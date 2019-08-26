@@ -374,7 +374,7 @@ class Music(commands.Cog):
     print(current_queue.id)
     related_videos = get_related_videos(current_queue.id)
     print(related_videos)
-    video_id = random.choice(related_videos).id.videoId
+    video_id = related_videos[0].id.videoId
     info = YTDLExtractor().extract_info(video_id).get_list()[0]
     self._add_to_queue(ctx, info)
 
