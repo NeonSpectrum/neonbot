@@ -8,10 +8,12 @@ certifi==2019.6.16
 cffi==1.12.3
 chardet==3.0.4
 discord.py==1.2.3
+environs==5.2.1
 google-auth==1.6.3
 google-auth-httplib2==0.0.3
 httplib2==0.13.1
 idna==2.8
+marshmallow==3.0.1
 multidict==4.5.2
 pip-autoremove==0.9.1
 pyasn1==0.4.6
