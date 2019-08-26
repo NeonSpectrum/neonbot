@@ -225,7 +225,7 @@ class Music(commands.Cog):
                       
   @commands.command()
   @commands.guild_only()
-  async def autoplay(self, ctx, vol: int):
+  async def autoplay(self, ctx):
     server = get_server(ctx.guild.id)
     config = update_config(ctx.guild.id, "autoplay", not server.config.autoplay)
     await self.send(ctx, f"Autoplay is set to {'enabled' if config.autoplay else 'disabled'}.", delete_after=5)
