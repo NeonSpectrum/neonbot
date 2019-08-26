@@ -58,6 +58,15 @@ class Administrator(commands.Cog):
 
   @commands.command()
   @commands.is_owner()
+  async def prefix(self, ctx, arg):
+    database = Database(ctx.guild.id)
+    config = database.config
+    config.prefix = arg
+    config = database.update_config().config
+    await ctx.send(embed=Embed(description=f"Prefix is now set to {config.prefix}."))
+
+  @commands.command()
+  @commands.is_owner()
   async def deleteoncmd(self, ctx):
     database = Database(ctx.guild.id)
     config = database.config

@@ -9,15 +9,15 @@ from termcolor import cprint
 
 from helpers import database, log
 from helpers.constants import LOGO
-from helpers.database import load_database
+from helpers.database import Database, load_database
 
 bot = None
 servers = Dict()
 
 
 def prefix(bot, message):
-  id = message.guild.id
-  return getenv("PREFIX")
+  config = Database(message.guild.id).config
+  return config.prefix
 
 
 def load_cogs():
