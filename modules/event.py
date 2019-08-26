@@ -1,6 +1,5 @@
 import logging
 
-import arrow
 import discord
 from addict import Dict
 from discord.ext import commands
@@ -9,9 +8,12 @@ from bot import bot
 from helpers import log
 from helpers.constants import TIMEZONE
 from helpers.database import Database
-from helpers.utils import Embed
+from helpers.utils import Embed, date_formatted
 
 from .utility import chatbot
+
+commands_executed = 0
+get_commands_executed = lambda: commands_executed
 
 
 def get_activity():
@@ -58,9 +60,7 @@ class Event(commands.Cog):
       if voice_tts:
         await voice_tts.send(msg.replace("**", ""), tts=True, delete_after=3)
       if log:
-        embed = Embed(
-          description=f"`{arrow.now('Asia/Manila').format('YYYY-MM-DD hh:mm:ss A')}`:bust_in_silhouette:{msg}"
-        )
+        embed = Embed(description=f"`{date_formatted()}`:bust_in_silhouette:{msg}")
         embed.set_author(name="Voice Presence Update", icon_url=bot.user.avatar_url)
         await log.send(embed=embed)
 
@@ -90,8 +90,7 @@ class Event(commands.Cog):
       msg = f"**{before.name}** is now {get_activity_status(activity)}."
 
     if log and msg:
-      embed = Embed(
-        description=f"`{arrow.now('Asia/Manila').format('YYYY-MM-DD hh:mm:ss A')}`:bust_in_silhouette:{msg}")
+      embed = Embed(description=f"`{date_formatted()}`:bust_in_silhouette:{msg}")
       embed.set_author(name="User Presence Update", icon_url=bot.user.avatar_url)
       await log.send(embed=embed)
 
@@ -103,8 +102,7 @@ class Event(commands.Cog):
     msg = f"**{member.user}** joined the server."
 
     if channel:
-      embed = Embed(
-        description=f"`{arrow.now('Asia/Manila').format('YYYY-MM-DD hh:mm:ss A')}`:bust_in_silhouette:{msg}")
+      embed = Embed(description=f"`{date_formatted()}`:bust_in_silhouette:{msg}")
       embed.set_author(name="Member Join", icon_url=bot.user.avatar_url)
       channel.send()
 
@@ -116,13 +114,15 @@ class Event(commands.Cog):
     msg = f"**{member.user}** left the server."
 
     if channel:
-      embed = Embed(
-        description=f"`{arrow.now('Asia/Manila').format('YYYY-MM-DD hh:mm:ss A')}`:bust_in_silhouette:{msg}")
+      embed = Embed(description=f"`{date_formatted()}`:bust_in_silhouette:{msg}")
       embed.set_author(name="Member Leave", icon_url=bot.user.avatar_url)
       channel.send()
 
   @bot.event
   async def on_command(ctx):
+    global commands_executed
+    commands_executed += 1
+
     config = Database(ctx.guild.id).config
     log.cmd(ctx, ctx.message.content)
 

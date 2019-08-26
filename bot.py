@@ -1,5 +1,6 @@
 from os import listdir, path, popen
 from os.path import isfile, join
+from time import time
 
 import discord
 from addict import Dict
@@ -12,6 +13,7 @@ from helpers.database import Database, load_database
 from main import env
 
 bot = None
+uptime = time()
 servers = Dict()
 
 

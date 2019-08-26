@@ -1,12 +1,13 @@
 from urllib.parse import parse_qs, urlparse
 
-import arrow
 import requests
 import youtube_dl
 from addict import Dict
 
-from helpers.constants import TIMEZONE
 from main import env
+
+from .constants import TIMEZONE
+from .utils import date
 
 
 class YTDLExtractor:
@@ -66,5 +67,5 @@ def get_related_videos(video_id):
 def is_link_expired(url):
   params = Dict(parse_qs(urlparse(url).query))
   if params:
-    return arrow.now(TIMEZONE).timestamp > int(params.expire[0]) - 1800
+    return date.timestamp() > int(params.expire[0]) - 1800
   return False

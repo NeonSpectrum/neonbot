@@ -1,14 +1,16 @@
 import asyncio
-import math
+from datetime import datetime, timedelta
 
 import discord
 from discord.ext import commands
+from pytz import timezone
 
-from bot import bot
 from helpers import log
 
-from .constants import PAGINATION_EMOJI
-from .database import db
+from .constants import PAGINATION_EMOJI, TIMEZONE
+
+date = lambda: datetime.now(timezone(TIMEZONE))
+date_formatted = lambda: f"{date():%Y-%m-%d %-I:%M:%S %p}"
 
 
 def Embed(**kwargs):
@@ -20,7 +22,8 @@ class PaginationEmbed:
   embed = Embed()
   msg = None
 
-  def __init__(self, array=[], authorized_users=[]):
+  def __init__(self, bot, array=[], authorized_users=[]):
+    self.bot = bot
     self.array = array
     self.authorized_users = authorized_users
 
@@ -51,7 +54,7 @@ class PaginationEmbed:
 
     while True:
       try:
-        reaction, user = await bot.wait_for("reaction_add", timeout=60, check=check)
+        reaction, user = await self.bot.wait_for("reaction_add", timeout=60, check=check)
 
         await self._execute_command(PAGINATION_EMOJI.index(reaction.emoji))
 
@@ -90,31 +93,7 @@ class PaginationEmbed:
 
 
 def format_seconds(secs, format=0):
-  secNum = int(secs)
-  hours = math.floor(secNum / 3600)
-  minutes = math.floor((secNum - hours * 3600) / 60)
-  seconds = secNum - hours * 3600 - minutes * 60
-
-  if hours < 10:
-    hours = f"0{hours}"
-  if minutes < 10:
-    minutes = f"0{minutes}"
-  if seconds < 10:
-    seconds = f"0{seconds}"
-
-  if format == 0:
-    time = f"{hours}:{minutes}:{seconds}"
-    if hours == '00':
-      time = time[3:]
-    return time
-  elif format == 3:
-    return f"{hours}:{minutes}:{seconds}"
-  elif format == 2:
-    minutes = int(hours) * 60 + int(minutes)
-    return ('0' + minutes if minutes < 10 else minutes) + ':' + seconds
-  elif format == 1:
-    seconds = int(hours) * 60 + int(minutes) * 60 + int(seconds)
-    return '0' + seconds if seconds < 10 else seconds
+  return str(timedelta(seconds=secs))
 
 
 def raise_and_send(ctx, msg, exception=commands.CommandError):

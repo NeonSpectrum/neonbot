@@ -1,10 +1,8 @@
-import arrow
 from termcolor import colored, cprint
 
 from helpers.constants import TIMEZONE
+from helpers.utils import date_formatted
 from main import env
-
-date = lambda: arrow.now(TIMEZONE).format("YYYY-MM-DD hh:mm:ss A")
 
 if env.bool("HEROKU", False):
   colored = lambda msg, color: msg
@@ -12,7 +10,7 @@ if env.bool("HEROKU", False):
 
 def cmd(ctx, *msg):
   print(f"""
-{colored(f"------{date()}------", "yellow")}
+{colored(f"------{date_formatted()}------", "yellow")}
   {colored('Guild', 'cyan')}: {ctx.guild}
   {colored('Channel', 'cyan')}: {ctx.channel}
   {colored('User', 'cyan')}: {ctx.author}
@@ -21,8 +19,8 @@ def cmd(ctx, *msg):
 
 
 def info(*msg):
-  print(f"{colored(date(), 'yellow')} | {colored(' '.join(map(str,msg)), 'cyan')}")
+  print(f"{colored(date_formatted(), 'yellow')} | {colored(' '.join(map(str,msg)), 'cyan')}")
 
 
 def warn(*msg):
-  print(f"{colored(date(), 'yellow')} | {colored(' '.join(map(str,msg)), 'red')}")
+  print(f"{colored(date_formatted(), 'yellow')} | {colored(' '.join(map(str,msg)), 'red')}")
