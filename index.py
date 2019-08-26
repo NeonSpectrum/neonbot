@@ -9,7 +9,7 @@ from helpers.constants import LOG_FORMAT
 
 
 def load_env():
-  if (not os.path.isfile('.env')):
+  if (not os.getenv("HEROKU") and not os.path.isfile('.env')):
     os.popen('cp .env.example .env')
 
   load_dotenv()
