@@ -41,6 +41,7 @@ def update_config(guild_id, key, value):
   database.config.music[key] = value
   database.update_config().refresh_config()
   servers[guild_id].config = database.config.music
+  return servers[guild_id].config
 
 
 def in_voice_channel(ctx):
@@ -221,6 +222,13 @@ class Music(commands.Cog):
     server = get_server(ctx.guild.id)
     if isinstance(error, commands.MissingRequiredArgument):
       await self.send(ctx, f"Repeat is set to {server.config.repeat}.", delete_after=5)
+                      
+  @commands.command()
+  @commands.guild_only()
+  async def autoplay(self, ctx, vol: int):
+    server = get_server(ctx.guild.id)
+    config = update_config(ctx.guild.id, "autoplay", not server.config.autoplay)
+    await self.send(ctx, f"Autoplay is set to {'enabled' if config.autoplay else 'disabled'}.", delete_after=5)
 
   @commands.command(aliases=["list"])
   @commands.guild_only()
