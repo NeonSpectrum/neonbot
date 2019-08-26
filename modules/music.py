@@ -267,14 +267,14 @@ class Music(commands.Cog):
 
     log.cmd(ctx, f"Now playing {current_queue.title}")
 
-    self.bot.loop.create_task(self._playing_message(ctx, current_queue))
+    self.bot.loop.create_task(self._playing_message(ctx, server.current_queue, current_queue))
 
     song = discord.FFmpegPCMAudio(current_queue.stream, before_options=FFMPEG_OPTIONS)
     source = discord.PCMVolumeTransformer(song, volume=server.config.volume / 100)
 
     server.connection.play(source, after=lambda error: self._next(ctx, error))
 
-  async def _playing_message(self, ctx, current_queue):
+  async def _playing_message(self, ctx, index, current_queue):
     server = get_server(ctx.guild.id)
     config = server.config
 
@@ -288,12 +288,12 @@ class Music(commands.Cog):
     ]
 
     embed = Embed(title=current_queue.title, url=current_queue.url)
-    embed.set_author(name=f"Now Playing #{current_queue+1}", icon_url="https://i.imgur.com/SBMH84I.png")
+    embed.set_author(name=f"Now Playing #{index+1}", icon_url="https://i.imgur.com/SBMH84I.png")
     embed.set_footer(text=" | ".join(footer), icon_url=current_queue.requested.avatar_url)
 
     server.messages.last_playing = await ctx.send(embed=embed)
 
-  async def _finished_message(self, ctx, current_queue):
+  async def _finished_message(self, ctx, index, current_queue):
     server = get_server(ctx.guild.id)
     config = server.config
 
@@ -307,7 +307,7 @@ class Music(commands.Cog):
     ]
 
     embed = Embed(title=current_queue.title, url=current_queue.url)
-    embed.set_author(name=f"Finished Playing #{current_queue+1}", icon_url="https://i.imgur.com/SBMH84I.png")
+    embed.set_author(name=f"Finished Playing #{index+1}", icon_url="https://i.imgur.com/SBMH84I.png")
     embed.set_footer(text=" | ".join(footer), icon_url=current_queue.requested.avatar_url)
 
     server.messages.last_finished = await ctx.send(embed=embed)
@@ -319,7 +319,7 @@ class Music(commands.Cog):
 
     # if error: print(type(error))
     log.cmd(ctx, f"Finished playing {current_queue.title}")
-    self.bot.loop.create_task(self._finished_message(ctx, current_queue))
+    self.bot.loop.create_task(self._finished_message(ctx, server.current_queue, current_queue))
 
     server.connection.source.cleanup()
 
