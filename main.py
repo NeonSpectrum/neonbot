@@ -2,7 +2,6 @@ import logging
 import os
 
 import discord
-from dotenv import load_dotenv
 from environs import Env
 
 from helpers.constants import LOG_FORMAT
