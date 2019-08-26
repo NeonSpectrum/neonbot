@@ -1,4 +1,5 @@
 import asyncio
+import random
 import re
 
 import discord
@@ -10,8 +11,7 @@ from bot import servers
 from helpers import log
 from helpers.constants import CHOICES_EMOJI, FFMPEG_OPTIONS, YOUTUBE_REGEX
 from helpers.database import Database
-from helpers.utils import (Embed, PaginationEmbed, format_seconds, plural,
-                           raise_and_send)
+from helpers.utils import (Embed, PaginationEmbed, format_seconds, plural, raise_and_send)
 from helpers.ytdl import YTDLExtractor, get_related_videos, is_link_expired
 
 DEFAULT_CONFIG = Dict({
@@ -80,7 +80,7 @@ class Music(commands.Cog):
       output = e
     finally:
       output = str(output)
-      
+
     max_length = 1800
 
     if len(output) > max_length:
@@ -287,8 +287,7 @@ class Music(commands.Cog):
     ]
 
     embed = Embed(title=current_queue.title, url=current_queue.url)
-    embed.set_author(name=f"Now Playing #{server.current_queue+1}",
-                     icon_url="https://i.imgur.com/SBMH84I.png")
+    embed.set_author(name=f"Now Playing #{current_queue+1}", icon_url="https://i.imgur.com/SBMH84I.png")
     embed.set_footer(text=" | ".join(footer), icon_url=current_queue.requested.avatar_url)
 
     server.messages.last_playing = await ctx.send(embed=embed)
@@ -307,8 +306,7 @@ class Music(commands.Cog):
     ]
 
     embed = Embed(title=current_queue.title, url=current_queue.url)
-    embed.set_author(name=f"Finished Playing #{server.current_queue+1}",
-                     icon_url="https://i.imgur.com/SBMH84I.png")
+    embed.set_author(name=f"Finished Playing #{current_queue+1}", icon_url="https://i.imgur.com/SBMH84I.png")
     embed.set_footer(text=" | ".join(footer), icon_url=current_queue.requested.avatar_url)
 
     server.messages.last_finished = await ctx.send(embed=embed)
@@ -367,7 +365,7 @@ class Music(commands.Cog):
     print(current_queue.id)
     related_videos = get_related_videos(current_queue.id)
     print(related_videos)
-    video_id = related_videos[0].id.videoId
+    video_id = random.choice(related_videos).id.videoId
     info = YTDLExtractor().extract_info(video_id).get_list()[0]
     self._add_to_queue(ctx, info)
 

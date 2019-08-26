@@ -3,17 +3,12 @@ import os
 
 import discord
 from dotenv import load_dotenv
+from environs import Env
 
 from bot import run
 from helpers.constants import LOG_FORMAT
 
-
-def load_env():
-  if (not os.getenv("HEROKU") and not os.path.isfile('.env')):
-    os.popen('cp .env.example .env')
-
-  load_dotenv()
-
+env = Env()
 
 if __name__ == '__main__':
   formatter = logging.Formatter(LOG_FORMAT)
@@ -27,5 +22,5 @@ if __name__ == '__main__':
   if os.name == "nt":
     os.system('color')
 
-  load_env()
+  env.read_env()
   run()

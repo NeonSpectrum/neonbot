@@ -1,9 +1,8 @@
-from os import getenv
-
 from addict import Dict
 from pymongo import MongoClient
 
 from helpers import log
+from main import env
 
 db = None
 
@@ -11,10 +10,10 @@ db = None
 def load_database():
   global db
 
-  username = getenv("DB_USER")
-  password = getenv("DB_PASS")
-  url = getenv("DB_HOST").split(":")
-  name = getenv("DB_NAME")
+  username = env("DB_USER")
+  password = env("DB_PASS")
+  url = env("DB_HOST").split(":")
+  name = env("DB_NAME")
 
   client = MongoClient(host=url[0],
                        port=int(url[1]),
@@ -38,7 +37,7 @@ def process_database(guilds):
 def create_collection(guild_id):
   db.servers.insert_one({
     "server_id": str(guild_id),
-    "prefix": getenv("PREFIX"),
+    "prefix": env("PREFIX"),
     "deleteoncmd": False,
     "strictmode": False,
     "aliases": [],
@@ -54,9 +53,11 @@ def create_collection(guild_id):
 
 
 class Database:
-  def __init__(self, guild_id):
-    self.guild_id = str(guild_id)
-    self.config = Dict(db.servers.find_one({"server_id": self.guild_id}))
+  def __init__(self, guild_id=None):
+    if guild_id:
+      self.guild_id = str(guild_id)
+      self.refresh_config()
+    self.refresh_settings()
 
   def refresh_config(self):
     self.config = Dict(db.servers.find_one({"server_id": self.guild_id}))
@@ -67,3 +68,13 @@ class Database:
       self.config = self.config.to_dict()
     db.servers.update_one({"server_id": self.guild_id}, {"$set": self.config})
     return self.refresh_config()
+
+  def refresh_settings(self):
+    self.settings = Dict(db.settings.find_one())
+    return self
+
+  def update_settings(self):
+    if isinstance(self.settings, Dict):
+      self.settings = self.settings.to_dict()
+    db.settings.update_one({}, {"$set": self.settings})
+    return self.refresh_settings()

@@ -1,4 +1,3 @@
-from os import getenv
 from urllib.parse import parse_qs, urlparse
 
 import arrow
@@ -7,6 +6,7 @@ import youtube_dl
 from addict import Dict
 
 from helpers.constants import TIMEZONE
+from main import env
 
 
 class YTDLExtractor:
@@ -57,7 +57,7 @@ def get_related_videos(video_id):
                        "part": "snippet",
                        "relatedToVideoId": video_id,
                        "type": "video",
-                       "key": getenv("GOOGLE_API")
+                       "key": env("GOOGLE_API")
                      })
 
   return Dict(res.json())["items"]

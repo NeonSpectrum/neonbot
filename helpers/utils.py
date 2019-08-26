@@ -119,7 +119,7 @@ def format_seconds(secs, format=0):
 
 def raise_and_send(ctx, msg, exception=commands.CommandError):
   asyncio.ensure_future(ctx.send(embed=Embed(description=msg)))
-  log.cmd(ctx, "You need to be in a voice channel.")
+  log.cmd(ctx, msg)
   raise exception(msg)
 
 

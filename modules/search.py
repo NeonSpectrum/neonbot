@@ -1,5 +1,4 @@
 import random
-from os import getenv
 
 import requests
 from addict import Dict
@@ -7,6 +6,7 @@ from discord.ext import commands
 
 from bot import bot
 from helpers.utils import Embed
+from main import env
 
 
 class Search(commands.Cog):
@@ -21,8 +21,8 @@ class Search(commands.Cog):
                          "q": args,
                          "num": 1,
                          "searchType": "image",
-                         "cx": getenv("GOOGLE_CX"),
-                         "key": getenv("GOOGLE_API")
+                         "cx": env("GOOGLE_CX"),
+                         "key": env("GOOGLE_API")
                        })
     image = Dict(res.json())
     embed = Embed()

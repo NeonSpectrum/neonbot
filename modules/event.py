@@ -8,14 +8,14 @@ from discord.ext import commands
 from bot import bot
 from helpers import log
 from helpers.constants import TIMEZONE
-from helpers.database import Database, db
+from helpers.database import Database
 from helpers.utils import Embed
 
 from .utility import chatbot
 
 
 def get_activity():
-  settings = Dict(db.settings.find_one())
+  settings = Database().settings
   activity_type = settings.game.type.lower()
   activity_name = settings.game.name
   status = settings.status
@@ -29,7 +29,6 @@ class Event(commands.Cog):
   @bot.event
   async def on_ready():
     bot.help_command.verify_check = False
-    bot.help_command.show_hidden = False
     await bot.change_presence(activity=get_activity())
     log.info(f"Logged in as {bot.user}")
 

@@ -1,13 +1,12 @@
-from os import getenv
-
 import arrow
 from termcolor import colored, cprint
 
 from helpers.constants import TIMEZONE
+from main import env
 
 date = lambda: arrow.now(TIMEZONE).format("YYYY-MM-DD hh:mm:ss A")
 
-if getenv("HEROKU"):
+if env.bool("HEROKU", False):
   colored = lambda msg, color: msg
 
 
