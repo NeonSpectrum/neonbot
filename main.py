@@ -5,12 +5,13 @@ import discord
 from dotenv import load_dotenv
 from environs import Env
 
-from bot import run
 from helpers.constants import LOG_FORMAT
 
 env = Env()
 
 if __name__ == '__main__':
+  from bot import run
+
   formatter = logging.Formatter(LOG_FORMAT)
 
   logger = logging.getLogger('discord')
