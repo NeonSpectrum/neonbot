@@ -379,7 +379,7 @@ class Music(commands.Cog):
     
     related_videos = get_related_videos(current_queue.id)
     
-    if previous_queue and related_videos[0].id.videoId == previous_queue.queue.id:
+    if previous_queue and related_videos[0].id.videoId == previous_queue.id:
       video_id = related_videos[1].id.videoId
     else:
       video_id = related_videos[0].id.videoId
