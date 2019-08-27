@@ -1,6 +1,7 @@
 import asyncio
 import random
 import re
+from copy import deepcopy
 
 import discord
 import youtube_dl
@@ -30,16 +31,7 @@ DEFAULT_CONFIG = Dict({
 def get_server(guild_id):
   if guild_id not in servers.keys():
     config = Database(guild_id).config
-    servers[guild_id] =  Dict({
-      "connection": None,
-      "config": None,
-      "current_queue": 0,
-      "queue": [],
-      "messages": {
-        "last_playing": None,
-        "last_finished": None
-      }
-    })
+    servers[guild_id] = deepcopy(DEFAULT_CONFIG)
     servers[guild_id].config = config.music
 
   return servers[guild_id]
