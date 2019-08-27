@@ -21,8 +21,8 @@ if __name__ == '__main__':
   handler.setFormatter(formatter)
   logger.addHandler(handler)
 
-  if env.bool("HEROKU", False):
-    discord.opus.load_opus(env("OPUS_LIB"))
+  if not discord.opus.is_loaded():
+    discord.opus.load_opus('../lib/libopus.so.0')
 
   if os.name == "nt":
     os.system('color')
