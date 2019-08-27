@@ -7,14 +7,13 @@ import youtube_dl
 from addict import Dict
 from discord.ext import commands
 
-from bot import servers
 from helpers import log
 from helpers.constants import CHOICES_EMOJI, FFMPEG_OPTIONS, YOUTUBE_REGEX
 from helpers.database import Database
 from helpers.utils import Embed, PaginationEmbed, format_seconds, plural
 from helpers.ytdl import YTDLExtractor, get_related_videos, is_link_expired
 
-servers = servers.music
+servers = Dict()
 
 DEFAULT_CONFIG = Dict({
   "connection": None,
