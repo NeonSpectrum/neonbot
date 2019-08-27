@@ -21,6 +21,7 @@ class YTDLExtractor:
       "nocheckcertificate": True,
       "ignoreerrors": True,
       "logtostderr": False,
+      "source_address": "0.0.0.0",
       **extra_params
     })
 
