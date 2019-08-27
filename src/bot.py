@@ -12,25 +12,21 @@ from helpers.constants import LOGO
 from helpers.database import Database, load_database
 from main import env
 
-bot = None
 uptime = time()
-servers = Dict()
-
-
-def prefix(bot, message):
-  config = Database(message.guild.id).config
-  return config.prefix
+servers = Dict({"music": {}})
+bot = commands.Bot(command_prefix=lambda bot, message: Database(message.guild.id).config.prefix,
+                   owner_ids=env.list("OWNER_ID", subcast=int))
 
 
 def load_cogs():
   cogs_dir = "modules"
-  for extension in [f.replace('.py', '') for f in listdir(cogs_dir) if isfile(join(cogs_dir, f))]:
+  for extension in [
+      f.replace('.py', '') for f in listdir("src/" + cogs_dir) if isfile(join("src/" + cogs_dir, f))
+  ]:
     bot.load_extension(cogs_dir + "." + extension)
 
 
 def run():
-  global bot
-  bot = commands.Bot(command_prefix=prefix, owner_ids=env.list("OWNER_ID", subcast=int))
   cprint(LOGO, 'blue')
   load_database()
   load_cogs()

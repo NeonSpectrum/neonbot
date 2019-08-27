@@ -96,11 +96,5 @@ def format_seconds(secs, format=0):
   return str(timedelta(seconds=secs))
 
 
-def raise_and_send(ctx, msg, exception=commands.CommandError):
-  asyncio.ensure_future(ctx.send(embed=Embed(description=msg)))
-  log.cmd(ctx, msg)
-  raise exception(msg)
-
-
 def plural(val, singular, plural):
   return f"{val} {singular if val == 1 else plural}"

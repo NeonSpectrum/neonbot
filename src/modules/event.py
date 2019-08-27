@@ -4,7 +4,7 @@ import discord
 from addict import Dict
 from discord.ext import commands
 
-from bot import bot
+from bot import bot, servers
 from helpers import log
 from helpers.constants import TIMEZONE
 from helpers.database import Database
@@ -48,14 +48,21 @@ class Event(commands.Cog):
     if member.bot: return
 
     config = Database(member.guild.id).config
+    music = servers[member.guild.id].connection
+
     if before.channel != after.channel:
       voice_tts = bot.get_channel(int(config.channel.voicetts or -1))
       log = bot.get_channel(int(config.channel.log or -1))
+      members = lambda members: len(list(filter(lambda member: not member.bot, members)))
 
       if after.channel:
         msg = f"**{member.name}** has connected to **{after.channel.name}**"
+        if music and music.is_paused() and members(after.channel.members) > 0:
+          music.resume()
       else:
         msg = f"**{member.name}** has disconnected to **{before.channel.name}**"
+        if music and music.is_playing() and members(before.channel.members) == 0:
+          music.pause()
 
       if voice_tts:
         await voice_tts.send(msg.replace("**", ""), tts=True, delete_after=3)

@@ -11,6 +11,8 @@ env = Env()
 if __name__ == '__main__':
   from bot import run
 
+  env.read_env()
+
   formatter = logging.Formatter(LOG_FORMAT)
 
   logger = logging.getLogger('discord')
@@ -19,8 +21,10 @@ if __name__ == '__main__':
   handler.setFormatter(formatter)
   logger.addHandler(handler)
 
+  if env.bool("HEROKU", False):
+    discord.opus.load_opus(env("OPUS_LIB"))
+
   if os.name == "nt":
     os.system('color')
 
-  env.read_env()
   run()

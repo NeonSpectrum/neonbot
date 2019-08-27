@@ -11,9 +11,10 @@ from bot import servers
 from helpers import log
 from helpers.constants import CHOICES_EMOJI, FFMPEG_OPTIONS, YOUTUBE_REGEX
 from helpers.database import Database
-from helpers.utils import (Embed, PaginationEmbed, format_seconds, plural,
-                           raise_and_send)
+from helpers.utils import Embed, PaginationEmbed, format_seconds, plural
 from helpers.ytdl import YTDLExtractor, get_related_videos, is_link_expired
+
+servers = servers.music
 
 DEFAULT_CONFIG = Dict({
   "connection": None,
@@ -44,11 +45,12 @@ def update_config(guild_id, key, value):
   return servers[guild_id].config
 
 
-def in_voice_channel(ctx):
+async def in_voice_channel(ctx):
   if ctx.author.voice != None and ctx.author.voice.channel != None:
     return True
   else:
-    raise_and_send(ctx, "You need to be in a voice channel.")
+    await ctx.send(embed=Embed(description="You need to be in a voice channel."))
+    return False
 
 
 def must_in_argument(choices):
@@ -222,13 +224,15 @@ class Music(commands.Cog):
     server = get_server(ctx.guild.id)
     if isinstance(error, commands.MissingRequiredArgument):
       await self.send(ctx, f"Repeat is set to {server.config.repeat}.", delete_after=5)
-                      
+
   @commands.command()
   @commands.guild_only()
   async def autoplay(self, ctx):
     server = get_server(ctx.guild.id)
     config = update_config(ctx.guild.id, "autoplay", not server.config.autoplay)
-    await self.send(ctx, f"Autoplay is set to {'enabled' if config.autoplay else 'disabled'}.", delete_after=5)
+    await self.send(ctx,
+                    f"Autoplay is set to {'enabled' if config.autoplay else 'disabled'}.",
+                    delete_after=5)
 
   @commands.command(aliases=["list"])
   @commands.guild_only()
@@ -371,9 +375,7 @@ class Music(commands.Cog):
   def _process_autoplay(self, ctx):
     server = get_server(ctx.guild.id)
     current_queue = self._get_current_queue(server)
-    print(current_queue.id)
     related_videos = get_related_videos(current_queue.id)
-    print(related_videos)
     video_id = related_videos[0].id.videoId
     info = YTDLExtractor().extract_info(video_id).get_list()[0]
     self._add_to_queue(ctx, info)
