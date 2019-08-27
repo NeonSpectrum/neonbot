@@ -93,7 +93,10 @@ class PaginationEmbed:
 
 
 def format_seconds(secs, format=0):
-  return str(timedelta(seconds=secs))
+  formatted =  str(timedelta(seconds=secs))
+  if formatted.startswith("0:")
+    return formatted[2:]
+  return formatted
 
 
 def plural(val, singular, plural):
