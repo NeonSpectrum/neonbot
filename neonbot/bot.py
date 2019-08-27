@@ -13,7 +13,6 @@ from helpers.constants import LOGO
 from helpers.database import Database, load_database
 
 uptime = time()
-servers = Dict({"music": {}})
 bot = commands.Bot(command_prefix=lambda bot, message: Database(message.guild.id).config.prefix,
                    owner_ids=env.list("OWNER_IDS", [], subcast=int))
 
