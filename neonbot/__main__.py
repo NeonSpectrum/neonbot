@@ -7,18 +7,15 @@ from environs import Env
 from helpers.constants import LOG_FORMAT
 
 env = Env()
+env.read_env()
 
 if __name__ == '__main__':
-  from bot import run
-
-  env.read_env()
-
-  formatter = logging.Formatter(LOG_FORMAT)
+  import bot
 
   logger = logging.getLogger('discord')
   logger.setLevel(logging.INFO)
   handler = logging.FileHandler(filename='debug.log', encoding='utf-8', mode='w')
-  handler.setFormatter(formatter)
+  handler.setFormatter(logging.Formatter(LOG_FORMAT))
   logger.addHandler(handler)
 
   if not discord.opus.is_loaded():
@@ -27,4 +24,4 @@ if __name__ == '__main__':
   if os.name == "nt":
     os.system('color')
 
-  run()
+  bot.run()

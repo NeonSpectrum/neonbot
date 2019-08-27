@@ -8,6 +8,7 @@ from addict import Dict
 from discord.ext import commands
 
 from bot import bot, uptime
+from helpers.constants import AUTHOR, NAME, VERSION
 from helpers.utils import Embed, format_seconds
 
 chatbot_users = Dict()
@@ -36,10 +37,10 @@ class Utility(commands.Cog):
     process = psutil.Process(os.getpid())
 
     embed = Embed()
-    embed.set_author(name="NeonBot v1.0.0", icon_url=bot.user.avatar_url)
+    embed.set_author(name="{NAME} v{VERSION}", icon_url=bot.user.avatar_url)
     embed.add_field(name="Username", value=bot.user.name, inline=True)
     embed.add_field(name="Created On", value=f"{bot.user.created_at:%Y-%m-%d %I:%M:%S %p}", inline=True)
-    embed.add_field(name="Created By", value="NeonSpectrum", inline=True)
+    embed.add_field(name="Created By", value=AUTHOR, inline=True)
     embed.add_field(name="Guilds", value=len(bot.guilds), inline=True)
     embed.add_field(name="Channels", value=sum(1 for _ in bot.get_all_channels()), inline=True)
     embed.add_field(name="Users", value=len(bot.users), inline=True)

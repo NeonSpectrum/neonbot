@@ -1,8 +1,8 @@
 from addict import Dict
 from pymongo import MongoClient
 
+from bot import env
 from helpers import log
-from main import env
 
 db = None
 

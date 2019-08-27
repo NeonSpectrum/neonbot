@@ -8,22 +8,20 @@ from discord.ext import commands
 from pymongo import MongoClient
 from termcolor import cprint
 
+from __main__ import env
 from helpers.constants import LOGO
 from helpers.database import Database, load_database
-from main import env
 
 uptime = time()
 servers = Dict({"music": {}})
 bot = commands.Bot(command_prefix=lambda bot, message: Database(message.guild.id).config.prefix,
-                   owner_ids=env.list("OWNER_ID", subcast=int))
+                   owner_ids=env.list("OWNER_IDS", [], subcast=int))
 
 
 def load_cogs():
-  cogs_dir = "modules"
-  for extension in [
-      f.replace('.py', '') for f in listdir("src/" + cogs_dir) if isfile(join("src/" + cogs_dir, f))
-  ]:
-    bot.load_extension(cogs_dir + "." + extension)
+  cogs_dir = "neonbot/modules"
+  for extension in [f.replace('.py', '') for f in listdir(cogs_dir) if isfile(join(cogs_dir, f))]:
+    bot.load_extension("modules." + extension)
 
 
 def run():

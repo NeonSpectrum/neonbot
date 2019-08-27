@@ -4,9 +4,8 @@ import requests
 from addict import Dict
 from discord.ext import commands
 
-from bot import bot
+from bot import bot, env
 from helpers.utils import Embed
-from main import env
 
 
 class Search(commands.Cog):

@@ -1,8 +1,8 @@
 from termcolor import colored, cprint
 
+from bot import env
 from helpers.constants import TIMEZONE
 from helpers.utils import date_formatted
-from main import env
 
 if env.bool("HEROKU", False):
   colored = lambda msg, color: msg

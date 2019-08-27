@@ -4,7 +4,7 @@ import requests
 import youtube_dl
 from addict import Dict
 
-from main import env
+from bot import env
 
 from .constants import TIMEZONE
 from .utils import date

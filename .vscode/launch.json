@@ -8,7 +8,7 @@
       "name": "Launch NeonBot",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/src/main.py",
+      "program": "${workspaceFolder}/neonbot",
       "console": "internalConsole"
     }
   ]
