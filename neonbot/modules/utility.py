@@ -37,7 +37,7 @@ class Utility(commands.Cog):
     process = psutil.Process(os.getpid())
 
     embed = Embed()
-    embed.set_author(name="{NAME} v{VERSION}", icon_url=bot.user.avatar_url)
+    embed.set_author(name=f"{NAME} v{VERSION}", icon_url=bot.user.avatar_url)
     embed.add_field(name="Username", value=bot.user.name, inline=True)
     embed.add_field(name="Created On", value=f"{bot.user.created_at:%Y-%m-%d %I:%M:%S %p}", inline=True)
     embed.add_field(name="Created By", value=AUTHOR, inline=True)
