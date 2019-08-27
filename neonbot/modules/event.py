@@ -4,7 +4,7 @@ import discord
 from addict import Dict
 from discord.ext import commands
 
-from bot import bot, servers
+from bot import bot
 from helpers import log
 from helpers.constants import TIMEZONE
 from helpers.database import Database
@@ -45,6 +45,8 @@ class Event(commands.Cog):
 
   @bot.event
   async def on_voice_state_update(member, before, after):
+    from .music import servers
+    
     if member.bot: return
 
     config = Database(member.guild.id).config
