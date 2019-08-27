@@ -22,7 +22,7 @@ if __name__ == '__main__':
   logger.addHandler(handler)
 
   if not discord.opus.is_loaded():
-    discord.opus.load_opus('../lib/libopus.so.0')
+    discord.opus.load_opus("lib/libopus.so.0")
 
   if os.name == "nt":
     os.system('color')
