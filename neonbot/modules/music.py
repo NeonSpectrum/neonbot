@@ -127,8 +127,10 @@ class Music(commands.Cog):
       else:
         embed = Embed(description="Song failed to load.")
     else:
+      msg = await self.send(ctx, "Searching...")
       ytdl = YTDLExtractor().extract_info(args)
       ytdl_list = ytdl.get_list()
+      await msg.delete()
       if len(ytdl_list) == 0:
         return await ctx.send(embed=Embed(description="Failed to fetch songs."))
       choice = await self._display_choices(ctx, ytdl.get_choices())
