@@ -443,7 +443,7 @@ class Music(commands.Cog):
     related_videos = get_related_videos(current_queue.id)
     
     for video in related_videos:
-      existing = len([queue for queue in server.queue if queue.id == video.id]) > 0
+      existing = len([queue for queue in server.queue if queue.id == video.id.videoId]) > 0
       if existing: del video
 
     video_id = related_videos[0].id.videoId
