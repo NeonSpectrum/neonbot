@@ -1,3 +1,4 @@
+from datetime import datetime
 from urllib.parse import parse_qs, urlparse
 
 import requests
@@ -20,7 +21,6 @@ class YTDLExtractor:
       "quiet": True,
       "nocheckcertificate": True,
       "ignoreerrors": True,
-      "logtostderr": False,
       "source_address": "0.0.0.0",
       **extra_params
     })
@@ -35,20 +35,31 @@ class YTDLExtractor:
       Dict({
         "id": entry.id,
         "title": entry.get("title", "*Not Available*"),
-        "url": "https://www.youtube.com/watch?v=" + entry.id
+        "url": f"https://www.youtube.com/watch?v={entry.id}"
       }) for entry in self.info
     ]
 
   def get_list(self):
+    def parse_description(description):
+      description_arr = description.split("\n")[:15]
+      while len("\n".join(description_arr)) > 1000:
+        description_arr.pop()
+      if len(description.split("\n")) != len(description_arr):
+        description_arr.append("...")
+      return "\n".join(description_arr)
+
     return [
       Dict({
         "id": entry.id,
         "title": entry.title,
-        "description": entry.description,
+        "description": parse_description(entry.description),
+        "uploader": entry.uploader,
         "duration": entry.duration,
         "thumbnail": entry.thumbnail,
         "stream": entry.url,
-        "url": entry.webpage_url
+        "url": entry.webpage_url,
+        "view_count": f"{entry.view_count:,}",
+        "upload_date": datetime.strptime(entry.upload_date, "%Y%m%d").strftime("%b %d, %Y")
       }) for entry in self.info if entry
     ]
 

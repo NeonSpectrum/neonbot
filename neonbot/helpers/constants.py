@@ -1,6 +1,6 @@
 NAME = 'NeonBot'
 AUTHOR = 'NeonSpectrum'
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 
 TIMEZONE = "Asia/Manila"
 LOG_FORMAT = '%(asctime)s:%(levelname)s:%(name)s: %(message)s'

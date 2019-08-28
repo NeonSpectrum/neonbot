@@ -38,17 +38,17 @@ class Utility(commands.Cog):
 
     embed = Embed()
     embed.set_author(name=f"{NAME} v{VERSION}", icon_url=bot.user.avatar_url)
-    embed.add_field(name="Username", value=bot.user.name, inline=True)
-    embed.add_field(name="Created On", value=f"{bot.user.created_at:%Y-%m-%d %I:%M:%S %p}", inline=True)
-    embed.add_field(name="Created By", value=AUTHOR, inline=True)
-    embed.add_field(name="Guilds", value=len(bot.guilds), inline=True)
-    embed.add_field(name="Channels", value=sum(1 for _ in bot.get_all_channels()), inline=True)
-    embed.add_field(name="Users", value=len(bot.users), inline=True)
-    embed.add_field(name="Commands Executed", value=get_commands_executed(), inline=True)
+    embed.add_field(name="Username", value=bot.user.name)
+    embed.add_field(name="Created On", value=f"{bot.user.created_at:%Y-%m-%d %I:%M:%S %p}")
+    embed.add_field(name="Created By", value=AUTHOR)
+    embed.add_field(name="Guilds", value=len(bot.guilds))
+    embed.add_field(name="Channels", value=sum(1 for _ in bot.get_all_channels()))
+    embed.add_field(name="Users", value=len(bot.users))
+    embed.add_field(name="Commands Executed", value=get_commands_executed())
     embed.add_field(name="Ram Usage",
                     value=f"Approximately {(process.memory_info().rss / 1024000):.2f} MB",
                     inline=True)
-    embed.add_field(name="Uptime", value=format_seconds(time() - uptime).split(".")[0], inline=True)
+    embed.add_field(name="Uptime", value=format_seconds(time() - uptime).split(".")[0])
 
     await ctx.send(embed=embed)
 

@@ -22,7 +22,9 @@ class PaginationEmbed:
   embed = Embed()
   msg = None
 
-  def __init__(self, bot, array=[], authorized_users=[]):
+  def __init__(self, array=[], authorized_users=[]):
+    from bot import bot
+
     self.bot = bot
     self.array = array
     self.authorized_users = authorized_users
@@ -93,7 +95,7 @@ class PaginationEmbed:
 
 
 def format_seconds(secs, format=0):
-  formatted =  str(timedelta(seconds=secs))
+  formatted = str(timedelta(seconds=secs))
   if formatted.startswith("0:"):
     return formatted[2:]
   return formatted

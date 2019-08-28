@@ -21,9 +21,11 @@ DEFAULT_CONFIG = Dict({
   "config": None,
   "current_queue": 0,
   "queue": [],
+  "disable_after": False,
   "messages": {
     "last_playing": None,
-    "last_finished": None
+    "last_finished": None,
+    "paused": None
   }
 })
 
@@ -67,7 +69,7 @@ def must_in_argument(choices):
 class Music(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
-    self.send = lambda ctx, msg, **kwargs: ctx.send(embed=Embed(description=msg, **kwargs))
+    self.send = lambda ctx, msg, **kwargs: ctx.send(embed=Embed(description=msg), **kwargs)
 
   @commands.command(hidden=True)
   @commands.guild_only()
@@ -100,17 +102,30 @@ class Music(commands.Cog):
   @commands.check(in_voice_channel)
   async def play(self, ctx, *, args):
     server = get_server(ctx.guild.id)
+    embed = info = loading_msg = None
 
-    if re.search(YOUTUBE_REGEX, args):
+    if args.isdigit():
+      index = int(args)
+      if len(server.queue) > index < 0:
+        return await self.send(ctx, "Invalid index.", delete_after=5)
+      await self._next(ctx, index=index - 1)
+    elif re.search(YOUTUBE_REGEX, args):
+      loading_msg = await self.send(ctx, "Loading...")
+
       ytdl = YTDLExtractor().extract_info(args)
       ytdl_list = ytdl.get_list()
 
       if len(ytdl_list) > 1:
         info = ytdl_list
-        embed = Embed(description=f"Adding {len(info)} {plural(len(info), 'song', 'songs')} to queue")
-      else:
+        errors = len(ytdl.info) - len(ytdl_list)
+        embed = Embed(description=f"Added {plural(len(info), 'song', 'songs')} to queue.")
+        if errors > 0:
+          embed.description += f" {errors} failed to load."
+      elif ytdl_list:
         info = ytdl_list[0]
-        embed = Embed(title=f"Adding song to queue #{len(server.queue)+1}", description=ytdl_list[0].title)
+        embed = Embed(title=f"Added song to queue #{len(server.queue)+1}", description=ytdl_list[0].title)
+      else:
+        embed = Embed(description="Song failed to load.")
     else:
       ytdl = YTDLExtractor({"extract_flat": "in_playlist"}).extract_info(args)
       choice = await self._display_choices(ctx, ytdl.get_choices())
@@ -119,19 +134,24 @@ class Music(commands.Cog):
       info = YTDLExtractor().extract_info(ytdl.info[choice].id).get_list()[0]
       embed = Embed(title=f"You have selected #{choice+1}. Adding song to queue #{len(server.queue)+1}",
                     description=info.title)
-    await ctx.send(embed=embed, delete_after=5)
-    self._add_to_queue(ctx, info)
 
-    if not ctx.guild.voice_client:
+    if info:
+      self._add_to_queue(ctx, info)
+    if loading_msg:
+      await loading_msg.delete()
+    if embed:
+      await ctx.send(embed=embed, delete_after=5)
+
+    if len(server.queue) > 0 and not ctx.guild.voice_client:
       server.connection = await ctx.author.voice.channel.connect()
       log.cmd(ctx, f"Connected to {ctx.author.voice.channel}.")
-      self._play(ctx)
+      await self._play(ctx)
 
   @commands.command(aliases=["next"])
   @commands.guild_only()
   async def skip(self, ctx):
     server = get_server(ctx.guild.id)
-    self._next(ctx, skip=True)
+    await self._next(ctx, skip=True)
 
   @commands.command()
   @commands.guild_only()
@@ -153,7 +173,7 @@ class Music(commands.Cog):
     server.connection.pause()
     log.cmd(ctx, "Player paused.")
 
-    await self.send(ctx, "Player paused.", delete_after=5)
+    server.messages.paused = await self.send(ctx, f"Player paused. `{ctx.prefix}resume` to resume.")
 
   @commands.command()
   @commands.guild_only()
@@ -166,14 +186,16 @@ class Music(commands.Cog):
     server.connection.resume()
     log.cmd(ctx, "Player resumed.")
 
+    if server.messages.paused:
+      await server.messages.paused.delete()
+
     await self.send(ctx, "Player resumed.", delete_after=5)
 
   @commands.command()
   @commands.guild_only()
   async def reset(self, ctx):
     server = get_server(ctx.guild.id)
-    server.connection.stop()
-    await server.connection.disconnect()
+    await self._next(ctx, reset=True)
     del servers[ctx.guild.id]
     await self.send(ctx, "Player reset.", delete_after=5)
 
@@ -187,7 +209,7 @@ class Music(commands.Cog):
     if index < server.current_queue:
       server.current_queue -= 1
     elif index == server.current_queue:
-      self._next(ctx)
+      await self._next(ctx)
 
     embed = Embed(title=queue.title, url=queue.url)
     embed.set_author(name=f"Removed song #{index+1}", icon_url="https://i.imgur.com/SBMH84I.png")
@@ -234,6 +256,30 @@ class Music(commands.Cog):
                     f"Autoplay is set to {'enabled' if config.autoplay else 'disabled'}.",
                     delete_after=5)
 
+  @commands.command(aliases=["np"])
+  async def nowplaying(self, ctx):
+    server = get_server(ctx.guild.id)
+    config = server.config
+    current_queue = self._get_current_queue(server)
+
+    footer = [
+      str(current_queue.requested), f"Volume: {config.volume}%", f"Repeat: {config.repeat}",
+      f"Shuffle: {'on' if config.shuffle else 'off'}", f"Autoplay: {'on' if config.autoplay else 'off'}"
+    ]
+
+    embed = Embed()
+    embed.add_field(name="Uploader", value=current_queue.uploader)
+    embed.add_field(name="Upload Date", value=current_queue.upload_date)
+    embed.add_field(name="Duration", value=format_seconds(current_queue.duration))
+    embed.add_field(name="Views", value=current_queue.view_count)
+    embed.add_field(name="Description", value=current_queue.description, inline=False)
+    embed.set_author(name=current_queue.title,
+                     url=current_queue.url,
+                     icon_url="https://i.imgur.com/mG8QKe7.png")
+    embed.set_thumbnail(url=current_queue.thumbnail)
+    embed.set_footer(text=" | ".join(footer), icon_url=current_queue.requested.avatar_url)
+    await ctx.send(embed=embed)
+
   @commands.command(aliases=["list"])
   @commands.guild_only()
   async def playlist(self, ctx):
@@ -265,30 +311,67 @@ class Music(commands.Cog):
       f"Shuffle: {'on' if config.shuffle else 'off'}", f"Autoplay: {'on' if config.autoplay else 'off'}"
     ]
 
-    embed = PaginationEmbed(self.bot, array=embeds, authorized_users=[ctx.author.id])
+    embed = PaginationEmbed(array=embeds, authorized_users=[ctx.author.id])
     embed.set_author(name="Player Queue", icon_url="https://i.imgur.com/SBMH84I.png")
     embed.set_footer(text=" | ".join(footer), icon_url=self.bot.user.avatar_url)
     await embed.build(ctx)
 
-  def _play(self, ctx):
+  async def _play(self, ctx, replace=False):
     server = get_server(ctx.guild.id)
     current_queue = self._get_current_queue(server)
 
     if is_link_expired(current_queue.stream):
       current_queue = YTDLExtractor().extract_info(current_queue.id).get_list()[0]
 
-    log.cmd(ctx, f"Now playing {current_queue.title}")
-
-    self.bot.loop.create_task(self._playing_message(ctx, server.current_queue, current_queue))
+    await self._playing_message(ctx)
 
     song = discord.FFmpegPCMAudio(current_queue.stream, before_options=FFMPEG_OPTIONS)
     source = discord.PCMVolumeTransformer(song, volume=server.config.volume / 100)
 
-    server.connection.play(source, after=lambda error: self._next(ctx, error))
+    if not replace:
+      server.connection.play(source, after=lambda error: self.bot.loop.create_task(self._next(ctx, error)))
+    else:
+      server.connection.source = source
 
-  async def _playing_message(self, ctx, index, current_queue):
+  async def _next(self, ctx, error=None, skip=False, index=None, reset=False):
+    server = get_server(ctx.guild.id)
+    current_queue = self._get_current_queue(server)
+    config = server.config
+
+    if error: log.warn("After play error:", error)
+
+    await self._finished_message(ctx, delete_after=5 if reset else None)
+
+    if reset:
+      server.connection.stop()
+      await server.connection.disconnect()
+      return
+
+    if index != None:
+      server.current_queue = index
+      return await self._play(ctx, replace=True)
+
+    if skip:
+      if server.current_queue == len(server.queue) - 1:
+        if config.repeat == "off" and config.autoplay:
+          self._process_autoplay(ctx)
+          server.current_queue += 1
+        else:
+          server.current_queue = 0
+      else:
+        server.current_queue += 1
+      return await self._play(ctx, replace=True)
+
+    if self._process_repeat(ctx):
+      await self._play(ctx)
+
+  async def _playing_message(self, ctx, delete_after=None):
     server = get_server(ctx.guild.id)
     config = server.config
+    current_queue = self._get_current_queue(server)
+    index = server.current_queue
+
+    log.cmd(ctx, f"Now playing {current_queue.title}")
 
     if server.messages.last_playing:
       await server.messages.last_playing.delete()
@@ -303,11 +386,15 @@ class Music(commands.Cog):
     embed.set_author(name=f"Now Playing #{index+1}", icon_url="https://i.imgur.com/SBMH84I.png")
     embed.set_footer(text=" | ".join(footer), icon_url=current_queue.requested.avatar_url)
 
-    server.messages.last_playing = await ctx.send(embed=embed)
+    server.messages.last_playing = await ctx.send(embed=embed, delete_after=delete_after)
 
-  async def _finished_message(self, ctx, index, current_queue):
+  async def _finished_message(self, ctx, delete_after=None):
     server = get_server(ctx.guild.id)
     config = server.config
+    current_queue = self._get_current_queue(server)
+    index = server.current_queue
+
+    log.cmd(ctx, f"Finished playing {current_queue.title}")
 
     if server.messages.last_finished:
       await server.messages.last_finished.delete()
@@ -322,35 +409,7 @@ class Music(commands.Cog):
     embed.set_author(name=f"Finished Playing #{index+1}", icon_url="https://i.imgur.com/SBMH84I.png")
     embed.set_footer(text=" | ".join(footer), icon_url=current_queue.requested.avatar_url)
 
-    server.messages.last_finished = await ctx.send(embed=embed)
-
-  def _next(self, ctx, error=None, skip=False):
-    server = get_server(ctx.guild.id)
-    current_queue = self._get_current_queue(server)
-    config = server.config
-
-    # if error: print(type(error))
-    log.cmd(ctx, f"Finished playing {current_queue.title}")
-    self.bot.loop.create_task(self._finished_message(ctx, server.current_queue, current_queue))
-
-    server.connection.source.cleanup()
-
-    if skip:
-      server.connection.stop()
-
-      if server.current_queue == len(server.queue) - 1:
-        if config.repeat == "off" and config.autoplay:
-          self._process_autoplay(ctx)
-          server.current_queue += 1
-        else:
-          server.current_queue = 0
-      else:
-        server.current_queue += 1
-      self._play(ctx)
-      return
-
-    if self._process_repeat(ctx):
-      self._play(ctx)
+    server.messages.last_finished = await ctx.send(embed=embed, delete_after=delete_after)
 
   def _process_repeat(self, ctx):
     server = get_server(ctx.guild.id)
@@ -376,14 +435,14 @@ class Music(commands.Cog):
     server = get_server(ctx.guild.id)
     current_queue = self._get_current_queue(server)
     previous_queue = server.queue[server.current_queue - 1] if len(server.queue) > 1 else None
-    
+
     related_videos = get_related_videos(current_queue.id)
-    
+
     if previous_queue and related_videos[0].id.videoId == previous_queue.id:
       video_id = related_videos[1].id.videoId
     else:
       video_id = related_videos[0].id.videoId
-      
+
     info = YTDLExtractor().extract_info(video_id).get_list()[0]
     self._add_to_queue(ctx, info)
 

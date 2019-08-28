@@ -9,7 +9,8 @@ from pymongo import MongoClient
 from termcolor import cprint
 
 from __main__ import env
-from helpers.constants import LOGO
+from helpers import log
+from helpers.constants import LOGO, NAME, VERSION
 from helpers.database import Database, load_database
 
 uptime = time()
@@ -25,6 +26,7 @@ def load_cogs():
 
 def run():
   cprint(LOGO, 'blue')
+  log.info(f"Starting {NAME} v{VERSION}")
   load_database()
   load_cogs()
   bot.run(env("TOKEN"))
