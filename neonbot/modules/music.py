@@ -373,9 +373,8 @@ class Music(commands.Cog):
     await self._finished_message(ctx, delete_after=5 if reset else None)
 
     if reset:
-      server.connection.stop()
-      await server.connection.disconnect()
-      return
+      server.connection.source.cleanup()
+      return await server.connection.disconnect()
     if self._process_repeat(ctx):
       await self._play(ctx)
 
