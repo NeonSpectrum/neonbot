@@ -127,11 +127,14 @@ class Music(commands.Cog):
       else:
         embed = Embed(description="Song failed to load.")
     else:
-      ytdl = YTDLExtractor({"extract_flat": "in_playlist"}).extract_info(args)
+      ytdl = YTDLExtractor().extract_info(args)
+      ytdl_list = ytdl.get_list()
+      if len(ytdl_list) == 0:
+        return await ctx.send(embed=Embed(description="Failed to fetch songs."))
       choice = await self._display_choices(ctx, ytdl.get_choices())
       if choice < 0:
         return
-      info = YTDLExtractor().extract_info(ytdl.info[choice].id).get_list()[0]
+      info = ytdl_list[choice]
       embed = Embed(title=f"You have selected #{choice+1}. Adding song to queue #{len(server.queue)+1}",
                     description=info.title)
 

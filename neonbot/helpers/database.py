@@ -50,6 +50,7 @@ def create_collection(guild_id):
       "roles": {}
     }
   })
+  db.servers.insert_one({"status": "online", "game": {"type": "WATCHING", "name": "NANI?!"}})
 
 
 class Database:
