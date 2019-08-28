@@ -12,8 +12,6 @@ from .utils import date
 
 
 class YTDLExtractor:
-  info = Dict()
-
   def __init__(self, extra_params={}):
     self.ytdl = youtube_dl.YoutubeDL({
       "default_search": "ytsearch5",
@@ -27,8 +25,11 @@ class YTDLExtractor:
 
   def extract_info(self, *args, **kwargs):
     info = Dict(self.ytdl.extract_info(*args, download=False, **kwargs))
-    self.info = info.get("entries", [info])
+    self.info = info.get("entries", info)
     return self
+
+  def process_choice(self, index):
+    self.info = Dict(self.ytdl.process_ie_result(self.info[index], download=False))
 
   def get_choices(self):
     return [
@@ -39,7 +40,7 @@ class YTDLExtractor:
       }) for entry in self.info
     ]
 
-  def get_list(self):
+  def get_info(self):
     def parse_description(description):
       description_arr = description.split("\n")[:15]
       while len("\n".join(description_arr)) > 1000:
@@ -48,8 +49,8 @@ class YTDLExtractor:
         description_arr.append("...")
       return "\n".join(description_arr)
 
-    return [
-      Dict({
+    def parse_entry(entry):
+      return Dict({
         "id": entry.id,
         "title": entry.title,
         "description": parse_description(entry.description),
@@ -60,8 +61,12 @@ class YTDLExtractor:
         "url": entry.webpage_url,
         "view_count": f"{entry.view_count:,}",
         "upload_date": datetime.strptime(entry.upload_date, "%Y%m%d").strftime("%b %d, %Y")
-      }) for entry in self.info if entry
-    ]
+      })
+
+    if isinstance(self.info, list):
+      return [parse_entry(entry) for entry in self.info]
+
+    return parse_entry(self.info)
 
 
 def get_related_videos(video_id):
