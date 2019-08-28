@@ -201,6 +201,7 @@ class Music(commands.Cog):
   @commands.guild_only()
   async def reset(self, ctx):
     server = get_server(ctx.guild.id)
+    server.disable_after = True
     await self._next(ctx, reset=True)
     del servers[ctx.guild.id]
     await self.send(ctx, "Player reset.", delete_after=5)
@@ -329,9 +330,11 @@ class Music(commands.Cog):
     embed.set_footer(text=" | ".join(footer), icon_url=self.bot.user.avatar_url)
     await embed.build(ctx)
 
-  async def _play(self, ctx, replace=False):
+  async def _play(self, ctx):
     server = get_server(ctx.guild.id)
     current_queue = self._get_current_queue(server)
+    
+    server.disable_after = False
 
     if is_link_expired(current_queue.stream):
       log.info("Link expired:", current_queue.title)
@@ -341,21 +344,21 @@ class Music(commands.Cog):
     song = discord.FFmpegPCMAudio(current_queue.stream, before_options=FFMPEG_OPTIONS)
     source = discord.PCMVolumeTransformer(song, volume=server.config.volume / 100)
 
-    if not replace:
-      server.connection.play(source, after=lambda error: self.bot.loop.create_task(self._next(ctx, error)))
-      await self._playing_message(ctx)
-    else:
-      server.connection.source = source
+    def after(error):
+      if error: log.warn("After play error:", error)
+      if not server.disable_after: self._next(ctx)
 
-  async def _next(self, ctx, error=None, index=None, reset=False):
+    server.connection.play(source, after=lambda error: self.bot.loop.create_task(self._next(ctx, error)))
+    await self._playing_message(ctx)
+
+  async def _next(self, ctx, index=None, reset=False):
     server = get_server(ctx.guild.id)
     current_queue = self._get_current_queue(server)
     config = server.config
-
-    if error: log.warn("After play error:", error)
-
+     
+    await self._finished_message(ctx, delete_after=5 if reset else None)
+    
     if index != None:
-      last_index = server.current_queue
       if len(server.queue) == index and server.current_queue == len(server.queue) - 1:
         if config.repeat == "off" and config.autoplay:
           self._process_autoplay(ctx)
@@ -365,14 +368,10 @@ class Music(commands.Cog):
           server.current_queue = 0
       else:
         server.current_queue = index
-      await self._play(ctx, replace=True)
-      await self._finished_message(ctx, index=last_index)
-      await self._playing_message(ctx, index=index)
-      return
-
-    await self._finished_message(ctx, delete_after=5 if reset else None)
+      return await self._play(ctx)
 
     if reset:
+      server.connection.stop()
       return await server.connection.disconnect()
     if self._process_repeat(ctx):
       await self._play(ctx)
