@@ -361,6 +361,7 @@ class Music(commands.Cog):
           self._process_autoplay(ctx)
           server.current_queue += 1
         else:
+          index = 0
           server.current_queue = 0
       else:
         server.current_queue = index
