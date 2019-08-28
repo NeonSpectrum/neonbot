@@ -439,14 +439,14 @@ class Music(commands.Cog):
   def _process_autoplay(self, ctx):
     server = get_server(ctx.guild.id)
     current_queue = self._get_current_queue(server)
-    previous_queue = server.queue[server.current_queue - 1] if len(server.queue) > 1 else None
 
     related_videos = get_related_videos(current_queue.id)
+    
+    for video in related_videos:
+      existing = len([queue for queue in server.queue if queue.id == video.id]) > 0
+      if existing: del video
 
-    if previous_queue and related_videos[0].id.videoId == previous_queue.id:
-      video_id = related_videos[1].id.videoId
-    else:
-      video_id = related_videos[0].id.videoId
+    video_id = related_videos[0].id.videoId
 
     info = YTDLExtractor().extract_info(video_id).get_list()[0]
     self._add_to_queue(ctx, info)
