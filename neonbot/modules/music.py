@@ -511,7 +511,7 @@ class Music(commands.Cog):
     msg = await ctx.send(embed=embed)
 
     async def react_to_msg():
-      for emoji in CHOICES_EMOJI[0:len(entries) - 1] + CHOICES_EMOJI[5]:
+      for emoji in CHOICES_EMOJI[0:len(entries) - 1] + [CHOICES_EMOJI[5]]:
         try:
           await msg.add_reaction(emoji)
         except discord.NotFound:
