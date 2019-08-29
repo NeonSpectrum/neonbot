@@ -12,8 +12,7 @@ from discord.ext import commands
 from helpers import log
 from helpers.constants import CHOICES_EMOJI, FFMPEG_OPTIONS, YOUTUBE_REGEX
 from helpers.database import Database
-from helpers.utils import (Embed, PaginationEmbed, format_seconds,
-                           new_coroutine_thread, plural)
+from helpers.utils import (Embed, PaginationEmbed, format_seconds, new_coroutine_thread, plural)
 from helpers.ytdl import YTDLExtractor, get_related_videos, is_link_expired
 
 servers = Dict()
@@ -24,6 +23,7 @@ DEFAULT_CONFIG = Dict({
   "current_queue": 0,
   "queue": [],
   "shuffled_list": [],
+  "tasks": [],
   "disable_after": False,
   "messages": {
     "last_playing": None,
@@ -46,7 +46,7 @@ def update_config(guild_id, key, value):
   database = Database(guild_id)
   database.config.music[key] = value
   database.update_config().refresh_config()
-  servers[guild_id].config = database.config.music
+  servers[guild_id].config = database.conasynciofig.music
   return servers[guild_id].config
 
 
@@ -141,7 +141,8 @@ class Music(commands.Cog):
             embed.description += f" Failed to load {plural(errors, 'song', 'songs')}."
           await ctx.send(embed=embed, delete_after=5)
 
-        return asyncio.ensure_future(process_playlist())
+        server.tasks.append(self.bot.loop.create_task(process_playlist()))
+        return
 
       elif ytdl_list:
         info = ytdl.get_info()
@@ -224,6 +225,7 @@ class Music(commands.Cog):
   async def reset(self, ctx):
     server = get_server(ctx.guild.id)
     await self._next(ctx, reset=True)
+    [task.cancel() for task in server.tasks]
     del servers[ctx.guild.id]
     await self.send(ctx, "Player reset.", delete_after=5)
 

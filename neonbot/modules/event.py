@@ -147,7 +147,7 @@ class Event(commands.Cog):
 
   @bot.event
   async def on_command_error(ctx, error):
-    ignored = (commands.CheckFailure, commands.MissingRequiredArgument)
+    ignored = (commands.CheckFailure, commands.MissingRequiredArgument, discord.NotFound)
     if isinstance(error, ignored):
       return
 
