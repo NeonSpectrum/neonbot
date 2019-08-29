@@ -46,7 +46,7 @@ def update_config(guild_id, key, value):
   database = Database(guild_id)
   database.config.music[key] = value
   database.update_config().refresh_config()
-  servers[guild_id].config = database.conasynciofig.music
+  servers[guild_id].config = database.config.music
   return servers[guild_id].config
 
 
