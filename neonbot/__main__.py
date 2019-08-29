@@ -13,7 +13,7 @@ if __name__ == '__main__':
   import bot
 
   logger = logging.getLogger('discord')
-  logger.setLevel(logging.INFO)
+  logger.setLevel(logging.DEBUG)
   handler = logging.FileHandler(filename='debug.log', encoding='utf-8', mode='w')
   handler.setFormatter(logging.Formatter(LOG_FORMAT))
   logger.addHandler(handler)

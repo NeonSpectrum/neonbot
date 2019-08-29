@@ -1,8 +1,10 @@
 import asyncio
 
 import discord
+from aiohttp import ClientSession
 from discord.ext import commands
 
+from bot import env
 from helpers.database import Database
 from helpers.utils import Embed
 
@@ -23,6 +25,26 @@ class Administrator(commands.Cog):
     except Exception as e:
       output = str(e)
     await ctx.send(f"```py\n{output}```")
+
+  @commands.command(hidden=True)
+  @commands.is_owner()
+  async def generatelog(self, ctx):
+    session = ClientSession()
+    file = open("./debug.log", "r")
+    text = file.read()
+    file.close()
+    res = await session.post("https://pastebin.com/api/api_post.php",
+                             data={
+                               "api_dev_key": env("PASTEBIN_API"),
+                               "api_paste_code": text,
+                               "api_option": "paste",
+                               "api_paste_private": 1,
+                               "paste_expire_date": "10M"
+                             })
+    paste_link = await res.text()
+    paste_id = paste_link.split("/")[-1]
+    await ctx.send(embed=Embed(description=f"Generated pastebin: https://pastebin.com/raw/{paste_id}"))
+    await session.close()
 
   @commands.command(hidden=True)
   @commands.is_owner()
