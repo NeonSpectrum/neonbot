@@ -172,7 +172,7 @@ class Music(commands.Cog):
     if embed:
       await ctx.send(embed=embed, delete_after=5)
 
-    if len(server.queue) > 0 and ctx.voice_client:
+    if len(server.queue) > 0 and not ctx.voice_client:
       await self._connect(ctx)
       await self._play(ctx)
 
