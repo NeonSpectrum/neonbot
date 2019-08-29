@@ -46,7 +46,7 @@ class Search(commands.Cog):
     json = await res.json()
     if not isinstance(json[0], dict):
       await msg.delete()
-      return await ctx.send(embed=Embed(description="Term not found."))
+      return await ctx.send(embed=Embed(description="Word not found."), delete_after=5)
 
     dictionary = Dict(json[0])
     prs = dictionary.hwi.prs[0] or dictionary.vrs[0].prs[0]
