@@ -2,6 +2,7 @@ import asyncio
 import random
 import re
 from copy import deepcopy
+from threading import Thread
 
 import discord
 import youtube_dl
@@ -11,7 +12,8 @@ from discord.ext import commands
 from helpers import log
 from helpers.constants import CHOICES_EMOJI, FFMPEG_OPTIONS, YOUTUBE_REGEX
 from helpers.database import Database
-from helpers.utils import Embed, PaginationEmbed, format_seconds, plural
+from helpers.utils import (Embed, PaginationEmbed, format_seconds,
+                           new_coroutine_thread, plural)
 from helpers.ytdl import YTDLExtractor, get_related_videos, is_link_expired
 
 servers = Dict()
@@ -21,6 +23,7 @@ DEFAULT_CONFIG = Dict({
   "config": None,
   "current_queue": 0,
   "queue": [],
+  "shuffled_list": [],
   "disable_after": False,
   "messages": {
     "last_playing": None,
@@ -102,7 +105,7 @@ class Music(commands.Cog):
   @commands.check(in_voice_channel)
   async def play(self, ctx, *, args):
     server = get_server(ctx.guild.id)
-    embed = info = loading_msg = None
+    embed = info = loading_msg = playlist = None
 
     if args.isdigit():
       index = int(args)
@@ -112,23 +115,43 @@ class Music(commands.Cog):
     elif re.search(YOUTUBE_REGEX, args):
       loading_msg = await self.send(ctx, "Loading...")
 
-      ytdl = YTDLExtractor().extract_info(args)
-      ytdl_list = ytdl.get_info()
+      ytdl = await YTDLExtractor({"extract_flat": "in_playlist"}).extract_info(args)
+      ytdl_list = ytdl.info
 
       if isinstance(ytdl_list, list):
-        info = ytdl_list
-        errors = len(ytdl.info) - len(ytdl_list)
-        embed = Embed(description=f"Added {plural(len(info), 'song', 'songs')} to queue.")
-        if errors > 0:
-          embed.description += f" {errors} failed to load."
+        await loading_msg.delete()
+        msg = await ctx.send(embed=Embed(
+          description=f"Adding {plural(len(ytdl_list), 'song', 'songs')} to queue."))
+
+        async def process_playlist():
+          errors = 0
+
+          for entry in ytdl_list:
+            await ytdl.process_entry(entry)
+            info = ytdl.get_info()
+            if info: self._add_to_queue(ctx, info)
+            else: errors += 1
+            if len(server.queue) > 0 and not ctx.voice_client:
+              await self._connect(ctx)
+              await self._play(ctx)
+          await msg.delete()
+
+          embed = Embed(description=f"Added {plural(len(ytdl_list) - errors, 'song', 'songs')}.")
+          if errors > 0:
+            embed.description += f" Failed to load {plural(errors, 'song', 'songs')}."
+          await ctx.send(embed=embed, delete_after=5)
+
+        return asyncio.ensure_future(process_playlist())
+
       elif ytdl_list:
-        info = ytdl_list[0]
-        embed = Embed(title=f"Added song to queue #{len(server.queue)+1}", description=ytdl_list[0].title)
+        info = ytdl.get_info()
+        embed = Embed(title=f"Added song to queue #{len(server.queue)+1}", description=info.title)
       else:
         embed = Embed(description="Song failed to load.")
     else:
       msg = await self.send(ctx, "Searching...")
-      ytdl = YTDLExtractor({"extract_flat": "in_playlist"}).extract_info(args)
+      ytdl = YTDLExtractor({"extract_flat": "in_playlist"})
+      await ytdl.extract_info(args)
       ytdl_choices = ytdl.get_choices()
       await msg.delete()
       if len(ytdl_choices) == 0:
@@ -136,7 +159,7 @@ class Music(commands.Cog):
       choice = await self._display_choices(ctx, ytdl_choices)
       if choice < 0:
         return
-      ytdl.process_choice(choice)
+      await ytdl.process_entry(ytdl.info[choice])
       info = ytdl.get_info()
       embed = Embed(title=f"You have selected #{choice+1}. Adding song to queue #{len(server.queue)+1}",
                     description=info.title)
@@ -148,9 +171,8 @@ class Music(commands.Cog):
     if embed:
       await ctx.send(embed=embed, delete_after=5)
 
-    if len(server.queue) > 0 and not ctx.guild.voice_client:
-      server.connection = await ctx.author.voice.channel.connect()
-      log.cmd(ctx, f"Connected to {ctx.author.voice.channel}.")
+    if len(server.queue) > 0:
+      await self._connect(ctx)
       await self._play(ctx)
 
   @commands.command(aliases=["next"])
@@ -201,7 +223,6 @@ class Music(commands.Cog):
   @commands.guild_only()
   async def reset(self, ctx):
     server = get_server(ctx.guild.id)
-    server.disable_after = True
     await self._next(ctx, reset=True)
     del servers[ctx.guild.id]
     await self.send(ctx, "Player reset.", delete_after=5)
@@ -333,47 +354,52 @@ class Music(commands.Cog):
   async def _play(self, ctx):
     server = get_server(ctx.guild.id)
     current_queue = self._get_current_queue(server)
-    
-    server.disable_after = False
 
     if is_link_expired(current_queue.stream):
       log.info("Link expired:", current_queue.title)
-      current_queue = YTDLExtractor().extract_info(current_queue.id).get_info()
+      ytdl = await YTDLExtractor().extract_info(current_queue.id)
+      current_queue = ytdl.get_info()
       log.info("Fetched new link for", current_queue.title)
 
     song = discord.FFmpegPCMAudio(current_queue.stream, before_options=FFMPEG_OPTIONS)
     source = discord.PCMVolumeTransformer(song, volume=server.config.volume / 100)
 
-    def after(error):
+    async def after(error):
       if error: log.warn("After play error:", error)
-      if not server.disable_after: self._next(ctx)
+      if not server.disable_after:
+        await self._next(ctx)
 
-    server.connection.play(source, after=lambda error: self.bot.loop.create_task(self._next(ctx, error)))
+    server.connection.play(source, after=lambda error: self.bot.loop.create_task(after(error)))
     await self._playing_message(ctx)
+    server.disable_after = False
 
   async def _next(self, ctx, index=None, reset=False):
     server = get_server(ctx.guild.id)
     current_queue = self._get_current_queue(server)
     config = server.config
-     
+
     await self._finished_message(ctx, delete_after=5 if reset else None)
-    
-    if index != None:
-      if len(server.queue) == index and server.current_queue == len(server.queue) - 1:
+
+    if reset or index is not None:
+      server.disable_after = True
+      server.connection.stop()
+
+      if reset: return await server.connection.disconnect()
+
+      if config.shuffle:
+        server.current_queue = self._process_shuffle(ctx)
+      elif len(server.queue) == index and server.current_queue == len(server.queue) - 1:
         if config.repeat == "off" and config.autoplay:
-          self._process_autoplay(ctx)
+          await self._process_autoplay(ctx)
           server.current_queue += 1
         else:
-          index = 0
           server.current_queue = 0
       else:
         server.current_queue = index
       return await self._play(ctx)
 
-    if reset:
-      server.connection.stop()
-      return await server.connection.disconnect()
-    if self._process_repeat(ctx):
+    if config.shuffle or await self._process_repeat(ctx):
+      if config.shuffle: server.current_queue = self._process_shuffle(ctx)
       await self._play(ctx)
 
   async def _playing_message(self, ctx, index=None, delete_after=None):
@@ -422,7 +448,7 @@ class Music(commands.Cog):
 
     server.messages.last_finished = await ctx.send(embed=embed, delete_after=delete_after)
 
-  def _process_repeat(self, ctx):
+  async def _process_repeat(self, ctx):
     server = get_server(ctx.guild.id)
     config = server.config
 
@@ -431,7 +457,7 @@ class Music(commands.Cog):
         server.current_queue = 0
       elif config.repeat == "off":
         if config.autoplay:
-          self._process_autoplay(ctx)
+          await self._process_autoplay(ctx)
           server.current_queue += 1
         else:
           # reset queue to index 0 and stop playing
@@ -442,11 +468,24 @@ class Music(commands.Cog):
 
     return True
 
-  def _process_autoplay(self, ctx):
+  def _process_shuffle(self, ctx):
+    server = get_server(ctx.guild.id)
+    config = server.config
+
+    if server.current_queue in server.shuffled_list:
+      server.shuffled_list.append(server.current_queue)
+    if len(server.shuffled_list) == len(server.queue):
+      server.shuffled_list = [server.current_queue]
+    while True:
+      index = random.randint(0, len(server.queue) - 1)
+      if index not in server.shuffled_list:
+        return index
+
+  async def _process_autoplay(self, ctx):
     server = get_server(ctx.guild.id)
     current_queue = self._get_current_queue(server)
 
-    related_videos = get_related_videos(current_queue.id)
+    related_videos = await get_related_videos(current_queue.id)
     filtered_videos = []
 
     for i, video in enumerate(related_videos):
@@ -456,7 +495,8 @@ class Music(commands.Cog):
 
     video_id = filtered_videos[0].id.videoId
 
-    info = YTDLExtractor().extract_info(video_id).get_info()
+    ytdl = await YTDLExtractor().extract_info(video_id)
+    info = ytdl.get_info()
     self._add_to_queue(ctx, info)
 
   async def _display_choices(self, ctx, entries):
@@ -469,7 +509,7 @@ class Music(commands.Cog):
     msg = await ctx.send(embed=embed)
 
     async def react_to_msg():
-      for emoji in CHOICES_EMOJI:
+      for emoji in CHOICES_EMOJI[0:len(entries) - 1] + CHOICES_EMOJI[5]:
         try:
           await msg.add_reaction(emoji)
         except discord.NotFound:
@@ -492,15 +532,16 @@ class Music(commands.Cog):
       index = CHOICES_EMOJI.index(reaction.emoji)
       return index
 
+  async def _connect(self, ctx):
+    server = get_server(ctx.guild.id)
+    if not ctx.voice_client:
+      server.connection = await ctx.author.voice.channel.connect()
+      log.cmd(ctx, f"Connected to {ctx.author.voice.channel}.")
+
   def _add_to_queue(self, ctx, data):
     server = get_server(ctx.guild.id)
-    if isinstance(data, list):
-      for info in data:
-        info.requested = ctx.author
-      server.queue += data
-    else:
-      data.requested = ctx.author
-      server.queue.append(data)
+    data.requested = ctx.author
+    server.queue.append(data)
 
   def _get_current_queue(self, server):
     return server.queue[server.current_queue]

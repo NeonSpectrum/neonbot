@@ -6,11 +6,13 @@ from discord.ext import commands
 
 from bot import bot
 from helpers import log
-from helpers.constants import TIMEZONE
+from helpers.constants import NAME, TIMEZONE
 from helpers.database import Database
 from helpers.utils import Embed, date_formatted
 
 from .utility import chatbot
+
+IGNORED_DELETEONCMD = ["eval", "evalmusic", "prune"]
 
 commands_executed = 0
 get_commands_executed = lambda: commands_executed
@@ -35,18 +37,23 @@ class Event(commands.Cog):
     log.info(f"Logged in as {bot.user}")
 
   @bot.event
+  async def on_disconnect():
+    log.info(f"{NAME} disconnected")
+
+  @bot.event
   async def on_message(message):
     if message.content.startswith(bot.user.mention):
       msg = " ".join(message.content.split(" ")[1:])
-      response = chatbot(message.author.id, msg).conversation.say.bot
-      await message.channel.send(embed=Embed(description=f"{message.author.mention} {response}"))
+      response = await chatbot(message.author.id, msg)
+      await message.channel.send(embed=Embed(
+        description=f"{message.author.mention} {response.conversation.say.bot}"))
     else:
       await bot.process_commands(message)
 
   @bot.event
   async def on_voice_state_update(member, before, after):
     from .music import servers
-    
+
     if member.bot: return
 
     config = Database(member.guild.id).config
@@ -135,7 +142,7 @@ class Event(commands.Cog):
     config = Database(ctx.guild.id).config
     log.cmd(ctx, ctx.message.content)
 
-    if ctx.command.name != "prune" and config.deleteoncmd:
+    if ctx.command.name not in IGNORED_DELETEONCMD and config.deleteoncmd:
       await ctx.message.delete()
 
   @bot.event

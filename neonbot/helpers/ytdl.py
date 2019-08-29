@@ -1,11 +1,13 @@
+import functools
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from urllib.parse import parse_qs, urlparse
 
-import requests
 import youtube_dl
 from addict import Dict
+from aiohttp import ClientSession
 
-from bot import env
+from bot import bot, env
 
 from .constants import TIMEZONE
 from .utils import date
@@ -13,6 +15,8 @@ from .utils import date
 
 class YTDLExtractor:
   def __init__(self, extra_params={}):
+    self.thread_pool = ThreadPoolExecutor(max_workers=3)
+    self.loop = bot.loop
     self.ytdl = youtube_dl.YoutubeDL({
       "default_search": "ytsearch5",
       "format": "95/bestaudio",
@@ -23,13 +27,18 @@ class YTDLExtractor:
       **extra_params
     })
 
-  def extract_info(self, *args, **kwargs):
-    info = Dict(self.ytdl.extract_info(*args, download=False, **kwargs))
+  async def extract_info(self, *args, **kwargs):
+    executor = await self.loop.run_in_executor(
+      self.thread_pool, functools.partial(self.ytdl.extract_info, *args, download=False, **kwargs))
+    info = Dict(executor)
     self.info = info.get("entries", info)
     return self
 
-  def process_choice(self, index):
-    self.info = Dict(self.ytdl.process_ie_result(self.info[index], download=False))
+  async def process_entry(self, info):
+    executor = await self.loop.run_in_executor(
+      self.thread_pool, functools.partial(self.ytdl.process_ie_result, info, download=False))
+    self.info = Dict(executor)
+    return self
 
   def get_choices(self):
     return [
@@ -64,21 +73,23 @@ class YTDLExtractor:
       })
 
     if isinstance(self.info, list):
-      return [parse_entry(entry) for entry in self.info]
+      return [parse_entry(entry) for entry in self.info if entry]
 
-    return parse_entry(self.info)
+    return parse_entry(self.info) if self.info else None
 
 
-def get_related_videos(video_id):
-  res = requests.get("https://www.googleapis.com/youtube/v3/search",
-                     params={
-                       "part": "snippet",
-                       "relatedToVideoId": video_id,
-                       "type": "video",
-                       "key": env("GOOGLE_API")
-                     })
-
-  return Dict(res.json())["items"]
+async def get_related_videos(video_id):
+  session = ClientSession()
+  res = await session.get("https://www.googleapis.com/youtube/v3/search",
+                          params={
+                            "part": "snippet",
+                            "relatedToVideoId": video_id,
+                            "type": "video",
+                            "key": env("GOOGLE_API")
+                          })
+  json = await res.json()
+  await session.close()
+  return Dict(json)["items"]
 
 
 def is_link_expired(url):

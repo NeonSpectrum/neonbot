@@ -3,23 +3,21 @@ import random
 from time import time
 
 import psutil
-import requests
 from addict import Dict
+from aiohttp import ClientSession
 from discord.ext import commands
 
 from bot import bot, uptime
 from helpers.constants import AUTHOR, NAME, VERSION
 from helpers.utils import Embed, format_seconds
 
-chatbot_users = Dict()
 
-
-def chatbot(user_id, message):
-  user = chatbot_users[user_id]
-  if not user:
-    user.requests = requests.Session()
-  res = user.requests.get("https://program-o.com/v3/chat.php", params={"say": message})
-  return Dict(res.json())
+async def chatbot(user_id, message):
+  session = ClientSession()
+  res = await session.get("https://program-o.com/v3/chat.php", params={"say": message})
+  json = await res.json()
+  await session.close()
+  return Dict()
 
 
 class Utility(commands.Cog):

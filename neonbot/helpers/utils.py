@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime, timedelta
+from threading import Thread
 
 import discord
 from discord.ext import commands
@@ -103,3 +104,18 @@ def format_seconds(secs, format=0):
 
 def plural(val, singular, plural):
   return f"{val} {singular if val == 1 else plural}"
+
+
+def new_coroutine_thread(fc):
+  # if not asyncio.iscoroutinefunction(fc):
+  #   fc = asyncio.coroutine(fc)rt_loop, args=(new_loop,))
+
+  def run():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    future = asyncio.ensure_future(fc(), loop=loop)
+    loop.run_until_complete(fc())
+    loop.stop()
+
+  thread = Thread(target=run)
+  thread.start()
