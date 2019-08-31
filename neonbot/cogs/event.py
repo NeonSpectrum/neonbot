@@ -15,7 +15,6 @@ from .utility import chatbot
 IGNORED_DELETEONCMD = ["eval", "evalmusic", "prune"]
 
 commands_executed = 0
-get_commands_executed = lambda: commands_executed
 
 
 def get_activity():
@@ -42,12 +41,24 @@ class Event(commands.Cog):
 
   @bot.event
   async def on_message(message):
+    def check_alias():
+      nonlocal message
+      config = Database(message.guild.id).config
+      arr = [x for x in config.aliases if x.name == message.content]
+      if len(arr) > 0:
+        message.content = arr[0].cmd.format(config.prefix)
+        return True
+      return False
+
     if message.content.startswith(bot.user.mention):
       msg = " ".join(message.content.split(" ")[1:])
       response = await chatbot(message.author.id, msg)
       await message.channel.send(embed=Embed(
         description=f"{message.author.mention} {response.conversation.say.bot}"))
     else:
+      if check_alias():
+        await message.channel.send(embed=Embed(description=f"Alias found. Executing `{message.content}`."),
+                                   delete_after=5)
       await bot.process_commands(message)
 
   @bot.event

@@ -106,16 +106,8 @@ def plural(val, singular, plural):
   return f"{val} {singular if val == 1 else plural}"
 
 
-def new_coroutine_thread(fc):
-  # if not asyncio.iscoroutinefunction(fc):
-  #   fc = asyncio.coroutine(fc)rt_loop, args=(new_loop,))
-
-  def run():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    future = asyncio.ensure_future(fc(), loop=loop)
-    loop.run_until_complete(fc())
-    loop.stop()
-
-  thread = Thread(target=run)
-  thread.start()
+async def check_args(ctx, arg, choices):
+  if arg in choices:
+    return True
+  await ctx.send(embed=Embed(description=f"Invalid argument. ({' | '.join(choices)})"))
+  return False

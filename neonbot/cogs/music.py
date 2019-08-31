@@ -12,7 +12,7 @@ from discord.ext import commands
 from helpers import log
 from helpers.constants import CHOICES_EMOJI, FFMPEG_OPTIONS, YOUTUBE_REGEX
 from helpers.database import Database
-from helpers.utils import (Embed, PaginationEmbed, format_seconds, new_coroutine_thread, plural)
+from helpers.utils import (Embed, PaginationEmbed, check_args, format_seconds, plural)
 from helpers.ytdl import YTDLExtractor, get_related_videos, is_link_expired
 
 servers = Dict()
@@ -58,24 +58,12 @@ async def in_voice_channel(ctx):
     return False
 
 
-def must_in_argument(choices):
-  async def check(ctx):
-    command = " ".join(ctx.message.content.split(" ")[1:])
-    if command in choices or command == "":
-      return True
-    await ctx.send(embed=Embed(description=f"Invalid argument. ({' | '.join(choices)})"))
-    return False
-
-  return commands.check(check)
-
-
 class Music(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
     self.send = lambda ctx, msg, **kwargs: ctx.send(embed=Embed(description=msg), **kwargs)
 
   @commands.command(hidden=True)
-  @commands.guild_only()
   @commands.is_owner()
   async def evalmusic(self, ctx, *args):
     server = get_server(ctx.guild.id)
@@ -101,7 +89,6 @@ class Music(commands.Cog):
       await ctx.send(f"```py\n{i}```")
 
   @commands.command(aliases=["p"])
-  @commands.guild_only()
   @commands.check(in_voice_channel)
   async def play(self, ctx, *, args):
     server = get_server(ctx.guild.id)
@@ -177,13 +164,11 @@ class Music(commands.Cog):
       await self._play(ctx)
 
   @commands.command(aliases=["next"])
-  @commands.guild_only()
   async def skip(self, ctx):
     server = get_server(ctx.guild.id)
     await self._next(ctx, index=server.current_queue + 1)
 
   @commands.command()
-  @commands.guild_only()
   async def stop(self, ctx):
     server = get_server(ctx.guild.id)
     server.current_queue = 0
@@ -192,7 +177,6 @@ class Music(commands.Cog):
     await self.send(ctx, "Player stopped.", delete_after=5)
 
   @commands.command()
-  @commands.guild_only()
   async def pause(self, ctx):
     server = get_server(ctx.guild.id)
 
@@ -205,7 +189,6 @@ class Music(commands.Cog):
     server.messages.paused = await self.send(ctx, f"Player paused. `{ctx.prefix}resume` to resume.")
 
   @commands.command()
-  @commands.guild_only()
   async def resume(self, ctx):
     server = get_server(ctx.guild.id)
 
@@ -221,7 +204,6 @@ class Music(commands.Cog):
     await self.send(ctx, "Player resumed.", delete_after=5)
 
   @commands.command()
-  @commands.guild_only()
   async def reset(self, ctx):
     server = get_server(ctx.guild.id)
     await self._next(ctx, reset=True)
@@ -230,14 +212,12 @@ class Music(commands.Cog):
     await self.send(ctx, "Player reset.", delete_after=5)
 
   @commands.command()
-  @commands.guild_only()
   async def join(self, ctx):
     server = get_server(ctx.guild.id)
     server.connection = await ctx.author.voice.channel.connect()
     log.cmd(ctx, f"Connected to {ctx.author.voice.channel}.")
 
   @commands.command()
-  @commands.guild_only()
   async def removesong(self, ctx, index: int):
     index -= 1
     server = get_server(ctx.guild.id)
@@ -257,7 +237,6 @@ class Music(commands.Cog):
     await ctx.send(embed=embed, delete_after=5)
 
   @commands.command(aliases=["vol"])
-  @commands.guild_only()
   async def volume(self, ctx, vol: int):
     server = get_server(ctx.guild.id)
     server.connection.source.volume = vol / 100
@@ -271,9 +250,9 @@ class Music(commands.Cog):
       await self.send(ctx, f"Volume is set to {server.config.volume}%.", delete_after=5)
 
   @commands.command()
-  @commands.guild_only()
-  @must_in_argument(["off", "single", "all"])
   async def repeat(self, ctx, args):
+    if not await check_args(ctx, ["off", "single", "all"]): return
+
     server = get_server(ctx.guild.id)
     update_config(ctx.guild.id, "repeat", args)
     await self.send(ctx, f"Repeat changed to {args}.", delete_after=5)
@@ -285,7 +264,6 @@ class Music(commands.Cog):
       await self.send(ctx, f"Repeat is set to {server.config.repeat}.", delete_after=5)
 
   @commands.command()
-  @commands.guild_only()
   async def autoplay(self, ctx):
     server = get_server(ctx.guild.id)
     config = update_config(ctx.guild.id, "autoplay", not server.config.autoplay)
@@ -318,7 +296,6 @@ class Music(commands.Cog):
     await ctx.send(embed=embed)
 
   @commands.command(aliases=["list"])
-  @commands.guild_only()
   async def playlist(self, ctx):
     server = get_server(ctx.guild.id)
     config = server.config

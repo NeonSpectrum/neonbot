@@ -5,7 +5,6 @@ from urllib.parse import parse_qs, urlparse
 
 import youtube_dl
 from addict import Dict
-from aiohttp import ClientSession
 
 from bot import bot, env
 
@@ -79,16 +78,14 @@ class YTDLExtractor:
 
 
 async def get_related_videos(video_id):
-  session = ClientSession()
-  res = await session.get("https://www.googleapis.com/youtube/v3/search",
-                          params={
-                            "part": "snippet",
-                            "relatedToVideoId": video_id,
-                            "type": "video",
-                            "key": env("GOOGLE_API")
-                          })
+  res = await bot.session.get("https://www.googleapis.com/youtube/v3/search",
+                              params={
+                                "part": "snippet",
+                                "relatedToVideoId": video_id,
+                                "type": "video",
+                                "key": env("GOOGLE_API")
+                              })
   json = await res.json()
-  await session.close()
   return Dict(json)["items"]
 
 

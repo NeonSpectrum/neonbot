@@ -13,11 +13,9 @@ from helpers.utils import Embed, format_seconds
 
 
 async def chatbot(user_id, message):
-  session = ClientSession()
-  res = await session.get("https://program-o.com/v3/chat.php", params={"say": message})
+  res = await bot.session.get("https://program-o.com/v3/chat.php", params={"say": message})
   json = await res.json()
-  await session.close()
-  return Dict()
+  return Dict(json)
 
 
 class Utility(commands.Cog):
@@ -30,7 +28,7 @@ class Utility(commands.Cog):
 
   @commands.command(aliases=["stats"])
   async def status(self, ctx):
-    from .event import get_commands_executed
+    from .event import commands_executed
 
     process = psutil.Process(os.getpid())
 
@@ -42,7 +40,7 @@ class Utility(commands.Cog):
     embed.add_field(name="Guilds", value=len(bot.guilds))
     embed.add_field(name="Channels", value=sum(1 for _ in bot.get_all_channels()))
     embed.add_field(name="Users", value=len(bot.users))
-    embed.add_field(name="Commands Executed", value=get_commands_executed())
+    embed.add_field(name="Commands Executed", value=commands_executed)
     embed.add_field(name="Ram Usage",
                     value=f"Approximately {(process.memory_info().rss / 1024000):.2f} MB",
                     inline=True)

@@ -3,7 +3,6 @@ from io import BytesIO
 
 import discord
 from addict import Dict
-from aiohttp import ClientSession
 from discord.ext import commands
 
 from bot import bot, env
@@ -17,17 +16,15 @@ class Search(commands.Cog):
   @commands.command()
   async def image(self, ctx, *, args):
     msg = await ctx.send(embed=Embed(description="Searching..."))
-    session = ClientSession()
-    res = await session.get("https://www.googleapis.com/customsearch/v1",
-                            params={
-                              "q": args,
-                              "num": 1,
-                              "searchType": "image",
-                              "cx": env("GOOGLE_CX"),
-                              "key": env("GOOGLE_API")
-                            })
+    res = await self.bot.session.get("https://www.googleapis.com/customsearch/v1",
+                                     params={
+                                       "q": args,
+                                       "num": 1,
+                                       "searchType": "image",
+                                       "cx": env("GOOGLE_CX"),
+                                       "key": env("GOOGLE_API")
+                                     })
     image = Dict(await res.json())
-    await session.close()
 
     embed = Embed()
     embed.set_author(name=f"Google Images for {args}", icon_url="http://i.imgur.com/G46fm8J.png")
@@ -40,9 +37,8 @@ class Search(commands.Cog):
   @commands.command(aliases=["dict"])
   async def dictionary(self, ctx, *, args):
     msg = await ctx.send(embed=Embed(description="Searching..."))
-    session = ClientSession()
-    res = await session.get(f"https://www.dictionaryapi.com/api/v3/references/sd4/json/{args}",
-                            params={"key": env("DICTIONARY_API")})
+    res = await self.bot.session.get(f"https://www.dictionaryapi.com/api/v3/references/sd4/json/{args}",
+                                     params={"key": env("DICTIONARY_API")})
     json = await res.json()
     if not isinstance(json[0], dict):
       await msg.delete()
@@ -53,7 +49,7 @@ class Search(commands.Cog):
     audio = prs.sound.audio
     if audio:
       url = f"https://media.merriam-webster.com/soundc11/{audio[0]}/{audio}.wav"
-      res = await session.get(url)
+      res = await self.bot.session.get(url)
 
     embed = Embed()
     embed.add_field(name=args, value=f"*{prs.mw}*" + "\n" + dictionary.shortdef[0])
@@ -66,8 +62,6 @@ class Search(commands.Cog):
     if audio:
       content = await res.read()
       await ctx.send(file=discord.File(BytesIO(content), args + ".wav"))
-
-    await session.close()
 
 
 def setup(bot):
