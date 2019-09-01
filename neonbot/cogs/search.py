@@ -1,4 +1,5 @@
 import random
+import textwrap
 from datetime import datetime
 from io import BytesIO
 
@@ -90,11 +91,11 @@ class Search(commands.Cog):
                     value=f"{json.weather[0].main} - {json.weather[0].description}",
                     inline=False)
     embed.add_field(name="🌡 Temperature",
-                    value=f"""
+                    value=textwrap.dedent(f"""
                     Minimum Temperature: {json.main.temp_min}°C
                     Maximum Temperature: {json.main.temp_max}°C
                     Temperature: {json.main.temp}°C
-                    """,
+                    """),
                     inline=False)
     embed.add_field(name="💨 Wind",
                     value=f"Speed: {json.wind.speed} m/s\nDegrees: {json.wind.deg or 'N/A'}°",
@@ -194,18 +195,18 @@ class Search(commands.Cog):
     embed.add_field(name="Strong Against", value=", ".join(strong_against))
     embed.add_field(name="Skill Build", value=" > ".join(skill_build))
     embed.add_field(name="Item Build",
-                    value=f"""
+                    value=textwrap.dedent(f"""
                     **Starting Items:** {", ".join(item_build[0])}
                     **Boots:** {", ".join(item_build[1])}
                     **Core Items:** {", ".join(item_build[2])}
                     **Luxury Items:**  {", ".join(item_build[3])}
-                    """)
+                    """))
     embed.add_field(name="Rune Build",
-                    value=f"""
+                    value=textwrap.dedent(f"""
                     **Primary:** {", ".join(rune_build[0])}
                     **Secondary:** {", ".join(rune_build[1])}
                     **Stat Shard:** {", ".join(rune_build[2])}
-                    """)
+                    """))
 
     await ctx.send(embed=embed)
 
