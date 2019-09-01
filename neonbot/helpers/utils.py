@@ -66,6 +66,8 @@ class PaginationEmbed:
       except asyncio.TimeoutError:
         await msg.clear_reactions()
         break
+      except discord.NotFound:
+        break
 
   async def _add_reactions(self):
     self.reactions = []
