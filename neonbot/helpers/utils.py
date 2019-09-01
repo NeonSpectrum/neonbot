@@ -1,6 +1,5 @@
 import asyncio
 from datetime import datetime, timedelta
-from threading import Thread
 
 import discord
 from discord.ext import commands
@@ -99,7 +98,7 @@ async def embed_choices(ctx, entries):
   embed = Embed(title=F"Choose 1-{len(entries)} below.")
 
   for index, entry in enumerate(entries, start=1):
-    embed.add_field(name=f"{index}. {entry.title}", value=entry.url)
+    embed.add_field(name=f"{index}. {entry.title}", value=entry.url, inline=False)
 
   msg = await ctx.send(embed=embed)
 
