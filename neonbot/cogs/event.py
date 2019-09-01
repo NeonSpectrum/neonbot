@@ -150,7 +150,8 @@ class Event(commands.Cog):
 
   @bot.event
   async def on_command_error(ctx, error):
-    ignored = (commands.CheckFailure, commands.MissingRequiredArgument, discord.NotFound)
+    ignored = (commands.CheckFailure, commands.MissingRequiredArgument)
+    
     if isinstance(error, ignored):
       return
 
@@ -159,6 +160,15 @@ class Event(commands.Cog):
     if isinstance(error, commands.CommandNotFound):
       return await ctx.send(embed=Embed(description=str(error)))
 
+    raise error
+
+  @bot.event
+  async def on_error(error):
+    ignored = (discord.NotFound)
+    
+    if isinstance(error, ignored):
+      return
+    
     raise error
 
 
