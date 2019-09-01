@@ -223,7 +223,7 @@ class Search(commands.Cog):
     ]
     await loading_msg.delete()
     choice = await embed_choices(ctx, links)
-    res = await self.session.get(links[choice].url)
+    res = await self.session.get(links[choice].url, proxy=env("PROXY", None))
     html = await res.text()
     soup = BeautifulSoup(html, 'html.parser')
     div = soup.select("div.col-xs-12.col-lg-8.text-center")[0]
