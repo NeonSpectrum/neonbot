@@ -12,8 +12,9 @@ from discord.ext import commands
 from helpers import log
 from helpers.constants import CHOICES_EMOJI, FFMPEG_OPTIONS, YOUTUBE_REGEX
 from helpers.database import Database
-from helpers.utils import (Embed, PaginationEmbed, check_args, format_seconds, plural)
-from helpers.ytdl import YTDLExtractor, get_related_videos, is_link_expired
+from helpers.utils import (Embed, PaginationEmbed, check_args, embed_choices,
+                           format_seconds, plural)
+from helpers.ytdl import YTDL, get_related_videos, is_link_expired
 
 servers = Dict()
 
@@ -102,7 +103,7 @@ class Music(commands.Cog):
     elif re.search(YOUTUBE_REGEX, args):
       loading_msg = await self.send(ctx, "Loading...")
 
-      ytdl = await YTDLExtractor({"extract_flat": "in_playlist"}).extract_info(args)
+      ytdl = await YTDL().extract_info(args)
       ytdl_list = ytdl.info
 
       if isinstance(ytdl_list, list):
@@ -112,7 +113,6 @@ class Music(commands.Cog):
 
         async def process_playlist():
           errors = 0
-
           for entry in ytdl_list:
             await ytdl.process_entry(entry)
             info = ytdl.get_info()
@@ -128,9 +128,7 @@ class Music(commands.Cog):
             embed.description += f" Failed to load {plural(errors, 'song', 'songs')}."
           await ctx.send(embed=embed, delete_after=5)
 
-        server.tasks.append(self.bot.loop.create_task(process_playlist()))
-        return
-
+        return server.tasks.append(self.bot.loop.create_task(process_playlist()))
       elif ytdl_list:
         info = ytdl.get_info()
         embed = Embed(title=f"Added song to queue #{len(server.queue)+1}", description=info.title)
@@ -138,13 +136,12 @@ class Music(commands.Cog):
         embed = Embed(description="Song failed to load.")
     else:
       msg = await self.send(ctx, "Searching...")
-      ytdl = YTDLExtractor({"extract_flat": "in_playlist"})
-      await ytdl.extract_info(args)
+      ytdl = await YTDL().extract_info(args)
       ytdl_choices = ytdl.get_choices()
       await msg.delete()
       if len(ytdl_choices) == 0:
         return await ctx.send(embed=Embed(description="Failed to fetch songs."))
-      choice = await self._display_choices(ctx, ytdl_choices)
+      choice = await embed_choices(ctx, ytdl_choices)
       if choice < 0:
         return
       await ytdl.process_entry(ytdl.info[choice])
@@ -336,7 +333,7 @@ class Music(commands.Cog):
 
     if is_link_expired(current_queue.stream):
       log.info("Link expired:", current_queue.title)
-      ytdl = await YTDLExtractor().extract_info(current_queue.id)
+      ytdl = await YTDL().extract_info(current_queue.id)
       current_queue = ytdl.get_info()
       log.info("Fetched new link for", current_queue.title)
 
@@ -474,42 +471,9 @@ class Music(commands.Cog):
 
     video_id = filtered_videos[0].id.videoId
 
-    ytdl = await YTDLExtractor().extract_info(video_id)
+    ytdl = await YTDL().extract_info(video_id)
     info = ytdl.get_info()
     self._add_to_queue(ctx, info)
-
-  async def _display_choices(self, ctx, entries):
-    server = get_server(ctx.guild.id)
-    embed = Embed(title="Choose 1-5 below.")
-
-    for index, entry in enumerate(entries, start=1):
-      embed.add_field(name=f"{index}. {entry['title']}", value=entry.url)
-
-    msg = await ctx.send(embed=embed)
-
-    async def react_to_msg():
-      for emoji in CHOICES_EMOJI[0:len(entries) - 1] + [CHOICES_EMOJI[5]]:
-        try:
-          await msg.add_reaction(emoji)
-        except discord.NotFound:
-          return
-
-    asyncio.ensure_future(react_to_msg())
-
-    try:
-      reaction, user = await self.bot.wait_for("reaction_add",
-                                               timeout=30,
-                                               check=lambda reaction, user: reaction.emoji in CHOICES_EMOJI
-                                               and ctx.author == user and reaction.message.id == msg.id)
-      if reaction.emoji == "🗑":
-        raise asyncio.TimeoutError
-    except asyncio.TimeoutError:
-      await msg.delete()
-      return -1
-    else:
-      await msg.delete()
-      index = CHOICES_EMOJI.index(reaction.emoji)
-      return index
 
   async def _connect(self, ctx):
     server = get_server(ctx.guild.id)

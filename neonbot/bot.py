@@ -10,14 +10,11 @@ from pymongo import MongoClient
 from termcolor import cprint
 
 from __main__ import env
-from helpers import log
 from helpers.constants import LOGO, NAME, VERSION
-from helpers.database import Database, load_database
 
 uptime = time()
 owner_ids = env.list("OWNER_IDS", [], subcast=int)
-bot = commands.Bot(command_prefix=lambda bot, message: Database(message.guild.id).config.prefix,
-                   owner_ids=set(owner_ids))
+bot = commands.Bot(command_prefix=env("PREFIX"), owner_ids=set(owner_ids))
 
 
 @bot.check
@@ -32,9 +29,14 @@ def load_cogs():
 
 
 def run():
+  from helpers.database import Database, load_database
+  from helpers import log
+
+  bot.command_prefix = lambda bot, message: Database(message.guild.id).config.prefix
+  bot.session = ClientSession(loop=bot.loop)
+
   cprint(LOGO, 'blue')
   log.info(f"Starting {NAME} v{VERSION}")
   load_database()
   load_cogs()
-  bot.session = ClientSession(loop=bot.loop)
   bot.run(env("TOKEN"))

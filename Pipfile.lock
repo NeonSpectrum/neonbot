@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "8345203275ca2baa3d2618880548238ab77e3d3d4d3da963352cbed92e8bc5b0"
+            "sha256": "11c2f20162c0e1088071a9643eff5d63decafcd9b6b22d04863c196d45293524"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -73,6 +73,15 @@
                 "sha256:f0b870f674851ecbfbbbd364d6b5cbdff9dcedbc7f3f5e18a6891057f21fe399"
             ],
             "version": "==19.1.0"
+        },
+        "beautifulsoup4": {
+            "hashes": [
+                "sha256:05668158c7b85b791c5abde53e50265e16f98ad601c402ba44d70f96c4159612",
+                "sha256:25288c9e176f354bf277c0a10aa96c782a6a18a17122dba2e8cec4a97e03343b",
+                "sha256:f040590be10520f2ea4c2ae8c3dae441c7cfff5308ec9d58a0ec0c1b8f81d469"
+            ],
+            "index": "pypi",
+            "version": "==4.8.0"
         },
         "cffi": {
             "hashes": [
@@ -305,6 +314,13 @@
             ],
             "version": "==1.12.0"
         },
+        "soupsieve": {
+            "hashes": [
+                "sha256:8662843366b8d8779dec4e2f921bebec9afd856a5ff2e82cd419acc5054a1a92",
+                "sha256:a5a6166b4767725fd52ae55fee8c8b6137d9a51e9f1edea461a062a759160118"
+            ],
+            "version": "==1.9.3"
+        },
         "termcolor": {
             "hashes": [
                 "sha256:1d6d69ce66211143803fbc56652b41d73b4a400a2891d7bf7a1cdf4c02de613b"
@@ -356,11 +372,11 @@
         },
         "youtube-dl": {
             "hashes": [
-                "sha256:f0831d15eec48e980c9bc00657ede5e21775d463db2d0af9f6ba482225d6c2bf",
-                "sha256:ff65a10f81b64d8e0d1872a89bee0d075370ba6e4c658193e56e6f93e5ca46ba"
+                "sha256:c9b8fb6c5a3d62d37c722495f83fc0839aa9c0dea966d38bb2325a87f85dc83c",
+                "sha256:cf543d2379af92709f7345ec0e53894c93ab6ab8ae54ed211d4a11b3e6d03460"
             ],
             "index": "pypi",
-            "version": "==2019.8.13"
+            "version": "==2019.9.1"
         }
     },
     "develop": {

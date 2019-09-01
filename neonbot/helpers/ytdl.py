@@ -12,7 +12,7 @@ from .constants import TIMEZONE
 from .utils import date
 
 
-class YTDLExtractor:
+class YTDL:
   def __init__(self, extra_params={}):
     self.thread_pool = ThreadPoolExecutor(max_workers=3)
     self.loop = bot.loop
@@ -23,20 +23,21 @@ class YTDLExtractor:
       "nocheckcertificate": True,
       "ignoreerrors": True,
       "source_address": "0.0.0.0",
+      "extract_flat": "in_playlist",
       **extra_params
     })
 
   async def extract_info(self, *args, **kwargs):
-    executor = await self.loop.run_in_executor(
+    result = await self.loop.run_in_executor(
       self.thread_pool, functools.partial(self.ytdl.extract_info, *args, download=False, **kwargs))
-    info = Dict(executor)
+    info = Dict(result)
     self.info = info.get("entries", info)
     return self
 
   async def process_entry(self, info):
-    executor = await self.loop.run_in_executor(
+    result = await self.loop.run_in_executor(
       self.thread_pool, functools.partial(self.ytdl.process_ie_result, info, download=False))
-    self.info = Dict(executor)
+    self.info = Dict(result)
     return self
 
   def get_choices(self):
@@ -91,6 +92,4 @@ async def get_related_videos(video_id):
 
 def is_link_expired(url):
   params = Dict(parse_qs(urlparse(url).query))
-  if params:
-    return date().timestamp() > int(params.expire[0]) - 1800
-  return False
+  return date().timestamp() > int(params.expire[0]) - 1800 if params else False

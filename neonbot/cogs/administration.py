@@ -12,6 +12,7 @@ from helpers.utils import Embed, check_args
 class Administration(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
+    self.session = bot.session
 
   @commands.command(hidden=True)
   @commands.is_owner()
@@ -46,14 +47,14 @@ class Administration(commands.Cog):
   async def generatelog(self, ctx):
     with open("./debug.log", "r") as f:
       text = f.read()
-    res = await self.bot.session.post("https://pastebin.com/api/api_post.php",
-                                      data={
-                                        "api_dev_key": env("PASTEBIN_API"),
-                                        "api_paste_code": text,
-                                        "api_option": "paste",
-                                        "api_paste_private": 1,
-                                        "paste_expire_date": "10M"
-                                      })
+    res = await self.session.post("https://pastebin.com/api/api_post.php",
+                                  data={
+                                    "api_dev_key": env("PASTEBIN_API"),
+                                    "api_paste_code": text,
+                                    "api_option": "paste",
+                                    "api_paste_private": 1,
+                                    "paste_expire_date": "10M"
+                                  })
     paste_link = await res.text()
     paste_id = paste_link.split("/")[-1]
     await ctx.send(embed=Embed(description=f"Generated pastebin: https://pastebin.com/raw/{paste_id}"))

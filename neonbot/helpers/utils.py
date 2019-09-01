@@ -6,9 +6,10 @@ import discord
 from discord.ext import commands
 from pytz import timezone
 
+from bot import bot
 from helpers import log
 
-from .constants import PAGINATION_EMOJI, TIMEZONE
+from .constants import CHOICES_EMOJI, PAGINATION_EMOJI, TIMEZONE
 
 date = lambda: datetime.now(timezone(TIMEZONE))
 date_formatted = lambda: f"{date():%Y-%m-%d %-I:%M:%S %p}"
@@ -19,19 +20,18 @@ def Embed(**kwargs):
 
 
 class PaginationEmbed:
-  index = 0
-  embed = Embed()
-  msg = None
-
   def __init__(self, array=[], authorized_users=[]):
-    from bot import bot
-
     self.bot = bot
     self.array = array
     self.authorized_users = authorized_users
 
+    self.index = 0
+    self.embed = Embed()
+    self.msg = None
+
   async def build(self, ctx):
     self.ctx = ctx
+    self.title = self.embed.title
     await self._send()
 
     if len(self.array) > 1:
@@ -40,7 +40,7 @@ class PaginationEmbed:
 
   async def _send(self):
     embed = self.embed.copy()
-    embed.description = self.array[self.index].description
+    embed.description = self.array[self.index].description + f"\n**Page {self.index+1}/{len(self.array)}**"
 
     if self.msg:
       return await self.msg.edit(embed=embed)
@@ -62,7 +62,7 @@ class PaginationEmbed:
         await self._execute_command(PAGINATION_EMOJI.index(reaction.emoji))
 
         if reaction.emoji == "🗑":
-          raise asyncio.TimeoutError
+          await self.msg.delete()
 
       except asyncio.TimeoutError:
         await msg.clear_reactions()
@@ -93,6 +93,39 @@ class PaginationEmbed:
 
   def set_footer(self, **kwargs):
     self.embed.set_footer(**kwargs)
+
+
+async def embed_choices(ctx, entries):
+  embed = Embed(title=F"Choose 1-{len(entries)} below.")
+
+  for index, entry in enumerate(entries, start=1):
+    embed.add_field(name=f"{index}. {entry.title}", value=entry.url)
+
+  msg = await ctx.send(embed=embed)
+
+  async def react_to_msg():
+    for emoji in CHOICES_EMOJI[0:len(entries)] + [CHOICES_EMOJI[-1]]:
+      try:
+        await msg.add_reaction(emoji)
+      except discord.NotFound:
+        return
+
+  asyncio.ensure_future(react_to_msg())
+
+  try:
+    reaction, user = await bot.wait_for("reaction_add",
+                                        timeout=30,
+                                        check=lambda reaction, user: reaction.emoji in CHOICES_EMOJI and ctx.
+                                        author == user and reaction.message.id == msg.id)
+    if reaction.emoji == "🗑":
+      raise asyncio.TimeoutError
+  except asyncio.TimeoutError:
+    await msg.delete()
+    return -1
+  else:
+    await msg.delete()
+    index = CHOICES_EMOJI.index(reaction.emoji)
+    return index
 
 
 def format_seconds(secs, format=0):

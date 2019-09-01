@@ -99,22 +99,14 @@ class Event(commands.Cog):
     log = bot.get_channel(int(config.channel.log or -1))
     msg = None
 
-    def get_activity_status(activity):
-      if isinstance(activity, discord.Game):
-        return f"playing **{activity.name}**"
-      elif isinstance(activity, discord.Activity):
-        return f"{activity.type.name} **{activity.name}**"
-      elif isinstance(activity, discord.Spotify):
-        return f"listening **{activity.title}**"
-
     if before.status != after.status:
       msg = f"**{before.name}** is now **{after.status}**."
     elif before.activities and not after.activities:
       activity = before.activities[-1]
-      msg = f"**{before.name}** is done {get_activity_status(activity)}."
+      msg = f"**{before.name}** is done {activity.type.name} **{activity.name}**."
     elif not before.activities and after.activities:
       activity = after.activities[-1]
-      msg = f"**{before.name}** is now {get_activity_status(activity)}."
+      msg = f"**{before.name}** is now {activity.type.name} **{activity.name}**."
 
     if log and msg:
       embed = Embed(description=f"`{date_formatted()}`:bust_in_silhouette:{msg}")

@@ -19,6 +19,7 @@ youtube-dl = "*"
 PyNaCl = "*"
 aiohttp = "*"
 aiodns = "*"
+beautifulsoup4 = "*"
 
 [requires]
 python_version = "3.7"
