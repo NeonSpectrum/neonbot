@@ -240,7 +240,7 @@ class Search(commands.Cog):
         del line[0]
       lines.append("\n".join(line))
 
-    embeds = [Embed(description=line) for line in lines]
+    embeds = [Embed(description=line) for line in lines if line]
 
     embed = PaginationEmbed(array=embeds, authorized_users=[ctx.author.id])
     embed.set_author(name=title, icon_url="https://i.imgur.com/SBMH84I.png")
