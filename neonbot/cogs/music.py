@@ -184,14 +184,6 @@ class Music(commands.Cog):
         await self._next(ctx, index=server.current_queue + 1)
 
     @commands.command()
-    async def stop(self, ctx):
-        server = get_server(ctx.guild.id)
-        server.current_queue = 0
-        server.connection.stop()
-        log.cmd(ctx, "Player stopped.")
-        await self.send(ctx, "Player stopped.", delete_after=5)
-
-    @commands.command()
     async def pause(self, ctx):
         server = get_server(ctx.guild.id)
 
@@ -221,9 +213,18 @@ class Music(commands.Cog):
         await self.send(ctx, "Player resumed.", delete_after=5)
 
     @commands.command()
+    async def stop(self, ctx):
+        server = get_server(ctx.guild.id)
+        await self._next(ctx, stop=True)
+        server.current_queue = 0
+        log.cmd(ctx, "Player stopped.")
+        await self.send(ctx, "Player stopped.", delete_after=5)
+
+    @commands.command()
     async def reset(self, ctx):
         server = get_server(ctx.guild.id)
-        await self._next(ctx, reset=True)
+        await self._next(ctx, stop=True)
+        await server.connection.disconnect()
         [task.cancel() for task in server.tasks]
         del servers[ctx.guild.id]
         await self.send(ctx, "Player reset.", delete_after=5)
@@ -397,19 +398,19 @@ class Music(commands.Cog):
         await self._playing_message(ctx)
         server.disable_after = False
 
-    async def _next(self, ctx, index=None, reset=False):
+    async def _next(self, ctx, index=None, stop=False):
         server = get_server(ctx.guild.id)
         current_queue = self._get_current_queue(server)
         config = server.config
 
-        await self._finished_message(ctx, delete_after=5 if reset else None)
+        await self._finished_message(ctx, delete_after=5 if stop else None)
 
-        if reset or index is not None:
+        if stop or index is not None:
             server.disable_after = True
             server.connection.stop()
 
             if reset:
-                return await server.connection.disconnect()
+                return
 
             if config.shuffle:
                 server.current_queue = self._process_shuffle(ctx)
