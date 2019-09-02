@@ -272,7 +272,7 @@ class Music(commands.Cog):
 
     @commands.command()
     async def repeat(self, ctx, args):
-        if not await check_args(ctx, ["off", "single", "all"]):
+        if not await check_args(ctx, args, ["off", "single", "all"]):
             return
 
         server = get_server(ctx.guild.id)
