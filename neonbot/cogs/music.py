@@ -409,7 +409,7 @@ class Music(commands.Cog):
             server.disable_after = True
             server.connection.stop()
 
-            if reset:
+            if stop:
                 return
 
             if config.shuffle:
