@@ -240,21 +240,21 @@ class Music(commands.Cog):
         index -= 1
         server = get_server(ctx.guild.id)
         queue = server.queue[index]
-
-        if index < server.current_queue:
-            server.current_queue -= 1
-        elif index == server.current_queue:
-            await self._next(ctx)
-
+        
         embed = Embed(title=queue.title, url=queue.url)
         embed.set_author(
             name=f"Removed song #{index+1}", icon_url="https://i.imgur.com/SBMH84I.png"
         )
         embed.set_footer(text=queue.requested, icon_url=queue.requested.avatar_url)
 
+        await ctx.send(embed=embed, delete_after=5)
+        
         del queue
 
-        await ctx.send(embed=embed, delete_after=5)
+        if index < server.current_queue:
+            server.current_queue -= 1
+        elif index == server.current_queue:
+            await self._next(ctx, index=server.current_queue)
 
     @commands.command(aliases=["vol"])
     async def volume(self, ctx, vol: int):
