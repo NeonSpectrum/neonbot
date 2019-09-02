@@ -427,7 +427,7 @@ class Music(commands.Cog):
                 server.current_queue = index
             return await self._play(ctx)
 
-        if config.shuffle or await self._process_repeat(ctx):
+        if await self._process_repeat(ctx) or config.shuffle:
             if config.shuffle:
                 server.current_queue = self._process_shuffle(ctx)
             await self._play(ctx)
