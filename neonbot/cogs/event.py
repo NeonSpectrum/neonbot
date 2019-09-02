@@ -139,7 +139,7 @@ class Event(commands.Cog):
         config = Database(member.guild.id).config
         channel = bot.get_channel(int(config.channel.log))
 
-        msg = f"**{member.user}** joined the server."
+        msg = f"**{member.name}** joined the server."
 
         if channel:
             embed = Embed(description=f"`{date_formatted()}`:bust_in_silhouette:{msg}")
@@ -151,7 +151,7 @@ class Event(commands.Cog):
         config = Database(member.guild.id).config
         channel = bot.get_channel(int(config.channel.log))
 
-        msg = f"**{member.user}** left the server."
+        msg = f"**{member.name}** left the server."
 
         if channel:
             embed = Embed(description=f"`{date_formatted()}`:bust_in_silhouette:{msg}")
