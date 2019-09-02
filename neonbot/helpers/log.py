@@ -5,22 +5,27 @@ from helpers.constants import TIMEZONE
 from helpers.utils import date_formatted
 
 if env.bool("HEROKU", False):
-  colored = lambda msg, color: msg
+    colored = lambda msg, color: msg
 
 
 def cmd(ctx, *msg):
-  print(f"""
+    print(
+        f"""
 {colored(f"------{date_formatted()}------", "yellow")}
-  {colored('Guild', 'cyan')}: {ctx.guild}
-  {colored('Channel', 'cyan')}: {ctx.channel}
-  {colored('User', 'cyan')}: {ctx.author}
-  {colored('Message', 'cyan')}: {' '.join(map(str,msg))}
-""")
+    {colored('Guild', 'cyan')}: {ctx.guild}
+    {colored('Channel', 'cyan')}: {ctx.channel}
+    {colored('User', 'cyan')}: {ctx.author}
+    {colored('Message', 'cyan')}: {' '.join(map(str,msg))}
+"""
+    )
 
 
 def info(*msg):
-  print(f"{colored(date_formatted(), 'yellow')} | {colored(' '.join(map(str,msg)), 'cyan')}")
+    print(f"{colored(date_formatted(), 'yellow')} | {colored(' '.join(map(str,msg)), 'cyan')}"
+    )
 
 
 def warn(*msg):
-  print(f"{colored(date_formatted(), 'yellow')} | {colored(' '.join(map(str,msg)), 'red')}")
+    print(
+        f"{colored(date_formatted(), 'yellow')} | {colored(' '.join(map(str,msg)), 'red')}"
+    )
