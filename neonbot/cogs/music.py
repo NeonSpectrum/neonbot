@@ -445,6 +445,8 @@ class Music(commands.Cog):
         config = server.config
         index = index if index != None else server.current_queue
         current_queue = server.queue[index]
+        
+        ctx.author = current_queue.requested
 
         log.cmd(ctx, f"Now playing {current_queue.title}")
 
@@ -477,6 +479,8 @@ class Music(commands.Cog):
         config = server.config
         index = index if index != None else server.current_queue
         current_queue = server.queue[index]
+        
+        ctx.author = current_queue.requested
 
         log.cmd(ctx, f"Finished playing {current_queue.title}")
 
