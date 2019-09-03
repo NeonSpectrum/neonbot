@@ -43,7 +43,7 @@ class PaginationEmbed:
         embed = self.embed.copy()
         embed.description = (
             self.array[self.index].description
-            + f"\n**Page {self.index+1}/{len(self.array)}**"
+            + f"\n\n**Page {self.index+1}/{len(self.array)}**"
         )
 
         if self.msg:
