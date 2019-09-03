@@ -321,10 +321,8 @@ class Search(commands.Cog):
         html = await res.text()
         soup = BeautifulSoup(html, "html.parser")
         div = soup.select("div.col-xs-12.col-lg-8.text-center")[0]
-        print(div.get_text())
         title = div.select("b")[0].get_text()
         lyrics = div.select("div:nth-of-type(5)")[0].get_text().splitlines()
-        print(lyrics)
 
         lines = []
 
