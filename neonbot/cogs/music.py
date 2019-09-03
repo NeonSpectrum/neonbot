@@ -358,9 +358,7 @@ class Music(commands.Cog):
             )
 
         for i, song in enumerate(server.queue):
-            description = f"""\
-      `{'*' if server.current_queue == i else ''}{i+1}.` [{song.title}]({song.url})
-      - - - `{format_seconds(song.duration)}` `{song.requested}`"""
+            description = f"`{'*' if server.current_queue == i else ''}{i+1}.` [{song.title}]({song.url})\n- - - `{format_seconds(song.duration)}` `{song.requested}`"
             temp.append(description)
             duration += song.duration
 
