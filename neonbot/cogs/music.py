@@ -102,7 +102,7 @@ class Music(commands.Cog):
 
         if keyword.isdigit():
             index = int(keyword)
-            if len(server.queue) > index < 0:
+            if index > len(server.queue) or index < 0:
                 return await ctx.send(
                     embed=Embed(description="Invalid index.", delete_after=5)
                 )
@@ -186,7 +186,7 @@ class Music(commands.Cog):
     @commands.command(aliases=["next"])
     async def skip(self, ctx):
         server = get_server(ctx.guild.id)
-        await self._next(ctx, index=server.current_queue + 1)
+        server.connection.stop()
 
     @commands.command()
     async def pause(self, ctx):
@@ -260,7 +260,7 @@ class Music(commands.Cog):
 
         await ctx.send(embed=embed, delete_after=5)
 
-        del queue
+        del server.queue[index]
 
         if index < server.current_queue:
             server.current_queue -= 1
@@ -417,7 +417,7 @@ class Music(commands.Cog):
         await self._playing_message(ctx)
         server.disable_after = False
 
-    async def _next(self, ctx, index=None, stop=False):
+    async def _next(self, ctx, *, index=None, stop=False):
         server = get_server(ctx.guild.id)
         config = server.config
 
@@ -430,9 +430,7 @@ class Music(commands.Cog):
             if stop:
                 return
 
-            if config.shuffle:
-                server.current_queue = self._process_shuffle(ctx)
-            elif (
+            if (
                 len(server.queue) == index
                 and server.current_queue == len(server.queue) - 1
             ):

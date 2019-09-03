@@ -190,7 +190,9 @@ class Event(commands.Cog):
             return await ctx.send(embed=Embed(description=str(error)))
         if isinstance(error, commands.MissingRequiredArgument):
             return await ctx.send(
-                embed=Embed(description=f"{error} {ctx.command.usage}")
+                embed=Embed(
+                    description=f"{str(error).capitalize()} {ctx.command.usage or ''}"
+                )
             )
 
         raise error
