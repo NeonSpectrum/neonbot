@@ -330,9 +330,9 @@ class Search(commands.Cog):
 
         for i in range(0, len(lyrics), 25):
             line = lyrics[i : i + 25]
-            while line[-1]:
+            while not line[-1]:
                 del line[-1]
-            while line[0]:
+            while not line[0]:
                 del line[0]
             lines.append("\n".join(line))
 
