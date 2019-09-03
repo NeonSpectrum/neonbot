@@ -52,7 +52,9 @@ class Administration(commands.Cog):
     @commands.is_owner()
     async def generatelog(self, ctx):
         if not env("PASTEBIN_API"):
-            return await ctx.send(embed=Embed(description="Error. Pastebin API not found."))
+            return await ctx.send(
+                embed=Embed(description="Error. Pastebin API not found.")
+            )
 
         with open("./debug.log", "r") as f:
             text = f.read()

@@ -7,7 +7,7 @@ from addict import Dict
 from aiohttp import ClientSession
 from discord.ext import commands
 
-from bot import bot, uptime
+from bot import bot
 from helpers.constants import AUTHOR, NAME, VERSION
 from helpers.utils import Embed, format_seconds
 
@@ -34,15 +34,17 @@ class Utility(commands.Cog):
         process = psutil.Process(os.getpid())
 
         embed = Embed()
-        embed.set_author(name=f"{NAME} v{VERSION}", icon_url=bot.user.avatar_url)
-        embed.add_field(name="Username", value=bot.user.name)
+        embed.set_author(name=f"{NAME} v{VERSION}", icon_url=self.bot.user.avatar_url)
+        embed.add_field(name="Username", value=self.bot.user.name)
         embed.add_field(
-            name="Created On", value=f"{bot.user.created_at:%Y-%m-%d %I:%M:%S %p}"
+            name="Created On", value=f"{self.bot.user.created_at:%Y-%m-%d %I:%M:%S %p}"
         )
         embed.add_field(name="Created By", value=AUTHOR)
-        embed.add_field(name="Guilds", value=len(bot.guilds))
-        embed.add_field(name="Channels", value=sum(1 for _ in bot.get_all_channels()))
-        embed.add_field(name="Users", value=len(bot.users))
+        embed.add_field(name="Guilds", value=len(self.bot.guilds))
+        embed.add_field(
+            name="Channels", value=sum(1 for _ in self.bot.get_all_channels())
+        )
+        embed.add_field(name="Users", value=len(self.bot.users))
         embed.add_field(name="Commands Executed", value=commands_executed)
         embed.add_field(
             name="Ram Usage",
@@ -50,7 +52,8 @@ class Utility(commands.Cog):
             inline=True,
         )
         embed.add_field(
-            name="Uptime", value=format_seconds(time() - uptime).split(".")[0]
+            name="Uptime",
+            value=format_seconds(time() - process.create_time()).split(".")[0],
         )
 
         await ctx.send(embed=embed)

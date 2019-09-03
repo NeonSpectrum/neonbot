@@ -1,4 +1,6 @@
 import asyncio
+import math
+import random
 from datetime import datetime, timedelta
 
 import discord
@@ -63,7 +65,7 @@ class PaginationEmbed:
 
         while True:
             try:
-                reaction, user = await self.bot.wait_for(
+                reaction, _ = await self.bot.wait_for(
                     "reaction_add", timeout=60, check=check
                 )
 
@@ -123,7 +125,7 @@ async def embed_choices(ctx, entries):
     asyncio.ensure_future(react_to_msg())
 
     try:
-        reaction, user = await bot.wait_for(
+        reaction, _ = await bot.wait_for(
             "reaction_add",
             timeout=30,
             check=lambda reaction, user: reaction.emoji in CHOICES_EMOJI
@@ -159,3 +161,17 @@ async def check_args(ctx, arg, choices):
         embed=Embed(description=f"Invalid argument. ({' | '.join(choices)})")
     )
     return False
+
+
+def guess_string(string):
+    string = list(string)
+
+    i = 0
+    while i < math.ceil(len(string) / 2):
+        index = random.randint(0, len(string) - 1)
+        if string[index] == " " or string[index] == "_":
+            continue
+        string[index] = "_"
+        i += 1
+
+    return " ".join(string)

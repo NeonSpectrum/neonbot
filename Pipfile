@@ -21,6 +21,8 @@ PyNaCl = "*"
 aiohttp = "*"
 aiodns = "*"
 beautifulsoup4 = "*"
+pokemon = "*"
+pillow = "*"
 
 [requires]
 python_version = "3.7.4"

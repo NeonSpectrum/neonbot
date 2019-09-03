@@ -12,8 +12,14 @@ from discord.ext import commands
 from helpers import log
 from helpers.constants import CHOICES_EMOJI, FFMPEG_OPTIONS, YOUTUBE_REGEX
 from helpers.database import Database
-from helpers.utils import (Embed, PaginationEmbed, check_args, embed_choices,
-                           format_seconds, plural)
+from helpers.utils import (
+    Embed,
+    PaginationEmbed,
+    check_args,
+    embed_choices,
+    format_seconds,
+    plural,
+)
 from helpers.ytdl import YTDL, get_related_videos, is_link_expired
 
 servers = Dict()
@@ -60,18 +66,15 @@ async def in_voice_channel(ctx):
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.send = lambda ctx, msg, **kwargs: ctx.send(
-            embed=Embed(description=msg), **kwargs
-        )
 
     @commands.command(hidden=True)
     @commands.is_owner()
     async def evalmusic(self, ctx, *args):
-        server = get_server(ctx.guild.id)
-        bot = self.bot
         try:
             if args[0] == "await":
-                output = await eval(args[1])
+                output = await eval(
+                    args[1], {"server": get_server(ctx.guild.id), "bot": self.bot}
+                )
             else:
                 output = eval(args[0])
         except Exception as e:
@@ -91,21 +94,23 @@ class Music(commands.Cog):
         for i in msg_array:
             await ctx.send(f"```py\n{i}```")
 
-    @commands.command(aliases=["p"])
+    @commands.command(aliases=["p"], usage="<url | keyword>")
     @commands.check(in_voice_channel)
-    async def play(self, ctx, *, args):
+    async def play(self, ctx, *, keyword):
         server = get_server(ctx.guild.id)
-        embed = info = loading_msg = playlist = None
+        embed = info = loading_msg = None
 
-        if args.isdigit():
-            index = int(args)
+        if keyword.isdigit():
+            index = int(keyword)
             if len(server.queue) > index < 0:
-                return await self.send(ctx, "Invalid index.", delete_after=5)
+                return await ctx.send(
+                    embed=Embed(description="Invalid index.", delete_after=5)
+                )
             await self._next(ctx, index=index - 1)
-        elif re.search(YOUTUBE_REGEX, args):
-            loading_msg = await self.send(ctx, "Loading...")
+        elif re.search(YOUTUBE_REGEX, keyword):
+            loading_msg = await ctx.send(embed=Embed(description="Loading..."))
 
-            ytdl = await YTDL().extract_info(args)
+            ytdl = await YTDL().extract_info(keyword)
             ytdl_list = ytdl.info
 
             if isinstance(ytdl_list, list):
@@ -151,8 +156,8 @@ class Music(commands.Cog):
             else:
                 embed = Embed(description="Song failed to load.")
         else:
-            msg = await self.send(ctx, "Searching...")
-            ytdl = await YTDL().extract_info(args)
+            msg = await ctx.send(embed=Embed(description="Searching..."))
+            ytdl = await YTDL().extract_info(keyword)
             ytdl_choices = ytdl.get_choices()
             await msg.delete()
             if len(ytdl_choices) == 0:
@@ -193,8 +198,8 @@ class Music(commands.Cog):
         server.connection.pause()
         log.cmd(ctx, "Player paused.")
 
-        server.messages.paused = await self.send(
-            ctx, f"Player paused. `{ctx.prefix}resume` to resume."
+        server.messages.paused = await ctx.send(
+            embed=Embed(description=f"Player paused. `{ctx.prefix}resume` to resume.")
         )
 
     @commands.command()
@@ -210,7 +215,7 @@ class Music(commands.Cog):
         if server.messages.paused:
             await server.messages.paused.delete()
 
-        await self.send(ctx, "Player resumed.", delete_after=5)
+        await ctx.send(embed=Embed(description="Player resumed.", delete_after=5))
 
     @commands.command()
     async def stop(self, ctx):
@@ -218,7 +223,7 @@ class Music(commands.Cog):
         await self._next(ctx, stop=True)
         server.current_queue = 0
         log.cmd(ctx, "Player stopped.")
-        await self.send(ctx, "Player stopped.", delete_after=5)
+        await ctx.send(embed=Embed(description="Player stopped.", delete_after=5))
 
     @commands.command()
     async def reset(self, ctx):
@@ -227,7 +232,7 @@ class Music(commands.Cog):
         await server.connection.disconnect()
         [task.cancel() for task in server.tasks]
         del servers[ctx.guild.id]
-        await self.send(ctx, "Player reset.", delete_after=5)
+        await ctx.send(embed=Embed(description="Player reset.", delete_after=5))
 
     @commands.command()
     async def join(self, ctx):
@@ -240,7 +245,13 @@ class Music(commands.Cog):
         index -= 1
         server = get_server(ctx.guild.id)
         queue = server.queue[index]
-        
+
+        if not queue:
+            await ctx.send(
+                embed=Embed(description="There is no song in that index."),
+                delete_after=5,
+            )
+
         embed = Embed(title=queue.title, url=queue.url)
         embed.set_author(
             name=f"Removed song #{index+1}", icon_url="https://i.imgur.com/SBMH84I.png"
@@ -248,7 +259,7 @@ class Music(commands.Cog):
         embed.set_footer(text=queue.requested, icon_url=queue.requested.avatar_url)
 
         await ctx.send(embed=embed, delete_after=5)
-        
+
         del queue
 
         if index < server.current_queue:
@@ -256,45 +267,51 @@ class Music(commands.Cog):
         elif index == server.current_queue:
             await self._next(ctx, index=server.current_queue)
 
-    @commands.command(aliases=["vol"])
-    async def volume(self, ctx, vol: int):
+    @commands.command(aliases=["vol"], usage="<1 - 100>")
+    async def volume(self, ctx, vol: int = -1):
         server = get_server(ctx.guild.id)
-        server.connection.source.volume = vol / 100
-        update_config(ctx.guild.id, "volume", vol)
-        await self.send(ctx, f"Volume changed to {vol}%", delete_after=5)
 
-    @volume.error
-    async def _volume_value(self, ctx, error):
-        server = get_server(ctx.guild.id)
-        if isinstance(error, commands.MissingRequiredArgument):
-            await self.send(
-                ctx, f"Volume is set to {server.config.volume}%.", delete_after=5
+        if vol == -1:
+            return await ctx.send(
+                embed=Embed(description=f"Volume is set to {server.config.volume}%."),
+                delete_after=5,
+            )
+        elif vol < 1 or vol > 100:
+            return await ctx.send(
+                embed=Embed(description=f"Volume must be 1 - 100."), delete_after=5
             )
 
-    @commands.command()
-    async def repeat(self, ctx, args):
+        server.connection.source.volume = vol / 100
+        update_config(ctx.guild.id, "volume", vol)
+        await ctx.send(
+            embed=Embed(description=f"Volume changed to {vol}%", delete_after=5)
+        )
+
+    @commands.command(usage="<off | single | all>")
+    async def repeat(self, ctx, args=None):
+        server = get_server(ctx.guild.id)
+
+        if args is None:
+            return await ctx.send(
+                embed=Embed(description=f"Repeat is set to {server.config.repeat}."),
+                delete_after=5,
+            )
         if not await check_args(ctx, args, ["off", "single", "all"]):
             return
 
-        server = get_server(ctx.guild.id)
         update_config(ctx.guild.id, "repeat", args)
-        await self.send(ctx, f"Repeat changed to {args}.", delete_after=5)
-
-    @repeat.error
-    async def _repeat_value(self, ctx, error):
-        server = get_server(ctx.guild.id)
-        if isinstance(error, commands.MissingRequiredArgument):
-            await self.send(
-                ctx, f"Repeat is set to {server.config.repeat}.", delete_after=5
-            )
+        await ctx.send(
+            embed=Embed(description=f"Repeat changed to {args}.", delete_after=5)
+        )
 
     @commands.command()
     async def autoplay(self, ctx):
         server = get_server(ctx.guild.id)
         config = update_config(ctx.guild.id, "autoplay", not server.config.autoplay)
-        await self.send(
-            ctx,
-            f"Autoplay is set to {'enabled' if config.autoplay else 'disabled'}.",
+        await ctx.send(
+            embed=Embed(
+                description=f"Autoplay is set to {'enabled' if config.autoplay else 'disabled'}."
+            ),
             delete_after=5,
         )
 
@@ -342,14 +359,16 @@ class Music(commands.Cog):
         duration = 0
 
         if queue_length == 0:
-            return await self.send(ctx, "Empty playlist.", delete_after=5)
+            return await ctx.send(
+                embed=Embed(description="Empty playlist.", delete_after=5)
+            )
 
         for i, song in enumerate(server.queue):
             description = f"""\
-      `{'*' if server.current_queue == i else ''}{i+1}.` [{queue[i].title}]({queue[i].url})
-      - - - `{format_seconds(queue[i].duration)}` `{queue[i].requested}`"""
+      `{'*' if server.current_queue == i else ''}{i+1}.` [{song.title}]({song.url})
+      - - - `{format_seconds(song.duration)}` `{song.requested}`"""
             temp.append(description)
-            duration += queue[i].duration
+            duration += song.duration
 
             if (i != 0 and (i + 1) % 10 == 0) or i == len(queue) - 1:
                 embeds.append(Embed(description="\n".join(temp)))
@@ -400,7 +419,6 @@ class Music(commands.Cog):
 
     async def _next(self, ctx, index=None, stop=False):
         server = get_server(ctx.guild.id)
-        current_queue = self._get_current_queue(server)
         config = server.config
 
         await self._finished_message(ctx, delete_after=5 if stop else None)
@@ -519,7 +537,6 @@ class Music(commands.Cog):
 
     def _process_shuffle(self, ctx):
         server = get_server(ctx.guild.id)
-        config = server.config
 
         if server.current_queue in server.shuffled_list:
             server.shuffled_list.append(server.current_queue)
@@ -537,7 +554,7 @@ class Music(commands.Cog):
         related_videos = await get_related_videos(current_queue.id)
         filtered_videos = []
 
-        for i, video in enumerate(related_videos):
+        for video in related_videos:
             existing = (
                 len([queue for queue in server.queue if queue.id == video.id.videoId])
                 > 0

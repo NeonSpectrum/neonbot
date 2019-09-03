@@ -14,10 +14,12 @@ from helpers.constants import LOGO, NAME, VERSION
 
 env = Env()
 env.read_env()
-uptime = time()
 owner_ids = env.list("OWNER_IDS", [], subcast=int)
-print(owner_ids)
-bot = commands.Bot(command_prefix=env("DEFAULT_PREFIX"), owner_ids=set(owner_ids))
+bot = commands.Bot(
+    command_prefix=env("DEFAULT_PREFIX"),
+    owner_ids=set(owner_ids),
+    help_command=commands.DefaultHelpCommand(verify_checks=False),
+)
 
 
 @bot.check

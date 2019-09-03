@@ -1,4 +1,4 @@
-import logging
+import sys
 
 import discord
 from addict import Dict
@@ -31,16 +31,18 @@ def get_activity():
 
 
 class Event(commands.Cog):
+    @staticmethod
     @bot.event
     async def on_ready():
-        bot.help_command.verify_check = False
         await bot.change_presence(activity=get_activity())
         log.info(f"Logged in as {bot.user}")
 
+    @staticmethod
     @bot.event
     async def on_disconnect():
         log.info(f"{NAME} disconnected")
 
+    @staticmethod
     @bot.event
     async def on_message(message):
         def check_alias():
@@ -70,6 +72,7 @@ class Event(commands.Cog):
                 )
             await bot.process_commands(message)
 
+    @staticmethod
     @bot.event
     async def on_voice_state_update(member, before, after):
         from .music import servers
@@ -111,6 +114,7 @@ class Event(commands.Cog):
                 )
                 await log.send(embed=embed)
 
+    @staticmethod
     @bot.event
     async def on_member_update(before, after):
         if before.bot:
@@ -134,6 +138,7 @@ class Event(commands.Cog):
             embed.set_author(name="User Presence Update", icon_url=bot.user.avatar_url)
             await log.send(embed=embed)
 
+    @staticmethod
     @bot.event
     async def on_member_join(member):
         config = Database(member.guild.id).config
@@ -146,6 +151,7 @@ class Event(commands.Cog):
             embed.set_author(name="Member Join", icon_url=bot.user.avatar_url)
             channel.send()
 
+    @staticmethod
     @bot.event
     async def on_member_remove(member):
         config = Database(member.guild.id).config
@@ -158,6 +164,7 @@ class Event(commands.Cog):
             embed.set_author(name="Member Leave", icon_url=bot.user.avatar_url)
             channel.send()
 
+    @staticmethod
     @bot.event
     async def on_command(ctx):
         global commands_executed
@@ -169,9 +176,10 @@ class Event(commands.Cog):
         if ctx.command.name not in IGNORED_DELETEONCMD and config.deleteoncmd:
             await ctx.message.delete()
 
+    @staticmethod
     @bot.event
     async def on_command_error(ctx, error):
-        ignored = (commands.CheckFailure, commands.MissingRequiredArgument)
+        ignored = commands.CheckFailure
 
         if isinstance(error, ignored):
             return
@@ -180,11 +188,17 @@ class Event(commands.Cog):
 
         if isinstance(error, commands.CommandNotFound):
             return await ctx.send(embed=Embed(description=str(error)))
+        if isinstance(error, commands.MissingRequiredArgument):
+            return await ctx.send(
+                embed=Embed(description=f"{error} {ctx.command.usage}")
+            )
 
         raise error
 
+    @staticmethod
     @bot.event
-    async def on_error(error):
+    async def on_error(event, *args, **kwargs):
+        error = sys.exc_info()[1]
         ignored = discord.NotFound
 
         if isinstance(error, ignored):
