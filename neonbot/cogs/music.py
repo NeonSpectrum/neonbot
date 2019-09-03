@@ -183,11 +183,6 @@ class Music(commands.Cog):
             await self._connect(ctx)
             await self._play(ctx)
 
-    @commands.command(aliases=["next"])
-    async def skip(self, ctx):
-        server = get_server(ctx.guild.id)
-        server.connection.stop()
-
     @commands.command()
     async def pause(self, ctx):
         server = get_server(ctx.guild.id)
@@ -217,6 +212,11 @@ class Music(commands.Cog):
 
         await ctx.send(embed=Embed(description="Player resumed.", delete_after=5))
 
+    @commands.command(aliases=["next"])
+    async def skip(self, ctx):
+        server = get_server(ctx.guild.id)
+        server.connection.stop()
+
     @commands.command()
     async def stop(self, ctx):
         server = get_server(ctx.guild.id)
@@ -233,12 +233,6 @@ class Music(commands.Cog):
         [task.cancel() for task in server.tasks]
         del servers[ctx.guild.id]
         await ctx.send(embed=Embed(description="Player reset.", delete_after=5))
-
-    @commands.command()
-    async def join(self, ctx):
-        server = get_server(ctx.guild.id)
-        server.connection = await ctx.author.voice.channel.connect()
-        log.cmd(ctx, f"Connected to {ctx.author.voice.channel}.")
 
     @commands.command()
     async def removesong(self, ctx, index: int):
