@@ -179,7 +179,11 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_command_error(ctx, error):
-        ignored = commands.CheckFailure
+        if hasattr(ctx.command, "on_error"):
+            return
+
+        error = getattr(error, "original", error)
+        ignored = (commands.CheckFailure, discord.NotFound)
 
         if isinstance(error, ignored):
             return
@@ -188,23 +192,13 @@ class Event(commands.Cog):
 
         if isinstance(error, commands.CommandNotFound):
             return await ctx.send(embed=Embed(description=str(error)))
+
         if isinstance(error, commands.MissingRequiredArgument):
             return await ctx.send(
                 embed=Embed(
                     description=f"{str(error).capitalize()} {ctx.command.usage or ''}"
                 )
             )
-
-        raise error
-
-    @staticmethod
-    @bot.event
-    async def on_error(event, *args, **kwargs):
-        error = sys.exc_info()[1]
-        ignored = discord.NotFound
-
-        if isinstance(error, ignored):
-            return
 
         raise error
 

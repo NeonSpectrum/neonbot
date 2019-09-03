@@ -309,6 +309,17 @@ class Music(commands.Cog):
             delete_after=5,
         )
 
+    @commands.command()
+    async def shuffle(self, ctx):
+        server = get_server(ctx.guild.id)
+        config = update_config(ctx.guild.id, "shuffle", not server.config.shuffle)
+        await ctx.send(
+            embed=Embed(
+                description=f"Shuffle is set to {'enabled' if config.shuffle else 'disabled'}."
+            ),
+            delete_after=5,
+        )
+
     @commands.command(aliases=["np"])
     async def nowplaying(self, ctx):
         server = get_server(ctx.guild.id)
@@ -392,10 +403,16 @@ class Music(commands.Cog):
             current_queue = ytdl.get_info()
             log.info("Fetched new link for", current_queue.title)
 
-        song = discord.FFmpegPCMAudio(
-            current_queue.stream, before_options=FFMPEG_OPTIONS
-        )
-        source = discord.PCMVolumeTransformer(song, volume=server.config.volume / 100)
+        try:
+            song = discord.FFmpegPCMAudio(
+                current_queue.stream, before_options=FFMPEG_OPTIONS
+            )
+            source = discord.PCMVolumeTransformer(
+                song, volume=server.config.volume / 100
+            )
+        except discord.ClientException as e:
+            log.warn(e)
+            return await ctx.send("Error while playing the song.")
 
         async def after(error):
             if error:
@@ -445,10 +462,8 @@ class Music(commands.Cog):
         config = server.config
         index = index if index != None else server.current_queue
         current_queue = server.queue[index]
-        
-        ctx.author = current_queue.requested
 
-        log.cmd(ctx, f"Now playing {current_queue.title}")
+        log.cmd(ctx, f"Now playing {current_queue.title}", user=current_queue.requested)
 
         if server.messages.last_playing:
             await server.messages.last_playing.delete()
@@ -479,10 +494,10 @@ class Music(commands.Cog):
         config = server.config
         index = index if index != None else server.current_queue
         current_queue = server.queue[index]
-        
-        ctx.author = current_queue.requested
 
-        log.cmd(ctx, f"Finished playing {current_queue.title}")
+        log.cmd(
+            ctx, f"Finished playing {current_queue.title}", user=current_queue.requested
+        )
 
         if server.messages.last_finished:
             await server.messages.last_finished.delete()
@@ -560,7 +575,7 @@ class Music(commands.Cog):
 
         ytdl = await YTDL().extract_info(video_id)
         info = ytdl.get_info()
-        self._add_to_queue(ctx, info)
+        self._add_to_queue(ctx, info, requested=ctx.author)
 
     async def _connect(self, ctx):
         server = get_server(ctx.guild.id)
@@ -568,9 +583,9 @@ class Music(commands.Cog):
             server.connection = await ctx.author.voice.channel.connect()
             log.cmd(ctx, f"Connected to {ctx.author.voice.channel}.")
 
-    def _add_to_queue(self, ctx, data):
+    def _add_to_queue(self, ctx, data, requested=None):
         server = get_server(ctx.guild.id)
-        data.requested = ctx.author
+        data.requested = requested or ctx.author
         server.queue.append(data)
 
     def _get_current_queue(self, server):

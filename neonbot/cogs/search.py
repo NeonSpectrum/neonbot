@@ -317,6 +317,8 @@ class Search(commands.Cog):
         ]
         await loading_msg.delete()
         choice = await embed_choices(ctx, links)
+        if choice < 0:
+            return
         res = await self.session.get(links[choice].url, proxy=env("PROXY", None))
         html = await res.text()
         soup = BeautifulSoup(html, "html.parser")

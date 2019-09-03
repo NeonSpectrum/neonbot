@@ -77,17 +77,13 @@ class PaginationEmbed:
             except asyncio.TimeoutError:
                 await msg.clear_reactions()
                 break
-            except discord.NotFound:
-                break
 
     async def _add_reactions(self):
-        self.reactions = []
         for emoji in PAGINATION_EMOJI:
             try:
-                self.reactions.append(await self.msg.add_reaction(emoji))
+                await self.msg.add_reaction(emoji)
             except discord.NotFound:
-                self.reactions = []
-                return
+                break
 
     async def _execute_command(self, cmd):
         current_index = self.index
@@ -108,6 +104,9 @@ class PaginationEmbed:
 
 
 async def embed_choices(ctx, entries):
+    if len(entries) == 0:
+        return await ctx.send(embed=Embed(description="Empty choices."), delete_after=5)
+
     embed = Embed(title=f"Choose 1-{len(entries)} below.")
 
     for index, entry in enumerate(entries, start=1):
@@ -120,14 +119,13 @@ async def embed_choices(ctx, entries):
             try:
                 await msg.add_reaction(emoji)
             except discord.NotFound:
-                return
-
-    asyncio.ensure_future(react_to_msg())
+                break
 
     try:
+        asyncio.ensure_future(react_to_msg())
         reaction, _ = await bot.wait_for(
             "reaction_add",
-            timeout=30,
+            timeout=10,
             check=lambda reaction, user: reaction.emoji in CHOICES_EMOJI
             and ctx.author == user
             and reaction.message.id == msg.id,
