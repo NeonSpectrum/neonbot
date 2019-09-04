@@ -376,7 +376,7 @@ class Music(commands.Cog):
 
         if not current_queue.stream and current_queue.ytdl:
             await current_queue.ytdl.process_entry(current_queue)
-            server.queue[server.current_queue] = current_queue.ytdl.get_info()
+            server.queue[server.current_queue] = current_queue = current_queue.ytdl.get_info()
         
         if is_link_expired(current_queue.stream):
             log.info("Link expired:", current_queue.title)
