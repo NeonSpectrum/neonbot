@@ -82,7 +82,8 @@ class Game(commands.Cog):
             msg = await self.bot.wait_for("message", check=check, timeout=30)
         except asyncio.TimeoutError:
             winner_embed.description = "**No one**"
-            channel.pokemon.status = 0
+            if not someone_answered:
+                channel.pokemon.status = 0
         else:
             if msg.author.id not in channel.pokemon.scoreboard:
                 channel.pokemon.scoreboard[msg.author.id] = 1
