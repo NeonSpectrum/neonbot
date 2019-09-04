@@ -55,7 +55,7 @@ class PaginationEmbed:
         msg = self.msg
 
         def check(reaction, user):
-            if not user.bot:
+            if not user.bot and reaction.emoji != "🗑":
                 asyncio.ensure_future(reaction.remove(user))
             return (
                 reaction.emoji in PAGINATION_EMOJI
