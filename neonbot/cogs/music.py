@@ -116,6 +116,7 @@ class Music(commands.Cog):
             if isinstance(ytdl_list, list):
                 for entry in ytdl_list:
                     entry.ytdl = ytdl
+                    entry.url = f"https://www.youtube.com/watch?v={entry.id}"
                     self._add_to_queue(ctx, entry)
                     print(entry)
                     
