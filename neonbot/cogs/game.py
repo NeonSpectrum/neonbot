@@ -123,7 +123,7 @@ class Game(commands.Cog):
     async def _pokemon_show_scoreboard(self, ctx):
         scoreboard = get_channel(ctx.channel.id).pokemon.scoreboard
 
-        scores = sorted(scoreboard.items(), key=lambda kv: kv[1], reversed=True)
+        scores = sorted(scoreboard.items(), key=lambda kv: kv[1], reverse=True)
         scores = map(lambda x: f"**{self.bot.get_user(x[0])}:** {x[1]}", scores)
 
         embed = Embed(title="Scoreboard", description="\n".join(scores))
