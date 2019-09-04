@@ -31,7 +31,6 @@ DEFAULT_CONFIG = Dict(
         "current_queue": 0,
         "queue": [],
         "shuffled_list": [],
-        "tasks": [],
         "disable_after": False,
         "messages": {"last_playing": None, "last_finished": None, "paused": None},
     }
@@ -209,7 +208,6 @@ class Music(commands.Cog):
         server = get_server(ctx.guild.id)
         await self._next(ctx, stop=True)
         await server.connection.disconnect()
-        [task.cancel() for task in server.tasks]
         del servers[ctx.guild.id]
         await ctx.send(embed=Embed(description="Player reset.", delete_after=5))
 
