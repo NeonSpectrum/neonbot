@@ -96,7 +96,7 @@ class Music(commands.Cog):
 
     @commands.command(aliases=["p"], usage="<url | keyword>")
     @commands.check(in_voice_channel)
-    async def play(self, ctx, *, keyword):
+    async def play(self, ctx, *, keyword=None):
         server = get_server(ctx.guild.id)
         embed = info = loading_msg = None
 
