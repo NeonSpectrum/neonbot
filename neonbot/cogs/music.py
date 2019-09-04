@@ -479,7 +479,7 @@ class Music(commands.Cog):
 
         footer = [
             str(current_queue.requested),
-            format_seconds(current_queue.duration),
+            format_seconds(current_queue.duration) if current_queue.duration else "N/A",
             f"Volume: {config.volume}%",
             f"Repeat: {config.repeat}",
             f"Shuffle: {'on' if config.shuffle else 'off'}",
@@ -513,7 +513,7 @@ class Music(commands.Cog):
 
         footer = [
             str(current_queue.requested),
-            format_seconds(current_queue.duration),
+            format_seconds(current_queue.duration) if current_queue.duration else "N/A",
             f"Volume: {config.volume}%",
             f"Repeat: {config.repeat}",
             f"Shuffle: {'on' if config.shuffle else 'off'}",
