@@ -150,15 +150,16 @@ class Music(commands.Cog):
                 title=f"You have selected #{choice+1}. Adding song to queue #{len(server.queue)+1}",
                 description=info.title,
             )
-
+        print("hi2")
         if info:
             self._add_to_queue(ctx, info)
         if loading_msg:
             await loading_msg.delete()
         if embed:
             await ctx.send(embed=embed, delete_after=5)
-
+        print("hi")
         if len(server.queue) > 0 and not ctx.voice_client:
+            print("connect")
             await self._connect(ctx)
             await self._play(ctx)
 
