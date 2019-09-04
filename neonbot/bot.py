@@ -49,5 +49,3 @@ def run():
     load_database()
     load_cogs()
     bot.run(env("TOKEN"))
-
-    await bot.session.close()
