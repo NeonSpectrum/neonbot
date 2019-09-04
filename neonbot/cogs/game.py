@@ -124,7 +124,8 @@ class Game(commands.Cog):
         scoreboard = get_channel(ctx.channel.id).pokemon.scoreboard
 
         scores = sorted(scoreboard.items(), key=lambda kv: kv[1], reverse=True)
-        scores = map(lambda x: f"**{self.bot.get_user(x[0])}:** {x[1]}", scores)
+        scores = list(map(lambda x: f"**{self.bot.get_user(x[0])}:** {x[1]}", scores))
+        scores[0] += " `WINNER`"
 
         embed = Embed(title="Scoreboard", description="\n".join(scores))
         embed.set_author(
