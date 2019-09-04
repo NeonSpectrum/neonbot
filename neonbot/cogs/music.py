@@ -115,38 +115,42 @@ class Music(commands.Cog):
 
             if isinstance(ytdl_list, list):
                 await loading_msg.delete()
-                msg = await ctx.send(
-                    embed=Embed(
-                        description=f"Adding {plural(len(ytdl_list), 'song', 'songs')} to queue."
+                
+                for entry in ytdl_list:
+                    entry.ytdl = ytdl
+                    self._add_to_queue(ctx, entry)
+                    
+                return await ctx.send(embed=Embed(
+                        description=f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue."
                     )
                 )
 
-                async def process_playlist():
-                    errors = 0
-                    for entry in ytdl_list:
-                        await ytdl.process_entry(entry)
-                        info = ytdl.get_info()
-                        if info:
-                            self._add_to_queue(ctx, info)
-                        else:
-                            errors += 1
-                        if len(server.queue) > 0 and not ctx.voice_client:
-                            await self._connect(ctx)
-                            await self._play(ctx)
-                    await msg.delete()
+#                 async def process_playlist():
+#                     errors = 0
+#                     for entry in ytdl_list:
+#                         await ytdl.process_entry(entry)
+#                         info = ytdl.get_info()
+#                         if info:
+#                             self._add_to_queue(ctx, info)
+#                         else:
+#                             errors += 1
+#                         if len(server.queue) > 0 and not ctx.voice_client:
+#                             await self._connect(ctx)
+#                             await self._play(ctx)
+#                     await msg.delete()
 
-                    embed = Embed(
-                        description=f"Added {plural(len(ytdl_list) - errors, 'song', 'songs')}."
-                    )
-                    if errors > 0:
-                        embed.description += (
-                            f" Failed to load {plural(errors, 'song', 'songs')}."
-                        )
-                    await ctx.send(embed=embed, delete_after=5)
+#                     embed = Embed(
+#                         description=f"Added {plural(len(ytdl_list) - errors, 'song', 'songs')}."
+#                     )
+#                     if errors > 0:
+#                         embed.description += (
+#                             f" Failed to load {plural(errors, 'song', 'songs')}."
+#                         )
+#                     await ctx.send(embed=embed, delete_after=5)
 
-                return server.tasks.append(
-                    self.bot.loop.create_task(process_playlist())
-                )
+#                 return server.tasks.append(
+#                     self.bot.loop.create_task(process_playlist())
+#                 )
             elif ytdl_list:
                 info = ytdl.get_info()
                 embed = Embed(
@@ -399,6 +403,10 @@ class Music(commands.Cog):
         server = get_server(ctx.guild.id)
         current_queue = self._get_current_queue(server)
 
+        if not current_queue.stream and current_queue.ytdl:
+            await current_queue.ytdl.process_entry(current_queue)
+            current_queue = current_queue.ytdl.get_info()
+        
         if is_link_expired(current_queue.stream):
             log.info("Link expired:", current_queue.title)
             ytdl = await YTDL().extract_info(current_queue.id)
