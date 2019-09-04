@@ -120,9 +120,8 @@ class Music(commands.Cog):
                     entry.ytdl = ytdl
                     self._add_to_queue(ctx, entry)
                     
-                return await ctx.send(embed=Embed(
-                        description=f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue."
-                    )
+                embed = Embed(
+                    description=f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue."
                 )
 
 #                 async def process_playlist():
@@ -375,9 +374,9 @@ class Music(commands.Cog):
             )
 
         for i, song in enumerate(server.queue):
-            description = f"`{'*' if server.current_queue == i else ''}{i+1}.` [{song.title}]({song.url})\n- - - `{format_seconds(song.duration)}` `{song.requested}`"
+            description = f"`{'*' if server.current_queue == i else ''}{i+1}.` [{song.title}]({song.url})\n- - - `{format_seconds(song.duration) if song.duration else 'N/A'}` `{song.requested}`"
             temp.append(description)
-            duration += song.duration
+            duration += song.duration or 0
 
             if (i != 0 and (i + 1) % 10 == 0) or i == len(queue) - 1:
                 embeds.append(Embed(description="\n".join(temp)))
