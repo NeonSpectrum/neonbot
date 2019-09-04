@@ -161,12 +161,14 @@ class Music(commands.Cog):
             ytdl_choices = ytdl.get_choices()
             await msg.delete()
             if len(ytdl_choices) == 0:
-                return await ctx.send(embed=Embed(description="Failed to fetch songs."))
+                return await ctx.send(embed=Embed(description="No songs available."))
             choice = await embed_choices(ctx, ytdl_choices)
             if choice < 0:
                 return
             await ytdl.process_entry(ytdl.info[choice])
             info = ytdl.get_info()
+            if not info:
+                return await ctx.send(embed=Embed(description="Rate limited due to many song requests. Try again later."), delete_after=10)
             embed = Embed(
                 title=f"You have selected #{choice+1}. Adding song to queue #{len(server.queue)+1}",
                 description=info.title,
