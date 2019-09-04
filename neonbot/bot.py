@@ -50,4 +50,4 @@ def run():
     load_cogs()
     bot.run(env("TOKEN"))
 
-    bot.session.close()
+    await bot.session.close()
