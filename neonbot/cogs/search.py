@@ -8,8 +8,9 @@ from addict import Dict
 from bs4 import BeautifulSoup
 from discord.ext import commands
 
-from bot import env
-from helpers.utils import Embed, PaginationEmbed, embed_choices
+from .. import env
+from ..classes import PaginationEmbed
+from ..helpers.utils import Embed, embed_choices
 
 
 class Search(commands.Cog):
@@ -20,11 +21,9 @@ class Search(commands.Cog):
     @commands.command()
     async def image(self, ctx, *, args):
         if not env("GOOGLE_CX") or not env("GOOGLE_API"):
-            return await ctx.send(
-                embed=Embed(description="Error. Google API not found.")
-            )
+            return await ctx.send(embed=Embed("Error. Google API not found."))
 
-        msg = await ctx.send(embed=Embed(description="Searching..."))
+        msg = await ctx.send(embed=Embed("Searching..."))
         res = await self.session.get(
             "https://www.googleapis.com/customsearch/v1",
             params={
@@ -50,11 +49,9 @@ class Search(commands.Cog):
     @commands.command(aliases=["dict"])
     async def dictionary(self, ctx, *, args):
         if not env("DICTIONARY_API"):
-            return await ctx.send(
-                embed=Embed(description="Error. Dictionary API not found.")
-            )
+            return await ctx.send(embed=Embed("Error. Dictionary API not found."))
 
-        msg = await ctx.send(embed=Embed(description="Searching..."))
+        msg = await ctx.send(embed=Embed("Searching..."))
         res = await self.session.get(
             f"https://www.dictionaryapi.com/api/v3/references/sd4/json/{args}",
             params={"key": env("DICTIONARY_API")},
@@ -62,9 +59,7 @@ class Search(commands.Cog):
         json = await res.json()
         if not isinstance(json[0], dict):
             await msg.delete()
-            return await ctx.send(
-                embed=Embed(description="Word not found."), delete_after=5
-            )
+            return await ctx.send(embed=Embed("Word not found."), delete_after=5)
 
         dictionary = Dict(json[0])
         prs = dictionary.hwi.prs[0] or dictionary.vrs[0].prs[0]
@@ -91,7 +86,7 @@ class Search(commands.Cog):
 
     @commands.command()
     async def weather(self, ctx, *, loc):
-        msg = await ctx.send(embed=Embed(description="Searching..."))
+        msg = await ctx.send(embed=Embed("Searching..."))
         res = await self.session.get(
             f"http://api.openweathermap.org/data/2.5/weather",
             params={
@@ -104,9 +99,7 @@ class Search(commands.Cog):
 
         await msg.delete()
         if json.cod != 200:
-            return await ctx.send(
-                embed=Embed(description="City not found."), delete_after=5
-            )
+            return await ctx.send(embed=Embed("City not found."), delete_after=5)
 
         embed = Embed()
         embed.set_author(
@@ -170,7 +163,7 @@ class Search(commands.Cog):
 
     @commands.command()
     async def lol(self, ctx, *, champion):
-        loading_msg = await ctx.send(embed=Embed(description="Searching..."))
+        loading_msg = await ctx.send(embed=Embed("Searching..."))
         res = await self.session.get(
             f"https://www.leaguespy.net/league-of-legends/champion/{champion}/stats"
         )
@@ -305,7 +298,7 @@ class Search(commands.Cog):
 
     @commands.command()
     async def lyrics(self, ctx, *, song):
-        loading_msg = await ctx.send(embed=Embed(description="Searching..."))
+        loading_msg = await ctx.send(embed=Embed("Searching..."))
         res = await self.session.get(
             "https://search.azlyrics.com/search.php", params={"q": song}
         )
@@ -336,7 +329,7 @@ class Search(commands.Cog):
                 del line[0]
             lines.append("\n".join(line))
 
-        embeds = [Embed(description=line) for line in lines if line]
+        embeds = [Embed(line) for line in lines if line]
 
         embed = PaginationEmbed(array=embeds, authorized_users=[ctx.author.id])
         embed.set_author(name=title, icon_url="https://i.imgur.com/SBMH84I.png")

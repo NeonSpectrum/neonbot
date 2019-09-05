@@ -6,10 +6,9 @@ from urllib.parse import parse_qs, urlparse
 import youtube_dl
 from addict import Dict
 
-from bot import bot, env
-
-from .constants import TIMEZONE
-from .utils import date
+from .. import bot, env
+from ..helpers.constants import TIMEZONE
+from ..helpers.date import date
 
 
 class YTDL:
@@ -90,21 +89,21 @@ class YTDL:
 
         return parse_entry(self.info) if self.info else None
 
+    @staticmethod
+    async def get_related_videos(video_id):
+        res = await bot.session.get(
+            "https://www.googleapis.com/youtube/v3/search",
+            params={
+                "part": "snippet",
+                "relatedToVideoId": video_id,
+                "type": "video",
+                "key": env("GOOGLE_API"),
+            },
+        )
+        json = await res.json()
+        return Dict(json)["items"]
 
-async def get_related_videos(video_id):
-    res = await bot.session.get(
-        "https://www.googleapis.com/youtube/v3/search",
-        params={
-            "part": "snippet",
-            "relatedToVideoId": video_id,
-            "type": "video",
-            "key": env("GOOGLE_API"),
-        },
-    )
-    json = await res.json()
-    return Dict(json)["items"]
-
-
-def is_link_expired(url):
-    params = Dict(parse_qs(urlparse(url).query))
-    return date().timestamp() > int(params.expire[0]) - 1800 if params else False
+    @staticmethod
+    def is_link_expired(url):
+        params = Dict(parse_qs(urlparse(url).query))
+        return date().timestamp() > int(params.expire[0]) - 1800 if params else False

@@ -7,9 +7,9 @@ from addict import Dict
 from aiohttp import ClientSession
 from discord.ext import commands
 
-from bot import bot
-from helpers.constants import AUTHOR, NAME, VERSION
-from helpers.utils import Embed, format_seconds
+from .. import __author__, __title__, __version__, bot
+from ..helpers.date import format_seconds
+from ..helpers.utils import Embed
 
 
 async def chatbot(user_id, message):
@@ -25,7 +25,7 @@ class Utility(commands.Cog):
 
     @commands.command()
     async def random(self, ctx, *args):
-        await ctx.send(embed=Embed(description=random.choice(args)))
+        await ctx.send(embed=Embed(random.choice(args)))
 
     @commands.command(aliases=["stats"])
     async def status(self, ctx):
@@ -34,12 +34,14 @@ class Utility(commands.Cog):
         process = psutil.Process(os.getpid())
 
         embed = Embed()
-        embed.set_author(name=f"{NAME} v{VERSION}", icon_url=self.bot.user.avatar_url)
+        embed.set_author(
+            name=f"{__title__} v{__version__}", icon_url=self.bot.user.avatar_url
+        )
         embed.add_field(name="Username", value=self.bot.user.name)
         embed.add_field(
             name="Created On", value=f"{self.bot.user.created_at:%Y-%m-%d %I:%M:%S %p}"
         )
-        embed.add_field(name="Created By", value=AUTHOR)
+        embed.add_field(name="Created By", value=__author__)
         embed.add_field(name="Guilds", value=len(self.bot.guilds))
         embed.add_field(
             name="Channels", value=sum(1 for _ in self.bot.get_all_channels())

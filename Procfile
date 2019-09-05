@@ -1,1 +1,1 @@
-worker: python3 neonbot
+worker: python3 main.py

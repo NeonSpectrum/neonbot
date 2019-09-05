@@ -4,15 +4,15 @@ import inspect
 import discord
 from discord.ext import commands
 
-from bot import env, owner_ids
-from helpers.database import Database
-from helpers.utils import Embed, check_args
+from .. import bot, env
+from ..helpers.utils import Embed, check_args
 
 
 class Administration(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.session = bot.session
+        self.db = bot.db
 
     @commands.command(hidden=True)
     @commands.is_owner()
@@ -52,9 +52,7 @@ class Administration(commands.Cog):
     @commands.is_owner()
     async def generatelog(self, ctx):
         if not env("PASTEBIN_API"):
-            return await ctx.send(
-                embed=Embed(description="Error. Pastebin API not found.")
-            )
+            return await ctx.send(embed=Embed("Error. Pastebin API not found."))
 
         with open("./debug.log", "r") as f:
             text = f.read()
@@ -71,9 +69,7 @@ class Administration(commands.Cog):
         paste_link = await res.text()
         paste_id = paste_link.split("/")[-1]
         await ctx.send(
-            embed=Embed(
-                description=f"Generated pastebin: https://pastebin.com/raw/{paste_id}"
-            )
+            embed=Embed(f"Generated pastebin: https://pastebin.com/raw/{paste_id}")
         )
 
     @commands.command(hidden=True)
@@ -82,14 +78,14 @@ class Administration(commands.Cog):
         try:
             self.bot.reload_extension("modules." + args)
         except Exception as e:
-            await ctx.send(embed=Embed(description=str(e)))
+            await ctx.send(embed=Embed(str(e)))
         else:
-            await ctx.send(embed=Embed(description=f"Reloaded module: `{args}`."))
+            await ctx.send(embed=Embed(f"Reloaded module: `{args}`."))
 
     @commands.command()
     @commands.has_permissions(manage_messages=True)
     async def prune(self, ctx, count: int = 1, member: discord.Member = None):
-        config = Database(ctx.guild.id).config
+        config = self.db.get_guild(ctx.guild.id).config
 
         if config.deleteoncmd:
             count += 1
@@ -110,13 +106,11 @@ class Administration(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def prefix(self, ctx, arg):
-        database = Database(ctx.guild.id)
+        database = self.db.get_guild(ctx.guild.id)
         config = database.config
         config.prefix = arg
         config = database.update_config().config
-        await ctx.send(
-            embed=Embed(description=f"Prefix is now set to {config.prefix}.")
-        )
+        await ctx.send(embed=Embed(f"Prefix is now set to {config.prefix}."))
 
     @commands.command()
     @commands.is_owner()
@@ -124,15 +118,13 @@ class Administration(commands.Cog):
         if not await check_args(ctx, arg, ["online", "offline", "dnd", "idle"]):
             return
 
-        database = Database()
+        database = self.db.get_settings()
         settings = database.settings
         settings.status = arg
         settings = database.update_settings().settings
 
         await self.bot.change_presence(status=discord.Status[arg])
-        await ctx.send(
-            embed=Embed(description=f"Status is now set to {settings.prefix}.")
-        )
+        await ctx.send(embed=Embed(f"Status is now set to {settings.prefix}."))
 
     @commands.command()
     @commands.is_owner()
@@ -142,7 +134,7 @@ class Administration(commands.Cog):
         ):
             return
 
-        database = Database()
+        database = self.db.get_settings()
         settings = database.settings
         settings.game.type = presence_type
         settings.game.name = name
@@ -155,23 +147,22 @@ class Administration(commands.Cog):
         )
         await ctx.send(
             embed=Embed(
-                description=f"Presence is now set to {settings.game.type} {settings.game.name}."
+                f"Presence is now set to {settings.game.type} {settings.game.name}."
             )
         )
 
     @commands.command()
     async def alias(self, ctx, name, *, cmd):
-        database = Database(ctx.guild.id)
+        database = self.db.get_guild(ctx.guild.id)
         aliases = database.config.aliases
         ids = [i for i, x in enumerate(aliases) if x.name == name]
         if len(ids) > 0:
             if (
                 int(aliases[ids[0]].owner) != ctx.author.id
-                and ctx.author.id not in owner_ids
+                and ctx.author.id not in bot.owner_ids
             ):
                 return await ctx.send(
-                    embed=Embed(description=f"You are not the owner of the alias."),
-                    delete_after=5,
+                    embed=Embed(f"You are not the owner of the alias."), delete_after=5
                 )
             aliases[ids[0]].cmd = (
                 cmd.replace(ctx.prefix, "{0}", 1) if cmd.startswith(ctx.prefix) else cmd
@@ -182,53 +173,46 @@ class Administration(commands.Cog):
             )
         database.update_config()
         await ctx.send(
-            embed=Embed(
-                description=f"Message with exactly `{name}` will now execute `{cmd}`"
-            ),
+            embed=Embed(f"Message with exactly `{name}` will now execute `{cmd}`"),
             delete_after=10,
         )
 
     @commands.command()
     @commands.is_owner()
     async def deletealias(self, ctx, name):
-        database = Database(ctx.guild.id)
+        database = self.db.get_guild(ctx.guild.id)
         aliases = database.config.aliases
         ids = [i for i, x in enumerate(aliases) if x.name == name]
         if len(ids) == 0:
-            return await ctx.send(
-                embed=Embed(description=f"Alias doesn't exists."), delete_after=5
-            )
+            return await ctx.send(embed=Embed(f"Alias doesn't exists."), delete_after=5)
         if (
             int(aliases[ids[0]].owner) != ctx.author.id
-            and ctx.author.id not in owner_ids
+            and ctx.author.id not in bot.owner_ids
         ):
             return await ctx.send(
-                embed=Embed(description=f"You are not the owner of the alias."),
-                delete_after=5,
+                embed=Embed(f"You are not the owner of the alias."), delete_after=5
             )
         del aliases[ids[0]]
         database.update_config()
-        await ctx.send(
-            embed=Embed(description=f"Alias`{name}` has been deleted."), delete_after=5
-        )
+        await ctx.send(embed=Embed(f"Alias`{name}` has been deleted."), delete_after=5)
 
     @commands.command()
     @commands.is_owner()
     async def deleteoncmd(self, ctx):
-        database = Database(ctx.guild.id)
+        database = self.db.get_guild(ctx.guild.id)
         config = database.config
         config.deleteoncmd = not config.deleteoncmd
         config = database.update_config().config
         await ctx.send(
             embed=Embed(
-                description=f"Delete on command is now set to {'enabled' if config.deleteoncmd else 'disabled'}."
+                f"Delete on command is now set to {'enabled' if config.deleteoncmd else 'disabled'}."
             )
         )
 
     @commands.command()
     @commands.is_owner()
     async def voicetts(self, ctx):
-        database = Database(ctx.guild.id)
+        database = self.db.get_guild(ctx.guild.id)
         config = database.config
         config.channel.voicetts = (
             ctx.channel.id if config.channel.voicetts != ctx.channel.id else None
@@ -236,16 +220,14 @@ class Administration(commands.Cog):
         config = database.update_config().config
 
         if config.channel.voicetts:
-            await ctx.send(
-                embed=Embed(description=f"Voice TTS is now set to this channel.")
-            )
+            await ctx.send(embed=Embed(f"Voice TTS is now set to this channel."))
         else:
-            await ctx.send(embed=Embed(description=f"Voice TTS is now disabled."))
+            await ctx.send(embed=Embed(f"Voice TTS is now disabled."))
 
     @commands.command()
     @commands.is_owner()
     async def logger(self, ctx):
-        database = Database(ctx.guild.id)
+        database = self.db.get_guild(ctx.guild.id)
         config = database.config
         config.channel.log = (
             ctx.channel.id if config.channel.log != ctx.channel.id else None
@@ -253,11 +235,9 @@ class Administration(commands.Cog):
         config = database.update_config().config
 
         if config.channel.log:
-            await ctx.send(
-                embed=Embed(description=f"Logger is now set to this channel.")
-            )
+            await ctx.send(embed=Embed(f"Logger is now set to this channel."))
         else:
-            await ctx.send(embed=Embed(description=f"Logger is now disabled."))
+            await ctx.send(embed=Embed(f"Logger is now disabled."))
 
 
 def setup(bot):

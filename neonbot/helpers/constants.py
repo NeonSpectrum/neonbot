@@ -1,9 +1,7 @@
-NAME = "NeonBot"
-AUTHOR = "NeonSpectrum"
-VERSION = "1.0.4"
-
 TIMEZONE = "Asia/Manila"
 LOG_FORMAT = "%(asctime)s:%(levelname)s:%(name)s: %(message)s"
+
+PERMISSION = 506723399
 
 PAGINATION_EMOJI = ["◀", "▶", "🗑"]
 CHOICES_EMOJI = [
