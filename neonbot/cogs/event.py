@@ -53,9 +53,8 @@ class Event(commands.Cog):
                 message.content = arr[0].cmd.format(config.prefix)
                 return True
             return False
-        print(message.content)
-        print(bot.user.mention)
-        if message.content.startswith(bot.user.mention):
+        
+        if message.content.replace("<@!","<@", 1).startswith(bot.user.mention):
             msg = " ".join(message.content.split(" ")[1:])
             log.cmd(message, f"Process chatbot: {msg}")
             response = await chatbot(message.author.id, msg)
