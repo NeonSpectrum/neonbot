@@ -56,6 +56,7 @@ class Event(commands.Cog):
 
         if message.content.startswith(bot.user.mention):
             msg = " ".join(message.content.split(" ")[1:])
+            log.cmd(message, f"Process chatbot: {msg}")
             response = await chatbot(message.author.id, msg)
             await message.channel.send(
                 embed=Embed(f"{message.author.mention} {response.conversation.say.bot}")
