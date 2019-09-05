@@ -201,7 +201,7 @@ class Player:
 
         ytdl = await YTDL().extract_info(video_id)
         info = ytdl.get_info()
-        self.add_to_queue(ctx, info, requested=self.bot.user)
+        self.add_to_queue(ctx, info, requested=bot.user)
 
     def add_to_queue(self, ctx, data, requested=None):
         data.requested = requested or ctx.author
