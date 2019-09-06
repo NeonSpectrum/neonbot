@@ -32,13 +32,12 @@ class Administration(commands.Cog):
             return code
 
         try:
-            code = cleanup(args)
-            lines = [f"  {i}" for i in code.splitlines()]
-            if len(lines) == 1:
+            code = cleanup(args).splitlines()
+            if len(code) == 1:
                 cmd = eval(code)
                 output = (await cmd) if inspect.isawaitable(cmd) else cmd
             else:
-                lines = "\n".join(lines)
+                lines = "\n".join([f"  {i}" for i in code])
                 exec(f"async def x():\n{lines}\n", env)
                 output = await eval("x()", env)
             await ctx.message.add_reaction("👌")
