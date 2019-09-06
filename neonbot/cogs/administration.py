@@ -34,7 +34,7 @@ class Administration(commands.Cog):
         try:
             code = cleanup(args).splitlines()
             if len(code) == 1:
-                cmd = eval(code)
+                cmd = eval(code[0])
                 output = (await cmd) if inspect.isawaitable(cmd) else cmd
             else:
                 lines = "\n".join([f"  {i}" for i in code])
