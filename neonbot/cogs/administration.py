@@ -31,7 +31,7 @@ class Administration(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def eval(self, ctx, *, args):
-        """Evaluates a lines of python code."""
+        """Evaluates a line/s of python code."""
 
         env = {
             "bot": self.bot,
