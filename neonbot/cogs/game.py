@@ -50,7 +50,7 @@ class Game(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def connect4(self, ctx):
-        """Starts connect4 game and wait for the players if players are insufficient."""
+        """Starts connect4 game and waits for the players if players are insufficient."""
 
         connect4 = get_channel(ctx.channel).connect4
         if connect4.players == 2:
