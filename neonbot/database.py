@@ -1,8 +1,11 @@
+import logging
+
 from addict import Dict
 from pymongo import MongoClient
 
 from . import env
-from .helpers import log
+
+log = logging.getLogger(__name__)
 
 
 class Database:

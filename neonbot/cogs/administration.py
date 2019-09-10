@@ -1,28 +1,45 @@
-import asyncio
-import inspect
+import contextlib
+import sys
+from io import StringIO
 
 import discord
 from discord.ext import commands
 
 from .. import bot, env
+from ..cogs.music import players
 from ..helpers.utils import Embed, check_args
 
 
+@contextlib.contextmanager
+def stdoutIO(stdout=None):
+    old = sys.stdout
+    if stdout is None:
+        stdout = StringIO()
+    sys.stdout = stdout
+    yield stdout
+    sys.stdout = old
+
+
 class Administration(commands.Cog):
+    """Administration commands that handles the management of the bot"""
+
     def __init__(self, bot):
         self.bot = bot
         self.session = bot.session
         self.db = bot.db
 
-    @commands.command(hidden=True)
+    @commands.command()
     @commands.is_owner()
     async def eval(self, ctx, *, args):
-        bot = self.bot
+        """Evaluates a lines of python code."""
+
         env = {
-            "bot": bot,
+            "bot": self.bot,
             "discord": discord,
             "commands": commands,
             "ctx": ctx,
+            "players": players,
+            "Embed": Embed,
             "__import__": __import__,
         }
 
@@ -33,23 +50,24 @@ class Administration(commands.Cog):
 
         try:
             code = cleanup(args).splitlines()
-            if len(code) == 1:
-                cmd = eval(code[0])
-                output = (await cmd) if inspect.isawaitable(cmd) else cmd
-            else:
-                lines = "\n".join([f"  {i}" for i in code])
+            lines = "\n".join([f"  {i}" for i in code])
+
+            with stdoutIO() as s:
                 exec(f"async def x():\n{lines}\n", env)
-                output = await eval("x()", env)
+                await eval("x()", env)
+            output = s.getvalue()
             await ctx.message.add_reaction("👌")
         except Exception as e:
             output = str(e)
             await ctx.message.add_reaction("❌")
-        if output and isinstance(output, str):
+        if output:
             await ctx.send(f"```py\n{output}```")
 
-    @commands.command(hidden=True)
+    @commands.command()
     @commands.is_owner()
     async def generatelog(self, ctx):
+        """Generates a link contains the content of debug.log"""
+
         if not env("PASTEBIN_API"):
             return await ctx.send(embed=Embed("Error. Pastebin API not found."))
 
@@ -71,9 +89,11 @@ class Administration(commands.Cog):
             embed=Embed(f"Generated pastebin: https://pastebin.com/raw/{paste_id}")
         )
 
-    @commands.command(hidden=True)
+    @commands.command()
     @commands.is_owner()
     async def reload(self, ctx, *, args):
+        """Reloads an extension."""
+
         try:
             self.bot.reload_extension("modules." + args)
         except Exception as e:
@@ -83,7 +103,13 @@ class Administration(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(manage_messages=True)
+    @commands.guild_only()
     async def prune(self, ctx, count: int = 1, member: discord.Member = None):
+        """
+        Deletes a number of messages.
+        If member is specified, it will delete message of that member.
+        """
+
         config = self.db.get_guild(ctx.guild.id).config
 
         if config.deleteoncmd:
@@ -103,8 +129,11 @@ class Administration(commands.Cog):
         await ctx.channel.purge(limit=limit, check=check)
 
     @commands.command()
-    @commands.is_owner()
+    @commands.has_permissions(administrator=True)
+    @commands.guild_only()
     async def prefix(self, ctx, arg):
+        """Sets the prefix of the current server."""
+
         database = self.db.get_guild(ctx.guild.id)
         config = database.config
         config.prefix = arg
@@ -114,6 +143,8 @@ class Administration(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def setstatus(self, ctx, arg):
+        """Sets the status of the bot."""
+
         if not await check_args(ctx, arg, ["online", "offline", "dnd", "idle"]):
             return
 
@@ -128,6 +159,8 @@ class Administration(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def setpresence(self, ctx, presence_type, *, name):
+        """Sets the presence of the bot."""
+
         if not await check_args(
             ctx, presence_type, ["watching", "listening", "playing"]
         ):
@@ -151,7 +184,14 @@ class Administration(commands.Cog):
         )
 
     @commands.command()
-    async def alias(self, ctx, name, *, cmd):
+    @commands.guild_only()
+    async def alias(self, ctx, name, *, command):
+        """
+        Sets or updates an alias command.
+
+        You must be the owner of the alias to update it.
+        """
+
         database = self.db.get_guild(ctx.guild.id)
         aliases = database.config.aliases
         ids = [i for i, x in enumerate(aliases) if x.name == name]
@@ -164,21 +204,30 @@ class Administration(commands.Cog):
                     embed=Embed(f"You are not the owner of the alias."), delete_after=5
                 )
             aliases[ids[0]].cmd = (
-                cmd.replace(ctx.prefix, "{0}", 1) if cmd.startswith(ctx.prefix) else cmd
+                command.replace(ctx.prefix, "{0}", 1)
+                if command.startswith(ctx.prefix)
+                else command
             )
         else:
             database.config.aliases.append(
-                {"name": name, "cmd": cmd, "owner": ctx.author.id}
+                {"name": name, "cmd": command, "owner": ctx.author.id}
             )
         database.update_config()
         await ctx.send(
-            embed=Embed(f"Message with exactly `{name}` will now execute `{cmd}`"),
+            embed=Embed(f"Message with exactly `{name}` will now execute `{command}`"),
             delete_after=10,
         )
 
     @commands.command()
     @commands.is_owner()
+    @commands.guild_only()
     async def deletealias(self, ctx, name):
+        """
+        Removes an alias command.
+
+        You must be the owner of the alias to delete it.
+        """
+
         database = self.db.get_guild(ctx.guild.id)
         aliases = database.config.aliases
         ids = [i for i, x in enumerate(aliases) if x.name == name]
@@ -197,7 +246,14 @@ class Administration(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
+    @commands.guild_only()
     async def deleteoncmd(self, ctx):
+        """
+        Enables/Disables delete on cmd.
+
+        If enabled, it will delete the command message of the user.
+        """
+
         database = self.db.get_guild(ctx.guild.id)
         config = database.config
         config.deleteoncmd = not config.deleteoncmd
@@ -209,8 +265,17 @@ class Administration(commands.Cog):
         )
 
     @commands.command()
-    @commands.is_owner()
+    @commands.has_permissions(administrator=True)
+    @commands.guild_only()
     async def voicetts(self, ctx):
+        """
+        Enables/Disables Voice TTS.
+
+        If enabled, the bot will send a tts message if someone joins/leaves a voice channel.
+
+        Note: The message will be sent to the current channel this command last executed.
+        """
+
         database = self.db.get_guild(ctx.guild.id)
         config = database.config
         config.channel.voicetts = (
@@ -224,8 +289,20 @@ class Administration(commands.Cog):
             await ctx.send(embed=Embed(f"Voice TTS is now disabled."))
 
     @commands.command()
-    @commands.is_owner()
+    @commands.has_permissions(administrator=True)
+    @commands.guild_only()
     async def logger(self, ctx):
+        """
+        Enables/Disables Logger.
+
+        If enabled, the bot will log the following:
+            - If someone joins/leaves the guild.
+            - If someone joins/leaves the voice channel.
+            - If someone updates his/her status or presence.
+
+        Note: The message will be sent to the current channel this command last executed.
+        """
+
         database = self.db.get_guild(ctx.guild.id)
         config = database.config
         config.channel.log = (

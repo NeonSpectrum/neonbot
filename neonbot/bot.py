@@ -1,34 +1,27 @@
-from os import listdir, path, popen
+import logging
+from os import listdir
 from os.path import isfile, join
 
-import discord
-from addict import Dict
 from aiohttp import ClientSession
 from discord.ext import commands
-from pymongo import MongoClient
-from termcolor import cprint
 
 from . import Database, __title__, __version__, env
-from .helpers import log
 from .helpers.constants import LOGO
+from .helpers.log import cprint
+
+log = logging.getLogger(__name__)
 
 
 class Bot(commands.Bot):
     def __init__(self):
         self.owner_ids = env.list("OWNER_IDS", [], subcast=int)
+        self.default_prefix = env("DEFAULT_PREFIX", ".")
         super().__init__(
-            command_prefix=env("DEFAULT_PREFIX"),
-            owner_ids=set(self.owner_ids),
-            help_command=commands.DefaultHelpCommand(verify_checks=False),
+            command_prefix=self.default_prefix, owner_ids=set(self.owner_ids)
         )
         self.db = Database()
         self.session = ClientSession(loop=self.loop)
-
-        log.init()
-
-    @staticmethod
-    async def globally_block_dms(ctx):
-        return ctx.guild is not None
+        self.commands_executed = 0
 
     def load_cogs(self):
         cogs_dir = "neonbot/cogs"
@@ -44,11 +37,11 @@ class Bot(commands.Bot):
         log.info(f"Starting {__title__} v{__version__}")
 
         self.db.load_database()
-        self.command_prefix = lambda bot, message: self.db.get_guild(
-            message.guild.id
-        ).config.prefix
-
-        self.add_check(self.globally_block_dms)
+        self.command_prefix = (
+            lambda bot, message: self.db.get_guild(message.guild.id).config.prefix
+            if message.guild
+            else self.default_prefix
+        )
 
         self.load_cogs()
         super().run(env("TOKEN"))

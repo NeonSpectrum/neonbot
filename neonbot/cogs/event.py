@@ -1,20 +1,18 @@
-import sys
+import logging
 
 import discord
-from addict import Dict
 from discord.ext import commands
 
-from .. import __title__, bot
-from ..helpers import log
-from ..helpers.constants import PERMISSION, TIMEZONE
+from .. import bot
+from ..helpers.constants import PERMISSION
 from ..helpers.date import date_format
 from ..helpers.utils import Embed
 from .music import get_player
 from .utility import chatbot
 
-IGNORED_DELETEONCMD = ["eval", "evalmusic", "prune"]
+log = logging.getLogger(__name__)
 
-commands_executed = 0
+IGNORED_DELETEONCMD = ["eval", "prune"]
 
 
 def get_activity():
@@ -33,14 +31,19 @@ def get_activity():
 class Event(commands.Cog):
     @staticmethod
     @bot.event
-    async def on_ready():
+    async def on_connect():
         await bot.change_presence(activity=get_activity())
         log.info(f"Logged in as {bot.user}")
 
     @staticmethod
     @bot.event
     async def on_disconnect():
-        log.info(f"{__title__} disconnected")
+        log.warn("Disconnected!")
+
+    @staticmethod
+    @bot.event
+    async def on_ready():
+        log.info("Connected!")
 
     @staticmethod
     @bot.event
@@ -53,14 +56,10 @@ class Event(commands.Cog):
                 message.content = arr[0].cmd.format(config.prefix)
                 return True
             return False
-        
-        if message.content.replace("<@!","<@", 1).startswith(bot.user.mention):
-            msg = " ".join(message.content.split(" ")[1:])
-            log.cmd(message, f"Process chatbot: {msg}")
-            response = await chatbot(message.author.id, msg)
-            await message.channel.send(
-                embed=Embed(f"{message.author.mention} {response.conversation.say.bot}")
-            )
+
+        if message.content.replace("<@!", "<@", 1).startswith(bot.user.mention):
+            log.cmd(message, message.content)
+            return await chatbot(message)
         elif message.channel.type.name == "private":
             if message.content.lower() == "invite":
                 application = await bot.application_info()
@@ -69,22 +68,20 @@ class Event(commands.Cog):
                         f"Bot invite link: https://discordapp.com/oauth2/authorize?client_id={application.id}&scope=bot&permissions={PERMISSION}"
                     )
                 )
-            elif (
-                message.author.id not in bot.owner_ids
-                and message.author.id != bot.user.id
-            ):
-                for owner in bot.owner_ids:
+                return log.info(f"Sent an invite link to: {message.author}")
+            elif message.author.id != bot.user.id:
+                log.info(f"DM from {message.author}: {message.content}")
+
+                for owner in filter(lambda x: x != message.author.id, bot.owner_ids):
                     embed = Embed(
                         title=f"DM from {message.author}", description=message.content
                     )
                     await bot.get_user(owner).send(embed=embed)
-        else:
-            if check_alias():
-                await message.channel.send(
-                    embed=Embed(f"Alias found. Executing `{message.content}`."),
-                    delete_after=5,
-                )
-            await bot.process_commands(message)
+        elif check_alias():
+            msg = f"Alias found. Executing `{message.content}`."
+            log.cmd(message, msg)
+            await message.channel.send(embed=Embed(msg), delete_after=5)
+        await bot.process_commands(message)
 
     @staticmethod
     @bot.event
@@ -93,11 +90,11 @@ class Event(commands.Cog):
             return
 
         config = bot.db.get_guild(member.guild.id).config
-        music = get_player(member.guild.id).connection
+        music = get_player(member.guild).connection
 
         if before.channel != after.channel:
-            voice_tts = bot.get_channel(int(config.channel.voicetts or -1))
-            log = bot.get_channel(int(config.channel.log or -1))
+            voice_tts_channel = bot.get_channel(int(config.channel.voicetts or -1))
+            log_channel = bot.get_channel(int(config.channel.log or -1))
             members = lambda members: len(
                 list(filter(lambda member: not member.bot, members))
             )
@@ -115,14 +112,16 @@ class Event(commands.Cog):
                 ):
                     music.pause()
 
-            if voice_tts:
-                await voice_tts.send(msg.replace("**", ""), tts=True, delete_after=3)
-            if log:
+            if voice_tts_channel:
+                await voice_tts_channel.send(
+                    msg.replace("**", ""), tts=True, delete_after=0
+                )
+            if log_channel:
                 embed = Embed(f"`{date_format()}`:bust_in_silhouette:{msg}")
                 embed.set_author(
                     name="Voice Presence Update", icon_url=bot.user.avatar_url
                 )
-                await log.send(embed=embed)
+                await log_channel.send(embed=embed)
 
     @staticmethod
     @bot.event
@@ -131,7 +130,7 @@ class Event(commands.Cog):
             return
 
         config = bot.db.get_guild(before.guild.id).config
-        log = bot.get_channel(int(config.channel.log or -1))
+        log_channel = bot.get_channel(int(config.channel.log or -1))
         msg = None
 
         if before.status != after.status:
@@ -143,10 +142,10 @@ class Event(commands.Cog):
             activity = after.activities[-1]
             msg = f"**{before.name}** is now {activity.type.name} **{activity.name}**."
 
-        if log and msg:
+        if log_channel and msg:
             embed = Embed(f"`{date_format()}`:bust_in_silhouette:{msg}")
             embed.set_author(name="User Presence Update", icon_url=bot.user.avatar_url)
-            await log.send(embed=embed)
+            await log_channel.send(embed=embed)
 
     @staticmethod
     @bot.event
@@ -177,8 +176,10 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_command(ctx):
-        global commands_executed
-        commands_executed += 1
+        bot.commands_executed += 1
+
+        if ctx.channel.type.name == "private":
+            return
 
         config = bot.db.get_guild(ctx.guild.id).config
         log.cmd(ctx, ctx.message.content)
@@ -198,7 +199,7 @@ class Event(commands.Cog):
         if isinstance(error, ignored):
             return
 
-        log.cmd(ctx, "Command error:", error)
+        log.cmd(ctx, f"Command error: {error}")
 
         if isinstance(error, commands.CommandNotFound):
             return await ctx.send(embed=Embed(str(error)))

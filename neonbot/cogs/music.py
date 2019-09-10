@@ -1,67 +1,40 @@
+import logging
 import re
 
+import discord
 from addict import Dict
 from discord.ext import commands
 
-from ..classes import YTDL, PaginationEmbed, Player
-from ..helpers import log
-from ..helpers.constants import CHOICES_EMOJI, FFMPEG_OPTIONS, YOUTUBE_REGEX
+from ..classes import PaginationEmbed, Player, Ytdl
+from ..helpers.constants import YOUTUBE_REGEX
 from ..helpers.date import format_seconds
 from ..helpers.utils import Embed, check_args, embed_choices, plural
 
-players = {}
+log = logging.getLogger(__name__)
+
+players = Dict()
 
 
-def get_player(guild_id):
-    if guild_id not in players.keys():
-        players[guild_id] = Player(guild_id)
+def get_player(guild: discord.Guild):
+    if guild.id not in players.keys():
+        players[guild.id] = Player(guild)
 
-    return players[guild_id]
-
-
-async def in_voice_channel(ctx):
-    if ctx.author.voice != None and ctx.author.voice.channel != None:
-        return True
-    else:
-        await ctx.send(embed=Embed("You need to be in a voice channel."))
-        return False
+    return players[guild.id]
 
 
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(hidden=True)
-    @commands.is_owner()
-    async def evalmusic(self, ctx, *args):
-        try:
-            if args[0] == "await":
-                output = await eval(
-                    args[1], {"server": get_player(ctx.guild.id), "bot": self.bot}
-                )
-            else:
-                output = eval(args[0])
-        except Exception as e:
-            output = e
-        finally:
-            output = str(output)
-
-        max_length = 1800
-
-        if len(output) > max_length:
-            msg_array = [
-                output[i : i + max_length] for i in range(0, len(output), max_length)
-            ]
-        else:
-            msg_array = [output]
-
-        for i in msg_array:
-            await ctx.send(f"```py\n{i}```")
-
     @commands.command(aliases=["p"], usage="<url | keyword>")
-    @commands.check(in_voice_channel)
+    @commands.guild_only()
     async def play(self, ctx, *, keyword=None):
-        player = get_player(ctx.guild.id)
+        """Searches the url or the keyword and add it to queue."""
+
+        if ctx.author.voice is None:
+            await ctx.send(embed=Embed("You need to be in a voice channel."))
+
+        player = get_player(ctx.guild)
         embed = info = loading_msg = None
 
         if keyword.isdigit():
@@ -72,7 +45,7 @@ class Music(commands.Cog):
         elif re.search(YOUTUBE_REGEX, keyword):
             loading_msg = await ctx.send(embed=Embed("Loading..."))
 
-            ytdl = await YTDL().extract_info(keyword)
+            ytdl = await Ytdl().extract_info(keyword)
             ytdl_list = ytdl.info
 
             if isinstance(ytdl_list, list):
@@ -96,7 +69,7 @@ class Music(commands.Cog):
                 embed = Embed("Song failed to load.")
         else:
             msg = await ctx.send(embed=Embed("Searching..."))
-            ytdl = await YTDL().extract_info(keyword)
+            ytdl = await Ytdl.extract_info(keyword)
             ytdl_choices = ytdl.get_choices()
             await msg.delete()
             if len(ytdl_choices) == 0:
@@ -131,8 +104,11 @@ class Music(commands.Cog):
             await player.play(ctx)
 
     @commands.command()
+    @commands.guild_only()
     async def pause(self, ctx):
-        player = get_player(ctx.guild.id)
+        """Pauses the current player."""
+
+        player = get_player(ctx.guild)
 
         if player.connection.is_paused():
             return
@@ -145,8 +121,11 @@ class Music(commands.Cog):
         )
 
     @commands.command()
+    @commands.guild_only()
     async def resume(self, ctx):
-        player = get_player(ctx.guild.id)
+        """Resumes the current player."""
+
+        player = get_player(ctx.guild)
 
         if player.connection.is_playing():
             return
@@ -160,30 +139,42 @@ class Music(commands.Cog):
         await ctx.send(embed=Embed("Player resumed."), delete_after=5)
 
     @commands.command(aliases=["next"])
+    @commands.guild_only()
     async def skip(self, ctx):
-        player = get_player(ctx.guild.id)
+        """Skips the current song."""
+
+        player = get_player(ctx.guild)
         player.connection.stop()
 
     @commands.command()
+    @commands.guild_only()
     async def stop(self, ctx):
-        player = get_player(ctx.guild.id)
+        """Stops the current player and resets the track number to 1."""
+
+        player = get_player(ctx.guild)
         await player.next(ctx, stop=True)
         player.current_queue = 0
         log.cmd(ctx, "Player stopped.")
         await ctx.send(embed=Embed("Player stopped."), delete_after=5)
 
     @commands.command()
+    @commands.guild_only()
     async def reset(self, ctx):
-        player = get_player(ctx.guild.id)
+        """Resets the current player and disconnect to voice channel."""
+
+        player = get_player(ctx.guild)
         await player.next(ctx, stop=True)
         await player.connection.disconnect()
         del players[ctx.guild.id]
         await ctx.send(embed=Embed("Player reset."), delete_after=5)
 
     @commands.command()
+    @commands.guild_only()
     async def removesong(self, ctx, index: int):
+        """Remove the song with the index specified."""
+
         index -= 1
-        player = get_player(ctx.guild.id)
+        player = get_player(ctx.guild)
         queue = player.queue[index]
 
         if not queue:
@@ -207,8 +198,11 @@ class Music(commands.Cog):
             await player.next(ctx, index=player.current_queue)
 
     @commands.command(aliases=["vol"], usage="<1 - 100>")
+    @commands.guild_only()
     async def volume(self, ctx, vol: int = -1):
-        player = get_player(ctx.guild.id)
+        """Sets or gets player's volume."""
+
+        player = get_player(ctx.guild)
 
         if vol == -1:
             return await ctx.send(
@@ -225,8 +219,11 @@ class Music(commands.Cog):
         await ctx.send(embed=Embed(f"Volume changed to {vol}%"), delete_after=5)
 
     @commands.command(usage="<off | single | all>")
+    @commands.guild_only()
     async def repeat(self, ctx, args=None):
-        player = get_player(ctx.guild.id)
+        """Sets or gets player's repeat mode."""
+
+        player = get_player(ctx.guild)
 
         if args is None:
             return await ctx.send(
@@ -239,8 +236,11 @@ class Music(commands.Cog):
         await ctx.send(embed=Embed(f"Repeat changed to {args}."), delete_after=5)
 
     @commands.command()
+    @commands.guild_only()
     async def autoplay(self, ctx):
-        player = get_player(ctx.guild.id)
+        """Enables/disables player's autoplay mode."""
+
+        player = get_player(ctx.guild)
         config = player.update_config("autoplay", not player.config.autoplay)
         await ctx.send(
             embed=Embed(
@@ -250,8 +250,11 @@ class Music(commands.Cog):
         )
 
     @commands.command()
+    @commands.guild_only()
     async def shuffle(self, ctx):
-        player = get_player(ctx.guild.id)
+        """Enables/disables player's shuffle mode."""
+
+        player = get_player(ctx.guild)
         config = player.update_config("shuffle", not player.config.shuffle)
         await ctx.send(
             embed=Embed(
@@ -261,9 +264,16 @@ class Music(commands.Cog):
         )
 
     @commands.command(aliases=["np"])
+    @commands.guild_only()
     async def nowplaying(self, ctx):
-        player = get_player(ctx.guild.id)
+        """Displays in brief description of the current playing."""
+
+        player = get_player(ctx.guild)
         config = player.config
+
+        if not player.connection.is_playing():
+            return await ctx.send(embed=Embed("No song playing."), delete_after=5)
+
         now_playing = player.now_playing
 
         footer = [
@@ -292,16 +302,18 @@ class Music(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["list"])
+    @commands.guild_only()
     async def playlist(self, ctx):
-        player = get_player(ctx.guild.id)
+        """List down all songs in the player's queue."""
+
+        player = get_player(ctx.guild)
         config = player.config
         queue = player.queue
-        queue_length = len(queue)
         embeds = []
         temp = []
         duration = 0
 
-        if queue_length == 0:
+        if len(queue) == 0:
             return await ctx.send(embed=Embed("Empty playlist."), delete_after=5)
 
         for i, song in enumerate(player.queue):
@@ -314,7 +326,7 @@ class Music(commands.Cog):
                 temp = []
 
         footer = [
-            f"{plural(queue_length, 'song', 'songs')}",
+            f"{plural(len(queue), 'song', 'songs')}",
             format_seconds(duration),
             f"Volume: {config.volume}%",
             f"Repeat: {config.repeat}",

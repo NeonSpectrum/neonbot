@@ -1,22 +1,23 @@
 import asyncio
+import math
+import random
 from copy import deepcopy
 from io import BytesIO
 
 import discord
 from addict import Dict
-from discord.ext import commands
 from PIL import Image, ImageEnhance
 from pokemon.master import catch_em_all, get_pokemon
 
 from .. import bot
-from ..helpers.utils import Embed, guess_string
+from ..helpers.utils import Embed
 
 pokemons = catch_em_all()
 
 
 class Pokemon:
-    def __init__(self, channel_id):
-        self.channel = bot.get_channel(channel_id)
+    def __init__(self, channel: discord.TextChannel):
+        self.channel = bot.get_channel(channel.id)
         self.status = 0
         self.scoreboard = Dict()
         self.timed_out = False
@@ -35,7 +36,7 @@ class Pokemon:
         embed.set_image(url="attachment://image.png")
 
         guess_embed = embed.copy()
-        guess_embed.set_footer(text=guess_string(name))
+        guess_embed.set_footer(text=self.guess_string(name))
 
         guess_msg = await self.channel.send(
             embed=guess_embed, file=discord.File(black_img, "image.png")
@@ -111,3 +112,16 @@ class Pokemon:
         )
 
         await self.channel.send(embed=embed)
+
+    def guess_string(string):
+        string = list(string)
+
+        i = 0
+        while i < math.ceil(len(string) / 2):
+            index = random.randint(0, len(string) - 1)
+            if string[index] == " " or string[index] == "_":
+                continue
+            string[index] = "_"
+            i += 1
+
+        return " ".join(string)

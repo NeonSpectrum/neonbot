@@ -7,11 +7,10 @@ import youtube_dl
 from addict import Dict
 
 from .. import bot, env
-from ..helpers.constants import TIMEZONE
 from ..helpers.date import date
 
 
-class YTDL:
+class Ytdl:
     def __init__(self, extra_params={}):
         self.thread_pool = ThreadPoolExecutor(max_workers=3)
         self.loop = bot.loop

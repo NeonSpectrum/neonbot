@@ -1,14 +1,21 @@
 import asyncio
 import random
 
+import discord
+
 from .. import bot
 from ..helpers.constants import CHOICES_EMOJI
 from ..helpers.utils import Embed
 
 
 class Connect4:
-    def __init__(self, channel_id):
-        self.channel = bot.get_channel(channel_id)
+    """
+    Initializes a connect 4 game that can start, stop, and show scoreboard.
+    Available to only one game in a channel.
+    """
+
+    def __init__(self, channel: discord.TextChannel):
+        self.channel = bot.get_channel(channel.id)
         self.config = bot.db.get_guild(self.channel.guild.id).config
         self.board = None
         self.players = []
@@ -18,54 +25,64 @@ class Connect4:
         self.timeout = None
         self.winner = None
 
-    async def join(self, user):
+        self.reset_board()
+
+    async def join(self, user: discord.User):
+        """Join the game and determine if the game will start or not
+
+        Parameters
+        ----------
+        user : discord.User
+        """
         if user not in self.players:
             self.players.append(user)
             if len(self.players) != 2:
                 self.timeout = bot.loop.create_task(self.join_timeout())
                 self.waiting_message = await self.channel.send(
                     embed=Embed(
-                        f"Waiting for players to join. To join the game please use `{self.config.prefix}connect4`"
+                        f"Waiting for players to join. To join the game please use`{self.config.prefix}connect4`"
                     )
                 )
             else:
                 self.timeout.cancel()
-                self.reset_board()
                 await self.show_board()
                 await self.start()
         else:
             await self.channel.send(embed=Embed("You are already in the game."))
 
     async def start(self):
-        while True:
+        """Starts the game and will loop until winner is detected"""
 
-            def check(m):
-                return (
-                    any(
-                        x.id == m.author.id and i == self.turn
-                        for i, x in enumerate(self.players)
-                    )
-                    and m.content.isdigit()
-                    and int(m.content) > 0
-                    and int(m.content) <= 7
+        def check(m):
+            return (
+                m.content.isdigit()
+                and any(
+                    x.id == m.author.id and i == self.turn
+                    for i, x in enumerate(self.players)
                 )
+                and int(m.content) > 0
+                and int(m.content) <= 7
+            )
 
-            try:
-                msg = await bot.wait_for("message", check=check, timeout=30)
-                is_moved = self.move_player(msg.author, int(msg.content) - 1)
-                if not is_moved:
-                    await self.channel.send(embed=Embed(f"{msg.content} is full."))
-                    continue
-                self.winner = self.check_winner()
-                self.next_player()
-                await self.show_board()
-                if self.winner:
-                    break
-            except asyncio.TimeoutError:
-                self.winner = self.next_player()
-                await self.show_board(timeout=True)
+        try:
+            msg = await bot.wait_for("message", check=check, timeout=30)
+        except asyncio.TimeoutError:
+            self.winner = self.next_player()
+            await self.show_board(timeout=True)
+        else:
+            is_moved = self.move_player(msg.author, int(msg.content) - 1)
+            if not is_moved:
+                await self.channel.send(embed=Embed(f"{msg.content} is full."))
+                return self.start()
+            self.winner = self.check_winner()
+            self.next_player()
+            await self.show_board()
+            if not self.winner:
+                self.start()
 
     async def join_timeout(self):
+        """Add timeout to check whether a player will join the game or not."""
+
         await asyncio.sleep(20)
         self.players = []
         await self.waiting_message.delete()
@@ -89,19 +106,22 @@ class Connect4:
         ]
 
     async def show_board(self, timeout=False):
+        """Shows the connect4 board and displays the current player turn or the winner.
+
+        Parameters
+        ----------
+        timeout : bool, optional
+            To check if the winner win through timeout, by default False
+        """
+
         winner = self.winner
         board = []
 
         for row in self.board:
-            arr = []
+            line = ""
             for circle in row:
-                if circle == 0:
-                    arr.append("⚫")
-                elif circle == 1:
-                    arr.append("🔴")
-                elif circle == 2:
-                    arr.append("🔵")
-            board.append("".join(arr))
+                line += ["⚫", "🔴", "🔵"][circle]
+            board.append(line)
         board.append("".join(CHOICES_EMOJI[:7]))
         if not winner:
             embed = Embed(title=f"Player to move: **{self.players[self.turn]}**")
@@ -127,17 +147,39 @@ class Connect4:
         if winner:
             self.__init__(self.channel.id)
 
-    def move_player(self, user_id, index):
+    def move_player(self, user: discord.User, index: int) -> bool:
+        """Moves the player and check if the slot is full
+
+        Parameters
+        ----------
+        user : discord.User
+        index : int
+            Location to where the player moves
+
+        Returns
+        -------
+        bool
+            Can move or not?
+        """
         for i in range(len(self.board) - 1, -1, -1):
             if self.board[i][index] == 0:
-                self.board[i][index] = self.players.index(user_id) + 1
+                self.board[i][index] = self.players.index(user) + 1
                 return True
         return False
 
     def _check_line(self, a, b, c, d):
         return a != 0 and a == b and a == c and a == d
 
-    def check_winner(self):
+    def check_winner(self) -> int:
+        """Get winner by checking lines horizontally and verically
+
+        Returns
+        -------
+        int
+            -1 = Draw
+            0 = No Winner
+            [1, 2] = Winner
+        """
         board = self.board
 
         for i in range(0, 3):

@@ -1,13 +1,9 @@
 import asyncio
-import math
-import random
 
 import discord
-from discord.ext import commands
 
 from .. import bot
-from ..helpers import log
-from .constants import CHOICES_EMOJI, PAGINATION_EMOJI, TIMEZONE
+from .constants import CHOICES_EMOJI
 
 
 def Embed(description=None, **kwargs):
@@ -61,17 +57,3 @@ async def check_args(ctx, arg, choices):
         return True
     await ctx.send(embed=Embed(f"Invalid argument. ({' | '.join(choices)})"))
     return False
-
-
-def guess_string(string):
-    string = list(string)
-
-    i = 0
-    while i < math.ceil(len(string) / 2):
-        index = random.randint(0, len(string) - 1)
-        if string[index] == " " or string[index] == "_":
-            continue
-        string[index] = "_"
-        i += 1
-
-    return " ".join(string)

@@ -1,28 +1,33 @@
+import logging
 import random
 
 import discord
 from addict import Dict
 
 from .. import bot
-from ..helpers import log
 from ..helpers.constants import FFMPEG_OPTIONS
 from ..helpers.date import format_seconds
 from ..helpers.utils import Embed
-from . import YTDL
+from . import Ytdl
+
+log = logging.getLogger(__name__)
 
 
 class Player:
-    def __init__(self, guild_id):
-        self.db = bot.db.get_guild(guild_id)
+    """
+    Initializes player that handles play, playlist, messages,
+    repeat, shuffle, autoplay.
+    """
+
+    def __init__(self, guild: discord.Guild):
+        self.db = bot.db.get_guild(guild.id)
         self.config = self.db.config.music
         self.connection = None
         self.current_queue = 0
         self.queue = []
         self.shuffled_list = []
         self.disable_after = False
-        self.messages = Dict(
-            {"last_playing": None, "last_finished": None, "paused": None}
-        )
+        self.messages = Dict(last_playing=None, last_finished=None, paused=None)
 
     @property
     def now_playing(self):
@@ -37,24 +42,25 @@ class Player:
             info.requested = now_playing.requested
             self.queue[self.current_queue] = now_playing = info
 
-        if YTDL.is_link_expired(now_playing.stream):
-            log.info("Link expired:", now_playing.title)
-            ytdl = await YTDL().extract_info(now_playing.id)
+        if Ytdl.is_link_expired(now_playing.stream):
+            log.warn(f"Link expired: {now_playing.title}")
+            ytdl = await Ytdl().extract_info(now_playing.id)
             self.queue[self.current_queue] = now_playing = ytdl.get_info()
-            log.info("Fetched new link for", now_playing.title)
+            log.info(f"Fetched new link for {now_playing.title}")
 
         try:
             song = discord.FFmpegPCMAudio(
                 now_playing.stream, before_options=FFMPEG_OPTIONS
             )
             source = discord.PCMVolumeTransformer(song, volume=self.config.volume / 100)
-        except discord.ClientException as e:
-            log.warn(e)
-            return await ctx.send("Error while playing the song.")
+        except discord.ClientException:
+            msg = "Error while playing the song."
+            log.exception(msg)
+            return await ctx.send(msg)
 
         async def after(error):
             if error:
-                log.warn("After play error:", error)
+                log.warn(f"After play error: {error}")
             if not self.disable_after:
                 await self.next(ctx)
 
@@ -86,9 +92,11 @@ class Player:
                 self.current_queue = index
             return await self.play(ctx)
 
-        if config.shuffle or await self.process_repeat(ctx):
-            if config.shuffle:
-                self.current_queue = self.process_shuffle(ctx)
+        if (
+            self.process_shuffle()
+            or await self.process_autoplay(ctx)
+            or self.process_repeat()
+        ):
             await self.play(ctx)
 
     async def playing_message(self, ctx, delete_after=None):
@@ -155,39 +163,43 @@ class Player:
             embed=embed, delete_after=delete_after
         )
 
-    async def process_repeat(self, ctx):
+    def process_repeat(self) -> bool:
         config = self.config
 
         if self.current_queue == len(self.queue) - 1:
             if config.repeat == "all":
                 self.current_queue = 0
             elif config.repeat == "off":
-                if config.autoplay:
-                    await self.process_autoplay(ctx)
-                    self.current_queue += 1
-                else:
-                    # reset queue to index 0 and stop playing
-                    self.current_queue = 0
-                    return False
+                # reset queue to index 0 and stop playing
+                self.current_queue = 0
+                return
         elif config.repeat != "single":
             self.current_queue += 1
 
         return True
 
-    def process_shuffle(self, ctx):
-        if self.current_queue in self.shuffled_list:
-            self.shuffled_list.append(self.current_queue)
+    def process_shuffle(self) -> bool:
+        if not self.config.shuffle:
+            return
+
         if len(self.shuffled_list) == len(self.queue):
-            self.shuffled_list = [self.current_queue]
+            self.shuffled_list = [self.now_playing.id]
+        elif self.now_playing.id not in self.shuffled_list:
+            self.shuffled_list.append(self.now_playing.id)
+
         while True:
             index = random.randint(0, len(self.queue) - 1)
-            if index not in self.shuffled_list:
-                return index
+            if self.queue[index].id not in self.shuffled_list:
+                self.current_queue = index
+                return True
 
-    async def process_autoplay(self, ctx):
+    async def process_autoplay(self, ctx) -> bool:
+        if not self.config.autoplay or self.current_queue != len(self.queue) - 1:
+            return
+
         current_queue = self.now_playing
 
-        related_videos = await YTDL.get_related_videos(current_queue.id)
+        related_videos = await Ytdl.get_related_videos(current_queue.id)
         filtered_videos = []
 
         for video in related_videos:
@@ -199,9 +211,12 @@ class Player:
 
         video_id = filtered_videos[0].id.videoId
 
-        ytdl = await YTDL().extract_info(video_id)
+        ytdl = await Ytdl().extract_info(video_id)
         info = ytdl.get_info()
         self.add_to_queue(ctx, info, requested=bot.user)
+        self.current_queue += 1
+
+        return True
 
     def add_to_queue(self, ctx, data, requested=None):
         data.requested = requested or ctx.author

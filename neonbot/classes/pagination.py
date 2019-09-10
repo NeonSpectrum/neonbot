@@ -1,6 +1,7 @@
 import asyncio
 
 import discord
+from discord.ext import commands
 
 from .. import bot
 from ..helpers.constants import PAGINATION_EMOJI
@@ -8,16 +9,24 @@ from ..helpers.utils import Embed
 
 
 class PaginationEmbed:
-    def __init__(self, array=[], authorized_users=[]):
+    """
+    Initializes a pagination embed that has a function
+    previous, next and delete.
+
+    You cannot control this after the timeout expires. Defaults to 60s
+    """
+
+    def __init__(self, array=[], authorized_users=[], timeout=60):
         self.bot = bot
         self.array = array
         self.authorized_users = authorized_users
+        self.timeout = timeout
 
         self.index = 0
         self.embed = Embed()
         self.msg = None
 
-    async def build(self, ctx):
+    async def build(self, ctx: commands.Context):
         self.ctx = ctx
         self.title = self.embed.title
         await self._send()
@@ -25,6 +34,12 @@ class PaginationEmbed:
         if len(self.array) > 1:
             asyncio.ensure_future(self._add_reactions())
             await self._listen()
+
+    def set_author(self, **kwargs):
+        self.embed.set_author(**kwargs)
+
+    def set_footer(self, **kwargs):
+        self.embed.set_footer(**kwargs)
 
     async def _send(self):
         embed = self.embed.copy()
@@ -39,6 +54,8 @@ class PaginationEmbed:
         self.msg = await self.ctx.send(embed=embed)
 
     async def _listen(self):
+        """Listens to react of the user and execute commands."""
+
         msg = self.msg
 
         def check(reaction, user):
@@ -53,7 +70,7 @@ class PaginationEmbed:
         while True:
             try:
                 reaction, _ = await self.bot.wait_for(
-                    "reaction_add", timeout=60, check=check
+                    "reaction_add", timeout=self.timeout, check=check
                 )
 
                 await self._execute_command(PAGINATION_EMOJI.index(reaction.emoji))
@@ -72,7 +89,7 @@ class PaginationEmbed:
             except discord.NotFound:
                 break
 
-    async def _execute_command(self, cmd):
+    async def _execute_command(self, cmd: int):
         current_index = self.index
 
         if cmd == 0 and self.index > 0:
@@ -82,9 +99,3 @@ class PaginationEmbed:
 
         if current_index != self.index:
             await self._send()
-
-    def set_author(self, **kwargs):
-        self.embed.set_author(**kwargs)
-
-    def set_footer(self, **kwargs):
-        self.embed.set_footer(**kwargs)

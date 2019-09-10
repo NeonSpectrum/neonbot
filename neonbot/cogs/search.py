@@ -1,4 +1,3 @@
-import random
 import textwrap
 from datetime import datetime
 from io import BytesIO
@@ -19,7 +18,9 @@ class Search(commands.Cog):
         self.session = bot.session
 
     @commands.command()
-    async def image(self, ctx, *, args):
+    async def image(self, ctx, *, keyword):
+        """Searches for an image in Google Image."""
+
         if not env("GOOGLE_CX") or not env("GOOGLE_API"):
             return await ctx.send(embed=Embed("Error. Google API not found."))
 
@@ -27,7 +28,7 @@ class Search(commands.Cog):
         res = await self.session.get(
             "https://www.googleapis.com/customsearch/v1",
             params={
-                "q": args,
+                "q": keyword,
                 "num": 1,
                 "searchType": "image",
                 "cx": env("GOOGLE_CX"),
@@ -38,7 +39,8 @@ class Search(commands.Cog):
 
         embed = Embed()
         embed.set_author(
-            name=f"Google Images for {args}", icon_url="http://i.imgur.com/G46fm8J.png"
+            name=f"Google Images for {keyword}",
+            icon_url="http://i.imgur.com/G46fm8J.png",
         )
         embed.set_footer(text=f"Searched by {ctx.author}")
         embed.set_image(url=image["items"][0].link)
@@ -47,13 +49,15 @@ class Search(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["dict"])
-    async def dictionary(self, ctx, *, args):
+    async def dictionary(self, ctx, *, word):
+        """Searches for a word in Merriam Webster."""
+
         if not env("DICTIONARY_API"):
             return await ctx.send(embed=Embed("Error. Dictionary API not found."))
 
         msg = await ctx.send(embed=Embed("Searching..."))
         res = await self.session.get(
-            f"https://www.dictionaryapi.com/api/v3/references/sd4/json/{args}",
+            f"https://www.dictionaryapi.com/api/v3/references/sd4/json/{word}",
             params={"key": env("DICTIONARY_API")},
         )
         json = await res.json()
@@ -69,7 +73,7 @@ class Search(commands.Cog):
             res = await self.session.get(url)
 
         embed = Embed()
-        embed.add_field(name=args, value=f"*{prs.mw}*" + "\n" + dictionary.shortdef[0])
+        embed.add_field(name=word, value=f"*{prs.mw}*" + "\n" + dictionary.shortdef[0])
         embed.set_author(
             name="Merriam-Webster Dictionary",
             icon_url="https://dictionaryapi.com/images/MWLogo.png",
@@ -82,15 +86,17 @@ class Search(commands.Cog):
         await ctx.send(embed=embed)
         if audio:
             content = await res.read()
-            await ctx.send(file=discord.File(BytesIO(content), args + ".wav"))
+            await ctx.send(file=discord.File(BytesIO(content), word + ".wav"))
 
     @commands.command()
-    async def weather(self, ctx, *, loc):
+    async def weather(self, ctx, *, location):
+        """Searches for a weather forecast in Open Weather Map."""
+
         msg = await ctx.send(embed=Embed("Searching..."))
         res = await self.session.get(
             f"http://api.openweathermap.org/data/2.5/weather",
             params={
-                "q": loc,
+                "q": location,
                 "units": "metric",
                 "appid": "a88701020436549755f42d7e4be71762",
             },
@@ -163,6 +169,8 @@ class Search(commands.Cog):
 
     @commands.command()
     async def lol(self, ctx, *, champion):
+        """Searches for a champion guide in LeagueSpy."""
+
         loading_msg = await ctx.send(embed=Embed("Searching..."))
         res = await self.session.get(
             f"https://www.leaguespy.net/league-of-legends/champion/{champion}/stats"
@@ -298,6 +306,8 @@ class Search(commands.Cog):
 
     @commands.command()
     async def lyrics(self, ctx, *, song):
+        """Searches for a lyrics in AZLyrics."""
+
         loading_msg = await ctx.send(embed=Embed("Searching..."))
         res = await self.session.get(
             "https://search.azlyrics.com/search.php", params={"q": song}

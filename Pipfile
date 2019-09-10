@@ -4,8 +4,10 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-pylint = "*"
 black = {version = "*",pre = "true"}
+flake8 = "*"
+flake8-docstrings = "*"
+flake8-mypy = "*"
 
 [packages]
 addict = "*"

@@ -1,5 +1,7 @@
 TIMEZONE = "Asia/Manila"
-LOG_FORMAT = "%(asctime)s:%(levelname)s:%(name)s: %(message)s"
+LOG_FORMAT = (
+    "%(asctime)s [%(levelname)s] [%(module)s.%(funcName)s:%(lineno)d]: %(message)s"
+)
 
 PERMISSION = 506723399
 
@@ -25,7 +27,7 @@ FFMPEG_OPTIONS = (
 YOUTUBE_REGEX = r"^(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+"
 
 LOGO = """\
- __    _  _______  _______  __    _  _______  _______  _______   
+ __    _  _______  _______  __    _  _______  _______  _______
 |  |  | ||       ||       ||  |  | ||  _    ||       ||       |
 |   |_| ||    ___||   _   ||   |_| || |_|   ||   _   ||_     _|
 |       ||   |___ |  | |  ||       ||       ||  | |  |  |   |

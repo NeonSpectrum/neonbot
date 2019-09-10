@@ -7,13 +7,13 @@ from ..helpers.utils import Embed
 rooms = Dict()
 
 
-def get_channel(channel_id):
-    if channel_id not in rooms.keys():
-        rooms[channel_id] = Dict(
-            {"pokemon": Pokemon(channel_id), "connect4": Connect4(channel_id)}
+def get_channel(channel):
+    if channel.id not in rooms.keys():
+        rooms[channel.id] = Dict(
+            {"pokemon": Pokemon(channel), "connect4": Connect4(channel)}
         )
 
-    return rooms[channel_id]
+    return rooms[channel.id]
 
 
 class Game(commands.Cog):
@@ -21,8 +21,11 @@ class Game(commands.Cog):
         self.bot = bot
 
     @commands.command(usage="<start | stop | scoreboard>")
+    @commands.guild_only()
     async def pokemon(self, ctx, *, cmd):
-        pokemon = get_channel(ctx.channel.id).pokemon
+        """Starts, stops, or shows the scoreboard of the pokemon game."""
+
+        pokemon = get_channel(ctx.channel).pokemon
 
         if cmd == "start":
             if pokemon.status == 1:
@@ -35,7 +38,7 @@ class Game(commands.Cog):
                 await pokemon.start()
 
             if pokemon.timed_out:
-                return pokemon.__init__(ctx.channel.id)
+                return pokemon.__init__(ctx.channel)
 
             await pokemon.show_scoreboard()
         elif cmd == "stop":
@@ -45,8 +48,11 @@ class Game(commands.Cog):
             await pokemon.show_scoreboard()
 
     @commands.command()
+    @commands.guild_only()
     async def connect4(self, ctx):
-        connect4 = get_channel(ctx.channel.id).connect4
+        """Starts connect4 game and wait for the players if players are insufficient."""
+
+        connect4 = get_channel(ctx.channel).connect4
         if connect4.players == 2:
             await ctx.send(
                 embed=Embed("Connect4 game is already running"), delete_after=5
