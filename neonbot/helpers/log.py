@@ -14,7 +14,7 @@ def colored(*args):
 
 def cprint(*args):
     if env.bool("HEROKU", False):
-        print(args[0])
+        return print(args[0])
     return termcolor.cprint(*args)
 
 
