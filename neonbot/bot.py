@@ -14,10 +14,9 @@ log = logging.getLogger(__name__)
 
 class Bot(commands.Bot):
     def __init__(self):
-        self.owner_ids = env.list("OWNER_IDS", [], subcast=int)
         self.default_prefix = env("DEFAULT_PREFIX", ".")
         super().__init__(
-            command_prefix=self.default_prefix, owner_ids=self.owner_ids
+            command_prefix=self.default_prefix, owner_ids=env.list("OWNER_IDS", [], subcast=int)
         )
         self.db = Database()
         self.session = ClientSession(loop=self.loop)
