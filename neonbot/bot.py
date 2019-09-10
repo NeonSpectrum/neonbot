@@ -17,7 +17,7 @@ class Bot(commands.Bot):
         self.owner_ids = env.list("OWNER_IDS", [], subcast=int)
         self.default_prefix = env("DEFAULT_PREFIX", ".")
         super().__init__(
-            command_prefix=self.default_prefix, owner_ids=set(self.owner_ids)
+            command_prefix=self.default_prefix, owner_ids=self.owner_ids
         )
         self.db = Database()
         self.session = ClientSession(loop=self.loop)
