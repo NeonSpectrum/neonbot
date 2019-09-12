@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import random
 
@@ -27,7 +26,6 @@ class Player:
         self.current_queue = 0
         self.queue = []
         self.shuffled_list = []
-        self.disable_after = False
         self.messages = Dict(last_playing=None, last_finished=None, paused=None)
 
     @property
@@ -59,26 +57,19 @@ class Player:
             log.exception(msg)
             return await ctx.send(msg)
 
-        async def after(error):
+        def after(error):
             if error:
                 log.warn(f"After play error: {error}")
-            if not self.disable_after:
-                await self.next(ctx)
+            bot.loop.create_task(self.next(ctx))
 
-        self.connection.play(
-            source,
-            after=lambda error: asyncio.run_coroutine_threadsafe(
-                after(error), bot.loop
-            ),
-        )
+        self.connection.play(source, after=after)
         await self.playing_message(ctx)
-        self.disable_after = False
 
     async def next(self, ctx, *, index=None, stop=False):
         await self.finished_message(ctx, delete_after=5 if stop else None)
 
         if stop or index is not None:
-            self.disable_after = True
+            self.connection._player.after = None
             self.connection.stop()
 
             if stop:

@@ -15,20 +15,18 @@ log = logging.getLogger(__name__)
 
 class Bot(commands.Bot):
     def __init__(self):
+        super().__init__(command_prefix=self.get_command_prefix())
+
         self.start_message()
 
-        self.default_prefix = env("DEFAULT_PREFIX", ".")
         self.db = Database()
-        self.session = ClientSession(timeout=ClientTimeout(total=30))
+        self.owner_ids = set(env.list("OWNER_IDS", [], subcast=int))
+
+        self.activity = self.get_activity()
+        self.session = ClientSession(loop=self.loop, timeout=ClientTimeout(total=30))
 
         self.app_info = None
         self.commands_executed = 0
-
-        super().__init__(
-            command_prefix=self.get_command_prefix(),
-            activity=self.get_activity(),
-            owner_ids=set(env.list("OWNER_IDS", [], subcast=int)),
-        )
 
     def start_message(self):
         cprint(LOGO, "blue")
