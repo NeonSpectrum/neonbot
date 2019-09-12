@@ -73,6 +73,8 @@ class Player:
             self.connection.stop()
 
             if stop:
+                if self.messages.last_playing:
+                    await self.messages.last_playing.delete()
                 return
 
             self.current_queue = index
