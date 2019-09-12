@@ -85,10 +85,12 @@ class Connect4:
 
         await asyncio.sleep(20)
         self.players = []
-        await self.waiting_message.delete()
-        await self.channel.send(
-            embed=Embed("Insufficient players. The game will now close."),
-            delete_after=5,
+        asyncio.gather(
+            self.waiting_message.delete(),
+            self.channel.send(
+                embed=Embed("Insufficient players. The game will now close."),
+                delete_after=5,
+            ),
         )
 
     def next_player(self):
@@ -120,7 +122,7 @@ class Connect4:
         for row in self.board:
             line = ""
             for circle in row:
-                line += ["⚫", "🔴", "🔵"][circle]
+                line += ("⚫", "🔴", "🔵")[circle]
             board.append(line)
         board.append("".join(CHOICES_EMOJI[:7]))
         if not winner:
@@ -140,6 +142,7 @@ class Connect4:
         embed.set_footer(
             text=f"Started by {self.players[0]}", icon_url=self.players[0].avatar_url
         )
+
         if self.last_board_message:
             await self.last_board_message.delete()
         self.last_board_message = await self.channel.send(embed=embed)

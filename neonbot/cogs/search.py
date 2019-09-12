@@ -1,3 +1,4 @@
+import logging
 import textwrap
 from datetime import datetime
 from io import BytesIO
@@ -10,6 +11,8 @@ from discord.ext import commands
 from .. import env
 from ..classes import PaginationEmbed
 from ..helpers.utils import Embed, embed_choices
+
+log = logging.getLogger(__name__)
 
 
 class Search(commands.Cog):
@@ -242,25 +245,21 @@ class Search(commands.Cog):
             rune_build[2].append(rune.get("title"))
 
         info = Dict(
-            {
-                "name": soup.select(".champ__header__left__main > h2")[0].get_text(),
-                "icon": soup.select(".champ__header__left__radial img")[0].get("src"),
-                "role": soup.select(
-                    ".stat-source > .stat-source__btn[active=true] > a"
-                )[0]
-                .get_text()
-                .split(" ")[0],
-                "role_icon": "https://www.leaguespy.net"
-                + soup.select(".champ__header__left__radial > .overlay > img")[0].get(
-                    "src"
-                ),
-                "win_rate": soup.select(".champ__header__left__main > .stats-bar")[0]
-                .find("span")
-                .get_text(),
-                "ban_rate": soup.select(".champ__header__left__main > .stats-bar")[1]
-                .find("span")
-                .get_text(),
-            }
+            name=soup.select(".champ__header__left__main > h2")[0].get_text(),
+            icon=soup.select(".champ__header__left__radial img")[0].get("src"),
+            role=soup.select(".stat-source > .stat-source__btn[active=true] > a")[0]
+            .get_text()
+            .split(" ")[0],
+            role_icon="https://www.leaguespy.net"
+            + soup.select(".champ__header__left__radial > .overlay > img")[0].get(
+                "src"
+            ),
+            win_rate=soup.select(".champ__header__left__main > .stats-bar")[0]
+            .find("span")
+            .get_text(),
+            ban_rate=soup.select(".champ__header__left__main > .stats-bar")[1]
+            .find("span")
+            .get_text(),
         )
 
         embed = Embed()
@@ -315,39 +314,47 @@ class Search(commands.Cog):
         html = await res.text()
         soup = BeautifulSoup(html, "html.parser")
         links = [
-            Dict({"title": link.find("b").get_text(), "url": link.get("href")})
-            for link in soup.select("td.visitedlyr > a", limit=5)
+            Dict(title=link.find("b").get_text(), url=link.get("href"))
+            for link in soup.select("td.visitedlyr > a")
+            if "/lyrics/" in link.get("href")
         ]
         await loading_msg.delete()
-        choice = await embed_choices(ctx, links)
+        choice = await embed_choices(ctx, links[:5])
         if choice < 0:
             return
-        res = await self.session.get(links[choice].url, proxy=env("PROXY", None))
-        html = await res.text()
-        soup = BeautifulSoup(html, "html.parser")
-        div = soup.select("div.col-xs-12.col-lg-8.text-center")[0]
-        title = div.select("b")[0].get_text()
-        lyrics = div.select("div:nth-of-type(5)")[0].get_text().splitlines()
 
-        lines = []
+        try:
+            res = await self.session.get(links[choice].url, proxy=env("PROXY", None))
+            html = await res.text()
+            soup = BeautifulSoup(html, "html.parser")
+            div = soup.select("div.col-xs-12.col-lg-8.text-center")[0]
+            title = div.select("b")[0].get_text()
+            lyrics = div.select("div:nth-of-type(5)")[0].get_text().splitlines()
+        except Exception:
+            log.exception("There was an error parsing the url.")
+            await ctx.send(
+                embed=Embed("There was error fetching the lyrics."), delete_after=5
+            )
+        else:
+            lines = []
 
-        for i in range(0, len(lyrics), 25):
-            line = lyrics[i : i + 25]
-            while not line[-1]:
-                del line[-1]
-            while not line[0]:
-                del line[0]
-            lines.append("\n".join(line))
+            for i in range(0, len(lyrics), 25):
+                line = lyrics[i : i + 25]
+                while not line[-1]:
+                    del line[-1]
+                while not line[0]:
+                    del line[0]
+                lines.append("\n".join(line))
 
-        embeds = [Embed(line) for line in lines if line]
+            embeds = [Embed(line) for line in lines if line]
 
-        embed = PaginationEmbed(array=embeds, authorized_users=[ctx.author.id])
-        embed.set_author(name=title, icon_url="https://i.imgur.com/SBMH84I.png")
-        embed.set_footer(
-            text="Powered by AZLyrics",
-            icon_url="https://www.azlyrics.com/az_logo_tr.png",
-        )
-        await embed.build(ctx)
+            embed = PaginationEmbed(array=embeds, authorized_users=[ctx.author.id])
+            embed.set_author(name=title, icon_url="https://i.imgur.com/SBMH84I.png")
+            embed.set_footer(
+                text="Powered by AZLyrics",
+                icon_url="https://www.azlyrics.com/az_logo_tr.png",
+            )
+            await embed.build(ctx)
 
 
 def setup(bot):

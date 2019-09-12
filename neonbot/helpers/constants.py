@@ -3,7 +3,7 @@ LOG_FORMAT = (
     "%(asctime)s [%(levelname)s] [%(module)s.%(funcName)s:%(lineno)d]: %(message)s"
 )
 
-PERMISSION = 506723399
+PERMISSIONS = 506723399
 
 PAGINATION_EMOJI = ["◀", "▶", "🗑"]
 CHOICES_EMOJI = [

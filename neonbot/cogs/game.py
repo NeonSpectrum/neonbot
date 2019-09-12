@@ -1,3 +1,5 @@
+import logging
+
 from addict import Dict
 from discord.ext import commands
 
@@ -6,12 +8,12 @@ from ..helpers.utils import Embed
 
 rooms = Dict()
 
+log = logging.getLogger(__name__)
+
 
 def get_channel(channel):
     if channel.id not in rooms.keys():
-        rooms[channel.id] = Dict(
-            {"pokemon": Pokemon(channel), "connect4": Connect4(channel)}
-        )
+        rooms[channel.id] = Dict(pokemon=Pokemon(channel), connect4=Connect4(channel))
 
     return rooms[channel.id]
 

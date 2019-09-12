@@ -32,8 +32,7 @@ class PaginationEmbed:
         await self._send()
 
         if len(self.array) > 1:
-            asyncio.ensure_future(self._add_reactions())
-            await self._listen()
+            asyncio.gather(self._add_reactions(), self._listen())
 
     def set_author(self, **kwargs):
         self.embed.set_author(**kwargs)
@@ -67,20 +66,19 @@ class PaginationEmbed:
                 and reaction.message.id == msg.id
             )
 
-        while True:
-            try:
-                reaction, _ = await self.bot.wait_for(
-                    "reaction_add", timeout=self.timeout, check=check
-                )
+        try:
+            reaction, _ = await self.bot.wait_for(
+                "reaction_add", timeout=self.timeout, check=check
+            )
 
-                await self._execute_command(PAGINATION_EMOJI.index(reaction.emoji))
+            await self._execute_command(PAGINATION_EMOJI.index(reaction.emoji))
 
-                if reaction.emoji == "🗑":
-                    await self.msg.delete()
-
-            except asyncio.TimeoutError:
-                await msg.clear_reactions()
-                break
+            if reaction.emoji == "🗑":
+                return await self.msg.delete()
+        except asyncio.TimeoutError:
+            await msg.clear_reactions()
+        else:
+            await self._listen()
 
     async def _add_reactions(self):
         for emoji in PAGINATION_EMOJI:

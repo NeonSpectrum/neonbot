@@ -2,9 +2,10 @@ import logging
 
 import discord
 from discord.ext import commands
+from discord.utils import oauth_url
 
 from .. import bot
-from ..helpers.constants import PERMISSION
+from ..helpers.constants import PERMISSIONS
 from ..helpers.date import date_format
 from ..helpers.utils import Embed
 from .music import get_player
@@ -15,24 +16,12 @@ log = logging.getLogger(__name__)
 IGNORED_DELETEONCMD = ["eval", "prune"]
 
 
-def get_activity():
-    settings = bot.db.get_settings().settings
-    activity_type = settings.game.type.lower()
-    activity_name = settings.game.name
-    status = settings.status
-
-    return discord.Activity(
-        name=activity_name,
-        type=discord.ActivityType[activity_type],
-        status=discord.Status[status],
-    )
-
-
 class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_connect():
-        await bot.change_presence(activity=get_activity())
+        if bot.app_info is None:
+            await bot.get_app_info()
         log.info(f"Logged in as {bot.user}")
 
     @staticmethod
@@ -59,15 +48,15 @@ class Event(commands.Cog):
 
         if message.content.replace("<@!", "<@", 1).startswith(bot.user.mention):
             log.cmd(message, message.content)
-            return await chatbot(message)
+            async with message.channel.typing():
+                await chatbot(message)
+            return
         elif message.channel.type.name == "private":
             if message.content.lower() == "invite":
-                application = await bot.application_info()
-                await message.channel.send(
-                    embed=Embed(
-                        f"Bot invite link: https://discordapp.com/oauth2/authorize?client_id={application.id}&scope=bot&permissions={PERMISSION}"
-                    )
+                url = oauth_url(
+                    bot.app_info.id, discord.Permissions(permissions=PERMISSIONS)
                 )
+                await message.channel.send(f"Bot invite link: {url}")
                 return log.info(f"Sent an invite link to: {message.author}")
             elif message.author.id != bot.user.id:
                 log.info(f"DM from {message.author}: {message.content}")
@@ -102,6 +91,7 @@ class Event(commands.Cog):
             if after.channel:
                 msg = f"**{member.name}** has connected to **{after.channel.name}**"
                 if music and music.is_paused() and members(after.channel.members) > 0:
+                    log.cmd(member, "Player resumed because someone connected.")
                     music.resume()
             else:
                 msg = f"**{member.name}** has disconnected to **{before.channel.name}**"
@@ -110,6 +100,7 @@ class Event(commands.Cog):
                     and music.is_playing()
                     and members(before.channel.members) == 0
                 ):
+                    log.cmd(member, "Player paused because no users connected.")
                     music.pause()
 
             if voice_tts_channel:

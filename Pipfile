@@ -11,7 +11,7 @@ flake8-mypy = "*"
 
 [packages]
 addict = "*"
-discord-py = {git = "https://github.com/Rapptz/discord.py.git"}
+discord-py = {git = "https://github.com/Rapptz/discord.py.git",ref = "master"}
 environs = "*"
 psutil = "*"
 pyasn1 = "*"

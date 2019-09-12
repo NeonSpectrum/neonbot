@@ -9,6 +9,9 @@ log = logging.getLogger(__name__)
 
 
 class Database:
+    def __init__(self):
+        self.db = self.load_database()
+
     def load_database(self):
         username = env("DB_USER")
         password = env("DB_PASS")
@@ -25,7 +28,7 @@ class Database:
         )
         log.info(f"MongoDB connection established on {':'.join(url)}")
 
-        self.db = client[name]
+        return client[name]
 
     def process_database(self, guilds):
         for guild in guilds:

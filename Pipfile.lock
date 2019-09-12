@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "217a2c34ce33077813e6474b9907549cb24c00c277d895ca0b34894cbe215d74"
+            "sha256": "7d4e2ef9c23f79c39755a8d1c7d586d2800555419ac7896c2023b101d993fc9f"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -125,7 +125,7 @@
         },
         "discord-py": {
             "git": "https://github.com/Rapptz/discord.py.git",
-            "ref": "ea3d119ca61e269f3d5bfdfe42178a82d2dba5e6"
+            "ref": "b4358d0dcf46f426717a84090f4ec158dd243faf"
         },
         "environs": {
             "hashes": [
@@ -144,10 +144,10 @@
         },
         "marshmallow": {
             "hashes": [
-                "sha256:159c3ed37094d66867bbacdf2e7effd7c7ad88c6b11f9b398ff5ea1d118508c3",
-                "sha256:51188df086da5c427c3c193faddf7f95857ee4053dbf2d083e5cbfd846b2fb29"
+                "sha256:5d6412948383b8d628b9d267045e83a5c4c387300ee7d7d57edc93d375be2660",
+                "sha256:76603a8a7517e753ff4ab811b8b987bc14cba206cf0aa7473142120dee6b9a78"
             ],
-            "version": "==3.0.3"
+            "version": "==3.0.4"
         },
         "multidict": {
             "hashes": [
@@ -382,11 +382,11 @@
         },
         "youtube-dl": {
             "hashes": [
-                "sha256:c9b8fb6c5a3d62d37c722495f83fc0839aa9c0dea966d38bb2325a87f85dc83c",
-                "sha256:cf543d2379af92709f7345ec0e53894c93ab6ab8ae54ed211d4a11b3e6d03460"
+                "sha256:6a42947dc0d9f26881260caf7d03dab0e53b2448e141a20566b57b6b388a5153",
+                "sha256:d61dd64e81a4cc026726b25981faf8ef8453363598483d51f7dc6f6d5580a78f"
             ],
             "index": "pypi",
-            "version": "==2019.9.1"
+            "version": "==2019.9.12.1"
         }
     },
     "develop": {

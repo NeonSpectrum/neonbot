@@ -9,10 +9,11 @@ from addict import Dict
 from .. import bot, env
 from ..helpers.date import date
 
+thread_pool = ThreadPoolExecutor(max_workers=3)
+
 
 class Ytdl:
     def __init__(self, extra_params={}):
-        self.thread_pool = ThreadPoolExecutor(max_workers=3)
         self.loop = bot.loop
         self.ytdl = youtube_dl.YoutubeDL(
             {
@@ -29,7 +30,7 @@ class Ytdl:
 
     async def extract_info(self, *args, **kwargs):
         result = await self.loop.run_in_executor(
-            self.thread_pool,
+            thread_pool,
             functools.partial(self.ytdl.extract_info, *args, download=False, **kwargs),
         )
         info = Dict(result)
@@ -38,7 +39,7 @@ class Ytdl:
 
     async def process_entry(self, info):
         result = await self.loop.run_in_executor(
-            self.thread_pool,
+            thread_pool,
             functools.partial(self.ytdl.process_ie_result, info, download=False),
         )
         self.info = Dict(result)
@@ -47,11 +48,9 @@ class Ytdl:
     def get_choices(self):
         return [
             Dict(
-                {
-                    "id": entry.id,
-                    "title": entry.get("title", "*Not Available*"),
-                    "url": f"https://www.youtube.com/watch?v={entry.id}",
-                }
+                id=entry.id,
+                title=entry.get("title", "*Not Available*"),
+                url=f"https://www.youtube.com/watch?v={entry.id}",
             )
             for entry in self.info
         ]
@@ -67,20 +66,18 @@ class Ytdl:
 
         def parse_entry(entry):
             return Dict(
-                {
-                    "id": entry.id,
-                    "title": entry.title,
-                    "description": parse_description(entry.description),
-                    "uploader": entry.uploader,
-                    "duration": entry.duration,
-                    "thumbnail": entry.thumbnail,
-                    "stream": entry.url,
-                    "url": entry.webpage_url,
-                    "view_count": f"{entry.view_count:,}",
-                    "upload_date": datetime.strptime(
-                        entry.upload_date, "%Y%m%d"
-                    ).strftime("%b %d, %Y"),
-                }
+                id=entry.id,
+                title=entry.title,
+                description=parse_description(entry.description),
+                uploader=entry.uploader,
+                duration=entry.duration,
+                thumbnail=entry.thumbnail,
+                stream=entry.url,
+                url=entry.webpage_url,
+                view_count=f"{entry.view_count:,}",
+                upload_date=datetime.strptime(entry.upload_date, "%Y%m%d").strftime(
+                    "%b %d, %Y"
+                ),
             )
 
         if isinstance(self.info, list):

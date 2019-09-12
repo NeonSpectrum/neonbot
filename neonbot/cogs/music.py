@@ -69,7 +69,7 @@ class Music(commands.Cog):
                 embed = Embed("Song failed to load.")
         else:
             msg = await ctx.send(embed=Embed("Searching..."))
-            ytdl = await Ytdl.extract_info(keyword)
+            ytdl = await Ytdl().extract_info(keyword)
             ytdl_choices = ytdl.get_choices()
             await msg.delete()
             if len(ytdl_choices) == 0:
@@ -82,7 +82,7 @@ class Music(commands.Cog):
             if not info:
                 return await ctx.send(
                     embed=Embed(
-                        "Rate limited due to many song requests. Try again later."
+                        "Video not available or rate limited due to many song requests. Try again later."
                     ),
                     delete_after=10,
                 )

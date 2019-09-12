@@ -1,4 +1,5 @@
 import contextlib
+import logging
 import sys
 from io import StringIO
 
@@ -6,8 +7,11 @@ import discord
 from discord.ext import commands
 
 from .. import bot, env
+from ..cogs.game import rooms
 from ..cogs.music import players
 from ..helpers.utils import Embed, check_args
+
+log = logging.getLogger(__name__)
 
 
 @contextlib.contextmanager
@@ -39,8 +43,9 @@ class Administration(commands.Cog):
             "commands": commands,
             "ctx": ctx,
             "players": players,
+            "player": players[ctx.guild.id],
+            "rooms": rooms,
             "Embed": Embed,
-            "__import__": __import__,
         }
 
         def cleanup(code):
@@ -56,12 +61,20 @@ class Administration(commands.Cog):
                 exec(f"async def x():\n{lines}\n", env)
                 await eval("x()", env)
             output = s.getvalue()
-            await ctx.message.add_reaction("👌")
         except Exception as e:
             output = str(e)
             await ctx.message.add_reaction("❌")
+        else:
+            await ctx.message.add_reaction("👌")
+
         if output:
-            await ctx.send(f"```py\n{output}```")
+            if len(output) > 1900:
+                msg_array = [output[i : i + 1900] for i in range(0, len(output), 1900)]
+            else:
+                msg_array = [output]
+
+            for msg in msg_array:
+                await ctx.send(f"```py\n{msg}```")
 
     @commands.command()
     @commands.is_owner()
@@ -95,10 +108,11 @@ class Administration(commands.Cog):
         """Reloads an extension."""
 
         try:
-            self.bot.reload_extension("modules." + args)
+            self.bot.reload_extension("neonbot.cogs." + args)
         except Exception as e:
             await ctx.send(embed=Embed(str(e)))
         else:
+            log.info(f"Reloaded module: {args}.")
             await ctx.send(embed=Embed(f"Reloaded module: `{args}`."))
 
     @commands.command()

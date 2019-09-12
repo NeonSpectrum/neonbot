@@ -1,4 +1,5 @@
 import logging
+import sys
 
 import termcolor
 
@@ -23,7 +24,11 @@ class Log(logging.Logger):
         super().__init__(*args, **kwargs)
 
         self.formatter = logging.Formatter(LOG_FORMAT, "%Y-%m-%d %I:%M:%S %p")
-        self.setLevel(env.log_level("LOG_LEVEL"))
+        self.setLevel(
+            env.log_level("LOG_LEVEL")
+            if self.name.startswith("neonbot")
+            else logging.ERROR
+        )
 
         self.set_file_handler()
         self.set_console_handler()
@@ -35,7 +40,6 @@ class Log(logging.Logger):
 
     def set_console_handler(self):
         console = logging.StreamHandler()
-        console.setLevel(logging.DEBUG)
         console.setFormatter(self.formatter)
         self.addHandler(console)
 
@@ -44,7 +48,7 @@ class Log(logging.Logger):
         channel = channel or ctx.channel
         user = user or ctx.author
 
-        print()
+        print(file=sys.stderr)
         self._log(
             logging.INFO,
             f"""

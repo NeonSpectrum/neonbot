@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import random
 
@@ -65,14 +66,15 @@ class Player:
                 await self.next(ctx)
 
         self.connection.play(
-            source, after=lambda error: bot.loop.create_task(after(error))
+            source,
+            after=lambda error: asyncio.run_coroutine_threadsafe(
+                after(error), bot.loop
+            ),
         )
         await self.playing_message(ctx)
         self.disable_after = False
 
     async def next(self, ctx, *, index=None, stop=False):
-        config = self.config
-
         await self.finished_message(ctx, delete_after=5 if stop else None)
 
         if stop or index is not None:
@@ -82,19 +84,12 @@ class Player:
             if stop:
                 return
 
-            if len(self.queue) == index and self.current_queue == len(self.queue) - 1:
-                if config.repeat == "off" and config.autoplay:
-                    await self.process_autoplay(ctx)
-                    self.current_queue += 1
-                else:
-                    self.current_queue = 0
-            else:
-                self.current_queue = index
+            self.current_queue = index
             return await self.play(ctx)
 
         if (
             self.process_shuffle()
-            or await self.process_autoplay(ctx)
+            or await self.process_autoplay()
             or self.process_repeat()
         ):
             await self.play(ctx)
@@ -193,7 +188,7 @@ class Player:
                 self.current_queue = index
                 return True
 
-    async def process_autoplay(self, ctx) -> bool:
+    async def process_autoplay(self) -> bool:
         if not self.config.autoplay or self.current_queue != len(self.queue) - 1:
             return
 
@@ -213,7 +208,7 @@ class Player:
 
         ytdl = await Ytdl().extract_info(video_id)
         info = ytdl.get_info()
-        self.add_to_queue(ctx, info, requested=bot.user)
+        self.add_to_queue(None, info, requested=bot.user)
         self.current_queue += 1
 
         return True
