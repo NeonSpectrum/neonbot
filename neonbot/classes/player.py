@@ -23,10 +23,11 @@ class Player:
         self.db = bot.db.get_guild(guild.id)
         self.config = self.db.config.music
         self.connection = None
+        self.channel = None
         self.current_queue = 0
         self.queue = []
         self.shuffled_list = []
-        self.messages = Dict(last_playing=None, last_finished=None, paused=None)
+        self.messages = Dict(last_playing=None, last_finished=None, paused=None, auto_paused=None)
         self.ytdl = Ytdl()
 
     @property
@@ -34,6 +35,7 @@ class Player:
         return self.queue[self.current_queue]
 
     async def play(self, ctx):
+        self.channel = ctx.channel
         now_playing = self.now_playing
 
         if not now_playing.stream:
