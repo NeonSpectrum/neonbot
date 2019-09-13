@@ -91,14 +91,14 @@ class Event(commands.Cog):
         
         def check_player_state():
             if music and music.is_paused() and members(after.channel.members) > 0:
-                log.cmd(member, "Player resumed because someone connected.", channel=after.channel)
+                log.cmd(member, "Player resumed because someone connected.", channel=after.channel, user="N/A")
                 music.resume()
             elif (
                 music
                 and music.is_playing()
                 and members(before.channel.members) == 0
             ):
-                log.cmd(member, "Player paused because no users connected.", channel=before.channel)
+                log.cmd(member, "Player paused because no users connected.", channel=before.channel, user="N/A")
                 music.pause()
         
         if member.voice.deaf or member.voice.self_deaf:
