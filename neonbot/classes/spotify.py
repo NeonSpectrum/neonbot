@@ -54,7 +54,7 @@ class Spotify:
         return Dict(id=url_id, type=url_type)
 
     async def get_track(self, id):
-        token = "BQA3hHY2m5EYAeWg_EiV9k40MQ2Kx3GRrEORk9G3F2BNsmmjEzq3MDohS3ZyZCAvajUV8EFDN4Fub8wI7yM"
+        token = await self.get_token()
 
         res = await self.session.get(
             self.BASE_URL + "/tracks/" + id,
@@ -63,7 +63,7 @@ class Spotify:
         return Dict(await res.json())
 
     async def get_playlist(self, id):
-        token = "BQA3hHY2m5EYAeWg_EiV9k40MQ2Kx3GRrEORk9G3F2BNsmmjEzq3MDohS3ZyZCAvajUV8EFDN4Fub8wI7yM"
+        token = await self.get_token()
 
         res = await self.session.get(
             self.BASE_URL + "/playlists/" + id,
