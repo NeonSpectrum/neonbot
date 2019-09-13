@@ -89,7 +89,7 @@ class Event(commands.Cog):
             list(filter(lambda member: not member.bot and not member.voice.deaf and not member.voice.self_deaf, members))
         )
         
-        if player and player.is_paused() and members(after.channel.members) > 0:
+        if player and player.connection.is_paused() and members(after.channel.members) > 0:
             if player.messages.auto_paused:
                 await player.messages.auto_paused.delete()
                 player.messages.auto_paused = None
@@ -97,7 +97,7 @@ class Event(commands.Cog):
             player.connection.resume()
         elif (
             player
-            and player.is_playing()
+            and player.connection.is_playing()
             and members(before.channel.members) == 0
         ):
             msg = "Player paused because no users are listening."
