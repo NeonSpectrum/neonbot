@@ -84,28 +84,36 @@ class Event(commands.Cog):
 
         config = bot.db.get_guild(member.guild.id).config
         music = get_player(member.guild).connection
+        
+        members = lambda members: len(
+            list(filter(lambda member: not member.bot and not member.voice.deaf and not member.voice.self_deaf, members))
+        )
+        
+        def check_player_state():
+            if music and music.is_paused() and members(after.channel.members) > 0:
+                log.cmd(member, "Player resumed because someone connected.", channel=after.channel)
+                music.resume()
+            elif (
+                music
+                and music.is_playing()
+                and members(before.channel.members) == 0
+            ):
+                log.cmd(member, "Player paused because no users connected.", channel=before.channel)
+                music.pause()
+        
+        if member.voice.deaf or member.voice.self_deaf:
+            check_player_state()
 
         if before.channel != after.channel:
             voice_tts_channel = bot.get_channel(int(config.channel.voicetts or -1))
             log_channel = bot.get_channel(int(config.channel.log or -1))
-            members = lambda members: len(
-                list(filter(lambda member: not member.bot and not member.voice.deaf and not member.voice.self_deaf, members))
-            )
 
             if after.channel:
                 msg = f"**{member.name}** has connected to **{after.channel.name}**"
-                if music and music.is_paused() and members(after.channel.members) > 0:
-                    log.cmd(member, "Player resumed because someone connected.")
-                    music.resume()
             else:
                 msg = f"**{member.name}** has disconnected to **{before.channel.name}**"
-                if (
-                    music
-                    and music.is_playing()
-                    and members(before.channel.members) == 0
-                ):
-                    log.cmd(member, "Player paused because no users connected.")
-                    music.pause()
+            
+            check_player_state()
 
             if voice_tts_channel:
                 await voice_tts_channel.send(
