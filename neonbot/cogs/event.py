@@ -83,26 +83,27 @@ class Event(commands.Cog):
             return
 
         config = bot.db.get_guild(member.guild.id).config
-        music = get_player(member.guild).connection
+        player = get_player(member.guild).connection
         
         members = lambda members: len(
             list(filter(lambda member: not member.bot and not member.voice.deaf and not member.voice.self_deaf, members))
         )
         
-        def check_player_state():
-            if music and music.is_paused() and members(after.channel.members) > 0:
-                log.cmd(member, "Player resumed because someone connected.", channel=after.channel, user="N/A")
-                music.resume()
-            elif (
-                music
-                and music.is_playing()
-                and members(before.channel.members) == 0
-            ):
-                log.cmd(member, "Player paused because no users connected.", channel=before.channel, user="N/A")
-                music.pause()
-        
-        if member.voice.deaf or member.voice.self_deaf:
-            check_player_state()
+        if player and player.is_paused() and members(after.channel.members) > 0:
+            if player.messages.auto_paused:
+                await player.messages.auto_paused.delete()
+                player.messages.auto_paused = None
+            log.cmd(member, "Player resumed because someone will be listening.", channel=after.channel, user="N/A")
+            player.connection.resume()
+        elif (
+            player
+            and player.is_playing()
+            and members(before.channel.members) == 0
+        ):
+            msg = "Player paused because no users are listening."
+            log.cmd(member, msg, channel=before.channel, user="N/A")
+            player.messages.auto_paused = await ctx.send(embed=Embed(msg))
+            player.connection.pause()
 
         if before.channel != after.channel:
             voice_tts_channel = bot.get_channel(int(config.channel.voicetts or -1))
@@ -113,8 +114,6 @@ class Event(commands.Cog):
             else:
                 msg = f"**{member.name}** has disconnected to **{before.channel.name}**"
             
-            check_player_state()
-
             if voice_tts_channel:
                 await voice_tts_channel.send(
                     msg.replace("**", ""), tts=True, delete_after=0
