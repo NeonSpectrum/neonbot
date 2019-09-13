@@ -83,7 +83,7 @@ class Event(commands.Cog):
             return
 
         config = bot.db.get_guild(member.guild.id).config
-        player = get_player(member.guild).connection
+        player = get_player(member.guild)
         
         members = lambda members: len(
             list(filter(lambda member: not member.bot and not member.voice.deaf and not member.voice.self_deaf, members))
