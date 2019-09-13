@@ -89,7 +89,7 @@ class Event(commands.Cog):
             voice_tts_channel = bot.get_channel(int(config.channel.voicetts or -1))
             log_channel = bot.get_channel(int(config.channel.log or -1))
             members = lambda members: len(
-                list(filter(lambda member: not member.bot, members))
+                list(filter(lambda member: not member.bot and not member.voice.deaf and not member.voice.self_deaf, members))
             )
 
             if after.channel:
