@@ -14,14 +14,16 @@ from ..helpers.utils import Embed
 log = logging.getLogger(__name__)
 
 
-async def chatbot(message):
-    msg = " ".join(message.content.split(" ")[1:])
+async def chatbot(message, dm=False):
+    msg = message.content if dm else " ".join(message.content.split(" ")[1:])
     res = await bot.session.get(
         "https://program-o.com/v3/chat.php", params={"say": msg}
     )
     response = Dict(await res.json())
     await message.channel.send(
-        embed=Embed(f"{message.author.mention} {response.conversation.say.bot}")
+        embed=Embed(
+            f"{'' if dm else message.author.mention} {response.conversation.say.bot}"
+        )
     )
 
 

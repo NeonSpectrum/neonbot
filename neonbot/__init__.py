@@ -10,4 +10,4 @@ from .bot import bot  # isort:skip
 
 from . import classes, cogs, helpers
 
-__all__ = ["env", "Database", "bot", "classes", "cogs", "helpers", "log"]
+__all__ = ("env", "Database", "bot", "classes", "cogs", "helpers", "log")

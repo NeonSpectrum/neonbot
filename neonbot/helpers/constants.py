@@ -25,6 +25,7 @@ FFMPEG_OPTIONS = (
 )
 
 YOUTUBE_REGEX = r"^(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+"
+SPOTIFY_REGEX = r"^(spotify:|https:\/\/[a-z]+\.spotify\.com\/)"
 
 LOGO = """\
  __    _  _______  _______  __    _  _______  _______  _______

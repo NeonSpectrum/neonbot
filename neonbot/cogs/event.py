@@ -7,7 +7,7 @@ from discord.utils import oauth_url
 from .. import bot
 from ..helpers.constants import PERMISSIONS
 from ..helpers.date import date_format
-from ..helpers.utils import Embed
+from ..helpers.utils import Embed, send_to_all_owners
 from .music import get_player
 from .utility import chatbot
 
@@ -20,8 +20,8 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_connect():
-        if bot.app_info is None:
-            await bot.get_app_info()
+        if not bot.app_info:
+            await bot.set_app_info()
         log.info(f"Logged in as {bot.user}")
 
     @staticmethod
@@ -32,7 +32,7 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_ready():
-        log.info("Connected!")
+        log.info("Ready!")
 
     @staticmethod
     @bot.event
@@ -60,12 +60,16 @@ class Event(commands.Cog):
                 return log.info(f"Sent an invite link to: {message.author}")
             elif message.author.id != bot.user.id:
                 log.info(f"DM from {message.author}: {message.content}")
-
-                for owner in filter(lambda x: x != message.author.id, bot.owner_ids):
-                    embed = Embed(
+                await send_to_all_owners(
+                    embed=Embed(
                         title=f"DM from {message.author}", description=message.content
-                    )
-                    await bot.get_user(owner).send(embed=embed)
+                    ),
+                    excluded=[message.author.id],
+                )
+                if not message.content.startswith(bot.default_prefix):
+                    async with message.channel.typing():
+                        await chatbot(message, dm=True)
+                    return
         elif check_alias():
             msg = f"Alias found. Executing `{message.content}`."
             log.cmd(message, msg)
@@ -199,6 +203,10 @@ class Event(commands.Cog):
             return await ctx.send(
                 embed=Embed(f"{str(error).capitalize()} {ctx.command.usage or ''}")
             )
+
+        await send_to_all_owners(
+            embed=Embed(title=error.__class__.__name__, description=str(error))
+        )
 
         raise error
 

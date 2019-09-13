@@ -5,10 +5,10 @@ import discord
 from addict import Dict
 from discord.ext import commands
 
-from ..classes import PaginationEmbed, Player, Ytdl
-from ..helpers.constants import YOUTUBE_REGEX
+from ..classes import PaginationEmbed, Player
+from ..helpers.constants import SPOTIFY_REGEX, YOUTUBE_REGEX
 from ..helpers.date import format_seconds
-from ..helpers.utils import Embed, check_args, embed_choices, plural
+from ..helpers.utils import Embed, check_args, plural
 
 log = logging.getLogger(__name__)
 
@@ -37,59 +37,21 @@ class Music(commands.Cog):
         player = get_player(ctx.guild)
         embed = info = loading_msg = None
 
-        if keyword.isdigit():
-            index = int(keyword)
-            if index > len(player.queue) or index < 0:
-                return await ctx.send(embed=Embed("Invalid index."), delete_after=5)
-            await player.next(ctx, index=index - 1)
-        elif re.search(YOUTUBE_REGEX, keyword):
-            loading_msg = await ctx.send(embed=Embed("Loading..."))
-
-            ytdl = await Ytdl().extract_info(keyword)
-            ytdl_list = ytdl.info
-
-            if isinstance(ytdl_list, list):
-                for entry in ytdl_list:
-                    if entry.title == "[Deleted video]":
-                        continue
-                    entry.ytdl = ytdl
-                    entry.url = f"https://www.youtube.com/watch?v={entry.id}"
-                    player.add_to_queue(ctx, entry)
-
-                embed = Embed(
-                    f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue."
-                )
-            elif ytdl_list:
-                info = ytdl.get_info()
-                embed = Embed(
-                    title=f"Added song to queue #{len(player.queue)+1}",
-                    description=info.title,
-                )
-            else:
-                embed = Embed("Song failed to load.")
-        else:
-            msg = await ctx.send(embed=Embed("Searching..."))
-            ytdl = await Ytdl().extract_info(keyword)
-            ytdl_choices = ytdl.get_choices()
-            await msg.delete()
-            if len(ytdl_choices) == 0:
-                return await ctx.send(embed=Embed("No songs available."))
-            choice = await embed_choices(ctx, ytdl_choices)
-            if choice < 0:
-                return
-            await ytdl.process_entry(ytdl.info[choice])
-            info = ytdl.get_info()
-            if not info:
-                return await ctx.send(
-                    embed=Embed(
-                        "Video not available or rate limited due to many song requests. Try again later."
-                    ),
-                    delete_after=10,
-                )
-            embed = Embed(
-                title=f"You have selected #{choice+1}. Adding song to queue #{len(player.queue)+1}",
-                description=info.title,
-            )
+        if keyword:
+            if keyword.isdigit():
+                index = int(keyword)
+                if index > len(player.queue) or index < 0:
+                    return await ctx.send(embed=Embed("Invalid index."), delete_after=5)
+                await player.next(ctx, index=index - 1)
+            elif re.search(YOUTUBE_REGEX, keyword):
+                info, embed = await player.process_youtube(ctx, keyword)
+            elif re.search(SPOTIFY_REGEX, keyword):
+                info, embed = await player.process_spotify(ctx, keyword)
+            elif keyword:
+                search = await player.process_search(ctx, keyword)
+                if not search:
+                    return
+                info, embed = search
 
         if info:
             player.add_to_queue(ctx, info)
@@ -101,6 +63,7 @@ class Music(commands.Cog):
         if len(player.queue) > 0 and not ctx.voice_client:
             player.connection = await ctx.author.voice.channel.connect()
             log.cmd(ctx, f"Connected to {ctx.author.voice.channel}.")
+        if player.connection and not player.connection.is_playing():
             await player.play(ctx)
 
     @commands.command()

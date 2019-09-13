@@ -20,6 +20,7 @@ class Bot(commands.Bot):
         self.start_message()
 
         self.db = Database()
+        self.default_prefix = env("DEFAULT_PREFIX", ".")
         self.owner_ids = set(env.list("OWNER_IDS", [], subcast=int))
 
         self.activity = self.get_activity()
@@ -44,15 +45,14 @@ class Bot(commands.Bot):
             status=discord.Status[status],
         )
 
-    async def get_app_info(self):
-        bot.app_info = await bot.application_info()
-        return bot.app_info
+    async def set_app_info(self):
+        self.app_info = await bot.application_info()
 
     def get_command_prefix(self):
         return (
             lambda _, message: self.db.get_guild(message.guild.id).config.prefix
             if message.guild
-            else env("DEFAULT_PREFIX", ".")
+            else self.default_prefix
         )
 
     def load_cogs(self):

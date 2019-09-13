@@ -7,8 +7,8 @@ from addict import Dict
 from .. import bot
 from ..helpers.constants import FFMPEG_OPTIONS
 from ..helpers.date import format_seconds
-from ..helpers.utils import Embed
-from . import Ytdl
+from ..helpers.utils import Embed, embed_choices, plural
+from . import Spotify, Ytdl
 
 log = logging.getLogger(__name__)
 
@@ -27,6 +27,7 @@ class Player:
         self.queue = []
         self.shuffled_list = []
         self.messages = Dict(last_playing=None, last_finished=None, paused=None)
+        self.ytdl = Ytdl()
 
     @property
     def now_playing(self):
@@ -35,16 +36,16 @@ class Player:
     async def play(self, ctx):
         now_playing = self.now_playing
 
-        if not now_playing.stream and now_playing.ytdl:
-            await now_playing.ytdl.process_entry(now_playing)
-            info = now_playing.ytdl.get_info()
+        if not now_playing.stream:
+            info = await self.ytdl.process_entry(now_playing)
+            info = self.ytdl.parse_info(info)
             info.requested = now_playing.requested
             self.queue[self.current_queue] = now_playing = info
 
         if Ytdl.is_link_expired(now_playing.stream):
             log.warn(f"Link expired: {now_playing.title}")
-            ytdl = await Ytdl().extract_info(now_playing.id)
-            self.queue[self.current_queue] = now_playing = ytdl.get_info()
+            info = await self.ytdl.extract_info(now_playing.id)
+            self.queue[self.current_queue] = now_playing = self.ytdl.parse_info(info)
             log.info(f"Fetched new link for {now_playing.title}")
 
         try:
@@ -69,12 +70,16 @@ class Player:
         await self.finished_message(ctx, delete_after=5 if stop else None)
 
         if stop or index is not None:
-            self.connection._player.after = None
+            if self.connection._player:
+                self.connection._player.after = None
             self.connection.stop()
 
             if stop:
                 if self.messages.last_playing:
-                    await self.messages.last_playing.delete()
+                    try:
+                        await self.messages.last_playing.delete()
+                    except discord.NotFound:
+                        pass
                 return
 
             self.current_queue = index
@@ -94,7 +99,10 @@ class Player:
         log.cmd(ctx, f"Now playing {now_playing.title}", user=now_playing.requested)
 
         if self.messages.last_playing:
-            await self.messages.last_playing.delete()
+            try:
+                await self.messages.last_playing.delete()
+            except discord.NotFound:
+                pass
 
         footer = [
             str(now_playing.requested),
@@ -127,7 +135,10 @@ class Player:
         )
 
         if self.messages.last_finished:
-            await self.messages.last_finished.delete()
+            try:
+                await self.messages.last_finished.delete()
+            except discord.NotFound:
+                pass
 
         footer = [
             str(now_playing.requested),
@@ -199,12 +210,102 @@ class Player:
 
         video_id = filtered_videos[0].id.videoId
 
-        ytdl = await Ytdl().extract_info(video_id)
-        info = ytdl.get_info()
+        info = await self.ytdl.extract_info(video_id)
+        info = self.ytdl.parse_info(info)
         self.add_to_queue(None, info, requested=bot.user)
         self.current_queue += 1
 
         return True
+
+    async def process_youtube(self, ctx, keyword, *, ytdl_list=None):
+        loading_msg = await ctx.send(embed=Embed("Loading..."))
+
+        if ytdl_list is None:
+            ytdl_list = await self.ytdl.extract_info(keyword)
+
+        info = embed = None
+
+        await loading_msg.delete()
+
+        if isinstance(ytdl_list, list):
+            for entry in ytdl_list:
+                if entry.title != "[Deleted video]":
+                    entry.url = f"https://www.youtube.com/watch?v={entry.id}"
+                    self.add_to_queue(ctx, entry)
+
+            embed = Embed(f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue.")
+        elif ytdl_list:
+            info = self.ytdl.parse_info(ytdl_list)
+            embed = Embed(
+                title=f"Added song to queue #{len(self.queue)+1}",
+                description=info.title,
+            )
+        else:
+            embed = Embed("Song failed to load.")
+
+        return info, embed
+
+    async def process_spotify(self, ctx, url):
+        spotify = Spotify()
+        result = spotify.parse_url(url)
+
+        if not result:
+            return await ctx.send(embed=Embed("Invalid spotify url."), delete_after=5)
+
+        if result.type == "playlist":
+            processing_msg = await ctx.send(
+                embed=Embed("Converting to youtube playlist. Please wait...")
+            )
+            playlist = await spotify.get_playlist(result.id)
+            ytdl_list = []
+
+            for items in playlist.tracks["items"]:
+                name = items.track.name
+                artist = items.track.artists[0].name
+
+                info = await Ytdl({"default_search": "ytsearch1"}).extract_info(
+                    f"{artist} {name} lyrics"
+                )
+                ytdl_list.append(info[0])
+
+            await processing_msg.delete()
+
+            return await self.process_youtube(ctx, None, ytdl_list=ytdl_list)
+        else:
+            track = await spotify.get_track(result.id)
+            return await self.process_search(
+                ctx, f"{track.artists[0].name} {track.name} lyrics", force_choice=0
+            )
+
+    async def process_search(self, ctx, keyword, *, force_choice=None):
+        msg = await ctx.send(embed=Embed("Searching..."))
+        extracted = await self.ytdl.extract_info(keyword)
+        ytdl_choices = self.ytdl.parse_choices(extracted)
+        await msg.delete()
+        if len(ytdl_choices) == 0:
+            return await ctx.send(embed=Embed("No songs available."))
+        if force_choice is None:
+            choice = await embed_choices(ctx, ytdl_choices)
+            if choice < 0:
+                return
+        else:
+            choice = force_choice
+        info = await self.ytdl.process_entry(extracted[choice])
+        info = self.ytdl.parse_info(info)
+        if not info:
+            await ctx.send(
+                embed=Embed(
+                    "Video not available or rate limited due to many song requests. Try again later."
+                ),
+                delete_after=10,
+            )
+            return
+        embed = Embed(
+            title=f"{'You have selected #{choice+1}.' if force_choice else'' }Adding song to queue #{len(self.queue)+1}",
+            description=info.title,
+        )
+
+        return info, embed
 
     def add_to_queue(self, ctx, data, requested=None):
         data.requested = requested or ctx.author

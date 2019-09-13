@@ -9,11 +9,10 @@ from addict import Dict
 from .. import bot, env
 from ..helpers.date import date
 
-thread_pool = ThreadPoolExecutor(max_workers=3)
-
 
 class Ytdl:
     def __init__(self, extra_params={}):
+        self.thread_pool = ThreadPoolExecutor(max_workers=3)
         self.loop = bot.loop
         self.ytdl = youtube_dl.YoutubeDL(
             {
@@ -30,32 +29,30 @@ class Ytdl:
 
     async def extract_info(self, *args, **kwargs):
         result = await self.loop.run_in_executor(
-            thread_pool,
+            self.thread_pool,
             functools.partial(self.ytdl.extract_info, *args, download=False, **kwargs),
         )
         info = Dict(result)
-        self.info = info.get("entries", info)
-        return self
+        return info.get("entries", info)
 
     async def process_entry(self, info):
         result = await self.loop.run_in_executor(
-            thread_pool,
+            self.thread_pool,
             functools.partial(self.ytdl.process_ie_result, info, download=False),
         )
-        self.info = Dict(result)
-        return self
+        return Dict(result)
 
-    def get_choices(self):
+    def parse_choices(self, info):
         return [
             Dict(
                 id=entry.id,
                 title=entry.get("title", "*Not Available*"),
                 url=f"https://www.youtube.com/watch?v={entry.id}",
             )
-            for entry in self.info
+            for entry in info
         ]
 
-    def get_info(self):
+    def parse_info(self, info):
         def parse_description(description):
             description_arr = description.split("\n")[:15]
             while len("\n".join(description_arr)) > 1000:
@@ -80,10 +77,10 @@ class Ytdl:
                 ),
             )
 
-        if isinstance(self.info, list):
-            return [parse_entry(entry) for entry in self.info if entry]
+        if isinstance(info, list):
+            return [parse_entry(entry) for entry in info if entry]
 
-        return parse_entry(self.info) if self.info else None
+        return parse_entry(info) if info else None
 
     @staticmethod
     async def get_related_videos(video_id):
