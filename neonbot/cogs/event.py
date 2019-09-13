@@ -102,7 +102,7 @@ class Event(commands.Cog):
         ):
             msg = "Player paused because no users are listening."
             log.cmd(member, msg, channel=before.channel, user="N/A")
-            player.messages.auto_paused = await ctx.send(embed=Embed(msg))
+            player.messages.auto_paused = await player.channel.send(embed=Embed(msg))
             player.connection.pause()
 
         if before.channel != after.channel:
