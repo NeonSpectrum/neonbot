@@ -59,6 +59,6 @@ async def check_args(ctx, arg, choices):
     return False
 
 
-async def send_to_all_owners(*, excluded=[], **kwargs):
+async def send_to_all_owners(*args, excluded=[], **kwargs):
     for owner in filter(lambda x: x not in excluded, bot.owner_ids):
-        await bot.get_user(owner).send(**kwargs)
+        await bot.get_user(owner).send(*args, **kwargs)

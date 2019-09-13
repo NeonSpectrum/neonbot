@@ -9,7 +9,7 @@ from discord.ext import commands
 from .. import bot, env
 from ..cogs.game import rooms
 from ..cogs.music import players
-from ..helpers.utils import Embed, check_args
+from ..helpers.utils import Embed, check_args, send_to_all_owners
 
 log = logging.getLogger(__name__)
 
@@ -46,6 +46,7 @@ class Administration(commands.Cog):
             "player": players[ctx.guild.id],
             "rooms": rooms,
             "Embed": Embed,
+            "send_to_all_owners": send_to_all_owners,
         }
 
         def cleanup(code):
