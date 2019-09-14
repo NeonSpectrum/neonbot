@@ -97,7 +97,7 @@ class Event(commands.Cog):
         )
 
         if player and player.connection:
-            if player.connection.is_paused() and after.channel and members(after.channel.members) > 0:
+            if player.connection.is_paused() and members(after.channel.members) > 0:
                 if player.messages.auto_paused:
                     await player.messages.auto_paused.delete()
                     player.messages.auto_paused = None
@@ -109,10 +109,10 @@ class Event(commands.Cog):
                 )
                 player.connection.resume()
             elif (
-                player.connection.is_playing() and before.channel and members(before.channel.members) == 0
+                player.connection.is_playing() and members(after.channel.members) == 0
             ):
                 msg = "Player paused because no users are listening."
-                log.cmd(member, msg, channel=before.channel, user="N/A")
+                log.cmd(member, msg, channel=after.channel, user="N/A")
                 player.messages.auto_paused = await player.channel.send(
                     embed=Embed(msg)
                 )
