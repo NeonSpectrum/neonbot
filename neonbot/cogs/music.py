@@ -1,5 +1,6 @@
 import logging
 import re
+import textwrap
 
 import discord
 from addict import Dict
@@ -279,14 +280,17 @@ class Music(commands.Cog):
         if len(queue) == 0:
             return await ctx.send(embed=Embed("Empty playlist."), delete_after=5)
 
-        for i, song in enumerate(player.queue):
-            description = f"`{'*' if player.current_queue == i else ''}{i+1}.` [{song.title}]({song.url})\n- - - `{format_seconds(song.duration) if song.duration else 'N/A'}` `{song.requested}`"
-            temp.append(description)
-            duration += song.duration or 0
-
-            if (i != 0 and (i + 1) % 10 == 0) or i == len(queue) - 1:
-                embeds.append(Embed("\n".join(temp)))
-                temp = []
+        for i in range(0, len(player.queue), 10):
+            temp = []
+            for index, song in enumerate(player.queue[i : i + 10]):
+                description = textwrap.dedent(
+                    f"""\
+                `{'*' if player.current_queue == index else ''}{index+1}.` [{song.title}]({song.url})
+                - - - `{format_seconds(song.duration) if song.duration else 'N/A'}` `{song.requested}`"""
+                )
+                temp.append(description)
+                duration += song.duration or 0
+            embeds.append(Embed("\n".join(temp)))
 
         footer = [
             f"{plural(len(queue), 'song', 'songs')}",

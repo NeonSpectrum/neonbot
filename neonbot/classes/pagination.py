@@ -87,13 +87,48 @@ class PaginationEmbed:
             except discord.NotFound:
                 break
 
+    async def _request_jump(self):
+        request_msg = await self.ctx.send(
+            embed=Embed(f"Enter page number (1-{len(self.array)}):")
+        )
+
+        def check(m):
+            if m.author.bot:
+                return
+
+            if m.content.isdigit():
+                bot.loop.create_task(m.delete())
+                if (
+                    int(m.content) >= 0
+                    and int(m.content) <= len(self.array)
+                    and m.channel.id == self.ctx.channel.id
+                ):
+                    return True
+
+            return False
+
+        try:
+            msg = await bot.wait_for("message", check=check, timeout=10)
+        except asyncio.TimeoutError:
+            pass
+        else:
+            self.index = int(msg.content) - 1
+        finally:
+            await request_msg.delete()
+
     async def _execute_command(self, cmd: int):
         current_index = self.index
 
-        if cmd == 0 and self.index > 0:
+        if cmd == 0:
+            self.index = 0
+        elif cmd == 1 and self.index > 0:
             self.index -= 1
-        elif cmd == 1 and self.index < len(self.array) - 1:
+        elif cmd == 2 and self.index < len(self.array) - 1:
             self.index += 1
+        elif cmd == 3:
+            self.index = len(self.array) - 1
+        elif cmd == 4:
+            await self._request_jump()
 
         if current_index != self.index:
             await self._send()

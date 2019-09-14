@@ -75,7 +75,7 @@ class Utility(commands.Cog):
             name="Channels", value=sum(1 for _ in self.bot.get_all_channels())
         )
         embed.add_field(name="Users", value=len(self.bot.users))
-        embed.add_field(name="Commands Executed", value=bot.commands_executed)
+        embed.add_field(name="Commands Executed", value=len(bot.commands_executed))
         embed.add_field(
             name="Ram Usage",
             value=f"Approximately {(process.memory_info().rss / 1024000):.2f} MB",

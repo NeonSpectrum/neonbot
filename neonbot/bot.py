@@ -27,7 +27,7 @@ class Bot(commands.Bot):
         self.session = ClientSession(loop=self.loop, timeout=ClientTimeout(total=30))
 
         self.app_info = None
-        self.commands_executed = 0
+        self.commands_executed = []
 
     def start_message(self):
         cprint(LOGO, "blue")

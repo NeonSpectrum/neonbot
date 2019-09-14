@@ -7,6 +7,7 @@ import discord
 from addict import Dict
 from bs4 import BeautifulSoup
 from discord.ext import commands
+from jikanpy import AioJikan
 
 from .. import env
 from ..classes import PaginationEmbed
@@ -19,6 +20,14 @@ class Search(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.session = bot.session
+
+    @commands.command()
+    async def joke(self, ctx):
+        res = await self.session.get(
+            "https://icanhazdadjoke.com", headers={"Accept": "application/json"}
+        )
+        json = Dict(await res.json())
+        await ctx.send(embed=Embed(json.joke))
 
     @commands.command()
     async def image(self, ctx, *, keyword):
@@ -355,6 +364,90 @@ class Search(commands.Cog):
                 icon_url="https://www.azlyrics.com/az_logo_tr.png",
             )
             await embed.build(ctx)
+
+    @commands.group(invoke_without_command=True)
+    async def anime(self, ctx):
+        """Searches for top, upcoming, or specific anime."""
+
+        await ctx.send(embed=Embed("Incomplete command. <search | top | upcoming>"))
+
+    @anime.command(name="search")
+    async def anime_search(self, ctx, *, keyword):
+        """Searches for anime information."""
+
+        loading_msg = await ctx.send(embed=Embed("Searching..."))
+
+        jikan = AioJikan(loop=self.bot.loop)
+        result = Dict(await jikan.search(search_type="anime", query=keyword)).results[0]
+        anime = Dict(await jikan.anime(result.mal_id))
+        await jikan.close()
+
+        embed = Embed()
+        embed.set_author(
+            name=f"{anime.title_english} ({anime.title_japanese})", url=anime.url
+        )
+        embed.set_thumbnail(url=anime.image_url)
+        embed.set_footer(
+            text="Powered by MyAnimeList",
+            icon_url="https://cdn.myanimelist.net/images/faviconv5.ico",
+        )
+        embed.add_field(name="Synopsis", value=anime.synopsis)
+        embed.add_field(name="Episodes", value=anime.episodes)
+        embed.add_field(name="Rank", value=anime.rank)
+        embed.add_field(name="Status", value=anime.status)
+        embed.add_field(name="Aired", value=anime.aired.string)
+        embed.add_field(
+            name="Genres", value=", ".join([genre.name for genre in anime.genres])
+        )
+
+        await loading_msg.delete()
+        await ctx.send(embed=embed)
+
+    @anime.command(name="top")
+    async def anime_top(self, ctx):
+        """Lists top anime."""
+
+        jikan = AioJikan(loop=self.bot.loop)
+        result = Dict(await jikan.top(type="anime")).top
+        await jikan.close()
+
+        embeds = []
+        for i in range(0, len(result), 10):
+            temp = []
+            for index, value in enumerate(result[i : i + 10]):
+                temp.append(f"`{i+index+1}.` [{value.title}]({value.url})")
+            embeds.append(Embed("\n".join(temp)))
+
+        embed = PaginationEmbed(array=embeds, authorized_users=[ctx.author.id])
+        embed.embed.title = ":trophy: Top 50 Anime"
+        embed.set_footer(
+            text="Powered by MyAnimeList",
+            icon_url="https://cdn.myanimelist.net/images/faviconv5.ico",
+        )
+        await embed.build(ctx)
+
+    @anime.command(name="upcoming")
+    async def anime_upcoming(self, ctx):
+        """Lists upcoming anime."""
+
+        jikan = AioJikan(loop=self.bot.loop)
+        result = Dict(await jikan.season_later()).anime
+        await jikan.close()
+
+        embeds = []
+        for i in range(0, len(result), 10):
+            temp = []
+            for index, value in enumerate(result[i : i + 10]):
+                temp.append(f"`{i+index+1}.` [{value.title}]({value.url})")
+            embeds.append(Embed("\n".join(temp)))
+
+        embed = PaginationEmbed(array=embeds, authorized_users=[ctx.author.id])
+        embed.embed.title = ":clock3: Upcoming Anime"
+        embed.set_footer(
+            text="Powered by MyAnimeList",
+            icon_url="https://cdn.myanimelist.net/images/faviconv5.ico",
+        )
+        await embed.build(ctx)
 
 
 def setup(bot):

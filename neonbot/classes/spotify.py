@@ -17,6 +17,9 @@ class Spotify:
         self.client_secret = env("SPOTIFY_CLIENT_SECRET")
 
     async def get_token(self):
+        if not self.client_id or not self.client_secret:
+            raise
+
         if spotify_credentials.expiration and time() < spotify_credentials.expiration:
             return spotify_credentials.token
 

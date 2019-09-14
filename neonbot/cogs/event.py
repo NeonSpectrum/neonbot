@@ -84,22 +84,38 @@ class Event(commands.Cog):
 
         config = bot.db.get_guild(member.guild.id).config
         player = get_player(member.guild)
-        
+
         members = lambda members: len(
-            list(filter(lambda member: not member.bot and not member.voice.deaf and not member.voice.self_deaf, members))
+            list(
+                filter(
+                    lambda member: not member.bot
+                    and not member.voice.deaf
+                    and not member.voice.self_deaf,
+                    members,
+                )
+            )
         )
-        
+
         if player and player.connection:
             if player.connection.is_paused() and members(after.channel.members) > 0:
                 if player.messages.auto_paused:
                     await player.messages.auto_paused.delete()
                     player.messages.auto_paused = None
-                log.cmd(member, "Player resumed because someone will be listening.", channel=after.channel, user="N/A")
+                log.cmd(
+                    member,
+                    "Player resumed because someone will be listening.",
+                    channel=after.channel,
+                    user="N/A",
+                )
                 player.connection.resume()
-            elif (player.connection.is_playing() and members(before.channel.members) == 0):
+            elif (
+                player.connection.is_playing() and members(before.channel.members) == 0
+            ):
                 msg = "Player paused because no users are listening."
                 log.cmd(member, msg, channel=before.channel, user="N/A")
-                player.messages.auto_paused = await player.channel.send(embed=Embed(msg))
+                player.messages.auto_paused = await player.channel.send(
+                    embed=Embed(msg)
+                )
                 player.connection.pause()
 
         if before.channel != after.channel:
@@ -110,7 +126,7 @@ class Event(commands.Cog):
                 msg = f"**{member.name}** has connected to **{after.channel.name}**"
             else:
                 msg = f"**{member.name}** has disconnected to **{before.channel.name}**"
-            
+
             if voice_tts_channel:
                 await voice_tts_channel.send(
                     msg.replace("**", ""), tts=True, delete_after=0
@@ -175,7 +191,7 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_command(ctx):
-        bot.commands_executed += 1
+        bot.commands_executed.append(ctx.message.content)
 
         if ctx.channel.type.name == "private":
             return

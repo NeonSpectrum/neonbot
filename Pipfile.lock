@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "7d4e2ef9c23f79c39755a8d1c7d586d2800555419ac7896c2023b101d993fc9f"
+            "sha256": "3f6ce541d4ef4c1666a5aef6b0f847fe201e4bd919929892e575a07848c21cee"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -124,7 +124,7 @@
             "version": "==3.0.4"
         },
         "discord-py": {
-            "git": "https://github.com/Rapptz/discord.py.git",
+            "git": "git://github.com/Rapptz/discord.py.git",
             "ref": "b4358d0dcf46f426717a84090f4ec158dd243faf"
         },
         "environs": {
@@ -141,6 +141,10 @@
                 "sha256:ea8b7f6188e6fa117537c3df7da9fc686d485087abf6ac197f9c46432f7e4a3c"
             ],
             "version": "==2.8"
+        },
+        "jikanpy": {
+            "git": "git://github.com/AWConant/jikanpy.git",
+            "ref": "40a9b8d9fa17fe74cf3cc217cf2b1dbb536953c6"
         },
         "marshmallow": {
             "hashes": [
