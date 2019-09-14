@@ -85,8 +85,11 @@ class Player:
                         pass
                 return
 
-            self.current_queue = index
-            return await self.play(ctx)
+            if index < len(self.queue):
+                self.current_queue = index
+                return await self.play(ctx)
+            
+            self.current_queue = index - 1
 
         if (
             self.process_shuffle()
