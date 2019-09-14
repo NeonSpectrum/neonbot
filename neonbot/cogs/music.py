@@ -282,7 +282,7 @@ class Music(commands.Cog):
 
         for i in range(0, len(player.queue), 10):
             temp = []
-            for index, song in enumerate(player.queue[i : i + 10]):
+            for index, song in enumerate(player.queue[i : i + 10], i):
                 description = textwrap.dedent(
                     f"""\
                 `{'*' if player.current_queue == index else ''}{index+1}.` [{song.title}]({song.url})
