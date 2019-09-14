@@ -391,7 +391,12 @@ class Search(commands.Cog):
             text="Powered by MyAnimeList",
             icon_url="https://cdn.myanimelist.net/images/faviconv5.ico",
         )
-        embed.add_field(name="Synopsis", value=anime.synopsis)
+        embed.add_field(
+            name="Synopsis",
+            value=anime.synopsis[:1000] + ".."
+            if len(anime.synopsis) > 1000
+            else anime.synopsis,
+        )
         embed.add_field(name="Episodes", value=anime.episodes)
         embed.add_field(name="Rank", value=anime.rank)
         embed.add_field(name="Status", value=anime.status)
