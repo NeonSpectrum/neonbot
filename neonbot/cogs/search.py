@@ -442,8 +442,8 @@ class Search(commands.Cog):
         embeds = []
         for i in range(0, len(result), 10):
             temp = []
-            for index, value in enumerate(result[i : i + 10]):
-                temp.append(f"`{i+index+1}.` [{value.title}]({value.url})")
+            for index, value in enumerate(result[i : i + 10], i):
+                temp.append(f"`{index+1}.` [{value.title}]({value.url})")
             embeds.append(Embed("\n".join(temp)))
 
         embed = PaginationEmbed(array=embeds, authorized_users=[ctx.author.id])
