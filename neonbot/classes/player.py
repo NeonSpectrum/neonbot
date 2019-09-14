@@ -69,7 +69,8 @@ class Player:
         await self.playing_message(ctx)
 
     async def next(self, ctx, *, index=None, stop=False):
-        await self.finished_message(ctx, delete_after=5 if stop else None)
+        if self.connection.is_playing():
+            await self.finished_message(ctx, delete_after=5 if stop else None)
 
         if stop or index is not None:
             if self.connection._player:
