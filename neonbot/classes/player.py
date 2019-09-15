@@ -32,7 +32,7 @@ class Player:
 
     @property
     def now_playing(self):
-        return self.queue[self.current_queue]
+        return self.queue[self.current_queue] if self.current_queue < len(self.queue) else None
 
     async def play(self, ctx):
         self.channel = ctx.channel
@@ -102,6 +102,9 @@ class Player:
         config = self.config
         now_playing = self.now_playing
 
+        if not now_playing:
+            return
+        
         log.cmd(ctx, f"Now playing {now_playing.title}", user=now_playing.requested)
 
         if self.messages.last_playing:
@@ -136,6 +139,9 @@ class Player:
         config = self.config
         now_playing = self.now_playing
 
+        if not now_playing:
+            return
+        
         log.cmd(
             ctx, f"Finished playing {now_playing.title}", user=now_playing.requested
         )
