@@ -200,7 +200,7 @@ class Player:
 
         while True:
             index = random.randint(0, len(self.queue) - 1)
-            if self.queue[index].id not in self.shuffled_list:
+            if self.queue[index].id not in self.shuffled_list or len(self.queue) == 1:
                 self.current_queue = index
                 return True
 
