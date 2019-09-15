@@ -44,6 +44,7 @@ class Administration(commands.Cog):
             "ctx": ctx,
             "players": players,
             "player": players[ctx.guild.id],
+            "config": self.db.get_guild(ctx.guild.id).config,
             "rooms": rooms,
             "Embed": Embed,
             "send_to_all_owners": send_to_all_owners,
