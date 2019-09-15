@@ -85,38 +85,31 @@ class Event(commands.Cog):
         config = bot.db.get_guild(member.guild.id).config
         player = get_player(member.guild)
 
-        members = lambda members: len(
-            list(
-                filter(
-                    lambda member: not member.bot
-                    and not member.voice.deaf
-                    and not member.voice.self_deaf,
-                    members,
-                )
-            )
-        )
-
         if player and player.connection:
-            if player.connection.is_paused() and members(after.channel.members) > 0:
+            voice_channel = after.channel or before.channel
+            voice_members = [
+                member
+                for member in voice_channel.members
+                if not member.bot and not member.voice.self_deaf
+            ]
+            if player.connection.is_playing() and len(voice_members) == 0:
+                msg = "Player paused because no users are listening."
+                log.cmd(member, msg, channel=voice_channel, user="N/A")
+                player.messages.auto_paused = await player.channel.send(
+                    embed=Embed(msg)
+                )
+                player.connection.pause()
+            elif player.connection.is_paused() and len(voice_members) > 0:
                 if player.messages.auto_paused:
                     await player.messages.auto_paused.delete()
                     player.messages.auto_paused = None
                 log.cmd(
                     member,
                     "Player resumed because someone will be listening.",
-                    channel=after.channel,
+                    channel=voice_channel,
                     user="N/A",
                 )
                 player.connection.resume()
-            elif (
-                player.connection.is_playing() and members(after.channel.members) == 0
-            ):
-                msg = "Player paused because no users are listening."
-                log.cmd(member, msg, channel=after.channel, user="N/A")
-                player.messages.auto_paused = await player.channel.send(
-                    embed=Embed(msg)
-                )
-                player.connection.pause()
 
         if before.channel != after.channel:
             voice_tts_channel = bot.get_channel(int(config.channel.voicetts or -1))

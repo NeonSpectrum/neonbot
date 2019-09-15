@@ -33,7 +33,7 @@ class Music(commands.Cog):
         """Searches the url or the keyword and add it to queue."""
 
         if ctx.author.voice is None:
-            await ctx.send(embed=Embed("You need to be in a voice channel."))
+            return await ctx.send(embed=Embed("You need to be in a voice channel."))
 
         player = get_player(ctx.guild)
         embed = info = loading_msg = None
