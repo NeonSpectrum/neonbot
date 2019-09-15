@@ -160,8 +160,9 @@ class Music(commands.Cog):
             player.current_queue -= 1
         elif index == player.current_queue:
             if len(player.queue) == 0:
-                return player.next(ctx, stop=True)
-            await player.next(ctx, index=player.current_queue)
+                await player.next(ctx, stop=True)
+            else:
+                await player.next(ctx, index=player.current_queue)
 
     @commands.command(aliases=["vol"], usage="<1 - 100>")
     @commands.guild_only()
