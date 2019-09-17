@@ -483,7 +483,7 @@ class Search(commands.Cog):
         await ctx.send(
             embed=Embed(
                 title=f"Translated from `{translate_langs[0]}` to `{translate_langs[1]}`",
-                description=json.text[0],
+                description=f"`{sentence}` → `{json.text[0]}`",
             )
         )
 
@@ -497,7 +497,7 @@ class Search(commands.Cog):
         for i in range(0, len(items), 25):
             temp = []
             for code, lang in items[i : i + 25]:
-                temp.append(f"`{code}` -> `{lang}`")
+                temp.append(f"`{code}` → `{lang}`")
             embeds.append(Embed("\n".join(temp)))
 
         embed = PaginationEmbed(array=embeds, authorized_users=[ctx.author.id])
