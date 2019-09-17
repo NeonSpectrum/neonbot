@@ -1,3 +1,4 @@
+import json
 import logging
 import textwrap
 from datetime import datetime
@@ -21,8 +22,13 @@ class Search(commands.Cog):
         self.bot = bot
         self.session = bot.session
 
+        with open("./neonbot/assets/lang.json", "r") as f:
+            self.lang_list = json.load(f)
+
     @commands.command()
     async def joke(self, ctx):
+        """Tells a random dad joke."""
+
         res = await self.session.get(
             "https://icanhazdadjoke.com", headers={"Accept": "application/json"}
         )
@@ -452,6 +458,50 @@ class Search(commands.Cog):
             text="Powered by MyAnimeList",
             icon_url="https://cdn.myanimelist.net/images/faviconv5.ico",
         )
+        await embed.build(ctx)
+
+    @commands.command(aliases=["trans"])
+    async def translate(self, ctx, lang, *, sentence):
+        """Translates sentence based on language code given."""
+
+        if not env("YANDEX_API"):
+            return await ctx.send(embed=Embed("Error. Yandex API not found."))
+
+        res = await self.session.get(
+            "https://translate.yandex.net/api/v1.5/tr.json/translate",
+            data={"key": env("YANDEX_API"), "text": sentence, "lang": lang},
+        )
+
+        json = Dict(await res.json())
+        print(json)
+
+        if json.message:
+            return await ctx.send(embed=Embed(json.message), delete_after=5)
+
+        translate_langs = [self.lang_list.get(code) for code in json.lang.split("-")]
+
+        await ctx.send(
+            embed=Embed(
+                title=f"Translated from `{translate_langs[0]}` to `{translate_langs[1]}`",
+                description=json.text[0],
+            )
+        )
+
+    @commands.command()
+    async def langlist(self, ctx):
+        """Lists all language codes."""
+
+        items = list(self.lang_list.items())
+
+        embeds = []
+        for i in range(0, len(items), 25):
+            temp = []
+            for code, lang in items[i : i + 25]:
+                temp.append(f"`{code}` -> `{lang}`")
+            embeds.append(Embed("\n".join(temp)))
+
+        embed = PaginationEmbed(array=embeds, authorized_users=[ctx.author.id])
+        embed.embed.title = ":blue_book: Language Code List"
         await embed.build(ctx)
 
 
