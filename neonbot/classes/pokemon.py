@@ -113,7 +113,7 @@ class Pokemon:
 
         await self.channel.send(embed=embed)
 
-    def guess_string(string):
+    def guess_string(self, string):
         string = list(string)
 
         i = 0
