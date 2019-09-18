@@ -35,7 +35,7 @@ class Administration(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def eval(self, ctx, *, args):
-        """Evaluates a line/s of python code."""
+        """Evaluates a line/s of python code. *BOT_OWNER"""
 
         env = {
             "bot": self.bot,
@@ -81,7 +81,7 @@ class Administration(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def generatelog(self, ctx):
-        """Generates a link contains the content of debug.log"""
+        """Generates a link contains the content of debug.log. *BOT_OWNER"""
 
         if not env("PASTEBIN_API"):
             return await ctx.send(embed=Embed("Error. Pastebin API not found."))
@@ -107,7 +107,7 @@ class Administration(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def reload(self, ctx, *, args):
-        """Reloads an extension."""
+        """Reloads an extension. *BOT_OWNER"""
 
         try:
             self.bot.reload_extension("neonbot.cogs." + args)
@@ -122,7 +122,7 @@ class Administration(commands.Cog):
     @commands.guild_only()
     async def prune(self, ctx, count: int = 1, member: discord.Member = None):
         """
-        Deletes a number of messages.
+        Deletes a number of messages. *MANAGE_MESSAGES
         If member is specified, it will delete message of that member.
         """
 
@@ -148,7 +148,7 @@ class Administration(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
     async def prefix(self, ctx, arg):
-        """Sets the prefix of the current server."""
+        """Sets the prefix of the current server. *ADMINISTRATOR"""
 
         database = self.db.get_guild(ctx.guild.id)
         config = database.config
@@ -159,7 +159,7 @@ class Administration(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def setstatus(self, ctx, arg):
-        """Sets the status of the bot."""
+        """Sets the status of the bot. *BOT_OWNER"""
 
         if not await check_args(ctx, arg, ["online", "offline", "dnd", "idle"]):
             return
@@ -175,7 +175,7 @@ class Administration(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def setpresence(self, ctx, presence_type, *, name):
-        """Sets the presence of the bot."""
+        """Sets the presence of the bot. *BOT_OWNER"""
 
         if not await check_args(
             ctx, presence_type, ["watching", "listening", "playing"]
@@ -235,7 +235,6 @@ class Administration(commands.Cog):
         )
 
     @commands.command()
-    @commands.is_owner()
     @commands.guild_only()
     async def deletealias(self, ctx, name):
         """
@@ -265,7 +264,7 @@ class Administration(commands.Cog):
     @commands.guild_only()
     async def deleteoncmd(self, ctx):
         """
-        Enables/Disables delete on cmd.
+        Enables/Disables delete on cmd. *BOT_OWNER
 
         If enabled, it will delete the command message of the user.
         """
@@ -285,7 +284,7 @@ class Administration(commands.Cog):
     @commands.guild_only()
     async def voicetts(self, ctx):
         """
-        Enables/Disables Voice TTS.
+        Enables/Disables Voice TTS. *ADMINISTRATOR
 
         If enabled, the bot will send a tts message if someone joins/leaves a voice channel.
 
@@ -309,7 +308,7 @@ class Administration(commands.Cog):
     @commands.guild_only()
     async def logger(self, ctx):
         """
-        Enables/Disables Logger.
+        Enables/Disables Logger. *ADMINISTRATOR
 
         If enabled, the bot will log the following:
             - If someone joins/leaves the guild.

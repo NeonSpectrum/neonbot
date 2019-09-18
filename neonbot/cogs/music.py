@@ -23,17 +23,34 @@ def get_player(guild: discord.Guild):
     return players[guild.id]
 
 
+async def in_voice(ctx):
+    if await ctx.bot.is_owner(ctx.author) and ctx.command.name == "reset":
+        return True
+
+    if not ctx.author.voice and ctx.invoked_with != "help":
+        await ctx.send(embed=Embed("You need to be in the channel."), delete_after=5)
+        return False
+    return True
+
+
+async def has_player(ctx):
+    player = get_player(ctx.guild)
+
+    if not player.connection and ctx.invoked_with != "help":
+        await ctx.send(embed=Embed("No active player."), delete_after=5)
+        return False
+    return True
+
+
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command(aliases=["p"], usage="<url | keyword>")
     @commands.guild_only()
+    @commands.check(in_voice)
     async def play(self, ctx, *, keyword=None):
         """Searches the url or the keyword and add it to queue."""
-
-        if ctx.author.voice is None:
-            return await ctx.send(embed=Embed("You need to be in a voice channel."))
 
         player = get_player(ctx.guild)
         embed = info = loading_msg = None
@@ -69,6 +86,8 @@ class Music(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
+    @commands.check(has_player)
+    @commands.check(in_voice)
     async def pause(self, ctx):
         """Pauses the current player."""
 
@@ -86,6 +105,8 @@ class Music(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
+    @commands.check(has_player)
+    @commands.check(in_voice)
     async def resume(self, ctx):
         """Resumes the current player."""
 
@@ -104,6 +125,8 @@ class Music(commands.Cog):
 
     @commands.command(aliases=["next"])
     @commands.guild_only()
+    @commands.check(has_player)
+    @commands.check(in_voice)
     async def skip(self, ctx):
         """Skips the current song."""
 
@@ -112,6 +135,8 @@ class Music(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
+    @commands.check(has_player)
+    @commands.check(in_voice)
     async def stop(self, ctx):
         """Stops the current player and resets the track number to 1."""
 
@@ -123,6 +148,8 @@ class Music(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
+    @commands.check(has_player)
+    @commands.check(in_voice)
     async def reset(self, ctx):
         """Resets the current player and disconnect to voice channel."""
 
@@ -134,6 +161,8 @@ class Music(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
+    @commands.check(has_player)
+    @commands.check(in_voice)
     async def removesong(self, ctx, index: int):
         """Remove the song with the index specified."""
 
@@ -166,6 +195,8 @@ class Music(commands.Cog):
 
     @commands.command(aliases=["vol"], usage="<1 - 100>")
     @commands.guild_only()
+    @commands.check(has_player)
+    @commands.check(in_voice)
     async def volume(self, ctx, vol: int = -1):
         """Sets or gets player's volume."""
 
@@ -187,6 +218,8 @@ class Music(commands.Cog):
 
     @commands.command(usage="<off | single | all>")
     @commands.guild_only()
+    @commands.check(has_player)
+    @commands.check(in_voice)
     async def repeat(self, ctx, args=None):
         """Sets or gets player's repeat mode."""
 
@@ -204,6 +237,8 @@ class Music(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
+    @commands.check(has_player)
+    @commands.check(in_voice)
     async def autoplay(self, ctx):
         """Enables/disables player's autoplay mode."""
 
@@ -218,6 +253,8 @@ class Music(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
+    @commands.check(has_player)
+    @commands.check(in_voice)
     async def shuffle(self, ctx):
         """Enables/disables player's shuffle mode."""
 
@@ -232,6 +269,8 @@ class Music(commands.Cog):
 
     @commands.command(aliases=["np"])
     @commands.guild_only()
+    @commands.check(has_player)
+    @commands.check(in_voice)
     async def nowplaying(self, ctx):
         """Displays in brief description of the current playing."""
 
@@ -270,6 +309,8 @@ class Music(commands.Cog):
 
     @commands.command(aliases=["list"])
     @commands.guild_only()
+    @commands.check(has_player)
+    @commands.check(in_voice)
     async def playlist(self, ctx):
         """List down all songs in the player's queue."""
 
