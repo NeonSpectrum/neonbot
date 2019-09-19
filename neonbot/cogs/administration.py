@@ -212,9 +212,8 @@ class Administration(commands.Cog):
         aliases = database.config.aliases
         ids = [i for i, x in enumerate(aliases) if x.name == name]
         if len(ids) > 0:
-            if (
-                int(aliases[ids[0]].owner) != ctx.author.id
-                and ctx.author.id not in bot.owner_ids
+            if int(aliases[ids[0]].owner) != ctx.author.id and await bot.is_owner(
+                ctx.author
             ):
                 return await ctx.send(
                     embed=Embed(f"You are not the owner of the alias."), delete_after=5
@@ -248,9 +247,8 @@ class Administration(commands.Cog):
         ids = [i for i, x in enumerate(aliases) if x.name == name]
         if len(ids) == 0:
             return await ctx.send(embed=Embed(f"Alias doesn't exists."), delete_after=5)
-        if (
-            int(aliases[ids[0]].owner) != ctx.author.id
-            and ctx.author.id not in bot.owner_ids
+        if int(aliases[ids[0]].owner) != ctx.author.id and await bot.is_owner(
+            ctx.author
         ):
             return await ctx.send(
                 embed=Embed(f"You are not the owner of the alias."), delete_after=5
