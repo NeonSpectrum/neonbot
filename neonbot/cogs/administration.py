@@ -330,7 +330,10 @@ class Administration(commands.Cog):
             await ctx.send(embed=Embed(f"Logger is now disabled."))
 
     @commands.command()
+    @commands.is_owner()
     async def update(self, ctx):
+        """Updates the bot from github."""
+        
         process = await asyncio.create_subprocess_shell(
             "git pull", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
@@ -354,7 +357,10 @@ class Administration(commands.Cog):
             await self.bot.restart()
 
     @commands.command()
+    @commands.is_owner()
     async def restart(self, ctx):
+        """Restarts bot."""
+        
         await self.bot.restart()
 
 
