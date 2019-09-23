@@ -33,6 +33,7 @@ class Event(commands.Cog):
     @bot.event
     async def on_ready():
         log.info("Ready!")
+        await bot.send_restart_message()
 
     @staticmethod
     @bot.event

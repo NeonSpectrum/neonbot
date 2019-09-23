@@ -13,6 +13,7 @@ from discord.ext import commands
 from . import Database, __title__, __version__, env
 from .helpers.constants import LOGO
 from .helpers.log import cprint
+from .helpers.utils import Embed
 
 log = logging.getLogger(__name__)
 
@@ -55,6 +56,22 @@ class Bot(commands.Bot):
                     {**queue, "requested": queue.requested.id} for queue in player.queue
                 ]
             json.dump(queue_list, f, indent=4)
+
+    async def send_restart_message(self):
+        file = "./tmp/restart_config.json"
+        if path.exists(file):
+            with open(file, "r") as f:
+                data = Dict(json.load(f))
+            os.remove(file)
+
+            channel = self.get_channel(data.channel_id)
+            try:
+                message = await channel.fetch_message(data.message_id)
+            except discord.NotFound:
+                pass
+            else:
+                await message.delete()
+            await channel.send(embed=Embed("Bot Restarted."), delete_after=10)
 
     def start_message(self):
         cprint(LOGO, "blue")

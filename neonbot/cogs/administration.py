@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import json
 import logging
 import sys
 from io import StringIO
@@ -333,7 +334,7 @@ class Administration(commands.Cog):
     @commands.is_owner()
     async def update(self, ctx):
         """Updates the bot from github."""
-        
+
         process = await asyncio.create_subprocess_shell(
             "git pull", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
@@ -352,16 +353,32 @@ class Administration(commands.Cog):
 
         await ctx.send(embed=embed)
 
-        if "Updating" in result:
-            self.bot.save_music()
-            await self.bot.restart()
-
-    @commands.command()
+    @commands.command(usage="<soft | hard>")
     @commands.is_owner()
-    async def restart(self, ctx):
+    async def restart(self, ctx, status):
         """Restarts bot."""
-        
-        await self.bot.restart()
+
+        if not await check_args(ctx, status, ["hard", "soft"]):
+            return
+
+        if status == "hard":
+            self.bot.save_music()
+            msg = await ctx.send(embed=Embed("Bot Restarting..."))
+            with open("./tmp/restart_config.json", "w") as f:
+                json.dump(
+                    {"message_id": msg.id, "channel_id": ctx.channel.id}, f, indent=4
+                )
+            await self.bot.restart()
+        elif status == "soft":
+            for extension in bot.extensions.keys():
+                try:
+                    self.bot.reload_extension(extension)
+                except Exception as e:
+                    return await ctx.send(embed=Embed(str(e)))
+
+            msg = "Reloaded all modules"
+            log.info(msg)
+            await ctx.send(embed=Embed(msg), delete_after=10)
 
 
 def setup(bot):
