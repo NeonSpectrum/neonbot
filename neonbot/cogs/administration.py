@@ -352,7 +352,7 @@ class Administration(commands.Cog):
 
         await ctx.send(embed=embed)
 
-        if "files changed" not in result:
+        if "Updating" in result:
             self.bot.save_music()
             await self.bot.restart()
 
