@@ -1,8 +1,12 @@
+import json
 import logging
-from os import listdir
-from os.path import isfile, join
+import os
+import sys
+from os import path
 
 import discord
+import psutil
+from addict import Dict
 from aiohttp import ClientSession, ClientTimeout
 from discord.ext import commands
 
@@ -28,6 +32,29 @@ class Bot(commands.Bot):
 
         self.app_info = None
         self.commands_executed = []
+
+        self.game = Dict()
+        self.music = Dict()
+
+        self._music_cache = {}
+        self.load_music()
+
+    def load_music(self):
+        file = "./tmp/music.json"
+        if path.exists(file):
+            with open(file, "r") as f:
+                self._music_cache = Dict(json.load(f))
+            os.remove(file)
+
+    def save_music(self):
+        file = "./tmp/music.json"
+        with open(file, "w") as f:
+            queue_list = Dict()
+            for key, player in self.music.items():
+                queue_list[key] = [
+                    {**queue, "requested": queue.requested.id} for queue in player.queue
+                ]
+            json.dump(queue_list, f, indent=4)
 
     def start_message(self):
         cprint(LOGO, "blue")
@@ -59,14 +86,27 @@ class Bot(commands.Bot):
         cogs_dir = "neonbot/cogs"
         for extension in [
             f.replace(".py", "")
-            for f in listdir(cogs_dir)
-            if f != "__init__.py" and isfile(join(cogs_dir, f))
+            for f in os.listdir(cogs_dir)
+            if f != "__init__.py" and path.isfile(path.join(cogs_dir, f))
         ]:
             self.load_extension("neonbot.cogs." + extension)
 
     async def logout(self):
         await self.session.close()
-        return super().logout()
+        super().logout()
+
+    async def restart(self):
+        await self.session.close()
+        [await voice.disconnect() for voice in self.voice_clients]
+        try:
+            p = psutil.Process(os.getpid())
+            for handler in p.open_files() + p.connections():
+                os.close(handler.fd)
+        except Exception as e:
+            log.exception(e)
+
+        python = sys.executable
+        os.execl(python, python, *sys.argv)
 
     def run(self):
         self.load_cogs()

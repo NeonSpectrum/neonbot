@@ -12,6 +12,7 @@ def main():
     if os.name == "nt":
         os.system("color")
 
+    os.makedirs("./tmp", exist_ok=True)
     bot.run()
 
 

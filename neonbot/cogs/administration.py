@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 import logging
 import sys
@@ -327,6 +328,34 @@ class Administration(commands.Cog):
             await ctx.send(embed=Embed(f"Logger is now set to this channel."))
         else:
             await ctx.send(embed=Embed(f"Logger is now disabled."))
+
+    @commands.command()
+    async def update(self, ctx):
+        process = await asyncio.create_subprocess_shell(
+            "git pull", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
+
+        stdout, stderr = await process.communicate()
+
+        result = stdout.decode().strip()
+
+        embed = Embed()
+        embed.set_author(
+            name="Github Update",
+            icon_url="https://cdn1.iconfinder.com/data/icons/social-media-vol-1-1/24/_github-512.png",
+        )
+
+        embed.description = result
+
+        await ctx.send(embed=embed)
+
+        if "files changed" not in result:
+            self.bot.save_music()
+            await self.bot.restart()
+
+    @commands.command()
+    async def restart(self, ctx):
+        await self.bot.restart()
 
 
 def setup(bot):

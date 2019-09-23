@@ -3,17 +3,15 @@ import re
 import textwrap
 
 import discord
-from addict import Dict
 from discord.ext import commands
 
+from .. import music as players
 from ..classes import PaginationEmbed, Player
 from ..helpers.constants import SPOTIFY_REGEX, YOUTUBE_REGEX
 from ..helpers.date import format_seconds
 from ..helpers.utils import Embed, check_args, plural
 
 log = logging.getLogger(__name__)
-
-players = Dict()
 
 
 def get_player(guild: discord.Guild):
@@ -45,6 +43,7 @@ async def has_player(ctx):
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.bot.load_music()
 
     @commands.command(aliases=["p"], usage="<url | keyword>")
     @commands.guild_only()
@@ -60,7 +59,10 @@ class Music(commands.Cog):
                 index = int(keyword)
                 if index > len(player.queue) or index < 0:
                     return await ctx.send(embed=Embed("Invalid index."), delete_after=5)
-                await player.next(ctx, index=index - 1)
+                if player.connection:
+                    await player.next(ctx, index=index - 1)
+                else:
+                    player.current_queue = index - 1
             elif re.search(YOUTUBE_REGEX, keyword):
                 info, embed = await player.process_youtube(ctx, keyword)
             elif re.search(SPOTIFY_REGEX, keyword):
@@ -309,7 +311,6 @@ class Music(commands.Cog):
 
     @commands.command(aliases=["list"])
     @commands.guild_only()
-    @commands.check(has_player)
     @commands.check(in_voice)
     async def playlist(self, ctx):
         """List down all songs in the player's queue."""

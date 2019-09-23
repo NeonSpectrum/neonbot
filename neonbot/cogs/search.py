@@ -90,8 +90,10 @@ class Search(commands.Cog):
             url = f"https://media.merriam-webster.com/soundc11/{audio[0]}/{audio}.wav"
             res = await self.session.get(url)
 
+        term = dictionary.meta.id[0:dictionary.meta.id.rfind(":")]
+
         embed = Embed()
-        embed.add_field(name=word, value=f"*{prs.mw}*" + "\n" + dictionary.shortdef[0])
+        embed.add_field(name=term, value=f"*{prs.mw}*" + "\n" + dictionary.shortdef[0])
         embed.set_author(
             name="Merriam-Webster Dictionary",
             icon_url="https://dictionaryapi.com/images/MWLogo.png",

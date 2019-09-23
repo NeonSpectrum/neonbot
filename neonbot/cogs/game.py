@@ -3,10 +3,9 @@ import logging
 from addict import Dict
 from discord.ext import commands
 
+from .. import game as rooms
 from ..classes import Connect4, Pokemon
 from ..helpers.utils import Embed
-
-rooms = Dict()
 
 log = logging.getLogger(__name__)
 

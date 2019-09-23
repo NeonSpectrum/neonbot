@@ -1,9 +1,12 @@
 import asyncio
+import logging
 
 import discord
 
 from .. import bot
 from .constants import CHOICES_EMOJI
+
+log = logging.getLogger(__name__)
 
 
 def Embed(description=None, **kwargs):

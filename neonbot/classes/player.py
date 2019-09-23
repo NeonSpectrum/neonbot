@@ -20,6 +20,7 @@ class Player:
     """
 
     def __init__(self, guild: discord.Guild):
+        self.guild = guild
         self.db = bot.db.get_guild(guild.id)
         self.config = self.db.config.music
         self.connection = None
@@ -27,12 +28,27 @@ class Player:
         self.current_queue = 0
         self.queue = []
         self.shuffled_list = []
-        self.messages = Dict(last_playing=None, last_finished=None, paused=None, auto_paused=None)
+        self.messages = Dict(
+            last_playing=None, last_finished=None, paused=None, auto_paused=None
+        )
         self.ytdl = Ytdl()
+
+        self._load_music_cache()
+
+    def _load_music_cache(self):
+        cache = bot._music_cache.get(str(self.guild.id))
+        if cache:
+            self.queue = cache
+            for queue in self.queue:
+                queue.requested = bot.get_user(queue.requested)
 
     @property
     def now_playing(self):
-        return self.queue[self.current_queue] if self.current_queue < len(self.queue) else None
+        return (
+            self.queue[self.current_queue]
+            if self.current_queue < len(self.queue)
+            else None
+        )
 
     async def play(self, ctx):
         self.channel = ctx.channel
@@ -58,7 +74,7 @@ class Player:
         except discord.ClientException:
             msg = "Error while playing the song."
             log.exception(msg)
-            return await ctx.send(msg)
+            return await ctx.send(embed=Embed(msg))
 
         def after(error):
             if error:
@@ -88,7 +104,7 @@ class Player:
             if index < len(self.queue):
                 self.current_queue = index
                 return await self.play(ctx)
-            
+
             self.current_queue = index - 1
 
         if (
@@ -104,7 +120,7 @@ class Player:
 
         if not now_playing:
             return
-        
+
         log.cmd(ctx, f"Now playing {now_playing.title}", user=now_playing.requested)
 
         if self.messages.last_playing:
@@ -141,7 +157,7 @@ class Player:
 
         if not now_playing:
             return
-        
+
         log.cmd(
             ctx, f"Finished playing {now_playing.title}", user=now_playing.requested
         )
