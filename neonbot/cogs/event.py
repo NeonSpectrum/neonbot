@@ -84,9 +84,9 @@ class Event(commands.Cog):
 
         config = bot.db.get_guild(member.guild.id).config
         player = get_player(member.guild)
+        voice_channel = after.channel or before.channel
 
         if player and player.connection:
-            voice_channel = after.channel or before.channel
             voice_members = [
                 member
                 for member in voice_channel.members
@@ -115,16 +115,19 @@ class Event(commands.Cog):
             voice_tts_channel = bot.get_channel(int(config.channel.voicetts or -1))
             log_channel = bot.get_channel(int(config.channel.log or -1))
 
+            role = voice_channel.guild.default_role
+            readable = voice_channel.overwrites_for(role).read_messages is not False
+
             if after.channel:
-                msg = f"**{member.name}** has connected to **{after.channel.name}**"
+                msg = f"**{member.name}** has connected to **{voice_channel.name}**"
             else:
-                msg = f"**{member.name}** has disconnected to **{before.channel.name}**"
+                msg = f"**{member.name}** has disconnected to **{voice_channel.name}**"
 
             if voice_tts_channel:
                 await voice_tts_channel.send(
                     msg.replace("**", ""), tts=True, delete_after=0
                 )
-            if log_channel:
+            if log_channel and readable:
                 embed = Embed(f"`{date_format()}`:bust_in_silhouette:{msg}")
                 embed.set_author(
                     name="Voice Presence Update", icon_url=bot.user.avatar_url
