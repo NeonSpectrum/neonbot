@@ -1,6 +1,7 @@
 import functools
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+from typing import List, Union
 from urllib.parse import parse_qs, urlparse
 
 import youtube_dl
@@ -8,10 +9,11 @@ from addict import Dict
 
 from .. import bot, env
 from ..helpers.date import date
+from ..helpers.exceptions import YtdlError
 
 
 class Ytdl:
-    def __init__(self, extra_params={}):
+    def __init__(self, extra_params: dict = {}) -> None:
         self.thread_pool = ThreadPoolExecutor(max_workers=3)
         self.loop = bot.loop
         self.ytdl = youtube_dl.YoutubeDL(
@@ -27,7 +29,7 @@ class Ytdl:
             }
         )
 
-    async def extract_info(self, *args, **kwargs):
+    async def extract_info(self, *args: str, **kwargs: str) -> Union[list, Dict]:
         result = await self.loop.run_in_executor(
             self.thread_pool,
             functools.partial(self.ytdl.extract_info, *args, download=False, **kwargs),
@@ -35,14 +37,19 @@ class Ytdl:
         info = Dict(result)
         return info.get("entries", info)
 
-    async def process_entry(self, info):
+    async def process_entry(self, info: Dict) -> Dict:
         result = await self.loop.run_in_executor(
             self.thread_pool,
             functools.partial(self.ytdl.process_ie_result, info, download=False),
         )
+        if not result:
+            raise YtdlError(
+                "Video not available or rate limited due to many song requests. Try again later."
+            )
+
         return Dict(result)
 
-    def parse_choices(self, info):
+    def parse_choices(self, info: Dict) -> list:
         return [
             Dict(
                 id=entry.id,
@@ -52,8 +59,8 @@ class Ytdl:
             for entry in info
         ]
 
-    def parse_info(self, info):
-        def parse_description(description):
+    def parse_info(self, info: Dict) -> Union[List[Dict], Dict]:
+        def parse_description(description: str) -> str:
             description_arr = description.split("\n")[:15]
             while len("\n".join(description_arr)) > 1000:
                 description_arr.pop()
@@ -61,7 +68,7 @@ class Ytdl:
                 description_arr.append("...")
             return "\n".join(description_arr)
 
-        def parse_entry(entry):
+        def parse_entry(entry: Dict) -> Dict:
             return Dict(
                 id=entry.id,
                 title=entry.title,
@@ -83,20 +90,20 @@ class Ytdl:
         return parse_entry(info) if info else None
 
     @staticmethod
-    async def get_related_videos(video_id):
+    async def get_related_videos(video_id: str) -> Dict:
         res = await bot.session.get(
             "https://www.googleapis.com/youtube/v3/search",
             params={
                 "part": "snippet",
                 "relatedToVideoId": video_id,
                 "type": "video",
-                "key": env("GOOGLE_API"),
+                "key": env.str("GOOGLE_API"),
             },
         )
         json = await res.json()
         return Dict(json)["items"]
 
     @staticmethod
-    def is_link_expired(url):
+    def is_link_expired(url: str) -> bool:
         params = Dict(parse_qs(urlparse(url).query))
         return date().timestamp() > int(params.expire[0]) - 1800 if params else False

@@ -1,4 +1,5 @@
 import logging
+from typing import cast
 
 import discord
 from discord.ext import commands
@@ -7,11 +8,13 @@ from discord.utils import oauth_url
 from .. import bot
 from ..helpers.constants import PERMISSIONS
 from ..helpers.date import date_format
+from ..helpers.exceptions import YtdlError
+from ..helpers.log import Log
 from ..helpers.utils import Embed, send_to_all_owners
 from .music import get_player
 from .utility import chatbot
 
-log = logging.getLogger(__name__)
+log = cast(Log, logging.getLogger(__name__))
 
 IGNORED_DELETEONCMD = ["eval", "prune"]
 
@@ -19,26 +22,26 @@ IGNORED_DELETEONCMD = ["eval", "prune"]
 class Event(commands.Cog):
     @staticmethod
     @bot.event
-    async def on_connect():
+    async def on_connect() -> None:
         if not bot.app_info:
             await bot.set_app_info()
         log.info(f"Logged in as {bot.user}")
 
     @staticmethod
     @bot.event
-    async def on_disconnect():
+    async def on_disconnect() -> None:
         log.warn("Disconnected!")
 
     @staticmethod
     @bot.event
-    async def on_ready():
+    async def on_ready() -> None:
         log.info("Ready!")
         await bot.send_restart_message()
 
     @staticmethod
     @bot.event
-    async def on_message(message):
-        def check_alias():
+    async def on_message(message: discord.Message) -> None:
+        def check_alias() -> bool:
             nonlocal message
             config = bot.db.get_guild(message.guild.id).config
             arr = [x for x in config.aliases if x.name == message.content]
@@ -79,7 +82,9 @@ class Event(commands.Cog):
 
     @staticmethod
     @bot.event
-    async def on_voice_state_update(member, before, after):
+    async def on_voice_state_update(
+        member: discord.Member, before: discord.VoiceState, after: discord.VoiceState
+    ) -> None:
         if member.bot:
             return
 
@@ -137,7 +142,7 @@ class Event(commands.Cog):
 
     @staticmethod
     @bot.event
-    async def on_member_update(before, after):
+    async def on_member_update(before: discord.Member, after: discord.Member) -> None:
         if before.bot:
             return
 
@@ -161,7 +166,7 @@ class Event(commands.Cog):
 
     @staticmethod
     @bot.event
-    async def on_member_join(member):
+    async def on_member_join(member: discord.Member) -> None:
         config = bot.db.get_guild(member.guild.id).config
         channel = bot.get_channel(int(config.channel.log))
 
@@ -174,7 +179,7 @@ class Event(commands.Cog):
 
     @staticmethod
     @bot.event
-    async def on_member_remove(member):
+    async def on_member_remove(member: discord.Member) -> None:
         config = bot.db.get_guild(member.guild.id).config
         channel = bot.get_channel(int(config.channel.log))
 
@@ -187,7 +192,7 @@ class Event(commands.Cog):
 
     @staticmethod
     @bot.event
-    async def on_command(ctx):
+    async def on_command(ctx: commands.Context) -> None:
         bot.commands_executed.append(ctx.message.content)
 
         if ctx.channel.type.name == "private":
@@ -201,19 +206,20 @@ class Event(commands.Cog):
 
     @staticmethod
     @bot.event
-    async def on_command_error(ctx, error):
+    async def on_command_error(ctx: commands.Context, error: Exception) -> None:
         if hasattr(ctx.command, "on_error"):
             return
 
         error = getattr(error, "original", error)
         ignored = (commands.CheckFailure, discord.NotFound)
+        send_msg = (commands.CommandNotFound, YtdlError)
 
         if isinstance(error, ignored):
             return
 
         log.cmd(ctx, f"Command error: {error}")
 
-        if isinstance(error, commands.CommandNotFound):
+        if isinstance(error, send_msg):
             return await ctx.send(embed=Embed(str(error)))
 
         if isinstance(error, commands.MissingRequiredArgument):
@@ -228,5 +234,5 @@ class Event(commands.Cog):
         raise error
 
 
-def setup(bot):
-    bot.add_cog(Event(bot))
+def setup(bot: commands.Bot) -> None:
+    bot.add_cog(Event())

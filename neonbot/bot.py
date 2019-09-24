@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 from os import path
+from typing import Callable, List, Union, cast
 
 import discord
 import psutil
@@ -12,42 +13,41 @@ from discord.ext import commands
 
 from . import Database, __title__, __version__, env
 from .helpers.constants import LOGO
-from .helpers.log import cprint
-from .helpers.utils import Embed
+from .helpers.log import Log, cprint
 
-log = logging.getLogger(__name__)
+log = cast(Log, logging.getLogger(__name__))
 
 
 class Bot(commands.Bot):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(command_prefix=self.get_command_prefix())
 
         self.start_message()
 
         self.db = Database()
-        self.default_prefix = env("DEFAULT_PREFIX", ".")
+        self.default_prefix = env.str("DEFAULT_PREFIX", ".")
         self.owner_ids = set(env.list("OWNER_IDS", [], subcast=int))
 
         self.activity = self.get_activity()
         self.session = ClientSession(loop=self.loop, timeout=ClientTimeout(total=30))
 
-        self.app_info = None
-        self.commands_executed = []
+        self.app_info: discord.AppInfo = None
+        self.commands_executed: List[str] = []
 
         self.game = Dict()
         self.music = Dict()
 
-        self._music_cache = {}
+        self._music_cache = Dict()
         self.load_music()
 
-    def load_music(self):
+    def load_music(self) -> None:
         file = "./tmp/music.json"
         if path.exists(file):
             with open(file, "r") as f:
                 self._music_cache = Dict(json.load(f))
             os.remove(file)
 
-    def save_music(self):
+    def save_music(self) -> None:
         file = "./tmp/music.json"
         with open(file, "w") as f:
             queue_list = Dict()
@@ -57,7 +57,9 @@ class Bot(commands.Bot):
                 ]
             json.dump(queue_list, f, indent=4)
 
-    async def send_restart_message(self):
+    async def send_restart_message(self) -> None:
+        from .helpers.utils import Embed
+
         file = "./tmp/restart_config.json"
         if path.exists(file):
             with open(file, "r") as f:
@@ -73,11 +75,11 @@ class Bot(commands.Bot):
                 await message.delete()
             await channel.send(embed=Embed("Bot Restarted."), delete_after=10)
 
-    def start_message(self):
+    def start_message(self) -> None:
         cprint(LOGO, "blue")
         log.info(f"Starting {__title__} v{__version__}")
 
-    def get_activity(self):
+    def get_activity(self) -> discord.Activity:
         settings = self.db.get_settings().settings
         activity_type = settings.game.type.lower()
         activity_name = settings.game.name
@@ -89,30 +91,31 @@ class Bot(commands.Bot):
             status=discord.Status[status],
         )
 
-    async def set_app_info(self):
+    async def set_app_info(self) -> None:
         self.app_info = await bot.application_info()
 
-    def get_command_prefix(self):
+    def get_command_prefix(self) -> Union[Callable, str]:
         return (
             lambda _, message: self.db.get_guild(message.guild.id).config.prefix
             if message.guild
             else self.default_prefix
         )
 
-    def load_cogs(self):
+    def load_cogs(self) -> None:
         cogs_dir = "neonbot/cogs"
+        excluded = "__init__.py"
         for extension in [
             f.replace(".py", "")
             for f in os.listdir(cogs_dir)
-            if f != "__init__.py" and path.isfile(path.join(cogs_dir, f))
+            if f not in excluded and path.isfile(path.join(cogs_dir, f))
         ]:
             self.load_extension("neonbot.cogs." + extension)
 
-    async def logout(self):
+    async def logout(self) -> None:
         await self.session.close()
         super().logout()
 
-    async def restart(self):
+    async def restart(self) -> None:
         await self.session.close()
         [await voice.disconnect() for voice in self.voice_clients]
         try:
@@ -125,9 +128,9 @@ class Bot(commands.Bot):
         python = sys.executable
         os.execl(python, python, *sys.argv)
 
-    def run(self):
+    def run(self) -> None:
         self.load_cogs()
-        super().run(env("TOKEN"))
+        super().run(env.str("TOKEN"))
 
 
 bot = Bot()

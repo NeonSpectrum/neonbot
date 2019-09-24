@@ -1,5 +1,6 @@
 import asyncio
 import random
+from typing import List
 
 import discord
 
@@ -17,17 +18,20 @@ class Connect4:
     def __init__(self, channel: discord.TextChannel):
         self.channel = bot.get_channel(channel.id)
         self.config = bot.db.get_guild(self.channel.guild.id).config
-        self.board = None
-        self.players = []
+
+        self.reset()
+
+    def reset(self) -> None:
+        self.board: list = []
+        self.players: List[discord.User] = []
         self.turn = random.randint(0, 1)
-        self.last_board_message = None
-        self.waiting_message = None
-        self.timeout = None
-        self.winner = None
+        self.last_board_message: discord.Message = None
+        self.waiting_message: discord.Message = None
+        self.timeout: asyncio.Task
 
         self.reset_board()
 
-    async def join(self, user: discord.User):
+    async def join(self, user: discord.User) -> None:
         """Join the game and determine if the game will start or not
 
         Parameters
@@ -50,10 +54,10 @@ class Connect4:
         else:
             await self.channel.send(embed=Embed("You are already in the game."))
 
-    async def start(self):
+    async def start(self) -> None:
         """Starts the game and will loop until winner is detected"""
 
-        def check(m):
+        def check(m: discord.Message) -> bool:
             return (
                 m.content.isdigit()
                 and any(
@@ -73,14 +77,15 @@ class Connect4:
             is_moved = self.move_player(msg.author, int(msg.content) - 1)
             if not is_moved:
                 await self.channel.send(embed=Embed(f"{msg.content} is full."))
-                return self.start()
+                self.start()
+                return
             self.winner = self.check_winner()
             self.next_player()
             await self.show_board()
             if not self.winner:
                 self.start()
 
-    async def join_timeout(self):
+    async def join_timeout(self) -> None:
         """Add timeout to check whether a player will join the game or not."""
 
         await asyncio.sleep(20)
@@ -93,11 +98,11 @@ class Connect4:
             ),
         )
 
-    def next_player(self):
+    def next_player(self) -> int:
         self.turn = 1 if self.turn == 0 else 0
         return self.turn
 
-    def reset_board(self):
+    def reset_board(self) -> None:
         self.board = [
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0],
@@ -107,7 +112,7 @@ class Connect4:
             [0, 0, 0, 0, 0, 0, 0],
         ]
 
-    async def show_board(self, timeout=False):
+    async def show_board(self, timeout: bool = False) -> None:
         """Shows the connect4 board and displays the current player turn or the winner.
 
         Parameters
@@ -120,11 +125,10 @@ class Connect4:
         board = []
 
         for row in self.board:
-            line = ""
-            for circle in row:
-                line += ("⚫", "🔴", "🔵")[circle]
+            line = [("⚫", "🔴", "🔵")[circle] for circle in row]
             board.append(line)
-        board.append("".join(CHOICES_EMOJI[:7]))
+        board.append(CHOICES_EMOJI[:7])
+
         if not winner:
             embed = Embed(title=f"Player to move: **{self.players[self.turn]}**")
         elif winner == -1:
@@ -138,7 +142,7 @@ class Connect4:
                 embed.title = (
                     f"**{self.players[other_player-1]}** didn't answer.\n" + embed.title
                 )
-        embed.description = "\n".join(board)
+        embed.description = "\n".join(["".join(b) for b in board])
         embed.set_footer(
             text=f"Started by {self.players[0]}", icon_url=self.players[0].avatar_url
         )
@@ -148,7 +152,7 @@ class Connect4:
         self.last_board_message = await self.channel.send(embed=embed)
 
         if winner:
-            self.__init__(self.channel.id)
+            self.reset()
 
     def move_player(self, user: discord.User, index: int) -> bool:
         """Moves the player and check if the slot is full
@@ -170,7 +174,7 @@ class Connect4:
                 return True
         return False
 
-    def _check_line(self, a, b, c, d):
+    def _check_line(self, a: int, b: int, c: int, d: int) -> bool:
         return a != 0 and a == b and a == c and a == d
 
     def check_winner(self) -> int:

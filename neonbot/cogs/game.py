@@ -1,16 +1,19 @@
 import logging
+from typing import cast
 
+import discord
 from addict import Dict
 from discord.ext import commands
 
 from .. import game as rooms
 from ..classes import Connect4, Pokemon
+from ..helpers.log import Log
 from ..helpers.utils import Embed
 
-log = logging.getLogger(__name__)
+log = cast(Log, logging.getLogger(__name__))
 
 
-def get_channel(channel):
+def get_channel(channel: discord.TextChannel) -> Dict:
     if channel.id not in rooms.keys():
         rooms[channel.id] = Dict(pokemon=Pokemon(channel), connect4=Connect4(channel))
 
@@ -18,12 +21,9 @@ def get_channel(channel):
 
 
 class Game(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-
     @commands.command(usage="<start | stop | scoreboard>")
     @commands.guild_only()
-    async def pokemon(self, ctx, *, cmd):
+    async def pokemon(self, ctx: commands.Context, *, cmd: str) -> None:
         """Starts, stops, or shows the scoreboard of the pokemon game."""
 
         pokemon = get_channel(ctx.channel).pokemon
@@ -50,7 +50,7 @@ class Game(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
-    async def connect4(self, ctx):
+    async def connect4(self, ctx: commands.Context) -> None:
         """Starts connect4 game and waits for the players if players are insufficient."""
 
         connect4 = get_channel(ctx.channel).connect4
@@ -62,5 +62,5 @@ class Game(commands.Cog):
             await connect4.join(ctx.author)
 
 
-def setup(bot):
-    bot.add_cog(Game(bot))
+def setup(bot: commands.Bot) -> None:
+    bot.add_cog(Game())

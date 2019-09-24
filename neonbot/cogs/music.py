@@ -1,27 +1,30 @@
 import logging
 import re
 import textwrap
+from typing import List, cast
 
 import discord
 from discord.ext import commands
 
+from .. import bot
 from .. import music as players
 from ..classes import PaginationEmbed, Player
 from ..helpers.constants import SPOTIFY_REGEX, YOUTUBE_REGEX
 from ..helpers.date import format_seconds
+from ..helpers.log import Log
 from ..helpers.utils import Embed, check_args, plural
 
-log = logging.getLogger(__name__)
+log = cast(Log, logging.getLogger(__name__))
 
 
-def get_player(guild: discord.Guild):
+def get_player(guild: discord.Guild) -> Player:
     if guild.id not in players.keys():
         players[guild.id] = Player(guild)
 
     return players[guild.id]
 
 
-async def in_voice(ctx):
+async def in_voice(ctx: commands.Context) -> bool:
     if await ctx.bot.is_owner(ctx.author) and ctx.command.name == "reset":
         return True
 
@@ -31,7 +34,7 @@ async def in_voice(ctx):
     return True
 
 
-async def has_player(ctx):
+async def has_player(ctx: commands.Context) -> bool:
     player = get_player(ctx.guild)
 
     if not player.connection and ctx.invoked_with != "help":
@@ -41,14 +44,13 @@ async def has_player(ctx):
 
 
 class Music(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.bot.load_music()
+    def __init__(self) -> None:
+        bot.load_music()
 
     @commands.command(aliases=["p"], usage="<url | keyword>")
     @commands.guild_only()
     @commands.check(in_voice)
-    async def play(self, ctx, *, keyword=None):
+    async def play(self, ctx: commands.Context, *, keyword: str = None) -> None:
         """Searches the url or the keyword and add it to queue."""
 
         player = get_player(ctx.guild)
@@ -74,7 +76,7 @@ class Music(commands.Cog):
                 info, embed = search
 
         if info:
-            player.add_to_queue(ctx, info)
+            player.add_to_queue(info, ctx.author)
         if loading_msg:
             await loading_msg.delete()
         if embed:
@@ -90,7 +92,7 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(has_player)
     @commands.check(in_voice)
-    async def pause(self, ctx):
+    async def pause(self, ctx: commands.Context) -> None:
         """Pauses the current player."""
 
         player = get_player(ctx.guild)
@@ -109,7 +111,7 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(has_player)
     @commands.check(in_voice)
-    async def resume(self, ctx):
+    async def resume(self, ctx: commands.Context) -> None:
         """Resumes the current player."""
 
         player = get_player(ctx.guild)
@@ -129,7 +131,7 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(has_player)
     @commands.check(in_voice)
-    async def skip(self, ctx):
+    async def skip(self, ctx: commands.Context) -> None:
         """Skips the current song."""
 
         player = get_player(ctx.guild)
@@ -139,7 +141,7 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(has_player)
     @commands.check(in_voice)
-    async def stop(self, ctx):
+    async def stop(self, ctx: commands.Context) -> None:
         """Stops the current player and resets the track number to 1."""
 
         player = get_player(ctx.guild)
@@ -152,7 +154,7 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(has_player)
     @commands.check(in_voice)
-    async def reset(self, ctx):
+    async def reset(self, ctx: commands.Context) -> None:
         """Resets the current player and disconnect to voice channel."""
 
         player = get_player(ctx.guild)
@@ -165,7 +167,7 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(has_player)
     @commands.check(in_voice)
-    async def removesong(self, ctx, index: int):
+    async def removesong(self, ctx: commands.Context, index: int) -> None:
         """Remove the song with the index specified."""
 
         index -= 1
@@ -199,7 +201,7 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(has_player)
     @commands.check(in_voice)
-    async def volume(self, ctx, vol: int = -1):
+    async def volume(self, ctx: commands.Context, vol: int = -1) -> None:
         """Sets or gets player's volume."""
 
         player = get_player(ctx.guild)
@@ -222,7 +224,7 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(has_player)
     @commands.check(in_voice)
-    async def repeat(self, ctx, args=None):
+    async def repeat(self, ctx: commands.Context, args: str = None) -> None:
         """Sets or gets player's repeat mode."""
 
         player = get_player(ctx.guild)
@@ -241,7 +243,7 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(has_player)
     @commands.check(in_voice)
-    async def autoplay(self, ctx):
+    async def autoplay(self, ctx: commands.Context) -> None:
         """Enables/disables player's autoplay mode."""
 
         player = get_player(ctx.guild)
@@ -257,7 +259,7 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(has_player)
     @commands.check(in_voice)
-    async def shuffle(self, ctx):
+    async def shuffle(self, ctx: commands.Context) -> None:
         """Enables/disables player's shuffle mode."""
 
         player = get_player(ctx.guild)
@@ -273,7 +275,7 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(has_player)
     @commands.check(in_voice)
-    async def nowplaying(self, ctx):
+    async def nowplaying(self, ctx: commands.Context) -> None:
         """Displays in brief description of the current playing."""
 
         player = get_player(ctx.guild)
@@ -312,14 +314,14 @@ class Music(commands.Cog):
     @commands.command(aliases=["list"])
     @commands.guild_only()
     @commands.check(in_voice)
-    async def playlist(self, ctx):
+    async def playlist(self, ctx: commands.Context) -> None:
         """List down all songs in the player's queue."""
 
         player = get_player(ctx.guild)
         config = player.config
         queue = player.queue
         embeds = []
-        temp = []
+        temp: List[str] = []
         duration = 0
 
         if len(queue) == 0:
@@ -350,9 +352,9 @@ class Music(commands.Cog):
         embed.set_author(
             name="Player Queue", icon_url="https://i.imgur.com/SBMH84I.png"
         )
-        embed.set_footer(text=" | ".join(footer), icon_url=self.bot.user.avatar_url)
+        embed.set_footer(text=" | ".join(footer), icon_url=bot.user.avatar_url)
         await embed.build(ctx)
 
 
-def setup(bot):
-    bot.add_cog(Music(bot))
+def setup(bot: commands.Bot) -> None:
+    bot.add_cog(Music())

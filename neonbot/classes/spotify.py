@@ -11,12 +11,12 @@ spotify_credentials = Dict()
 class Spotify:
     BASE_URL = "https://api.spotify.com/v1"
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.session = bot.session
-        self.client_id = env("SPOTIFY_CLIENT_ID")
-        self.client_secret = env("SPOTIFY_CLIENT_SECRET")
+        self.client_id = env.str("SPOTIFY_CLIENT_ID")
+        self.client_secret = env.str("SPOTIFY_CLIENT_SECRET")
 
-    async def get_token(self):
+    async def get_token(self) -> str:
         if not self.client_id or not self.client_secret:
             raise
 
@@ -37,7 +37,7 @@ class Spotify:
 
         return spotify_credentials.token
 
-    def parse_url(self, url):
+    def parse_url(self, url: str) -> Dict:
         parsed = urlparse(url)
         scheme = parsed.scheme
         hostname = parsed.netloc
@@ -48,28 +48,27 @@ class Spotify:
                 url_type, url_id = path.split("/")[1:3]
             elif scheme == "spotify":
                 url_type, url_id = path.split(":")
+            if not url_type or not url_id:
+                raise ValueError
         except ValueError:
-            return False
-
-        if not url_type or not url_id:
-            return False
+            return Dict()
 
         return Dict(id=url_id, type=url_type)
 
-    async def get_track(self, id):
+    async def get_track(self, track_id: str) -> Dict:
         token = await self.get_token()
 
         res = await self.session.get(
-            self.BASE_URL + "/tracks/" + id,
+            self.BASE_URL + "/tracks/" + track_id,
             headers={"Authorization": f"Bearer {token}"},
         )
         return Dict(await res.json())
 
-    async def get_playlist(self, id):
+    async def get_playlist(self, playlist_id: str) -> Dict:
         token = await self.get_token()
 
         res = await self.session.get(
-            self.BASE_URL + "/playlists/" + id,
+            self.BASE_URL + "/playlists/" + playlist_id,
             headers={"Authorization": f"Bearer {token}"},
         )
         return Dict(await res.json())

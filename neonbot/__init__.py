@@ -1,6 +1,6 @@
 __title__ = "NeonBot"
 __author__ = "NeonSpectrum"
-__version__ = "1.1.2"
+__version__ = "1.1.3"
 
 
 from .env import env  # isort:skip
@@ -13,4 +13,14 @@ from . import classes, cogs, helpers
 music = bot.music
 game = bot.game
 
-__all__ = ("env", "Database", "bot", "classes", "cogs", "helpers", "log")
+__all__ = (
+    "env",
+    "Database",
+    "log",
+    "bot",
+    "classes",
+    "cogs",
+    "helpers",
+    "music",
+    "game",
+)

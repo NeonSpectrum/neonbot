@@ -5,7 +5,7 @@ from discord import opus
 from neonbot import bot
 
 
-def main():
+def main() -> None:
     if not opus.is_loaded():
         opus.load_opus("./lib/libopus.so.0")
 

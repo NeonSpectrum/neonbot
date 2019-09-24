@@ -1,19 +1,22 @@
 import asyncio
 import logging
+from typing import cast
 
 import discord
+from discord.ext import commands
 
 from .. import bot
+from ..helpers.log import Log
 from .constants import CHOICES_EMOJI
 
-log = logging.getLogger(__name__)
+log = cast(Log, logging.getLogger(__name__))
 
 
-def Embed(description=None, **kwargs):
+def Embed(description: str = None, **kwargs: str) -> discord.Embed:
     return discord.Embed(color=0x59ABE3, description=description, **kwargs)
 
 
-async def embed_choices(ctx, entries):
+async def embed_choices(ctx: commands.Context, entries: list) -> int:
     if len(entries) == 0:
         return await ctx.send(embed=Embed("Empty choices."), delete_after=5)
 
@@ -24,7 +27,7 @@ async def embed_choices(ctx, entries):
 
     msg = await ctx.send(embed=embed)
 
-    async def react_to_msg():
+    async def react_to_msg() -> None:
         for emoji in CHOICES_EMOJI[0 : len(entries)] + [CHOICES_EMOJI[-1]]:
             try:
                 await msg.add_reaction(emoji)
@@ -51,17 +54,17 @@ async def embed_choices(ctx, entries):
         return index
 
 
-def plural(val, singular, plural):
+def plural(val: int, singular: str, plural: str) -> str:
     return f"{val} {singular if val == 1 else plural}"
 
 
-async def check_args(ctx, arg, choices):
+async def check_args(ctx: commands.Context, arg: str, choices: list) -> bool:
     if arg in choices:
         return True
     await ctx.send(embed=Embed(f"Invalid argument. ({' | '.join(choices)})"))
     return False
 
 
-async def send_to_all_owners(*args, excluded=[], **kwargs):
+async def send_to_all_owners(*args: str, excluded: list = [], **kwargs: str) -> None:
     for owner in filter(lambda x: x not in excluded, bot.owner_ids):
         await bot.get_user(owner).send(*args, **kwargs)

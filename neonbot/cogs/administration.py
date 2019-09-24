@@ -4,6 +4,7 @@ import json
 import logging
 import sys
 from io import StringIO
+from typing import Generator, cast
 
 import discord
 from discord.ext import commands
@@ -11,16 +12,16 @@ from discord.ext import commands
 from .. import bot, env
 from ..cogs.game import rooms
 from ..cogs.music import players
+from ..helpers.log import Log
 from ..helpers.utils import Embed, check_args, send_to_all_owners
 
-log = logging.getLogger(__name__)
+log = cast(Log, logging.getLogger(__name__))
 
 
 @contextlib.contextmanager
-def stdoutIO(stdout=None):
+def stdoutIO() -> Generator[StringIO, None, None]:
     old = sys.stdout
-    if stdout is None:
-        stdout = StringIO()
+    stdout = StringIO()
     sys.stdout = stdout
     yield stdout
     sys.stdout = old
@@ -29,18 +30,17 @@ def stdoutIO(stdout=None):
 class Administration(commands.Cog):
     """Administration commands that handles the management of the bot"""
 
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self) -> None:
         self.session = bot.session
         self.db = bot.db
 
     @commands.command()
     @commands.is_owner()
-    async def eval(self, ctx, *, args):
+    async def eval(self, ctx: commands.Context, *, args: str) -> None:
         """Evaluates a line/s of python code. *BOT_OWNER"""
 
         env = {
-            "bot": self.bot,
+            "bot": bot,
             "discord": discord,
             "commands": commands,
             "ctx": ctx,
@@ -52,7 +52,7 @@ class Administration(commands.Cog):
             "send_to_all_owners": send_to_all_owners,
         }
 
-        def cleanup(code):
+        def cleanup(code: str) -> str:
             if code.startswith("```") and code.endswith("```"):
                 return "\n".join(code.splitlines()[1:-1])
             return code
@@ -82,10 +82,10 @@ class Administration(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
-    async def generatelog(self, ctx):
+    async def generatelog(self, ctx: commands.Context) -> None:
         """Generates a link contains the content of debug.log. *BOT_OWNER"""
 
-        if not env("PASTEBIN_API"):
+        if not env.str("PASTEBIN_API"):
             return await ctx.send(embed=Embed("Error. Pastebin API not found."))
 
         with open("./debug.log", "r") as f:
@@ -93,7 +93,7 @@ class Administration(commands.Cog):
         res = await self.session.post(
             "https://pastebin.com/api/api_post.php",
             data={
-                "api_dev_key": env("PASTEBIN_API"),
+                "api_dev_key": env.str("PASTEBIN_API"),
                 "api_paste_code": text,
                 "api_option": "paste",
                 "api_paste_private": 1,
@@ -107,22 +107,11 @@ class Administration(commands.Cog):
         )
 
     @commands.command()
-    @commands.is_owner()
-    async def reload(self, ctx, *, args):
-        """Reloads an extension. *BOT_OWNER"""
-
-        try:
-            self.bot.reload_extension("neonbot.cogs." + args)
-        except Exception as e:
-            await ctx.send(embed=Embed(str(e)))
-        else:
-            log.info(f"Reloaded module: {args}.")
-            await ctx.send(embed=Embed(f"Reloaded module: `{args}`."))
-
-    @commands.command()
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
-    async def prune(self, ctx, count: int = 1, member: discord.Member = None):
+    async def prune(
+        self, ctx: commands.Context, count: int = 1, member: discord.Member = None
+    ) -> None:
         """
         Deletes a number of messages. *MANAGE_MESSAGES
         If member is specified, it will delete message of that member.
@@ -135,7 +124,7 @@ class Administration(commands.Cog):
 
         limit = 100 if member else count
 
-        def check(message):
+        def check(message: discord.Message) -> bool:
             nonlocal count
 
             if count <= 0:
@@ -149,7 +138,7 @@ class Administration(commands.Cog):
     @commands.command()
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
-    async def prefix(self, ctx, arg):
+    async def prefix(self, ctx: commands.Context, arg: str) -> None:
         """Sets the prefix of the current server. *ADMINISTRATOR"""
 
         database = self.db.get_guild(ctx.guild.id)
@@ -160,7 +149,7 @@ class Administration(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
-    async def setstatus(self, ctx, arg):
+    async def setstatus(self, ctx: commands.Context, arg: str) -> None:
         """Sets the status of the bot. *BOT_OWNER"""
 
         if not await check_args(ctx, arg, ["online", "offline", "dnd", "idle"]):
@@ -171,12 +160,14 @@ class Administration(commands.Cog):
         settings.status = arg
         settings = database.update_settings().settings
 
-        await self.bot.change_presence(status=discord.Status[arg])
+        await bot.change_presence(status=discord.Status[arg])
         await ctx.send(embed=Embed(f"Status is now set to {settings.prefix}."))
 
     @commands.command()
     @commands.is_owner()
-    async def setpresence(self, ctx, presence_type, *, name):
+    async def setpresence(
+        self, ctx: commands.Context, presence_type: str, *, name: str
+    ) -> None:
         """Sets the presence of the bot. *BOT_OWNER"""
 
         if not await check_args(
@@ -190,7 +181,7 @@ class Administration(commands.Cog):
         settings.game.name = name
         settings = database.update_settings().settings
 
-        await self.bot.change_presence(
+        await bot.change_presence(
             activity=discord.Activity(
                 name=name, type=discord.ActivityType[settings.game.type]
             )
@@ -203,7 +194,7 @@ class Administration(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
-    async def alias(self, ctx, name, *, command):
+    async def alias(self, ctx: commands.Context, name: str, *, command: str) -> None:
         """
         Sets or updates an alias command.
 
@@ -237,7 +228,7 @@ class Administration(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
-    async def deletealias(self, ctx, name):
+    async def deletealias(self, ctx: commands.Context, name: str) -> None:
         """
         Removes an alias command.
 
@@ -262,7 +253,7 @@ class Administration(commands.Cog):
     @commands.command()
     @commands.is_owner()
     @commands.guild_only()
-    async def deleteoncmd(self, ctx):
+    async def deleteoncmd(self, ctx: commands.Context) -> None:
         """
         Enables/Disables delete on cmd. *BOT_OWNER
 
@@ -282,7 +273,7 @@ class Administration(commands.Cog):
     @commands.command()
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
-    async def voicetts(self, ctx):
+    async def voicetts(self, ctx: commands.Context) -> None:
         """
         Enables/Disables Voice TTS. *ADMINISTRATOR
 
@@ -306,7 +297,7 @@ class Administration(commands.Cog):
     @commands.command()
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
-    async def logger(self, ctx):
+    async def logger(self, ctx: commands.Context) -> None:
         """
         Enables/Disables Logger. *ADMINISTRATOR
 
@@ -332,7 +323,7 @@ class Administration(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
-    async def update(self, ctx):
+    async def update(self, ctx: commands.Context) -> None:
         """Updates the bot from github."""
 
         process = await asyncio.create_subprocess_shell(
@@ -353,33 +344,34 @@ class Administration(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(usage="<soft | hard>")
+    @commands.command()
     @commands.is_owner()
-    async def restart(self, ctx, status):
+    async def reload(self, ctx: commands.Context, *, ext: str = None) -> None:
+        """Reloads a specific or all extension. *BOT_OWNER"""
+
+        extensions = bot.extensions.keys() if ext is None else ("neonbot.cogs." + ext)
+
+        try:
+            for extension in extensions:
+                bot.reload_extension(extension)
+        except Exception as e:
+            await ctx.send(embed=Embed(str(e)))
+        else:
+            msg = "Reloaded all modules" if ext is None else f"Reloaded module: {ext}."
+            log.info(msg)
+            await ctx.send(embed=Embed(msg))
+
+    @commands.command()
+    @commands.is_owner()
+    async def restart(self, ctx: commands.Context) -> None:
         """Restarts bot."""
 
-        if not await check_args(ctx, status, ["hard", "soft"]):
-            return
-
-        if status == "hard":
-            self.bot.save_music()
-            msg = await ctx.send(embed=Embed("Bot Restarting..."))
-            with open("./tmp/restart_config.json", "w") as f:
-                json.dump(
-                    {"message_id": msg.id, "channel_id": ctx.channel.id}, f, indent=4
-                )
-            await self.bot.restart()
-        elif status == "soft":
-            for extension in bot.extensions.keys():
-                try:
-                    self.bot.reload_extension(extension)
-                except Exception as e:
-                    return await ctx.send(embed=Embed(str(e)))
-
-            msg = "Reloaded all modules"
-            log.info(msg)
-            await ctx.send(embed=Embed(msg), delete_after=10)
+        bot.save_music()
+        msg = await ctx.send(embed=Embed("Bot Restarting..."))
+        with open("./tmp/restart_config.json", "w") as f:
+            json.dump({"message_id": msg.id, "channel_id": ctx.channel.id}, f, indent=4)
+        await bot.restart()
 
 
-def setup(bot):
-    bot.add_cog(Administration(bot))
+def setup(bot: commands.Bot) -> None:
+    bot.add_cog(Administration())

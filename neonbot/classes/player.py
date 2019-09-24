@@ -1,16 +1,19 @@
 import logging
 import random
+from typing import Any, List, Tuple, cast
 
 import discord
 from addict import Dict
+from discord.ext import commands
 
 from .. import bot
 from ..helpers.constants import FFMPEG_OPTIONS
 from ..helpers.date import format_seconds
+from ..helpers.log import Log
 from ..helpers.utils import Embed, embed_choices, plural
 from . import Spotify, Ytdl
 
-log = logging.getLogger(__name__)
+log = cast(Log, logging.getLogger(__name__))
 
 
 class Player:
@@ -23,11 +26,11 @@ class Player:
         self.guild = guild
         self.db = bot.db.get_guild(guild.id)
         self.config = self.db.config.music
-        self.connection = None
-        self.channel = None
+        self.connection: discord.VoiceClient = None
+        self.channel: discord.TextChannel = None
         self.current_queue = 0
-        self.queue = []
-        self.shuffled_list = []
+        self.queue: List[Dict] = []
+        self.shuffled_list: List[str] = []
         self.messages = Dict(
             last_playing=None, last_finished=None, paused=None, auto_paused=None
         )
@@ -35,7 +38,7 @@ class Player:
 
         self._load_music_cache()
 
-    def _load_music_cache(self):
+    def _load_music_cache(self) -> None:
         cache = bot._music_cache.get(str(self.guild.id))
         if cache:
             self.queue = cache
@@ -43,14 +46,14 @@ class Player:
                 queue.requested = bot.get_user(queue.requested)
 
     @property
-    def now_playing(self):
+    def now_playing(self) -> Dict:
         return (
             self.queue[self.current_queue]
             if self.current_queue < len(self.queue)
-            else None
+            else Dict()
         )
 
-    async def play(self, ctx):
+    async def play(self, ctx: commands.Context) -> None:
         self.channel = ctx.channel
         now_playing = self.now_playing
 
@@ -76,7 +79,7 @@ class Player:
             log.exception(msg)
             return await ctx.send(embed=Embed(msg))
 
-        def after(error):
+        def after(error: Exception) -> None:
             if error:
                 log.warn(f"After play error: {error}")
             bot.loop.create_task(self.next(ctx))
@@ -84,11 +87,13 @@ class Player:
         self.connection.play(source, after=after)
         await self.playing_message(ctx)
 
-    async def next(self, ctx, *, index=None, stop=False):
+    async def next(
+        self, ctx: commands.Context, *, index: int = -1, stop: bool = False
+    ) -> None:
         if not stop or (stop and self.connection.is_playing()):
             await self.finished_message(ctx, delete_after=5 if stop else None)
 
-        if stop or index is not None:
+        if stop or index != -1:
             if self.connection._player:
                 self.connection._player.after = None
             self.connection.stop()
@@ -114,7 +119,9 @@ class Player:
         ):
             await self.play(ctx)
 
-    async def playing_message(self, ctx, delete_after=None):
+    async def playing_message(
+        self, ctx: commands.Context, delete_after: int = None
+    ) -> None:
         config = self.config
         now_playing = self.now_playing
 
@@ -151,7 +158,9 @@ class Player:
             embed=embed, delete_after=delete_after
         )
 
-    async def finished_message(self, ctx, delete_after=None):
+    async def finished_message(
+        self, ctx: commands.Context, delete_after: int = None
+    ) -> None:
         config = self.config
         now_playing = self.now_playing
 
@@ -199,7 +208,7 @@ class Player:
             elif config.repeat == "off":
                 # reset queue to index 0 and stop playing
                 self.current_queue = 0
-                return
+                return False
         elif config.repeat != "single":
             self.current_queue += 1
 
@@ -207,7 +216,7 @@ class Player:
 
     def process_shuffle(self) -> bool:
         if not self.config.shuffle:
-            return
+            return False
 
         if len(self.shuffled_list) == len(self.queue):
             self.shuffled_list = [self.now_playing.id]
@@ -222,7 +231,7 @@ class Player:
 
     async def process_autoplay(self) -> bool:
         if not self.config.autoplay or self.current_queue != len(self.queue) - 1:
-            return
+            return False
 
         current_queue = self.now_playing
 
@@ -240,18 +249,21 @@ class Player:
 
         info = await self.ytdl.extract_info(video_id)
         info = self.ytdl.parse_info(info)
-        self.add_to_queue(None, info, requested=bot.user)
+        self.add_to_queue(info, bot.user)
         self.current_queue += 1
 
         return True
 
-    async def process_youtube(self, ctx, keyword, *, ytdl_list=None):
+    async def process_youtube(
+        self, ctx: commands.Context, keyword: str, *, ytdl_list: list = None
+    ) -> Tuple[Dict, discord.Embed]:
         loading_msg = await ctx.send(embed=Embed("Loading..."))
 
         if ytdl_list is None:
             ytdl_list = await self.ytdl.extract_info(keyword)
 
-        info = embed = None
+        info = Dict()
+        embed: discord.Embed
 
         await loading_msg.delete()
 
@@ -259,7 +271,7 @@ class Player:
             for entry in ytdl_list:
                 if entry.title != "[Deleted video]":
                     entry.url = f"https://www.youtube.com/watch?v={entry.id}"
-                    self.add_to_queue(ctx, entry)
+                    self.add_to_queue(entry, ctx.author)
 
             embed = Embed(f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue.")
         elif ytdl_list:
@@ -273,7 +285,9 @@ class Player:
 
         return info, embed
 
-    async def process_spotify(self, ctx, url):
+    async def process_spotify(
+        self, ctx: commands.Context, url: str
+    ) -> Tuple[Dict, discord.Embed]:
         spotify = Spotify()
         result = spotify.parse_url(url)
 
@@ -298,14 +312,16 @@ class Player:
 
             await processing_msg.delete()
 
-            return await self.process_youtube(ctx, None, ytdl_list=ytdl_list)
+            return await self.process_youtube(ctx, "", ytdl_list=ytdl_list)
         else:
             track = await spotify.get_track(result.id)
             return await self.process_search(
                 ctx, f"{track.artists[0].name} {track.name} lyrics", force_choice=0
             )
 
-    async def process_search(self, ctx, keyword, *, force_choice=None):
+    async def process_search(
+        self, ctx: commands.Context, keyword: str, *, force_choice: int = None
+    ) -> Tuple[Dict, discord.Embed]:
         msg = await ctx.send(embed=Embed("Searching..."))
         extracted = await self.ytdl.extract_info(keyword)
         ytdl_choices = self.ytdl.parse_choices(extracted)
@@ -315,19 +331,11 @@ class Player:
         if force_choice is None:
             choice = await embed_choices(ctx, ytdl_choices)
             if choice < 0:
-                return
+                return Dict(), Embed()
         else:
             choice = force_choice
         info = await self.ytdl.process_entry(extracted[choice])
         info = self.ytdl.parse_info(info)
-        if not info:
-            await ctx.send(
-                embed=Embed(
-                    "Video not available or rate limited due to many song requests. Try again later."
-                ),
-                delete_after=10,
-            )
-            return
         embed = Embed(
             title=f"{'You have selected #{choice+1}.' if force_choice else'' }Adding song to queue #{len(self.queue)+1}",
             description=info.title,
@@ -335,11 +343,11 @@ class Player:
 
         return info, embed
 
-    def add_to_queue(self, ctx, data, requested=None):
-        data.requested = requested or ctx.author
+    def add_to_queue(self, data: Dict, requested: discord.User) -> None:
+        data.requested = requested
         self.queue.append(data)
 
-    def update_config(self, key, value):
+    def update_config(self, key: str, value: Any) -> Dict:
         database = self.db
         database.config.music[key] = value
         database.update_config().refresh_config()

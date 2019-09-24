@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "3f6ce541d4ef4c1666a5aef6b0f847fe201e4bd919929892e575a07848c21cee"
+            "sha256": "2cccdbd41494b363e39895bf6a5241295f6af4c703a2bec3592b5ec039203c19"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -125,15 +125,15 @@
         },
         "discord-py": {
             "git": "git://github.com/Rapptz/discord.py.git",
-            "ref": "b4358d0dcf46f426717a84090f4ec158dd243faf"
+            "ref": "c6539bbc615e22a59455179b8526dc6ae264c2a4"
         },
         "environs": {
             "hashes": [
-                "sha256:ab4362c638aa67177a832aedf1609a95b46179ea9f5b1af8c90cbfe70ca7e6cf",
-                "sha256:d92784bdeb6fe038688b19128b5d9a4d9eda4d33f1a38c21be8cad54c769a763"
+                "sha256:59bea3c982fbcc9d0755d160f67e725b70227ecbc14f7507ac81f484c6fd8334",
+                "sha256:e0a6c53b05effbb7521374e564eb751ba2311bd36dcde2c7d914246175b8e02d"
             ],
             "index": "pypi",
-            "version": "==5.2.1"
+            "version": "==6.0.0"
         },
         "idna": {
             "hashes": [
@@ -144,14 +144,14 @@
         },
         "jikanpy": {
             "git": "git://github.com/AWConant/jikanpy.git",
-            "ref": "40a9b8d9fa17fe74cf3cc217cf2b1dbb536953c6"
+            "ref": "91ec6a132271ad65c466e7e91f8e8c7d780e5819"
         },
         "marshmallow": {
             "hashes": [
-                "sha256:4b790b6910c0261d22de296ed42569affcbd80097eb770eb6088a79bef69c330",
-                "sha256:fe31ac05fbde972909a752d12b808cbbc15a50ed0a692410e1b227ff10b483ff"
+                "sha256:6dca0125320c15795c4f2dfe8f2f5c37a96916e7a09a123eba05ef24d3126b94",
+                "sha256:801a7c70f0596b812a086773b9d7ba85b4bbad1becab14cde460ab7798511409"
             ],
-            "version": "==3.0.5"
+            "version": "==3.2.0"
         },
         "multidict": {
             "hashes": [
@@ -438,14 +438,6 @@
             "index": "pypi",
             "version": "==3.7.8"
         },
-        "flake8-docstrings": {
-            "hashes": [
-                "sha256:1666dd069c9c457ee57e80af3c1a6b37b00cc1801c6fde88e455131bb2e186cd",
-                "sha256:9c0db5a79a1affd70fdf53b8765c8a26bf968e59e0252d7f2fc546b41c0cda06"
-            ],
-            "index": "pypi",
-            "version": "==1.4.0"
-        },
         "flake8-mypy": {
             "hashes": [
                 "sha256:47120db63aff631ee1f84bac6fe8e64731dc66da3efc1c51f85e15ade4a3ba18",
@@ -491,25 +483,12 @@
             ],
             "version": "==2.5.0"
         },
-        "pydocstyle": {
-            "hashes": [
-                "sha256:04c84e034ebb56eb6396c820442b8c4499ac5eb94a3bda88951ac3dc519b6058",
-                "sha256:66aff87ffe34b1e49bff2dd03a88ce6843be2f3346b0c9814410d34987fbab59"
-            ],
-            "version": "==4.0.1"
-        },
         "pyflakes": {
             "hashes": [
                 "sha256:17dbeb2e3f4d772725c777fabc446d5634d1038f234e77343108ce445ea69ce0",
                 "sha256:d976835886f8c5b31d47970ed689944a0262b5f3afa00a5a7b4dc81e5449f8a2"
             ],
             "version": "==2.1.1"
-        },
-        "snowballstemmer": {
-            "hashes": [
-                "sha256:713e53b79cbcf97bc5245a06080a33d54a77e7cce2f789c835a143bcdb5c033e"
-            ],
-            "version": "==1.9.1"
         },
         "toml": {
             "hashes": [

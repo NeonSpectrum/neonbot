@@ -3,6 +3,7 @@ import logging
 import textwrap
 from datetime import datetime
 from io import BytesIO
+from typing import List, cast
 
 import discord
 from addict import Dict
@@ -10,23 +11,23 @@ from bs4 import BeautifulSoup
 from discord.ext import commands
 from jikanpy import AioJikan
 
-from .. import env
+from .. import bot, env
 from ..classes import PaginationEmbed
+from ..helpers.log import Log
 from ..helpers.utils import Embed, embed_choices
 
-log = logging.getLogger(__name__)
+log = cast(Log, logging.getLogger(__name__))
 
 
 class Search(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self) -> None:
         self.session = bot.session
 
         with open("./neonbot/assets/lang.json", "r") as f:
             self.lang_list = json.load(f)
 
     @commands.command()
-    async def joke(self, ctx):
+    async def joke(self, ctx: commands.Context) -> None:
         """Tells a random dad joke."""
 
         res = await self.session.get(
@@ -36,10 +37,10 @@ class Search(commands.Cog):
         await ctx.send(embed=Embed(json.joke))
 
     @commands.command()
-    async def image(self, ctx, *, keyword):
+    async def image(self, ctx: commands.Context, *, keyword: str) -> None:
         """Searches for an image in Google Image."""
 
-        if not env("GOOGLE_CX") or not env("GOOGLE_API"):
+        if not env.str("GOOGLE_CX") or not env.str("GOOGLE_API"):
             return await ctx.send(embed=Embed("Error. Google API not found."))
 
         msg = await ctx.send(embed=Embed("Searching..."))
@@ -49,8 +50,8 @@ class Search(commands.Cog):
                 "q": keyword,
                 "num": 1,
                 "searchType": "image",
-                "cx": env("GOOGLE_CX"),
-                "key": env("GOOGLE_API"),
+                "cx": env.str("GOOGLE_CX"),
+                "key": env.str("GOOGLE_API"),
             },
         )
         image = Dict(await res.json())
@@ -67,16 +68,16 @@ class Search(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["dict"])
-    async def dictionary(self, ctx, *, word):
+    async def dictionary(self, ctx: commands.Context, *, word: str) -> None:
         """Searches for a word in Merriam Webster."""
 
-        if not env("DICTIONARY_API"):
+        if not env.str("DICTIONARY_API"):
             return await ctx.send(embed=Embed("Error. Dictionary API not found."))
 
         msg = await ctx.send(embed=Embed("Searching..."))
         res = await self.session.get(
             f"https://www.dictionaryapi.com/api/v3/references/sd4/json/{word}",
-            params={"key": env("DICTIONARY_API")},
+            params={"key": env.str("DICTIONARY_API")},
         )
         json = await res.json()
         if not isinstance(json[0], dict):
@@ -109,7 +110,7 @@ class Search(commands.Cog):
             await ctx.send(file=discord.File(BytesIO(content), word + ".wav"))
 
     @commands.command()
-    async def weather(self, ctx, *, location):
+    async def weather(self, ctx: commands.Context, *, location: str) -> None:
         """Searches for a weather forecast in Open Weather Map."""
 
         msg = await ctx.send(embed=Embed("Searching..."))
@@ -188,7 +189,7 @@ class Search(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def lol(self, ctx, *, champion):
+    async def lol(self, ctx: commands.Context, *, champion: str) -> None:
         """Searches for a champion guide in LeagueSpy."""
 
         loading_msg = await ctx.send(embed=Embed("Searching..."))
@@ -203,7 +204,7 @@ class Search(commands.Cog):
 
         skill_build = []
         item_build = []
-        rune_build = [[], [], []]
+        rune_build: List[list] = [[], [], []]
 
         champ_counter = soup.select("div.champ__counters")
 
@@ -243,7 +244,7 @@ class Search(commands.Cog):
         item_block = soup.find("div", "champ__buildBottomNew").select(".item-block")
 
         for row in item_block:
-            arr = []
+            arr: List[str] = []
             for top in row.select(".item-block__top"):
                 arr += [
                     i.get_text() for i in top.select(".item-block__items > span > span")
@@ -321,7 +322,7 @@ class Search(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def lyrics(self, ctx, *, song):
+    async def lyrics(self, ctx: commands.Context, *, song: str) -> None:
         """Searches for a lyrics in AZLyrics."""
 
         loading_msg = await ctx.send(embed=Embed("Searching..."))
@@ -341,7 +342,9 @@ class Search(commands.Cog):
             return
 
         try:
-            res = await self.session.get(links[choice].url, proxy=env("PROXY", None))
+            res = await self.session.get(
+                links[choice].url, proxy=env.str("PROXY", None)
+            )
             html = await res.text()
             soup = BeautifulSoup(html, "html.parser")
             div = soup.select("div.col-xs-12.col-lg-8.text-center")[0]
@@ -374,20 +377,20 @@ class Search(commands.Cog):
             await embed.build(ctx)
 
     @commands.group(invoke_without_command=True)
-    async def anime(self, ctx):
+    async def anime(self, ctx: commands.Context) -> None:
         """Searches for top, upcoming, or specific anime."""
 
         await ctx.send(embed=Embed("Incomplete command. <search | top | upcoming>"))
 
     @anime.command(name="search")
-    async def anime_search(self, ctx, *, keyword):
+    async def anime_search(self, ctx: commands.Context, *, keyword: str) -> None:
         """Searches for anime information."""
 
         loading_msg = await ctx.send(embed=Embed("Searching..."))
 
-        jikan = AioJikan(loop=self.bot.loop)
+        jikan = AioJikan(loop=bot.loop)
         result = Dict(await jikan.search(search_type="anime", query=keyword)).results[0]
-        anime = Dict(await jikan.anime(result.mal_id))
+        anime = Dict(jikan.anime(result.mal_id))
         await jikan.close()
 
         embed = Embed()
@@ -417,10 +420,10 @@ class Search(commands.Cog):
         await ctx.send(embed=embed)
 
     @anime.command(name="top")
-    async def anime_top(self, ctx):
+    async def anime_top(self, ctx: commands.Context) -> None:
         """Lists top anime."""
 
-        jikan = AioJikan(loop=self.bot.loop)
+        jikan = AioJikan(loop=bot.loop)
         result = Dict(await jikan.top(type="anime")).top
         await jikan.close()
 
@@ -440,10 +443,10 @@ class Search(commands.Cog):
         await embed.build(ctx)
 
     @anime.command(name="upcoming")
-    async def anime_upcoming(self, ctx):
+    async def anime_upcoming(self, ctx: commands.Context) -> None:
         """Lists upcoming anime."""
 
-        jikan = AioJikan(loop=self.bot.loop)
+        jikan = AioJikan(loop=bot.loop)
         result = Dict(await jikan.season_later()).anime
         await jikan.close()
 
@@ -463,15 +466,17 @@ class Search(commands.Cog):
         await embed.build(ctx)
 
     @commands.command(aliases=["trans"])
-    async def translate(self, ctx, lang, *, sentence):
+    async def translate(
+        self, ctx: commands.Context, lang: str, *, sentence: str
+    ) -> None:
         """Translates sentence based on language code given."""
 
-        if not env("YANDEX_API"):
+        if not env.str("YANDEX_API"):
             return await ctx.send(embed=Embed("Error. Yandex API not found."))
 
         res = await self.session.get(
             "https://translate.yandex.net/api/v1.5/tr.json/translate",
-            data={"key": env("YANDEX_API"), "text": sentence, "lang": lang},
+            data={"key": env.str("YANDEX_API"), "text": sentence, "lang": lang},
         )
 
         json = Dict(await res.json())
@@ -490,7 +495,7 @@ class Search(commands.Cog):
         )
 
     @commands.command()
-    async def langlist(self, ctx):
+    async def langlist(self, ctx: commands.Context) -> None:
         """Lists all language codes."""
 
         items = list(self.lang_list.items())
@@ -507,5 +512,5 @@ class Search(commands.Cog):
         await embed.build(ctx)
 
 
-def setup(bot):
-    bot.add_cog(Search(bot))
+def setup(bot: commands.Bot) -> None:
+    bot.add_cog(Search())

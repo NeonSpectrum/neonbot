@@ -3,6 +3,7 @@ import math
 import random
 from copy import deepcopy
 from io import BytesIO
+from typing import Tuple
 
 import discord
 from addict import Dict
@@ -22,7 +23,7 @@ class Pokemon:
         self.scoreboard = Dict()
         self.timed_out = False
 
-    async def start(self):
+    async def start(self) -> None:
         channel = self.channel
 
         name, original_img, black_img = await self.get()
@@ -45,7 +46,7 @@ class Pokemon:
         winner_embed = embed.copy()
         someone_answered = False
 
-        def check(m):
+        def check(m: discord.Message) -> bool:
             nonlocal someone_answered
 
             if m.content:
@@ -83,7 +84,7 @@ class Pokemon:
                 embed=Embed("Pokemon game paused because no one tried to answer it.")
             )
 
-    async def get(self):
+    async def get(self) -> Tuple[str, BytesIO, BytesIO]:
         pokemon = Dict(list(get_pokemon(pokemons=pokemons).values())[0])
         res = await bot.session.get(
             f"https://gearoid.me/pokemon/images/artwork/{pokemon.id}.png"
@@ -99,7 +100,7 @@ class Pokemon:
 
         return (pokemon.name, original_img, black_img)
 
-    async def show_scoreboard(self):
+    async def show_scoreboard(self) -> None:
         scoreboard = self.scoreboard
 
         scores = sorted(scoreboard.items(), key=lambda kv: kv[1], reverse=True)
@@ -113,15 +114,15 @@ class Pokemon:
 
         await self.channel.send(embed=embed)
 
-    def guess_string(self, string):
-        string = list(string)
+    def guess_string(self, string: str) -> str:
+        new_string = list(string)
 
         i = 0
-        while i < math.ceil(len(string) / 2):
-            index = random.randint(0, len(string) - 1)
-            if string[index] == " " or string[index] == "_":
+        while i < math.ceil(len(new_string) / 2):
+            index = random.randint(0, len(new_string) - 1)
+            if new_string[index] == " " or new_string[index] == "_":
                 continue
-            string[index] = "_"
+            new_string[index] = "_"
             i += 1
 
-        return " ".join(string)
+        return " ".join(new_string)
