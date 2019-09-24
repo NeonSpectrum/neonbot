@@ -28,6 +28,7 @@ class Connect4:
         self.last_board_message: discord.Message = None
         self.waiting_message: discord.Message = None
         self.timeout: asyncio.Task
+        self.winner: int = None
 
         self.reset_board()
 
@@ -70,6 +71,7 @@ class Connect4:
 
         try:
             msg = await bot.wait_for("message", check=check, timeout=30)
+            await msg.delete()
         except asyncio.TimeoutError:
             self.winner = self.next_player()
             await self.show_board(timeout=True)
@@ -77,13 +79,14 @@ class Connect4:
             is_moved = self.move_player(msg.author, int(msg.content) - 1)
             if not is_moved:
                 await self.channel.send(embed=Embed(f"{msg.content} is full."))
-                self.start()
-                return
-            self.winner = self.check_winner()
-            self.next_player()
-            await self.show_board()
-            if not self.winner:
-                self.start()
+                await self.start()
+            else:
+                self.winner = self.check_winner()
+                self.next_player()
+                await self.show_board()
+
+                if self.winner == 0:
+                    await self.start()
 
     async def join_timeout(self) -> None:
         """Add timeout to check whether a player will join the game or not."""
