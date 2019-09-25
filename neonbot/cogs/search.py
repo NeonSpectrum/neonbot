@@ -198,7 +198,7 @@ class Search(commands.Cog):
         )
         await loading_msg.delete()
         if res.status == 404:
-            return await ctx.send("Champion not found.")
+            return await ctx.send(embed=Embed("Champion not found."))
         html = await res.text()
         soup = BeautifulSoup(html, "html.parser")
 
@@ -304,6 +304,8 @@ class Search(commands.Cog):
                     **Starting Items:** {", ".join(item_build[0])}
                     **Boots:** {", ".join(item_build[1])}
                     **Core Items:** {", ".join(item_build[2])}
+                self.winner = self.next_player()
+                await self.show_board()
                     **Luxury Items:**  {", ".join(item_build[3])}
                     """
             ),
