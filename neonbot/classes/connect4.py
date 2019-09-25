@@ -3,6 +3,7 @@ import random
 from typing import List
 
 import discord
+from discord.ext import tasks
 
 from .. import bot
 from ..helpers.constants import CHOICES_EMOJI
@@ -27,8 +28,7 @@ class Connect4:
         self.turn = random.randint(0, 1)
         self.last_board_message: discord.Message = None
         self.waiting_message: discord.Message = None
-        self.timeout: asyncio.Task
-        self.winner: int = None
+        self.winner: int = 0
 
         self.reset_board()
 
@@ -39,21 +39,24 @@ class Connect4:
         ----------
         user : discord.User
         """
+        if len(self.players) == 2:
+            return self.channel.send(
+                embed=Embed("Game already started."), delete_after=5
+            )
+
         if user not in self.players:
             self.players.append(user)
-            if len(self.players) != 2:
-                self.timeout = bot.loop.create_task(self.join_timeout())
-                self.waiting_message = await self.channel.send(
-                    embed=Embed(
-                        f"Waiting for players to join. To join the game please use`{self.config.prefix}connect4`"
-                    )
-                )
+            if len(self.players) < 2:
+                self.join_timeout.start()
             else:
-                self.timeout.cancel()
+                self.join_timeout.cancel()
+                await self.waiting_message.delete()
                 await self.show_board()
                 await self.start()
         else:
-            await self.channel.send(embed=Embed("You are already in the game."))
+            await self.channel.send(
+                embed=Embed("You are already in the game."), delete_after=10
+            )
 
     async def start(self) -> None:
         """Starts the game and will loop until winner is detected"""
@@ -76,30 +79,41 @@ class Connect4:
             self.winner = self.next_player()
             await self.show_board(timeout=True)
         else:
-            is_moved = self.move_player(msg.author, int(msg.content) - 1)
+            is_moved = self.move_player(int(msg.content) - 1)
             if not is_moved:
                 await self.channel.send(embed=Embed(f"{msg.content} is full."))
                 await self.start()
-            else:
-                self.winner = self.check_winner()
-                self.next_player()
-                await self.show_board()
+                return
 
-                if self.winner == 0:
-                    await self.start()
+            self.winner = self.check_winner()
+            self.next_player()
+            await self.show_board()
 
+            if any(self.players) and not self.winner:
+                await self.start()
+
+    @tasks.loop(count=1)
     async def join_timeout(self) -> None:
         """Add timeout to check whether a player will join the game or not."""
 
+        self.waiting_message = await self.channel.send(
+            embed=Embed(
+                f"Waiting for players to join. To join the game please use`{self.config.prefix}connect4`"
+            )
+        )
+
         await asyncio.sleep(20)
-        self.players = []
-        asyncio.gather(
-            self.waiting_message.delete(),
-            self.channel.send(
+
+    @join_timeout.after_loop
+    async def join_timeout_after(self) -> None:
+        await self.waiting_message.delete()
+
+        if not self.join_timeout.is_being_cancelled():
+            self.players = []
+            await self.channel.send(
                 embed=Embed("Insufficient players. The game will now close."),
                 delete_after=5,
-            ),
-        )
+            )
 
     def next_player(self) -> int:
         self.turn = 1 if self.turn == 0 else 0
@@ -112,7 +126,7 @@ class Connect4:
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 0, 0, 0, 0],
         ]
 
     async def show_board(self, timeout: bool = False) -> None:
@@ -157,8 +171,8 @@ class Connect4:
         if winner:
             self.reset()
 
-    def move_player(self, user: discord.User, index: int) -> bool:
-        """Moves the player and check if the slot is full
+    def move_player(self, index: int) -> bool:
+        """Moves the current turn player and check if the slot is full
 
         Parameters
         ----------
@@ -173,7 +187,7 @@ class Connect4:
         """
         for i in range(len(self.board) - 1, -1, -1):
             if self.board[i][index] == 0:
-                self.board[i][index] = self.players.index(user) + 1
+                self.board[i][index] = self.turn + 1
                 return True
         return False
 

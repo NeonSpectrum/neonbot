@@ -27,6 +27,9 @@ FFMPEG_OPTIONS = (
 YOUTUBE_REGEX = r"^(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+"
 SPOTIFY_REGEX = r"^(spotify:|https:\/\/[a-z]+\.spotify\.com\/)"
 
+IGNORED_DELETEONCMD = ["eval", "prune"]
+EXCLUDED_TYPING = ["eval", "prune", "skip", "chatbot"]
+
 LOGO = """\
  __    _  _______  _______  __    _  _______  _______  _______
 |  |  | ||       ||       ||  |  | ||  _    ||       ||       |

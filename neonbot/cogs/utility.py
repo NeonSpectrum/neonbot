@@ -18,16 +18,17 @@ log = cast(Log, logging.getLogger(__name__))
 
 
 async def chatbot(message: discord.Message, dm: bool = False) -> None:
-    msg = message.content if dm else " ".join(message.content.split(" ")[1:])
-    res = await bot.session.get(
-        "https://program-o.com/v3/chat.php", params={"say": msg}
-    )
-    response = Dict(await res.json())
-    await message.channel.send(
-        embed=Embed(
-            f"{'' if dm else message.author.mention} {response.conversation.say.bot}"
+    with message.channel.typing():
+        msg = message.content if dm else " ".join(message.content.split(" ")[1:])
+        res = await bot.session.get(
+            "https://program-o.com/v3/chat.php", params={"say": msg}
         )
-    )
+        response = Dict(await res.json())
+        await message.channel.send(
+            embed=Embed(
+                f"{'' if dm else message.author.mention} {response.conversation.say.bot}"
+            )
+        )
 
 
 class Utility(commands.Cog):

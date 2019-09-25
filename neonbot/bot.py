@@ -10,9 +10,10 @@ import psutil
 from addict import Dict
 from aiohttp import ClientSession, ClientTimeout
 from discord.ext import commands
+from discord.utils import oauth_url
 
 from . import Database, __title__, __version__, env
-from .helpers.constants import LOGO
+from .helpers.constants import LOGO, PERMISSIONS
 from .helpers.log import Log, cprint
 
 log = cast(Log, logging.getLogger(__name__))
@@ -50,30 +51,16 @@ class Bot(commands.Bot):
     def save_music(self) -> None:
         file = "./tmp/music.json"
         with open(file, "w") as f:
-            queue_list = Dict()
+            player = Dict()
             for key, player in self.music.items():
-                queue_list[key] = [
-                    {**queue, "requested": queue.requested.id} for queue in player.queue
-                ]
-            json.dump(queue_list, f, indent=4)
-
-    async def send_restart_message(self) -> None:
-        from .helpers.utils import Embed
-
-        file = "./tmp/restart_config.json"
-        if path.exists(file):
-            with open(file, "r") as f:
-                data = Dict(json.load(f))
-            os.remove(file)
-
-            channel = self.get_channel(data.channel_id)
-            try:
-                message = await channel.fetch_message(data.message_id)
-            except discord.NotFound:
-                pass
-            else:
-                await message.delete()
-            await channel.send(embed=Embed("Bot Restarted."), delete_after=10)
+                player[key] = {
+                    "current_queue": player.current_queue,
+                    "queue": [
+                        {**queue, "requested": queue.requested.id}
+                        for queue in player.queue
+                    ],
+                }
+            json.dump(player, f, indent=4)
 
     def start_message(self) -> None:
         cprint(LOGO, "blue")
@@ -127,6 +114,32 @@ class Bot(commands.Bot):
 
         python = sys.executable
         os.execl(python, python, *sys.argv)
+
+    async def send_restart_message(self) -> None:
+        from .helpers.utils import Embed
+
+        file = "./tmp/restart_config.json"
+        if path.exists(file):
+            with open(file, "r") as f:
+                data = Dict(json.load(f))
+            os.remove(file)
+
+            channel = self.get_channel(data.channel_id)
+            try:
+                message = await channel.fetch_message(data.message_id)
+            except discord.NotFound:
+                pass
+            else:
+                await message.delete()
+            await channel.send(embed=Embed("Bot Restarted."), delete_after=10)
+
+    async def send_invite_link(self, channel: discord.DMChannel) -> None:
+        with channel.typing():
+            url = oauth_url(
+                self.app_info.id, discord.Permissions(permissions=PERMISSIONS)
+            )
+            await channel.send(f"Bot invite link: {url}")
+            log.info(f"Sent an invite link to: {channel.recipient}")
 
     def run(self) -> None:
         self.load_cogs()

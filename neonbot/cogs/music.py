@@ -70,10 +70,9 @@ class Music(commands.Cog):
             elif re.search(SPOTIFY_REGEX, keyword):
                 info, embed = await player.process_spotify(ctx, keyword)
             elif keyword:
-                search = await player.process_search(ctx, keyword)
-                if not search:
+                info, embed = await player.process_search(ctx, keyword)
+                if not info:
                     return
-                info, embed = search
 
         if info:
             player.add_to_queue(info, ctx.author)
@@ -82,7 +81,7 @@ class Music(commands.Cog):
         if embed:
             await ctx.send(embed=embed, delete_after=5)
 
-        if len(player.queue) > 0 and not ctx.voice_client:
+        if any(player.queue) and not ctx.voice_client:
             player.connection = await ctx.author.voice.channel.connect()
             log.cmd(ctx, f"Connected to {ctx.author.voice.channel}.")
         if player.connection and not player.connection.is_playing():
@@ -192,7 +191,7 @@ class Music(commands.Cog):
         if index < player.current_queue:
             player.current_queue -= 1
         elif index == player.current_queue:
-            if len(player.queue) == 0:
+            if not player.queue:
                 await player.next(ctx, stop=True)
             else:
                 await player.next(ctx, index=player.current_queue)
@@ -324,7 +323,7 @@ class Music(commands.Cog):
         temp: List[str] = []
         duration = 0
 
-        if len(queue) == 0:
+        if not queue:
             return await ctx.send(embed=Embed("Empty playlist."), delete_after=5)
 
         for i in range(0, len(player.queue), 10):

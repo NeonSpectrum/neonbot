@@ -204,7 +204,7 @@ class Administration(commands.Cog):
         database = self.db.get_guild(ctx.guild.id)
         aliases = database.config.aliases
         ids = [i for i, x in enumerate(aliases) if x.name == name]
-        if len(ids) > 0:
+        if any(ids):
             if int(aliases[ids[0]].owner) != ctx.author.id and await bot.is_owner(
                 ctx.author
             ):
@@ -238,7 +238,7 @@ class Administration(commands.Cog):
         database = self.db.get_guild(ctx.guild.id)
         aliases = database.config.aliases
         ids = [i for i, x in enumerate(aliases) if x.name == name]
-        if len(ids) == 0:
+        if not ids:
             return await ctx.send(embed=Embed(f"Alias doesn't exists."), delete_after=5)
         if int(aliases[ids[0]].owner) != ctx.author.id and await bot.is_owner(
             ctx.author
@@ -324,7 +324,7 @@ class Administration(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def update(self, ctx: commands.Context) -> None:
-        """Updates the bot from github."""
+        """Updates the bot from github. *BOT_OWNER"""
 
         process = await asyncio.create_subprocess_shell(
             "git pull", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
@@ -364,7 +364,7 @@ class Administration(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def restart(self, ctx: commands.Context) -> None:
-        """Restarts bot."""
+        """Restarts bot. *BOT_OWNER"""
 
         bot.save_music()
         msg = await ctx.send(embed=Embed("Bot Restarting..."))

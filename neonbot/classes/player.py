@@ -41,7 +41,8 @@ class Player:
     def _load_music_cache(self) -> None:
         cache = bot._music_cache.get(str(self.guild.id))
         if cache:
-            self.queue = cache
+            self.queue = cache.queue
+            self.current_queue = cache.current_queue
             for queue in self.queue:
                 queue.requested = bot.get_user(queue.requested)
 
@@ -239,8 +240,8 @@ class Player:
         filtered_videos = []
 
         for video in related_videos:
-            existing = (
-                len([queue for queue in self.queue if queue.id == video.id.videoId]) > 0
+            existing = any(
+                [queue for queue in self.queue if queue.id == video.id.videoId]
             )
             if not existing:
                 filtered_videos.append(video)
@@ -326,7 +327,7 @@ class Player:
         extracted = await self.ytdl.extract_info(keyword)
         ytdl_choices = self.ytdl.parse_choices(extracted)
         await msg.delete()
-        if len(ytdl_choices) == 0:
+        if not ytdl_choices:
             return await ctx.send(embed=Embed("No songs available."))
         if force_choice is None:
             choice = await embed_choices(ctx, ytdl_choices)

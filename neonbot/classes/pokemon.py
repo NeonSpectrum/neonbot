@@ -105,13 +105,13 @@ class Pokemon:
 
         scores = sorted(scoreboard.items(), key=lambda kv: kv[1], reverse=True)
         scores = list(map(lambda x: f"**{bot.get_user(x[0])}: {x[1]}**", scores))
-        
+
         if self.status == 0:
             scores[0] += " `WINNER`"
 
         embed = Embed(title="Scoreboard", description="\n".join(scores))
         embed.set_author(
-                name="Who's that pokemon?", icon_url="https://i.imgur.com/3sQh8aN.png"
+            name="Who's that pokemon?", icon_url="https://i.imgur.com/3sQh8aN.png"
         )
 
         await self.channel.send(embed=embed)

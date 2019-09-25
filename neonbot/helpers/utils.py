@@ -17,7 +17,7 @@ def Embed(description: str = None, **kwargs: str) -> discord.Embed:
 
 
 async def embed_choices(ctx: commands.Context, entries: list) -> int:
-    if len(entries) == 0:
+    if not entries:
         return await ctx.send(embed=Embed("Empty choices."), delete_after=5)
 
     embed = Embed(title=f"Choose 1-{len(entries)} below.")

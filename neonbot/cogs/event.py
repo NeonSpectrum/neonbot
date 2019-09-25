@@ -1,12 +1,12 @@
 import logging
-from typing import cast
+from typing import List, Tuple, cast
 
 import discord
+from addict import Dict
 from discord.ext import commands
-from discord.utils import oauth_url
 
 from .. import bot
-from ..helpers.constants import PERMISSIONS
+from ..helpers.constants import EXCLUDED_TYPING, IGNORED_DELETEONCMD
 from ..helpers.date import date_format
 from ..helpers.exceptions import YtdlError
 from ..helpers.log import Log
@@ -16,7 +16,15 @@ from .utility import chatbot
 
 log = cast(Log, logging.getLogger(__name__))
 
-IGNORED_DELETEONCMD = ["eval", "prune"]
+
+async def get_ctx(message: discord.Message) -> Tuple[bool, commands.Context]:
+    aliases: List[Dict] = []
+    if message.guild:
+        config = bot.db.get_guild(message.guild.id).config
+        aliases = [x for x in config.aliases if x.name == message.content]
+        if any(aliases):
+            message.content = aliases[0].cmd.format(config.prefix)
+    return any(aliases), await bot.get_context(message)
 
 
 class Event(commands.Cog):
@@ -41,44 +49,34 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_message(message: discord.Message) -> None:
-        def check_alias() -> bool:
-            nonlocal message
-            config = bot.db.get_guild(message.guild.id).config
-            arr = [x for x in config.aliases if x.name == message.content]
-            if len(arr) > 0:
-                message.content = arr[0].cmd.format(config.prefix)
-                return True
-            return False
+        if message.author.id == bot.user.id:
+            return
+
+        is_alias, ctx = await get_ctx(message)
 
         if message.content.replace("<@!", "<@", 1).startswith(bot.user.mention):
-            log.cmd(message, message.content)
-            async with message.channel.typing():
-                await chatbot(message)
-            return
-        elif message.channel.type.name == "private":
+            log.cmd(ctx, message.content)
+            return await chatbot(message)
+        elif ctx.channel.type.name == "private":
             if message.content.lower() == "invite":
-                url = oauth_url(
-                    bot.app_info.id, discord.Permissions(permissions=PERMISSIONS)
-                )
-                await message.channel.send(f"Bot invite link: {url}")
-                return log.info(f"Sent an invite link to: {message.author}")
-            elif message.author.id != bot.user.id:
-                log.info(f"DM from {message.author}: {message.content}")
-                await send_to_all_owners(
-                    embed=Embed(
-                        title=f"DM from {message.author}", description=message.content
-                    ),
-                    excluded=[message.author.id],
-                )
-                if not message.content.startswith(bot.default_prefix):
-                    async with message.channel.typing():
-                        await chatbot(message, dm=True)
-                    return
-        elif check_alias():
-            msg = f"Alias found. Executing `{message.content}`."
-            log.cmd(message, msg)
-            await message.channel.send(embed=Embed(msg), delete_after=5)
-        await bot.process_commands(message)
+                return await bot.send_invite_link(message.channel)
+
+            log.info(f"DM from {ctx.author}: {message.content}")
+            await send_to_all_owners(
+                embed=Embed(title=f"DM from {ctx.author}", description=message.content),
+                excluded=[ctx.author.id],
+            )
+            if not ctx.command:
+                await chatbot(message, dm=True)
+
+        if is_alias:
+            msg = f"Alias found. Executing `{ctx.message.content}`."
+            log.cmd(ctx, msg)
+            await ctx.send(embed=Embed(msg), delete_after=5)
+        if ctx.command is not None:
+            if ctx.command.name not in EXCLUDED_TYPING:
+                await ctx.channel.trigger_typing()
+            await bot.process_commands(message)
 
     @staticmethod
     @bot.event
@@ -98,14 +96,14 @@ class Event(commands.Cog):
                 for member in voice_channel.members
                 if not member.bot and not member.voice.self_deaf
             ]
-            if player.connection.is_playing() and len(voice_members) == 0:
+            if player.connection.is_playing() and not voice_members:
                 msg = "Player paused because no users are listening."
                 log.cmd(member, msg, channel=voice_channel, user="N/A")
                 player.messages.auto_paused = await player.channel.send(
                     embed=Embed(msg)
                 )
                 player.connection.pause()
-            elif player.connection.is_paused() and len(voice_members) > 0:
+            elif player.connection.is_paused() and any(voice_members):
                 if player.messages.auto_paused:
                     await player.messages.auto_paused.delete()
                     player.messages.auto_paused = None
