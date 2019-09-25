@@ -50,7 +50,7 @@ class PaginationEmbed:
             + f"\n\n**Page {self.index+1}/{len(self.array)}**"
         )
 
-        if self.msg.id:
+        if self.msg:
             return await self.msg.edit(embed=embed)
 
         self.msg = await self.ctx.send(embed=embed)
