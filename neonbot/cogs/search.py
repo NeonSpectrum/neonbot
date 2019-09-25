@@ -94,7 +94,7 @@ class Search(commands.Cog):
         term = dictionary.meta.id[0 : dictionary.meta.id.rfind(":")]
 
         embed = Embed()
-        embed.add_field(name=term, value=f"*{prs.mw}*" + "\n" + dictionary.shortdef[0])
+        embed.add_field(name=term, value=(f"*{prs.mw}*" if prs.mw else "") + "\n" + dictionary.shortdef[0])
         embed.set_author(
             name="Merriam-Webster Dictionary",
             icon_url="https://dictionaryapi.com/images/MWLogo.png",
@@ -390,7 +390,7 @@ class Search(commands.Cog):
 
         jikan = AioJikan(loop=bot.loop)
         result = Dict(await jikan.search(search_type="anime", query=keyword)).results[0]
-        anime = Dict(jikan.anime(result.mal_id))
+        anime = Dict(await jikan.anime(result.mal_id))
         await jikan.close()
 
         embed = Embed()
