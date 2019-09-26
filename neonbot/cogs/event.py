@@ -1,4 +1,5 @@
 import logging
+import traceback
 from typing import List, Tuple, cast
 
 import discord
@@ -6,9 +7,9 @@ from addict import Dict
 from discord.ext import commands
 
 from .. import bot
+from ..helpers import exceptions
 from ..helpers.constants import EXCLUDED_TYPING, IGNORED_DELETEONCMD
 from ..helpers.date import date_format
-from ..helpers.exceptions import YtdlError
 from ..helpers.log import Log
 from ..helpers.utils import Embed, send_to_all_owners
 from .music import get_player
@@ -31,8 +32,7 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_connect() -> None:
-        if not bot.app_info:
-            await bot.set_app_info()
+        await bot.fetch_app_info()
         log.info(f"Logged in as {bot.user}")
 
     @staticmethod
@@ -209,8 +209,14 @@ class Event(commands.Cog):
             return
 
         error = getattr(error, "original", error)
-        ignored = (commands.CheckFailure, discord.NotFound)
-        send_msg = (commands.CommandNotFound, YtdlError)
+        ignored = commands.CheckFailure, discord.NotFound
+        send_msg = commands.CommandNotFound, exceptions.YtdlError
+
+        tb = traceback.format_exception(
+            etype=type(error), value=error, tb=error.__traceback__
+        )
+
+        tb_msg = "\n".join(tb)
 
         if isinstance(error, ignored):
             return
@@ -218,16 +224,25 @@ class Event(commands.Cog):
         log.cmd(ctx, f"Command error: {error}")
 
         if isinstance(error, send_msg):
-            return await ctx.send(embed=Embed(str(error)))
+            return await ctx.send(embed=Embed(error))
 
         if isinstance(error, commands.MissingRequiredArgument):
             return await ctx.send(
                 embed=Embed(f"{str(error).capitalize()} {ctx.command.usage or ''}")
             )
 
-        await send_to_all_owners(
-            embed=Embed(title=error.__class__.__name__, description=str(error))
+        await ctx.send(
+            embed=Embed(
+                f"There was an error executing the command. Please check the logs."
+            )
         )
+
+        embed = Embed(
+            title="Traceback Exception",
+            description=f"Command: ```{ctx.message.content}```\n```py\n{tb_msg}```",
+        )
+
+        await send_to_all_owners(embed=embed)
 
         raise error
 

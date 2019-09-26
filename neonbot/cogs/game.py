@@ -23,12 +23,12 @@ def get_channel(channel: discord.TextChannel) -> Dict:
 class Game(commands.Cog):
     @commands.command(usage="<start | stop | scoreboard>")
     @commands.guild_only()
-    async def pokemon(self, ctx: commands.Context, *, cmd: str) -> None:
+    async def pokemon(self, ctx: commands.Context, *, command: str) -> None:
         """Starts, stops, or shows the scoreboard of the pokemon game."""
 
         pokemon = get_channel(ctx.channel).pokemon
 
-        if cmd == "start":
+        if command == "start":
             if pokemon.status == 1:
                 return await ctx.send(
                     embed=Embed("Pokemon game already started."), delete_after=5
@@ -42,10 +42,10 @@ class Game(commands.Cog):
                 return pokemon.__init__(ctx.channel)
 
             await pokemon.show_scoreboard()
-        elif cmd == "stop":
+        elif command == "stop":
             pokemon.status = 0
             await ctx.send(embed=Embed("Pokemon game will stop after this."))
-        elif cmd == "scoreboard":
+        elif command == "scoreboard":
             await pokemon.show_scoreboard()
 
     @commands.command()

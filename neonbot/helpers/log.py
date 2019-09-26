@@ -1,6 +1,6 @@
 import logging
 import sys
-from typing import Callable, Union
+from typing import Callable, Optional, Union
 
 import discord
 import termcolor
@@ -51,9 +51,10 @@ class Log(logging.Logger):
         self,
         ctx: commands.Context,
         msg: str,
-        guild: discord.Guild = None,
-        channel: Union[discord.TextChannel, discord.VoiceChannel] = None,
-        user: discord.User = None,
+        *,
+        guild: Optional[discord.Guild] = None,
+        channel: Optional[Union[discord.TextChannel, discord.VoiceChannel]] = None,
+        user: Optional[discord.User] = None,
     ) -> None:
         guild = guild or ctx.guild
         channel = channel or ctx.channel

@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import cast
+from typing import Any, cast
 
 import discord
 from discord.ext import commands
@@ -12,8 +12,10 @@ from .constants import CHOICES_EMOJI
 log = cast(Log, logging.getLogger(__name__))
 
 
-def Embed(description: str = None, **kwargs: str) -> discord.Embed:
-    return discord.Embed(color=0x59ABE3, description=description, **kwargs)
+def Embed(description: Any = None, **kwargs: str) -> discord.Embed:
+    return discord.Embed(
+        color=0x59ABE3, description=description and str(description), **kwargs
+    )
 
 
 async def embed_choices(ctx: commands.Context, entries: list) -> int:

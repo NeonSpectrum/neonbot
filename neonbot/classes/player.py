@@ -1,6 +1,6 @@
 import logging
 import random
-from typing import Any, List, Tuple, cast
+from typing import List, Optional, Tuple, Union, cast
 
 import discord
 from addict import Dict
@@ -121,7 +121,7 @@ class Player:
             await self.play(ctx)
 
     async def playing_message(
-        self, ctx: commands.Context, delete_after: int = None
+        self, ctx: commands.Context, *, delete_after: Optional[int] = None
     ) -> None:
         config = self.config
         now_playing = self.now_playing
@@ -160,7 +160,7 @@ class Player:
         )
 
     async def finished_message(
-        self, ctx: commands.Context, delete_after: int = None
+        self, ctx: commands.Context, *, delete_after: Optional[int] = None
     ) -> None:
         config = self.config
         now_playing = self.now_playing
@@ -256,7 +256,7 @@ class Player:
         return True
 
     async def process_youtube(
-        self, ctx: commands.Context, keyword: str, *, ytdl_list: list = None
+        self, ctx: commands.Context, keyword: str, *, ytdl_list: Optional[list] = None
     ) -> Tuple[Dict, discord.Embed]:
         loading_msg = await ctx.send(embed=Embed("Loading..."))
 
@@ -321,7 +321,7 @@ class Player:
             )
 
     async def process_search(
-        self, ctx: commands.Context, keyword: str, *, force_choice: int = None
+        self, ctx: commands.Context, keyword: str, *, force_choice: Optional[int] = None
     ) -> Tuple[Dict, discord.Embed]:
         msg = await ctx.send(embed=Embed("Searching..."))
         extracted = await self.ytdl.extract_info(keyword)
@@ -335,6 +335,7 @@ class Player:
                 return Dict(), Embed()
         else:
             choice = force_choice
+
         info = await self.ytdl.process_entry(extracted[choice])
         info = self.ytdl.parse_info(info)
         embed = Embed(
@@ -348,7 +349,7 @@ class Player:
         data.requested = requested
         self.queue.append(data)
 
-    def update_config(self, key: str, value: Any) -> Dict:
+    def update_config(self, key: str, value: Union[str, int]) -> Dict:
         database = self.db
         database.config.music[key] = value
         database.update_config().refresh_config()

@@ -5,6 +5,7 @@ from datetime import datetime
 from io import BytesIO
 from typing import List, cast
 
+import aiohttp
 import discord
 from addict import Dict
 from bs4 import BeautifulSoup
@@ -13,6 +14,7 @@ from jikanpy import AioJikan
 
 from .. import bot, env
 from ..classes import PaginationEmbed
+from ..helpers.exceptions import ApiError
 from ..helpers.log import Log
 from ..helpers.utils import Embed, embed_choices
 
@@ -34,14 +36,12 @@ class Search(commands.Cog):
             "https://icanhazdadjoke.com", headers={"Accept": "application/json"}
         )
         json = Dict(await res.json())
+
         await ctx.send(embed=Embed(json.joke))
 
     @commands.command()
     async def image(self, ctx: commands.Context, *, keyword: str) -> None:
         """Searches for an image in Google Image."""
-
-        if not env.str("GOOGLE_CX") or not env.str("GOOGLE_API"):
-            return await ctx.send(embed=Embed("Error. Google API not found."))
 
         msg = await ctx.send(embed=Embed("Searching..."))
         res = await self.session.get(
@@ -55,6 +55,9 @@ class Search(commands.Cog):
             },
         )
         image = Dict(await res.json())
+
+        if image.error:
+            raise ApiError(image.message)
 
         embed = Embed()
         embed.set_author(
@@ -71,17 +74,21 @@ class Search(commands.Cog):
     async def dictionary(self, ctx: commands.Context, *, word: str) -> None:
         """Searches for a word in Merriam Webster."""
 
-        if not env.str("DICTIONARY_API"):
-            return await ctx.send(embed=Embed("Error. Dictionary API not found."))
-
         msg = await ctx.send(embed=Embed("Searching..."))
         res = await self.session.get(
             f"https://www.dictionaryapi.com/api/v3/references/sd4/json/{word}",
             params={"key": env.str("DICTIONARY_API")},
         )
-        json = await res.json()
+
+        await msg.delete()
+
+        try:
+            json = await res.json()
+        except aiohttp.ContentTypeError:
+            error = await res.text()
+            raise ApiError(error)
+
         if not isinstance(json[0], dict):
-            await msg.delete()
             return await ctx.send(embed=Embed("Word not found."), delete_after=5)
 
         dictionary = Dict(json[0])
@@ -91,10 +98,16 @@ class Search(commands.Cog):
             url = f"https://media.merriam-webster.com/soundc11/{audio[0]}/{audio}.wav"
             res = await self.session.get(url)
 
-        term = dictionary.meta.id[0 : dictionary.meta.id.rfind(":")]
+        term = dictionary.meta.id
+
+        if ":" in term:
+            term = dictionary.meta.id[0 : dictionary.meta.id.rfind(":")]
 
         embed = Embed()
-        embed.add_field(name=term, value=(f"*{prs.mw}*" if prs.mw else "") + "\n" + dictionary.shortdef[0])
+        embed.add_field(
+            name=term,
+            value=(f"*{prs.mw}*" if prs.mw else "") + "\n" + dictionary.shortdef[0],
+        )
         embed.set_author(
             name="Merriam-Webster Dictionary",
             icon_url="https://dictionaryapi.com/images/MWLogo.png",
@@ -125,7 +138,11 @@ class Search(commands.Cog):
         json = Dict(await res.json())
 
         await msg.delete()
-        if json.cod != 200:
+
+        if json.cod == 401:
+            raise ApiError(json.message)
+
+        if int(json.cod) == 404:
             return await ctx.send(embed=Embed("City not found."), delete_after=5)
 
         embed = Embed()
@@ -370,13 +387,15 @@ class Search(commands.Cog):
 
             embeds = [Embed(line) for line in lines if line]
 
-            embed = PaginationEmbed(array=embeds, authorized_users=[ctx.author.id])
-            embed.set_author(name=title, icon_url="https://i.imgur.com/SBMH84I.png")
-            embed.set_footer(
+            pagination = PaginationEmbed(ctx, embeds=embeds)
+            pagination.embed.set_author(
+                name=title, icon_url="https://i.imgur.com/SBMH84I.png"
+            )
+            pagination.embed.set_footer(
                 text="Powered by AZLyrics",
                 icon_url="https://www.azlyrics.com/az_logo_tr.png",
             )
-            await embed.build(ctx)
+            await pagination.build()
 
     @commands.group(invoke_without_command=True)
     async def anime(self, ctx: commands.Context) -> None:
@@ -391,14 +410,23 @@ class Search(commands.Cog):
         loading_msg = await ctx.send(embed=Embed("Searching..."))
 
         jikan = AioJikan(loop=bot.loop)
-        result = Dict(await jikan.search(search_type="anime", query=keyword)).results[0]
-        anime = Dict(await jikan.anime(result.mal_id))
+        results = Dict(await jikan.search(search_type="anime", query=keyword)).results
+
+        if not results:
+            return await ctx.send(embed=Embed("Anime not found."), delete_after=5)
+
+        anime = Dict(await jikan._get("anime", results[0].mal_id, None))
         await jikan.close()
 
+        if anime.title_english and not anime.title_japanese:
+            title = anime.title_english
+        elif not anime.title_english and anime.title_japanese:
+            title = anime.title_japanese
+        else:
+            title = f"{anime.title_english} ({anime.title_japanese})"
+
         embed = Embed()
-        embed.set_author(
-            name=f"{anime.title_english} ({anime.title_japanese})", url=anime.url
-        )
+        embed.set_author(name=title, url=anime.url)
         embed.set_thumbnail(url=anime.image_url)
         embed.set_footer(
             text="Powered by MyAnimeList",
@@ -406,7 +434,7 @@ class Search(commands.Cog):
         )
         embed.add_field(
             name="Synopsis",
-            value=anime.synopsis[:1000] + ".."
+            value=anime.synopsis[:1000] + "..."
             if len(anime.synopsis) > 1000
             else anime.synopsis,
         )
@@ -436,13 +464,13 @@ class Search(commands.Cog):
                 temp.append(f"`{i+index+1}.` [{value.title}]({value.url})")
             embeds.append(Embed("\n".join(temp)))
 
-        embed = PaginationEmbed(array=embeds, authorized_users=[ctx.author.id])
-        embed.embed.title = ":trophy: Top 50 Anime"
-        embed.set_footer(
+        pagination = PaginationEmbed(ctx, embeds=embeds)
+        pagination.embed.title = ":trophy: Top 50 Anime"
+        pagination.embed.set_footer(
             text="Powered by MyAnimeList",
             icon_url="https://cdn.myanimelist.net/images/faviconv5.ico",
         )
-        await embed.build(ctx)
+        await pagination.build()
 
     @anime.command(name="upcoming")
     async def anime_upcoming(self, ctx: commands.Context) -> None:
@@ -459,13 +487,13 @@ class Search(commands.Cog):
                 temp.append(f"`{index+1}.` [{value.title}]({value.url})")
             embeds.append(Embed("\n".join(temp)))
 
-        embed = PaginationEmbed(array=embeds, authorized_users=[ctx.author.id])
-        embed.embed.title = ":clock3: Upcoming Anime"
-        embed.set_footer(
+        pagination = PaginationEmbed(ctx, embeds=embeds)
+        pagination.embed.title = ":clock3: Upcoming Anime"
+        pagination.embed.set_footer(
             text="Powered by MyAnimeList",
             icon_url="https://cdn.myanimelist.net/images/faviconv5.ico",
         )
-        await embed.build(ctx)
+        await pagination.build()
 
     @commands.command(aliases=["trans"])
     async def translate(
@@ -473,16 +501,15 @@ class Search(commands.Cog):
     ) -> None:
         """Translates sentence based on language code given."""
 
-        if not env.str("YANDEX_API"):
-            return await ctx.send(embed=Embed("Error. Yandex API not found."))
-
         res = await self.session.get(
             "https://translate.yandex.net/api/v1.5/tr.json/translate",
             data={"key": env.str("YANDEX_API"), "text": sentence, "lang": lang},
         )
 
         json = Dict(await res.json())
-        print(json)
+
+        if json.code == 401:
+            raise ApiError(json.message)
 
         if json.message:
             return await ctx.send(embed=Embed(json.message), delete_after=5)
@@ -509,9 +536,9 @@ class Search(commands.Cog):
                 temp.append(f"`{code}` → `{lang}`")
             embeds.append(Embed("\n".join(temp)))
 
-        embed = PaginationEmbed(array=embeds, authorized_users=[ctx.author.id])
-        embed.embed.title = ":blue_book: Language Code List"
-        await embed.build(ctx)
+        pagination = PaginationEmbed(ctx, embeds=embeds)
+        pagination.embed.title = ":blue_book: Language Code List"
+        await pagination.build()
 
 
 def setup(bot: commands.Bot) -> None:

@@ -1,4 +1,5 @@
 import asyncio
+from typing import Optional
 
 import discord
 from discord.ext import commands
@@ -17,38 +18,37 @@ class PaginationEmbed:
     """
 
     def __init__(
-        self, array: list = [], authorized_users: list = [], timeout: int = 60
+        self,
+        ctx: commands.Context,
+        embeds: list = [],
+        authorized_users: Optional[list] = None,
+        timeout: Optional[int] = None,
     ) -> None:
         self.bot = bot
-        self.array = array
-        self.authorized_users = authorized_users
-        self.timeout = timeout
+        self.ctx = ctx
+        self.embeds = embeds
+        self.authorized_users = authorized_users or []
+        self.timeout = timeout or 60
 
         self.index = 0
         self.embed = Embed()
 
         self.msg: discord.Message = None
 
-    async def build(self, ctx: commands.Context) -> None:
-        self.ctx = ctx
+    async def build(self) -> None:
+        self.authorized_users.append(self.ctx.author.id)
         self.title = self.embed.title
         await self._send()
 
-        if len(self.array) > 1:
+        if len(self.embeds) > 1:
             asyncio.gather(self._add_reactions(), self._listen())
-
-    def set_author(self, **kwargs: str) -> None:
-        self.embed.set_author(**kwargs)
-
-    def set_footer(self, **kwargs: str) -> None:
-        self.embed.set_footer(**kwargs)
 
     async def _send(self) -> None:
         embed = self.embed.copy()
-        embed.description = (
-            self.array[self.index].description
-            + f"\n\n**Page {self.index+1}/{len(self.array)}**"
-        )
+        embed.description = self.embeds[self.index].description
+
+        if len(self.embeds) > 1:
+            embed.description += f"\n\n**Page {self.index+1}/{len(self.embeds)}**"
 
         if self.msg:
             return await self.msg.edit(embed=embed)
@@ -92,7 +92,7 @@ class PaginationEmbed:
 
     async def _request_jump(self) -> None:
         request_msg = await self.ctx.send(
-            embed=Embed(f"Enter page number (1-{len(self.array)}):")
+            embed=Embed(f"Enter page number (1-{len(self.embeds)}):")
         )
 
         def check(m: discord.Message) -> bool:
@@ -103,7 +103,7 @@ class PaginationEmbed:
                 bot.loop.create_task(m.delete())
                 if (
                     int(m.content) >= 0
-                    and int(m.content) <= len(self.array)
+                    and int(m.content) <= len(self.embeds)
                     and m.channel.id == self.ctx.channel.id
                 ):
                     return True
@@ -126,10 +126,10 @@ class PaginationEmbed:
             self.index = 0
         elif cmd == 1 and self.index > 0:
             self.index -= 1
-        elif cmd == 2 and self.index < len(self.array) - 1:
+        elif cmd == 2 and self.index < len(self.embeds) - 1:
             self.index += 1
         elif cmd == 3:
-            self.index = len(self.array) - 1
+            self.index = len(self.embeds) - 1
         elif cmd == 4:
             await self._request_jump()
 

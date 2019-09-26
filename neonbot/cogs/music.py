@@ -1,7 +1,7 @@
 import logging
 import re
 import textwrap
-from typing import List, cast
+from typing import List, Optional, cast
 
 import discord
 from discord.ext import commands
@@ -200,43 +200,43 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(has_player)
     @commands.check(in_voice)
-    async def volume(self, ctx: commands.Context, vol: int = -1) -> None:
+    async def volume(self, ctx: commands.Context, volume: Optional[int] = None) -> None:
         """Sets or gets player's volume."""
 
         player = get_player(ctx.guild)
 
-        if vol == -1:
+        if volume is None:
             return await ctx.send(
                 embed=Embed(f"Volume is set to {player.config.volume}%."),
                 delete_after=5,
             )
-        elif vol < 1 or vol > 100:
+        elif volume < 1 or volume > 100:
             return await ctx.send(
                 embed=Embed(f"Volume must be 1 - 100."), delete_after=5
             )
 
-        player.connection.source.volume = vol / 100
-        player.update_config("volume", vol)
-        await ctx.send(embed=Embed(f"Volume changed to {vol}%"), delete_after=5)
+        player.connection.source.volume = volume / 100
+        player.update_config("volume", volume)
+        await ctx.send(embed=Embed(f"Volume changed to {volume}%"), delete_after=5)
 
     @commands.command(usage="<off | single | all>")
     @commands.guild_only()
     @commands.check(has_player)
     @commands.check(in_voice)
-    async def repeat(self, ctx: commands.Context, args: str = None) -> None:
+    async def repeat(self, ctx: commands.Context, mode: Optional[str] = None) -> None:
         """Sets or gets player's repeat mode."""
 
         player = get_player(ctx.guild)
 
-        if args is None:
+        if mode is None:
             return await ctx.send(
                 embed=Embed(f"Repeat is set to {player.config.repeat}."), delete_after=5
             )
-        if not await check_args(ctx, args, ["off", "single", "all"]):
+        if not await check_args(ctx, mode, ["off", "single", "all"]):
             return
 
-        player.update_config("repeat", args)
-        await ctx.send(embed=Embed(f"Repeat changed to {args}."), delete_after=5)
+        player.update_config("repeat", mode)
+        await ctx.send(embed=Embed(f"Repeat changed to {mode}."), delete_after=5)
 
     @commands.command()
     @commands.guild_only()
@@ -347,12 +347,14 @@ class Music(commands.Cog):
             f"Autoplay: {'on' if config.autoplay else 'off'}",
         ]
 
-        embed = PaginationEmbed(array=embeds, authorized_users=[ctx.author.id])
-        embed.set_author(
+        pagination = PaginationEmbed(ctx, embeds=embeds)
+        pagination.embed.set_author(
             name="Player Queue", icon_url="https://i.imgur.com/SBMH84I.png"
         )
-        embed.set_footer(text=" | ".join(footer), icon_url=bot.user.avatar_url)
-        await embed.build(ctx)
+        pagination.embed.set_footer(
+            text=" | ".join(footer), icon_url=bot.user.avatar_url
+        )
+        await pagination.build()
 
 
 def setup(bot: commands.Bot) -> None:

@@ -78,8 +78,9 @@ class Bot(commands.Bot):
             status=discord.Status[status],
         )
 
-    async def set_app_info(self) -> None:
-        self.app_info = await bot.application_info()
+    async def fetch_app_info(self) -> None:
+        if not self.app_info:
+            self.app_info = await bot.application_info()
 
     def get_command_prefix(self) -> Union[Callable, str]:
         return (

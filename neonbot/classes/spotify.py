@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 from addict import Dict
 
 from .. import bot, env
+from ..helpers.exceptions import ApiError
 
 spotify_credentials = Dict()
 
@@ -17,9 +18,6 @@ class Spotify:
         self.client_secret = env.str("SPOTIFY_CLIENT_SECRET")
 
     async def get_token(self) -> str:
-        if not self.client_id or not self.client_secret:
-            raise
-
         if spotify_credentials.expiration and time() < spotify_credentials.expiration:
             return spotify_credentials.token
 
@@ -32,6 +30,10 @@ class Spotify:
             },
         )
         json = Dict(await res.json())
+
+        if json.error_description:
+            raise ApiError(json.error_description)
+
         spotify_credentials.token = json.access_token
         spotify_credentials.expiration = time() + json.expires_in - 600
 

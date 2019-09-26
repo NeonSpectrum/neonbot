@@ -10,6 +10,7 @@ import discord
 from discord.ext import commands
 
 from .. import bot, env
+from ..classes import PaginationEmbed
 from ..cogs.game import rooms
 from ..cogs.music import players
 from ..helpers.log import Log
@@ -36,7 +37,7 @@ class Administration(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
-    async def eval(self, ctx: commands.Context, *, args: str) -> None:
+    async def eval(self, ctx: commands.Context, *, code: str) -> None:
         """Evaluates a line/s of python code. *BOT_OWNER"""
 
         env = {
@@ -50,16 +51,14 @@ class Administration(commands.Cog):
             "rooms": rooms,
             "Embed": Embed,
             "send_to_all_owners": send_to_all_owners,
+            "p": print,
         }
 
-        def cleanup(code: str) -> str:
-            if code.startswith("```") and code.endswith("```"):
-                return "\n".join(code.splitlines()[1:-1])
-            return code
+        if code.startswith("```") and code.endswith("```"):
+            code = "\n".join(code.splitlines()[1:-1])
 
         try:
-            code = cleanup(args).splitlines()
-            lines = "\n".join([f"  {i}" for i in code])
+            lines = "\n".join([f"  {i}" for i in code.splitlines()])
 
             with stdoutIO() as s:
                 exec(f"async def x():\n{lines}\n", env)
@@ -72,13 +71,18 @@ class Administration(commands.Cog):
             await ctx.message.add_reaction("👌")
 
         if output:
-            if len(output) > 1900:
-                msg_array = [output[i : i + 1900] for i in range(0, len(output), 1900)]
-            else:
-                msg_array = [output]
+            msg_array = [output[i : i + 1900] for i in range(0, len(output), 1900)]
 
-            for msg in msg_array:
-                await ctx.send(f"```py\n{msg}```")
+            embeds = [Embed("```py\n" + msg.strip("\n") + "```") for msg in msg_array]
+
+            pagination = PaginationEmbed(ctx, embeds=embeds)
+            pagination.embed.set_author(
+                name="Python Interpreter", icon_url="https://i.imgur.com/vzcWouB.png"
+            )
+            pagination.embed.set_footer(
+                text=f"Executed by {ctx.author}", icon_url=ctx.author.avatar_url
+            )
+            await pagination.build()
 
     @commands.command()
     @commands.is_owner()
@@ -138,29 +142,29 @@ class Administration(commands.Cog):
     @commands.command()
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
-    async def prefix(self, ctx: commands.Context, arg: str) -> None:
+    async def prefix(self, ctx: commands.Context, prefix: str) -> None:
         """Sets the prefix of the current server. *ADMINISTRATOR"""
 
         database = self.db.get_guild(ctx.guild.id)
         config = database.config
-        config.prefix = arg
+        config.prefix = prefix
         config = database.update_config().config
         await ctx.send(embed=Embed(f"Prefix is now set to {config.prefix}."))
 
     @commands.command()
     @commands.is_owner()
-    async def setstatus(self, ctx: commands.Context, arg: str) -> None:
+    async def setstatus(self, ctx: commands.Context, status: str) -> None:
         """Sets the status of the bot. *BOT_OWNER"""
 
-        if not await check_args(ctx, arg, ["online", "offline", "dnd", "idle"]):
+        if not await check_args(ctx, status, ["online", "offline", "dnd", "idle"]):
             return
 
         database = self.db.get_settings()
         settings = database.settings
-        settings.status = arg
+        settings.status = status
         settings = database.update_settings().settings
 
-        await bot.change_presence(status=discord.Status[arg])
+        await bot.change_presence(status=discord.Status[status])
         await ctx.send(embed=Embed(f"Status is now set to {settings.prefix}."))
 
     @commands.command()
