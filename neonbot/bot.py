@@ -51,16 +51,16 @@ class Bot(commands.Bot):
     def save_music(self) -> None:
         file = "./tmp/music.json"
         with open(file, "w") as f:
-            player = Dict()
+            cache = Dict()
             for key, player in self.music.items():
-                player[key] = {
+                cache[key] = {
                     "current_queue": player.current_queue,
                     "queue": [
                         {**queue, "requested": queue.requested.id}
                         for queue in player.queue
                     ],
                 }
-            json.dump(player, f, indent=4)
+            json.dump(cache, f, indent=4)
 
     def start_message(self) -> None:
         cprint(LOGO, "blue")
