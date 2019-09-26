@@ -321,8 +321,6 @@ class Search(commands.Cog):
                     **Starting Items:** {", ".join(item_build[0])}
                     **Boots:** {", ".join(item_build[1])}
                     **Core Items:** {", ".join(item_build[2])}
-                self.winner = self.next_player()
-                await self.show_board()
                     **Luxury Items:**  {", ".join(item_build[3])}
                     """
             ),
