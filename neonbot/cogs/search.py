@@ -64,7 +64,7 @@ class Search(commands.Cog):
             name=f"Google Images for {keyword}",
             icon_url="http://i.imgur.com/G46fm8J.png",
         )
-        embed.set_footer(text=f"Searched by {ctx.author}")
+        embed.set_footer(text=f"Searched by {ctx.author}", icon_url=ctx.author.avatar_url)
         embed.set_image(url=image["items"][0].link)
 
         await msg.delete()
@@ -167,10 +167,10 @@ class Search(commands.Cog):
             name="🌡 Temperature",
             value=textwrap.dedent(
                 f"""
-                    Minimum Temperature: {json.main.temp_min}°C
-                    Maximum Temperature: {json.main.temp_max}°C
-                    Temperature: {json.main.temp}°C
-                    """
+                Minimum Temperature: {json.main.temp_min}°C
+                Maximum Temperature: {json.main.temp_max}°C
+                Temperature: {json.main.temp}°C
+                """
             ),
             inline=False,
         )
