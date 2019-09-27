@@ -97,23 +97,17 @@ class Event(commands.Cog):
                 if not member.bot and not member.voice.self_deaf
             ]
             if player.connection.is_playing() and not voice_members:
-                msg = "Player paused because no users are listening."
+                msg = "Player will reset after 10 minutes."
                 log.cmd(member, msg, channel=voice_channel, user="N/A")
-                player.messages.auto_paused = await player.channel.send(
-                    embed=Embed(msg)
-                )
+                player.messages.auto_paused = await player.ctx.send(embed=Embed(msg))
                 player.connection.pause()
+                player.reset_timeout.start()
             elif player.connection.is_paused() and any(voice_members):
                 if player.messages.auto_paused:
                     await player.messages.auto_paused.delete()
                     player.messages.auto_paused = None
-                log.cmd(
-                    member,
-                    "Player resumed because someone will be listening.",
-                    channel=voice_channel,
-                    user="N/A",
-                )
                 player.connection.resume()
+                player.reset_timeout.cancel()
 
         if before.channel != after.channel:
             voice_tts_channel = bot.get_channel(int(config.channel.voicetts or -1))

@@ -1,10 +1,11 @@
+import asyncio
 import logging
 import random
 from typing import List, Optional, Tuple, Union, cast
 
 import discord
 from addict import Dict
-from discord.ext import commands
+from discord.ext import tasks
 
 from .. import bot
 from ..helpers.constants import FFMPEG_OPTIONS
@@ -26,23 +27,27 @@ class Player:
         self.guild = guild
         self.db = bot.db.get_guild(guild.id)
         self.config = self.db.config.music
+        self.ytdl = Ytdl()
+        self.ctx: discord.TextChannel = None
+
+        self.load_defaults()
+
+        self._load_music_cache()
+
+    def load_defaults(self) -> None:
         self.connection: discord.VoiceClient = None
-        self.channel: discord.TextChannel = None
         self.current_queue = 0
         self.queue: List[Dict] = []
         self.shuffled_list: List[str] = []
         self.messages = Dict(
             last_playing=None, last_finished=None, paused=None, auto_paused=None
         )
-        self.ytdl = Ytdl()
-
-        self._load_music_cache()
 
     def _load_music_cache(self) -> None:
         cache = bot._music_cache.get(str(self.guild.id))
         if cache:
-            self.queue = cache.queue
             self.current_queue = cache.current_queue
+            self.queue = cache.queue
             for queue in self.queue:
                 queue.requested = bot.get_user(queue.requested)
 
@@ -54,8 +59,24 @@ class Player:
             else Dict()
         )
 
-    async def play(self, ctx: commands.Context) -> None:
-        self.channel = ctx.channel
+    async def reset(self) -> None:
+        await self.next(stop=True)
+        await self.connection.disconnect()
+        self.load_defaults()
+
+    @tasks.loop(count=1)
+    async def reset_timeout(self) -> None:
+        await asyncio.sleep(60 * 10)
+
+        if self.messages.auto_paused:
+            await self.messages.auto_paused.delete()
+        await self.reset()
+
+        msg = f"Player has been reset due to timeout."
+        log.cmd(self.ctx, msg)
+        await self.ctx.send(embed=Embed(msg))
+
+    async def play(self) -> None:
         now_playing = self.now_playing
 
         if not now_playing.stream:
@@ -78,21 +99,19 @@ class Player:
         except discord.ClientException:
             msg = "Error while playing the song."
             log.exception(msg)
-            return await ctx.send(embed=Embed(msg))
+            return await self.ctx.send(embed=Embed(msg))
 
         def after(error: Exception) -> None:
             if error:
                 log.warn(f"After play error: {error}")
-            bot.loop.create_task(self.next(ctx))
+            bot.loop.create_task(self.next())
 
         self.connection.play(source, after=after)
-        await self.playing_message(ctx)
+        await self.playing_message()
 
-    async def next(
-        self, ctx: commands.Context, *, index: int = -1, stop: bool = False
-    ) -> None:
+    async def next(self, *, index: int = -1, stop: bool = False) -> None:
         if not stop or (stop and self.connection.is_playing()):
-            await self.finished_message(ctx, delete_after=5 if stop else None)
+            await self.finished_message(delete_after=5 if stop else None)
 
         if stop or index != -1:
             if self.connection._player:
@@ -109,7 +128,7 @@ class Player:
 
             if index < len(self.queue):
                 self.current_queue = index
-                return await self.play(ctx)
+                return await self.play()
 
             self.current_queue = index - 1
 
@@ -118,18 +137,18 @@ class Player:
             or await self.process_autoplay()
             or self.process_repeat()
         ):
-            await self.play(ctx)
+            await self.play()
 
-    async def playing_message(
-        self, ctx: commands.Context, *, delete_after: Optional[int] = None
-    ) -> None:
+    async def playing_message(self, *, delete_after: Optional[int] = None) -> None:
         config = self.config
         now_playing = self.now_playing
 
         if not now_playing:
             return
 
-        log.cmd(ctx, f"Now playing {now_playing.title}", user=now_playing.requested)
+        log.cmd(
+            self.ctx, f"Now playing {now_playing.title}", user=now_playing.requested
+        )
 
         if self.messages.last_playing:
             try:
@@ -155,13 +174,11 @@ class Player:
             text=" | ".join(footer), icon_url=now_playing.requested.avatar_url
         )
 
-        self.messages.last_playing = await ctx.send(
+        self.messages.last_playing = await self.ctx.send(
             embed=embed, delete_after=delete_after
         )
 
-    async def finished_message(
-        self, ctx: commands.Context, *, delete_after: Optional[int] = None
-    ) -> None:
+    async def finished_message(self, *, delete_after: Optional[int] = None) -> None:
         config = self.config
         now_playing = self.now_playing
 
@@ -169,7 +186,9 @@ class Player:
             return
 
         log.cmd(
-            ctx, f"Finished playing {now_playing.title}", user=now_playing.requested
+            self.ctx,
+            f"Finished playing {now_playing.title}",
+            user=now_playing.requested,
         )
 
         if self.messages.last_finished:
@@ -196,7 +215,7 @@ class Player:
             text=" | ".join(footer), icon_url=now_playing.requested.avatar_url
         )
 
-        self.messages.last_finished = await ctx.send(
+        self.messages.last_finished = await self.ctx.send(
             embed=embed, delete_after=delete_after
         )
 
@@ -250,15 +269,15 @@ class Player:
 
         info = await self.ytdl.extract_info(video_id)
         info = self.ytdl.parse_info(info)
-        self.add_to_queue(info, bot.user)
+        self.add_to_queue(info, requested=bot.user)
         self.current_queue += 1
 
         return True
 
     async def process_youtube(
-        self, ctx: commands.Context, keyword: str, *, ytdl_list: Optional[list] = None
+        self, keyword: str, *, ytdl_list: Optional[list] = None
     ) -> Tuple[Dict, discord.Embed]:
-        loading_msg = await ctx.send(embed=Embed("Loading..."))
+        loading_msg = await self.ctx.send(embed=Embed("Loading..."))
 
         if ytdl_list is None:
             ytdl_list = await self.ytdl.extract_info(keyword)
@@ -272,7 +291,7 @@ class Player:
             for entry in ytdl_list:
                 if entry.title != "[Deleted video]":
                     entry.url = f"https://www.youtube.com/watch?v={entry.id}"
-                    self.add_to_queue(entry, ctx.author)
+                    self.add_to_queue(entry)
 
             embed = Embed(f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue.")
         elif ytdl_list:
@@ -286,17 +305,17 @@ class Player:
 
         return info, embed
 
-    async def process_spotify(
-        self, ctx: commands.Context, url: str
-    ) -> Tuple[Dict, discord.Embed]:
+    async def process_spotify(self, url: str) -> Tuple[Dict, discord.Embed]:
         spotify = Spotify()
         result = spotify.parse_url(url)
 
         if not result:
-            return await ctx.send(embed=Embed("Invalid spotify url."), delete_after=5)
+            return await self.ctx.send(
+                embed=Embed("Invalid spotify url."), delete_after=5
+            )
 
         if result.type == "playlist":
-            processing_msg = await ctx.send(
+            processing_msg = await self.ctx.send(
                 embed=Embed("Converting to youtube playlist. Please wait...")
             )
             playlist = await spotify.get_playlist(result.id)
@@ -313,24 +332,24 @@ class Player:
 
             await processing_msg.delete()
 
-            return await self.process_youtube(ctx, "", ytdl_list=ytdl_list)
+            return await self.process_youtube("", ytdl_list=ytdl_list)
         else:
             track = await spotify.get_track(result.id)
             return await self.process_search(
-                ctx, f"{track.artists[0].name} {track.name} lyrics", force_choice=0
+                f"{track.artists[0].name} {track.name} lyrics", force_choice=0
             )
 
     async def process_search(
-        self, ctx: commands.Context, keyword: str, *, force_choice: Optional[int] = None
+        self, keyword: str, *, force_choice: Optional[int] = None
     ) -> Tuple[Dict, discord.Embed]:
-        msg = await ctx.send(embed=Embed("Searching..."))
+        msg = await self.ctx.send(embed=Embed("Searching..."))
         extracted = await self.ytdl.extract_info(keyword)
         ytdl_choices = self.ytdl.parse_choices(extracted)
         await msg.delete()
         if not ytdl_choices:
-            return await ctx.send(embed=Embed("No songs available."))
+            return await self.ctx.send(embed=Embed("No songs available."))
         if force_choice is None:
-            choice = await embed_choices(ctx, ytdl_choices)
+            choice = await embed_choices(self.ctx, ytdl_choices)
             if choice < 0:
                 return Dict(), Embed()
         else:
@@ -345,8 +364,8 @@ class Player:
 
         return info, embed
 
-    def add_to_queue(self, data: Dict, requested: discord.User) -> None:
-        data.requested = requested
+    def add_to_queue(self, data: Dict, *, requested: discord.User = None) -> None:
+        data.requested = requested or self.ctx.author
         self.queue.append(data)
 
     def update_config(self, key: str, value: Union[str, int]) -> Dict:

@@ -54,6 +54,8 @@ class Music(commands.Cog):
         """Searches the url or the keyword and add it to queue."""
 
         player = get_player(ctx.guild)
+        player.ctx = ctx
+
         embed = info = loading_msg = None
 
         if keyword:
@@ -62,20 +64,20 @@ class Music(commands.Cog):
                 if index > len(player.queue) or index < 0:
                     return await ctx.send(embed=Embed("Invalid index."), delete_after=5)
                 if player.connection:
-                    await player.next(ctx, index=index - 1)
+                    await player.next(index=index - 1)
                 else:
                     player.current_queue = index - 1
             elif re.search(YOUTUBE_REGEX, keyword):
-                info, embed = await player.process_youtube(ctx, keyword)
+                info, embed = await player.process_youtube(keyword)
             elif re.search(SPOTIFY_REGEX, keyword):
-                info, embed = await player.process_spotify(ctx, keyword)
+                info, embed = await player.process_spotify(keyword)
             elif keyword:
-                info, embed = await player.process_search(ctx, keyword)
+                info, embed = await player.process_search(keyword)
                 if not info:
                     return
 
         if info:
-            player.add_to_queue(info, ctx.author)
+            player.add_to_queue(info, requested=ctx.author)
         if loading_msg:
             await loading_msg.delete()
         if embed:
@@ -85,7 +87,7 @@ class Music(commands.Cog):
             player.connection = await ctx.author.voice.channel.connect()
             log.cmd(ctx, f"Connected to {ctx.author.voice.channel}.")
         if player.connection and not player.connection.is_playing():
-            await player.play(ctx)
+            await player.play()
 
     @commands.command()
     @commands.guild_only()
@@ -144,7 +146,7 @@ class Music(commands.Cog):
         """Stops the current player and resets the track number to 1."""
 
         player = get_player(ctx.guild)
-        await player.next(ctx, stop=True)
+        await player.next(stop=True)
         player.current_queue = 0
         log.cmd(ctx, "Player stopped.")
         await ctx.send(embed=Embed("Player stopped."), delete_after=5)
@@ -157,10 +159,11 @@ class Music(commands.Cog):
         """Resets the current player and disconnect to voice channel."""
 
         player = get_player(ctx.guild)
-        await player.next(ctx, stop=True)
-        await player.connection.disconnect()
-        del players[ctx.guild.id]
-        await ctx.send(embed=Embed("Player reset."), delete_after=5)
+        await player.reset()
+
+        msg = "Player reset."
+        log.cmd(ctx, msg)
+        await ctx.send(embed=Embed(msg), delete_after=5)
 
     @commands.command()
     @commands.guild_only()
@@ -192,9 +195,9 @@ class Music(commands.Cog):
             player.current_queue -= 1
         elif index == player.current_queue:
             if not player.queue:
-                await player.next(ctx, stop=True)
+                await player.next(stop=True)
             else:
-                await player.next(ctx, index=player.current_queue)
+                await player.next(index=player.current_queue)
 
     @commands.command(aliases=["vol"], usage="<1 - 100>")
     @commands.guild_only()
