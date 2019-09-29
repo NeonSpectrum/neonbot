@@ -1,29 +1,29 @@
 import logging
 import sys
-from typing import Callable, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 import discord
 import termcolor
 from discord.ext import commands
 
-from .. import env
+from ..env import env
 from .constants import LOG_FORMAT
 
 
-def colored(*args: str) -> str:
+def colored(*args: Any) -> str:
     if env.bool("HEROKU", False):
         return args[0]
     return termcolor.colored(*args)
 
 
-def cprint(*args: str) -> None:
+def cprint(*args: Any) -> None:
     if env.bool("HEROKU", False):
         print(args[0])
     termcolor.cprint(*args)
 
 
 class Log(logging.Logger):
-    def __init__(self, *args: str, **kwargs: str):
+    def __init__(self, *args: Any, **kwargs: Any):
         self._log: Callable
         super().__init__(*args, **kwargs)
 

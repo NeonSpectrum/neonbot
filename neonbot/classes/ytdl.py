@@ -1,7 +1,7 @@
 import functools
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from typing import List, Union
+from typing import List, Union, Any
 from urllib.parse import parse_qs, urlparse
 
 import youtube_dl
@@ -29,7 +29,7 @@ class Ytdl:
             }
         )
 
-    async def extract_info(self, *args: str, **kwargs: str) -> Union[list, Dict]:
+    async def extract_info(self, *args: Any, **kwargs: Any) -> Union[list, Dict]:
         result = await self.loop.run_in_executor(
             self.thread_pool,
             functools.partial(self.ytdl.extract_info, *args, download=False, **kwargs),

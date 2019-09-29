@@ -13,6 +13,7 @@ def main() -> None:
         os.system("color")
 
     os.makedirs("./tmp", exist_ok=True)
+
     bot.run()
 
 

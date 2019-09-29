@@ -5,7 +5,7 @@ import discord
 from addict import Dict
 from discord.ext import commands
 
-from .. import game as rooms
+from .. import bot
 from ..classes import Connect4, Pokemon
 from ..helpers.log import Log
 from ..helpers.utils import Embed
@@ -14,6 +14,7 @@ log = cast(Log, logging.getLogger(__name__))
 
 
 def get_channel(channel: discord.TextChannel) -> Dict:
+    rooms = bot.game
     if channel.id not in rooms.keys():
         rooms[channel.id] = Dict(pokemon=Pokemon(channel), connect4=Connect4(channel))
 

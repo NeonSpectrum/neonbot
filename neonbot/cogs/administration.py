@@ -11,10 +11,8 @@ from discord.ext import commands
 
 from .. import bot, env
 from ..classes import PaginationEmbed
-from ..cogs.game import rooms
-from ..cogs.music import players
 from ..helpers.log import Log
-from ..helpers.utils import Embed, check_args, send_to_all_owners
+from ..helpers.utils import Embed, check_args
 
 log = cast(Log, logging.getLogger(__name__))
 
@@ -45,12 +43,13 @@ class Administration(commands.Cog):
             "discord": discord,
             "commands": commands,
             "ctx": ctx,
-            "players": players,
-            "player": players[ctx.guild.id],
+            "players": bot.music,
+            "player": bot.music[ctx.guild.id],
             "config": self.db.get_guild(ctx.guild.id).config,
-            "rooms": rooms,
+            "rooms": bot.game,
+            "room": bot.game[ctx.guild.id],
             "Embed": Embed,
-            "send_to_all_owners": send_to_all_owners,
+            "send_to_all_owners": bot.send_to_all_owners,
             "p": print,
         }
 

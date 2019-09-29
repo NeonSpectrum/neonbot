@@ -3,9 +3,8 @@ import random
 from typing import List
 
 import discord
-from discord.ext import tasks
+from discord.ext import commands, tasks
 
-from .. import bot
 from ..helpers.constants import CHOICES_EMOJI
 from ..helpers.utils import Embed
 
@@ -16,9 +15,10 @@ class Connect4:
     Available to only one game in a channel.
     """
 
-    def __init__(self, channel: discord.TextChannel):
-        self.channel = bot.get_channel(channel.id)
-        self.config = bot.db.get_guild(self.channel.guild.id).config
+    def __init__(self, ctx: commands.Context):
+        self.bot = ctx.bot
+        self.channel = ctx.channel
+        self.config = self.bot.db.get_guild(ctx.guild.id).config
 
         self.reset()
 
@@ -68,12 +68,11 @@ class Connect4:
                     x.id == m.author.id and i == self.turn
                     for i, x in enumerate(self.players)
                 )
-                and int(m.content) > 0
-                and int(m.content) <= 7
+                and 1 <= int(m.content) <= 7
             )
 
         try:
-            msg = await bot.wait_for("message", check=check, timeout=30)
+            msg = await self.bot.wait_for("message", check=check, timeout=30)
             await msg.delete()
         except asyncio.TimeoutError:
             self.winner = self.next_player()

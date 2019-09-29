@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from time import time
 from typing import cast
 
 from addict import Dict
@@ -63,8 +64,11 @@ class Database:
             authSource=name,
             retryWrites=False,
         )
-        log.info(f"MongoDB connection established on {':'.join(url)}")
 
+        start_time = time()
+        log.info(f"Connecting to Database...")
+        client.admin.command("ismaster")
+        log.info(f"MongoDB connection established in {(time() - start_time):.2f}s")
         return client[name]
 
     def process_database(self, guilds: list) -> None:

@@ -11,8 +11,7 @@ from ..helpers import exceptions
 from ..helpers.constants import EXCLUDED_TYPING, IGNORED_DELETEONCMD
 from ..helpers.date import date_format
 from ..helpers.log import Log
-from ..helpers.utils import Embed, send_to_all_owners
-from .music import get_player
+from ..helpers.utils import Embed
 from .utility import chatbot
 
 log = cast(Log, logging.getLogger(__name__))
@@ -43,7 +42,7 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_ready() -> None:
-        log.info("Ready!")
+        log.info("Ready!\n")
         await bot.send_restart_message()
 
     @staticmethod
@@ -62,7 +61,7 @@ class Event(commands.Cog):
                 return await bot.send_invite_link(message.channel)
 
             log.info(f"DM from {ctx.author}: {message.content}")
-            await send_to_all_owners(
+            await bot.send_to_all_owners(
                 embed=Embed(title=f"DM from {ctx.author}", description=message.content),
                 excluded=[ctx.author.id],
             )
@@ -87,7 +86,7 @@ class Event(commands.Cog):
             return
 
         config = bot.db.get_guild(member.guild.id).config
-        player = get_player(member.guild)
+        player = bot.music[member.guild.id]
         voice_channel = after.channel or before.channel
 
         if player and player.connection:
@@ -126,10 +125,11 @@ class Event(commands.Cog):
                     msg.replace("**", ""), tts=True, delete_after=0
                 )
             if log_channel and readable:
-                embed = Embed(f"`{date_format()}`:bust_in_silhouette:{msg}")
+                embed = Embed(f":bust_in_silhouette:{msg}")
                 embed.set_author(
                     name="Voice Presence Update", icon_url=bot.user.avatar_url
                 )
+                embed.set_footer(text=date_format())
                 await log_channel.send(embed=embed)
 
     @staticmethod
@@ -140,20 +140,45 @@ class Event(commands.Cog):
 
         config = bot.db.get_guild(before.guild.id).config
         log_channel = bot.get_channel(int(config.channel.log or -1))
+
         msg = None
 
-        if before.status != after.status:
-            msg = f"**{before.name}** is now **{after.status}**."
-        elif before.activities and not after.activities:
-            activity = before.activities[-1]
-            msg = f"**{before.name}** is done {activity.type.name} **{activity.name}**."
-        elif not before.activities and after.activities:
-            activity = after.activities[-1]
-            msg = f"**{before.name}** is now {activity.type.name} **{activity.name}**."
+        embed = Embed()
+        embed.set_footer(text=date_format())
 
-        if log_channel and msg:
-            embed = Embed(f"`{date_format()}`:bust_in_silhouette:{msg}")
+        if before.status != after.status:
             embed.set_author(name="User Presence Update", icon_url=bot.user.avatar_url)
+            msg = f"**{before.name}** is now **{after.status}**."
+            embed.description = f":bust_in_silhouette:{msg}"
+        elif before.activities != after.activities:
+            last = before.activities and before.activities[-1]
+            current = after.activities and after.activities[-1]
+
+            embed.description = f":bust_in_silhouette:**{before.name}** is"
+            embed.set_author(
+                name="Activity Presence Update", icon_url=bot.user.avatar_url
+            )
+
+            if current and isinstance(current, discord.Spotify):
+                embed.set_thumbnail(url=current.album_cover_url)
+                embed.add_field(name="Title", value=current.title, inline=False)
+                embed.add_field(name="Artist", value=current.artist, inline=False)
+            elif isinstance(current, (discord.Activity, discord.Game)):
+                embed.set_thumbnail(url=current.small_image_url)
+                embed.add_field(
+                    name="Details",
+                    value=discord.utils.escape_markdown(current.details),
+                    inline=False,
+                )
+
+            if not current:
+                embed.description += f" done {last.type.name} **{last.name}**."
+                embed.clear_fields()
+                embed._thumbnail = {}
+            else:
+                embed.description += f" now {current.type.name} **{current.name}**."
+
+        if log_channel and embed.description:
             await log_channel.send(embed=embed)
 
     @staticmethod
@@ -165,8 +190,9 @@ class Event(commands.Cog):
         msg = f"**{member.name}** joined the server."
 
         if channel:
-            embed = Embed(f"`{date_format()}`:bust_in_silhouette:{msg}")
+            embed = Embed(f":bust_in_silhouette:{msg}")
             embed.set_author(name="Member Join", icon_url=bot.user.avatar_url)
+            embed.set_footer(text=date_format())
             channel.send()
 
     @staticmethod
@@ -178,8 +204,9 @@ class Event(commands.Cog):
         msg = f"**{member.name}** left the server."
 
         if channel:
-            embed = Embed(f"`{date_format()}`:bust_in_silhouette:{msg}")
+            embed = Embed(f":bust_in_silhouette:{msg}")
             embed.set_author(name="Member Leave", icon_url=bot.user.avatar_url)
+            embed.set_footer(text=date_format())
             channel.send()
 
     @staticmethod
@@ -236,7 +263,7 @@ class Event(commands.Cog):
             description=f"Command: ```{ctx.message.content}```\n```py\n{tb_msg}```",
         )
 
-        await send_to_all_owners(embed=embed)
+        await bot.send_to_all_owners(embed=embed)
 
         raise error
 

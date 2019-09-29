@@ -3,11 +3,9 @@ import re
 import textwrap
 from typing import List, Optional, cast
 
-import discord
 from discord.ext import commands
 
 from .. import bot
-from .. import music as players
 from ..classes import PaginationEmbed, Player
 from ..helpers.constants import SPOTIFY_REGEX, YOUTUBE_REGEX
 from ..helpers.date import format_seconds
@@ -17,11 +15,12 @@ from ..helpers.utils import Embed, check_args, plural
 log = cast(Log, logging.getLogger(__name__))
 
 
-def get_player(guild: discord.Guild) -> Player:
-    if guild.id not in players.keys():
-        players[guild.id] = Player(guild)
+def get_player(ctx: commands.Context) -> Player:
+    players = bot.music
+    if ctx.guild.id not in players.keys():
+        players[ctx.guild.id] = Player(ctx)
 
-    return players[guild.id]
+    return players[ctx.guild.id]
 
 
 async def in_voice(ctx: commands.Context) -> bool:
@@ -35,7 +34,7 @@ async def in_voice(ctx: commands.Context) -> bool:
 
 
 async def has_player(ctx: commands.Context) -> bool:
-    player = get_player(ctx.guild)
+    player = get_player(ctx)
 
     if not player.connection and ctx.invoked_with != "help":
         await ctx.send(embed=Embed("No active player."), delete_after=5)
@@ -53,7 +52,7 @@ class Music(commands.Cog):
     async def play(self, ctx: commands.Context, *, keyword: str = None) -> None:
         """Searches the url or the keyword and add it to queue."""
 
-        player = get_player(ctx.guild)
+        player = get_player(ctx)
         player.ctx = ctx
 
         embed = info = loading_msg = None
@@ -96,7 +95,7 @@ class Music(commands.Cog):
     async def pause(self, ctx: commands.Context) -> None:
         """Pauses the current player."""
 
-        player = get_player(ctx.guild)
+        player = get_player(ctx)
 
         if player.connection.is_paused():
             return
@@ -115,7 +114,7 @@ class Music(commands.Cog):
     async def resume(self, ctx: commands.Context) -> None:
         """Resumes the current player."""
 
-        player = get_player(ctx.guild)
+        player = get_player(ctx)
 
         if player.connection.is_playing():
             return
@@ -135,7 +134,7 @@ class Music(commands.Cog):
     async def skip(self, ctx: commands.Context) -> None:
         """Skips the current song."""
 
-        player = get_player(ctx.guild)
+        player = get_player(ctx)
         player.connection.stop()
 
     @commands.command()
@@ -145,7 +144,7 @@ class Music(commands.Cog):
     async def stop(self, ctx: commands.Context) -> None:
         """Stops the current player and resets the track number to 1."""
 
-        player = get_player(ctx.guild)
+        player = get_player(ctx)
         await player.next(stop=True)
         player.current_queue = 0
         log.cmd(ctx, "Player stopped.")
@@ -158,7 +157,7 @@ class Music(commands.Cog):
     async def reset(self, ctx: commands.Context) -> None:
         """Resets the current player and disconnect to voice channel."""
 
-        player = get_player(ctx.guild)
+        player = get_player(ctx)
         await player.reset()
 
         msg = "Player reset."
@@ -173,7 +172,7 @@ class Music(commands.Cog):
         """Remove the song with the index specified."""
 
         index -= 1
-        player = get_player(ctx.guild)
+        player = get_player(ctx)
         queue = player.queue[index]
 
         if not queue:
@@ -206,7 +205,7 @@ class Music(commands.Cog):
     async def volume(self, ctx: commands.Context, volume: Optional[int] = None) -> None:
         """Sets or gets player's volume."""
 
-        player = get_player(ctx.guild)
+        player = get_player(ctx)
 
         if volume is None:
             return await ctx.send(
@@ -229,7 +228,7 @@ class Music(commands.Cog):
     async def repeat(self, ctx: commands.Context, mode: Optional[str] = None) -> None:
         """Sets or gets player's repeat mode."""
 
-        player = get_player(ctx.guild)
+        player = get_player(ctx)
 
         if mode is None:
             return await ctx.send(
@@ -248,7 +247,7 @@ class Music(commands.Cog):
     async def autoplay(self, ctx: commands.Context) -> None:
         """Enables/disables player's autoplay mode."""
 
-        player = get_player(ctx.guild)
+        player = get_player(ctx)
         config = player.update_config("autoplay", not player.config.autoplay)
         await ctx.send(
             embed=Embed(
@@ -264,7 +263,7 @@ class Music(commands.Cog):
     async def shuffle(self, ctx: commands.Context) -> None:
         """Enables/disables player's shuffle mode."""
 
-        player = get_player(ctx.guild)
+        player = get_player(ctx)
         config = player.update_config("shuffle", not player.config.shuffle)
         await ctx.send(
             embed=Embed(
@@ -280,7 +279,7 @@ class Music(commands.Cog):
     async def nowplaying(self, ctx: commands.Context) -> None:
         """Displays in brief description of the current playing."""
 
-        player = get_player(ctx.guild)
+        player = get_player(ctx)
         config = player.config
 
         if not player.connection.is_playing():
@@ -319,7 +318,7 @@ class Music(commands.Cog):
     async def playlist(self, ctx: commands.Context) -> None:
         """List down all songs in the player's queue."""
 
-        player = get_player(ctx.guild)
+        player = get_player(ctx)
         config = player.config
         queue = player.queue
         embeds = []

@@ -5,9 +5,8 @@ from typing import List, Optional, Tuple, Union, cast
 
 import discord
 from addict import Dict
-from discord.ext import tasks
+from discord.ext import commands, tasks
 
-from .. import bot
 from ..helpers.constants import FFMPEG_OPTIONS
 from ..helpers.date import format_seconds
 from ..helpers.log import Log
@@ -23,12 +22,12 @@ class Player:
     repeat, shuffle, autoplay.
     """
 
-    def __init__(self, guild: discord.Guild):
-        self.guild = guild
-        self.db = bot.db.get_guild(guild.id)
+    def __init__(self, ctx: commands.Context):
+        self.ctx = ctx
+        self.bot = ctx.bot
+        self.db = self.bot.db.get_guild(ctx.guild.id)
         self.config = self.db.config.music
         self.ytdl = Ytdl()
-        self.ctx: discord.TextChannel = None
 
         self.load_defaults()
 
@@ -44,12 +43,12 @@ class Player:
         )
 
     def _load_music_cache(self) -> None:
-        cache = bot._music_cache.get(str(self.guild.id))
+        cache = self.bot._music_cache.get(str(self.ctx.guild.id))
         if cache:
             self.current_queue = cache.current_queue
             self.queue = cache.queue
             for queue in self.queue:
-                queue.requested = bot.get_user(queue.requested)
+                queue.requested = self.bot.get_user(queue.requested)
 
     @property
     def now_playing(self) -> Dict:
@@ -104,7 +103,7 @@ class Player:
         def after(error: Exception) -> None:
             if error:
                 log.warn(f"After play error: {error}")
-            bot.loop.create_task(self.next())
+            self.bot.loop.create_task(self.next())
 
         self.connection.play(source, after=after)
         await self.playing_message()
@@ -120,10 +119,7 @@ class Player:
 
             if stop:
                 if self.messages.last_playing:
-                    try:
-                        await self.messages.last_playing.delete()
-                    except discord.NotFound:
-                        pass
+                    await self.messages.last_playing.delete()
                 return
 
             if index < len(self.queue):
@@ -151,10 +147,7 @@ class Player:
         )
 
         if self.messages.last_playing:
-            try:
-                await self.messages.last_playing.delete()
-            except discord.NotFound:
-                pass
+            await self.messages.last_playing.delete()
 
         footer = [
             str(now_playing.requested),
@@ -192,10 +185,7 @@ class Player:
         )
 
         if self.messages.last_finished:
-            try:
-                await self.messages.last_finished.delete()
-            except discord.NotFound:
-                pass
+            await self.messages.last_finished.delete()
 
         footer = [
             str(now_playing.requested),
@@ -269,7 +259,7 @@ class Player:
 
         info = await self.ytdl.extract_info(video_id)
         info = self.ytdl.parse_info(info)
-        self.add_to_queue(info, requested=bot.user)
+        self.add_to_queue(info, requested=self.bot.user)
         self.current_queue += 1
 
         return True

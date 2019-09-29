@@ -1,9 +1,12 @@
 import json
 import logging
 import os
+import re
 import sys
+from glob import glob
 from os import path
-from typing import Callable, List, Union, cast
+from time import time
+from typing import Any, Callable, List, Union, cast
 
 import discord
 import psutil
@@ -12,9 +15,12 @@ from aiohttp import ClientSession, ClientTimeout
 from discord.ext import commands
 from discord.utils import oauth_url
 
-from . import Database, __title__, __version__, env
+from . import __title__, __version__
+from .database import Database
+from .env import env
 from .helpers.constants import LOGO, PERMISSIONS
 from .helpers.log import Log, cprint
+from .helpers.utils import Embed
 
 log = cast(Log, logging.getLogger(__name__))
 
@@ -90,35 +96,37 @@ class Bot(commands.Bot):
         )
 
     def load_cogs(self) -> None:
-        cogs_dir = "neonbot/cogs"
-        excluded = "__init__.py"
-        for extension in [
-            f.replace(".py", "")
-            for f in os.listdir(cogs_dir)
-            if f not in excluded and path.isfile(path.join(cogs_dir, f))
-        ]:
+        files = sorted(glob("neonbot/cogs/[!_]*.py"))
+        extensions = list(map(lambda x: re.split(r"[/.]", x)[-2], files))
+        start_time = time()
+
+        print(file=sys.stderr)
+
+        for extension in extensions:
+            log.info(f"Loading {extension} cog...")
             self.load_extension("neonbot.cogs." + extension)
+
+        print(file=sys.stderr)
+
+        log.info(f"Loaded {len(extensions)} cogs after {(time() - start_time):.2f}s")
 
     async def logout(self) -> None:
         await self.session.close()
         super().logout()
 
     async def restart(self) -> None:
-        await self.session.close()
-        [await voice.disconnect() for voice in self.voice_clients]
+        await self.logout()
         try:
             p = psutil.Process(os.getpid())
             for handler in p.open_files() + p.connections():
                 os.close(handler.fd)
         except Exception as e:
             log.exception(e)
-
-        python = sys.executable
-        os.execl(python, python, *sys.argv)
+        else:
+            python = sys.executable
+            os.execl(python, python, *sys.argv)
 
     async def send_restart_message(self) -> None:
-        from .helpers.utils import Embed
-
         file = "./tmp/restart_config.json"
         if path.exists(file):
             with open(file, "r") as f:
@@ -141,6 +149,12 @@ class Bot(commands.Bot):
             )
             await channel.send(f"Bot invite link: {url}")
             log.info(f"Sent an invite link to: {channel.recipient}")
+
+    async def send_to_all_owners(
+        self, *args: Any, excluded: list = [], **kwargs: Any
+    ) -> None:
+        for owner in filter(lambda x: x not in excluded, self.owner_ids):
+            await self.get_user(owner).send(*args, **kwargs)
 
     def run(self) -> None:
         self.load_cogs()

@@ -5,7 +5,6 @@ from typing import Any, cast
 import discord
 from discord.ext import commands
 
-from .. import bot
 from ..helpers.log import Log
 from .constants import CHOICES_EMOJI
 
@@ -38,7 +37,7 @@ async def embed_choices(ctx: commands.Context, entries: list) -> int:
 
     try:
         asyncio.ensure_future(react_to_msg())
-        reaction, _ = await bot.wait_for(
+        reaction, _ = await ctx.bot.wait_for(
             "reaction_add",
             timeout=10,
             check=lambda reaction, user: reaction.emoji in CHOICES_EMOJI
@@ -48,12 +47,13 @@ async def embed_choices(ctx: commands.Context, entries: list) -> int:
         if reaction.emoji == "🗑":
             raise asyncio.TimeoutError
     except asyncio.TimeoutError:
-        await msg.delete()
-        return -1
+        index = -1
     else:
-        await msg.delete()
         index = CHOICES_EMOJI.index(reaction.emoji)
-        return index
+    finally:
+        await msg.delete()
+
+    return index
 
 
 def plural(val: int, singular: str, plural: str) -> str:
@@ -65,8 +65,3 @@ async def check_args(ctx: commands.Context, arg: str, choices: list) -> bool:
         return True
     await ctx.send(embed=Embed(f"Invalid argument. ({' | '.join(choices)})"))
     return False
-
-
-async def send_to_all_owners(*args: str, excluded: list = [], **kwargs: str) -> None:
-    for owner in filter(lambda x: x not in excluded, bot.owner_ids):
-        await bot.get_user(owner).send(*args, **kwargs)

@@ -33,7 +33,7 @@ async def chatbot(message: discord.Message, dm: bool = False) -> None:
 
 class Utility(commands.Cog):
     @commands.command()
-    async def chatbot(self, ctx: commands.Context, *args: str) -> None:
+    async def chatbot(self, ctx: commands.Context) -> None:
         """Chat with a bot using program-o."""
 
         await chatbot(ctx.message)

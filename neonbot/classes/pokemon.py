@@ -9,16 +9,17 @@ import discord
 from addict import Dict
 from PIL import Image, ImageEnhance
 from pokemon.master import catch_em_all, get_pokemon
+from discord.ext import commands
 
-from .. import bot
 from ..helpers.utils import Embed
 
 pokemons = catch_em_all()
 
 
 class Pokemon:
-    def __init__(self, channel: discord.TextChannel):
-        self.channel = bot.get_channel(channel.id)
+    def __init__(self, ctx: commands.Context):
+        self.bot = ctx.bot
+        self.channel = ctx.channel
         self.status = 0
         self.scoreboard = Dict()
         self.timed_out = False
@@ -57,7 +58,7 @@ class Pokemon:
             return m.channel == channel and m.content.lower() == name.lower()
 
         try:
-            msg = await bot.wait_for("message", check=check, timeout=30)
+            msg = await self.bot.wait_for("message", check=check, timeout=30)
         except asyncio.TimeoutError:
             winner_embed.description = "**No one**"
             if not someone_answered:
@@ -86,7 +87,7 @@ class Pokemon:
 
     async def get(self) -> Tuple[str, BytesIO, BytesIO]:
         pokemon = Dict(list(get_pokemon(pokemons=pokemons).values())[0])
-        res = await bot.session.get(
+        res = await self.bot.session.get(
             f"https://gearoid.me/pokemon/images/artwork/{pokemon.id}.png"
         )
 
@@ -104,7 +105,7 @@ class Pokemon:
         scoreboard = self.scoreboard
 
         scores = sorted(scoreboard.items(), key=lambda kv: kv[1], reverse=True)
-        scores = list(map(lambda x: f"**{bot.get_user(x[0])}: {x[1]}**", scores))
+        scores = list(map(lambda x: f"**{self.bot.get_user(x[0])}: {x[1]}**", scores))
 
         if self.status == 0:
             scores[0] += " `WINNER`"

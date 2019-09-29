@@ -4,7 +4,6 @@ from typing import Optional
 import discord
 from discord.ext import commands
 
-from .. import bot
 from ..helpers.constants import PAGINATION_EMOJI
 from ..helpers.utils import Embed
 
@@ -24,7 +23,7 @@ class PaginationEmbed:
         authorized_users: Optional[list] = None,
         timeout: Optional[int] = None,
     ) -> None:
-        self.bot = bot
+        self.bot = ctx.bot
         self.ctx = ctx
         self.embeds = embeds
         self.authorized_users = authorized_users or []
@@ -100,7 +99,7 @@ class PaginationEmbed:
                 return False
 
             if m.content.isdigit():
-                bot.loop.create_task(m.delete())
+                self.bot.loop.create_task(m.delete())
                 if (
                     int(m.content) >= 0
                     and int(m.content) <= len(self.embeds)
@@ -111,7 +110,7 @@ class PaginationEmbed:
             return False
 
         try:
-            msg = await bot.wait_for("message", check=check, timeout=10)
+            msg = await self.bot.wait_for("message", check=check, timeout=10)
         except asyncio.TimeoutError:
             pass
         else:
