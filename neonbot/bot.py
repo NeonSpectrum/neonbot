@@ -113,7 +113,7 @@ class Bot(commands.Bot):
 
     async def logout(self) -> None:
         await self.session.close()
-        super().logout()
+        await super().logout()
 
     async def restart(self) -> None:
         await self.logout()
