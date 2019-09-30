@@ -155,18 +155,6 @@ class Event(commands.Cog):
             last = before.activities and before.activities[-1]
             current = after.activities and after.activities[-1]
 
-            # If not spotify, game name must not be the same
-            if not isinstance(current, discord.Spotify) and (
-                getattr(last, "name", None) == getattr(current, "name", None)
-            ):
-                return
-
-            # If spotify, song title must not be the same
-            if isinstance(current, discord.Spotify) and (
-                getattr(last, "title", None) == getattr(current, "title", None)
-            ):
-                return
-
             def get_image(
                 activity: Union[discord.Spotify, discord.Game, discord.Activity]
             ) -> str:
@@ -182,10 +170,16 @@ class Event(commands.Cog):
             )
 
             if isinstance(current, discord.Spotify):
+                if getattr(last, "title", None) == getattr(current, "title", None):
+                    return
+
                 embed.set_thumbnail(url=get_image(current))
                 embed.add_field(name="Title", value=current.title)
                 embed.add_field(name="Artist", value=current.artist)
             elif isinstance(current, (discord.Activity, discord.Game)):
+                if getattr(last, "name", None) == getattr(current, "name", None):
+                    return
+
                 image = get_image(current)
                 image and embed.set_thumbnail(url=image)
                 if current.details:
