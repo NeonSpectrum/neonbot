@@ -170,8 +170,8 @@ class Event(commands.Cog):
             ) -> str:
                 if isinstance(activity, discord.Spotify):
                     return activity.album_cover_url
-                return getattr(current, "large_image_url", None) or (
-                    getattr(current, "small_image_url", None)
+                return getattr(activity, "large_image_url", None) or (
+                    getattr(activity, "small_image_url", None)
                 )
 
             if isinstance(current, discord.Spotify):
