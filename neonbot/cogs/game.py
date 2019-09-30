@@ -6,9 +6,8 @@ from addict import Dict
 from discord.ext import commands
 
 from .. import bot
-from ..classes import Connect4, Pokemon
+from ..classes import Connect4, Embed, Pokemon
 from ..helpers.log import Log
-from ..helpers.utils import Embed
 
 log = cast(Log, logging.getLogger(__name__))
 

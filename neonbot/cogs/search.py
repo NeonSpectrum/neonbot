@@ -13,10 +13,9 @@ from discord.ext import commands
 from jikanpy import AioJikan
 
 from .. import bot, env
-from ..classes import PaginationEmbed
+from ..classes import Embed, EmbedChoices, PaginationEmbed
 from ..helpers.exceptions import ApiError
 from ..helpers.log import Log
-from ..helpers.utils import Embed, embed_choices
 
 log = cast(Log, logging.getLogger(__name__))
 
@@ -151,8 +150,8 @@ class Search(commands.Cog):
 
         embed = Embed()
         embed.set_author(
-            name=f"{json.sys.country} - {json.name}",
-            url=f"https://openweathermap.org/city/{json.id}",
+            f"{json.sys.country} - {json.name}",
+            f"https://openweathermap.org/city/{json.id}",
             icon_url=f"https://www.countryflags.io/{json.sys.country.lower()}/flat/32.png",
         )
         embed.set_footer(
@@ -163,13 +162,13 @@ class Search(commands.Cog):
             url=f"http://openweathermap.org/img/w/{json.weather[0].icon}.png"
         )
         embed.add_field(
-            name="☁ Weather",
-            value=f"{json.weather[0].main} - {json.weather[0].description}",
+            "☁ Weather",
+            f"{json.weather[0].main} - {json.weather[0].description}",
             inline=False,
         )
         embed.add_field(
-            name="🌡 Temperature",
-            value=textwrap.dedent(
+            "🌡 Temperature",
+            textwrap.dedent(
                 f"""
                 Minimum Temperature: {json.main.temp_min}°C
                 Maximum Temperature: {json.main.temp_max}°C
@@ -179,33 +178,27 @@ class Search(commands.Cog):
             inline=False,
         )
         embed.add_field(
-            name="💨 Wind",
-            value=f"Speed: {json.wind.speed} m/s\nDegrees: {json.wind.deg or 'N/A'}°",
+            "💨 Wind",
+            f"Speed: {json.wind.speed} m/s\nDegrees: {json.wind.deg or 'N/A'}°",
             inline=False,
         )
         embed.add_field(
-            name="🌤 Sunrise",
-            value=datetime.fromtimestamp(json.sys.sunrise).strftime(
-                "%b %d, %Y %-I:%M:%S %p"
-            ),
+            "🌤 Sunrise",
+            datetime.fromtimestamp(json.sys.sunrise).strftime("%b %d, %Y %-I:%M:%S %p"),
             inline=False,
         )
         embed.add_field(
-            name="🌥 Sunset",
-            value=datetime.fromtimestamp(json.sys.sunset).strftime(
-                "%b %d, %Y %-I:%M:%S %p"
-            ),
+            "🌥 Sunset",
+            datetime.fromtimestamp(json.sys.sunset).strftime("%b %d, %Y %-I:%M:%S %p"),
             inline=False,
         )
         embed.add_field(
-            name="🔘 Coordinates",
-            value=f"Longitude: {json.coord.lon}\nLatitude: {json.coord.lat}",
+            "🔘 Coordinates",
+            f"Longitude: {json.coord.lon}\nLatitude: {json.coord.lat}",
             inline=False,
         )
-        embed.add_field(
-            name="🎛 Pressure", value=f"{json.main.pressure} hpa", inline=False
-        )
-        embed.add_field(name="💧 Humidity", value=f"{json.main.humidity}%", inline=False)
+        embed.add_field("🎛 Pressure", f"{json.main.pressure} hpa", inline=False)
+        embed.add_field("💧 Humidity", f"{json.main.humidity}%", inline=False)
 
         await ctx.send(embed=embed)
 
@@ -312,12 +305,12 @@ class Search(commands.Cog):
             text="Powered by LeagueSpy",
             icon_url="https://www.leaguespy.net/images/favicon/favicon-32x32.png",
         )
-        embed.add_field(name="Role", value=info.role, inline=False)
-        embed.add_field(name="Win Rate", value=info.win_rate)
-        embed.add_field(name="Ban Rate", value=info.ban_rate)
-        embed.add_field(name="Weak Against", value=", ".join(weak_against))
-        embed.add_field(name="Strong Against", value=", ".join(strong_against))
-        embed.add_field(name="Skill Build", value=" > ".join(skill_build))
+        embed.add_field("Role", info.role, inline=False)
+        embed.add_field("Win Rate", info.win_rate)
+        embed.add_field("Ban Rate", info.ban_rate)
+        embed.add_field("Weak Against", ", ".join(weak_against))
+        embed.add_field("Strong Against", ", ".join(strong_against))
+        embed.add_field("Skill Build", " > ".join(skill_build))
         embed.add_field(
             name="Item Build",
             value=textwrap.dedent(
@@ -358,7 +351,9 @@ class Search(commands.Cog):
             if "/lyrics/" in link.get("href")
         ]
         await loading_msg.delete()
-        choice = await embed_choices(ctx, links[:5])
+        embed_choices = await EmbedChoices(ctx, links[:5]).build()
+        choice = embed_choices.value
+
         if choice < 0:
             return
 
@@ -440,13 +435,11 @@ class Search(commands.Cog):
             if len(anime.synopsis) > 1000
             else anime.synopsis,
         )
-        embed.add_field(name="Episodes", value=anime.episodes)
-        embed.add_field(name="Rank", value=anime.rank)
-        embed.add_field(name="Status", value=anime.status)
-        embed.add_field(name="Aired", value=anime.aired.string)
-        embed.add_field(
-            name="Genres", value=", ".join([genre.name for genre in anime.genres])
-        )
+        embed.add_field("Episodes", anime.episodes)
+        embed.add_field("Rank", anime.rank)
+        embed.add_field("Status", anime.status)
+        embed.add_field("Aired", anime.aired.string)
+        embed.add_field("Genres", ", ".join([genre.name for genre in anime.genres]))
 
         await loading_msg.delete()
         await ctx.send(embed=embed)

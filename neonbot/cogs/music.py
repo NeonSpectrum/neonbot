@@ -6,11 +6,11 @@ from typing import List, Optional, cast
 from discord.ext import commands
 
 from .. import bot
-from ..classes import PaginationEmbed, Player
+from ..classes import Embed, PaginationEmbed, Player
 from ..helpers.constants import SPOTIFY_REGEX, YOUTUBE_REGEX
 from ..helpers.date import format_seconds
 from ..helpers.log import Log
-from ..helpers.utils import Embed, check_args, plural
+from ..helpers.utils import check_args, plural
 
 log = cast(Log, logging.getLogger(__name__))
 
@@ -296,11 +296,11 @@ class Music(commands.Cog):
         ]
 
         embed = Embed()
-        embed.add_field(name="Uploader", value=now_playing.uploader)
-        embed.add_field(name="Upload Date", value=now_playing.upload_date)
-        embed.add_field(name="Duration", value=format_seconds(now_playing.duration))
-        embed.add_field(name="Views", value=now_playing.view_count)
-        embed.add_field(name="Description", value=now_playing.description, inline=False)
+        embed.add_field("Uploader", now_playing.uploader)
+        embed.add_field("Upload Date", now_playing.upload_date)
+        embed.add_field("Duration", format_seconds(now_playing.duration))
+        embed.add_field("Views", now_playing.view_count)
+        embed.add_field("Description", now_playing.description, inline=False)
         embed.set_author(
             name=now_playing.title,
             url=now_playing.url,

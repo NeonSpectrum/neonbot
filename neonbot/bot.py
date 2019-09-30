@@ -16,11 +16,11 @@ from discord.ext import commands
 from discord.utils import oauth_url
 
 from . import __title__, __version__
+from .classes import Embed
 from .database import Database
 from .env import env
 from .helpers.constants import LOGO, PERMISSIONS
 from .helpers.log import Log, cprint
-from .helpers.utils import Embed
 
 log = cast(Log, logging.getLogger(__name__))
 
@@ -31,6 +31,7 @@ class Bot(commands.Bot):
 
         self.start_message()
 
+        self.env = env
         self.db = Database()
         self.default_prefix = env.str("DEFAULT_PREFIX", ".")
         self.owner_ids = set(env.list("OWNER_IDS", [], subcast=int))
@@ -86,7 +87,7 @@ class Bot(commands.Bot):
 
     async def fetch_app_info(self) -> None:
         if not self.app_info:
-            self.app_info = await bot.application_info()
+            self.app_info = await self.application_info()
 
     def get_command_prefix(self) -> Union[Callable, str]:
         return (
@@ -159,6 +160,3 @@ class Bot(commands.Bot):
     def run(self) -> None:
         self.load_cogs()
         super().run(env.str("TOKEN"))
-
-
-bot = Bot()

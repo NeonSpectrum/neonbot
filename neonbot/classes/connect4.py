@@ -6,7 +6,7 @@ import discord
 from discord.ext import commands, tasks
 
 from ..helpers.constants import CHOICES_EMOJI
-from ..helpers.utils import Embed
+from . import Embed
 
 
 class Connect4:

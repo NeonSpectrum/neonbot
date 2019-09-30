@@ -10,8 +10,8 @@ from discord.ext import commands, tasks
 from ..helpers.constants import FFMPEG_OPTIONS
 from ..helpers.date import format_seconds
 from ..helpers.log import Log
-from ..helpers.utils import Embed, embed_choices, plural
-from . import Spotify, Ytdl
+from ..helpers.utils import plural
+from . import Embed, EmbedChoices
 
 log = cast(Log, logging.getLogger(__name__))
 
@@ -23,10 +23,14 @@ class Player:
     """
 
     def __init__(self, ctx: commands.Context):
+        from .spotify import Spotify
+        from .ytdl import Ytdl
+
         self.ctx = ctx
         self.bot = ctx.bot
         self.db = self.bot.db.get_guild(ctx.guild.id)
         self.config = self.db.config.music
+        self.spotify = Spotify()
         self.ytdl = Ytdl()
 
         self.load_defaults()
@@ -84,7 +88,7 @@ class Player:
             info.requested = now_playing.requested
             self.queue[self.current_queue] = now_playing = info
 
-        if Ytdl.is_link_expired(now_playing.stream):
+        if self.ytdl.is_link_expired(now_playing.stream):
             log.warn(f"Link expired: {now_playing.title}")
             info = await self.ytdl.extract_info(now_playing.id)
             self.queue[self.current_queue] = now_playing = self.ytdl.parse_info(info)
@@ -245,7 +249,7 @@ class Player:
 
         current_queue = self.now_playing
 
-        related_videos = await Ytdl.get_related_videos(current_queue.id)
+        related_videos = await self.ytdl.get_related_videos(current_queue.id)
         filtered_videos = []
 
         for video in related_videos:
@@ -296,8 +300,7 @@ class Player:
         return info, embed
 
     async def process_spotify(self, url: str) -> Tuple[Dict, discord.Embed]:
-        spotify = Spotify()
-        result = spotify.parse_url(url)
+        result = self.spotify.parse_url(url)
 
         if not result:
             return await self.ctx.send(
@@ -308,23 +311,23 @@ class Player:
             processing_msg = await self.ctx.send(
                 embed=Embed("Converting to youtube playlist. Please wait...")
             )
-            playlist = await spotify.get_playlist(result.id)
+            playlist = await self.spotify.get_playlist(result.id)
             ytdl_list = []
 
             for items in playlist.tracks["items"]:
                 name = items.track.name
                 artist = items.track.artists[0].name
 
-                info = await Ytdl({"default_search": "ytsearch1"}).extract_info(
-                    f"{artist} {name} lyrics"
-                )
+                info = await self.ytdl.create(
+                    {"default_search": "ytsearch1"}
+                ).extract_info(f"{artist} {name} lyrics")
                 ytdl_list.append(info[0])
 
             await processing_msg.delete()
 
             return await self.process_youtube("", ytdl_list=ytdl_list)
         else:
-            track = await spotify.get_track(result.id)
+            track = await self.spotify.get_track(result.id)
             return await self.process_search(
                 f"{track.artists[0].name} {track.name} lyrics", force_choice=0
             )
@@ -339,7 +342,8 @@ class Player:
         if not ytdl_choices:
             return await self.ctx.send(embed=Embed("No songs available."))
         if force_choice is None:
-            choice = await embed_choices(self.ctx, ytdl_choices)
+            embed_choices = await EmbedChoices(self.ctx, ytdl_choices).build()
+            choice = embed_choices.value
             if choice < 0:
                 return Dict(), Embed()
         else:

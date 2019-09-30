@@ -10,9 +10,9 @@ from addict import Dict
 from discord.ext import commands
 
 from .. import __author__, __title__, __version__, bot
+from ..classes import Embed
 from ..helpers.date import format_seconds
 from ..helpers.log import Log
-from ..helpers.utils import Embed
 
 log = cast(Log, logging.getLogger(__name__))
 
@@ -63,26 +63,21 @@ class Utility(commands.Cog):
         process = psutil.Process(os.getpid())
 
         embed = Embed()
-        embed.set_author(
-            name=f"{__title__} v{__version__}", icon_url=bot.user.avatar_url
-        )
-        embed.add_field(name="Username", value=bot.user.name)
+        embed.set_author(f"{__title__} v{__version__}", icon_url=bot.user.avatar_url)
+        embed.add_field("Username", bot.user.name)
+        embed.add_field("Created On", f"{bot.user.created_at:%Y-%m-%d %I:%M:%S %p}")
+        embed.add_field("Created By", __author__)
+        embed.add_field("Guilds", len(bot.guilds))
+        embed.add_field("Channels", sum(1 for _ in bot.get_all_channels()))
+        embed.add_field("Users", len(bot.users))
+        embed.add_field("Commands Executed", len(bot.commands_executed))
         embed.add_field(
-            name="Created On", value=f"{bot.user.created_at:%Y-%m-%d %I:%M:%S %p}"
-        )
-        embed.add_field(name="Created By", value=__author__)
-        embed.add_field(name="Guilds", value=len(bot.guilds))
-        embed.add_field(name="Channels", value=sum(1 for _ in bot.get_all_channels()))
-        embed.add_field(name="Users", value=len(bot.users))
-        embed.add_field(name="Commands Executed", value=len(bot.commands_executed))
-        embed.add_field(
-            name="Ram Usage",
-            value=f"Approximately {(process.memory_info().rss / 1024000):.2f} MB",
+            "Ram Usage",
+            f"Approximately {(process.memory_info().rss / 1024000):.2f} MB",
             inline=True,
         )
         embed.add_field(
-            name="Uptime",
-            value=format_seconds(time() - process.create_time()).split(".")[0],
+            "Uptime", format_seconds(time() - process.create_time()).split(".")[0]
         )
 
         await ctx.send(embed=embed)

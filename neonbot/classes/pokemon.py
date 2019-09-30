@@ -7,11 +7,11 @@ from typing import Tuple
 
 import discord
 from addict import Dict
+from discord.ext import commands
 from PIL import Image, ImageEnhance
 from pokemon.master import catch_em_all, get_pokemon
-from discord.ext import commands
 
-from ..helpers.utils import Embed
+from . import Embed
 
 pokemons = catch_em_all()
 

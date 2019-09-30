@@ -7,7 +7,7 @@ from typing import cast
 from addict import Dict
 from pymongo import MongoClient
 
-from . import env
+from .env import env
 from .helpers.log import Log
 
 log = cast(Log, logging.getLogger(__name__))

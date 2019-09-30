@@ -1,9 +1,7 @@
-from .ytdl import Ytdl  # isort:skip
-from .spotify import Spotify  # isort:skip
+from .embed import Embed, PaginationEmbed, EmbedChoices  # isort:skip
 
 from .connect4 import Connect4
-from .pagination import PaginationEmbed
 from .player import Player
 from .pokemon import Pokemon
 
-__all__ = ("Ytdl", "Connect4", "PaginationEmbed", "Player", "Pokemon", "Spotify")
+__all__ = ("Connect4", "Embed", "PaginationEmbed", "EmbedChoices", "Player", "Pokemon")

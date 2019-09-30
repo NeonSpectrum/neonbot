@@ -9,10 +9,10 @@ from typing import Generator, cast
 import discord
 from discord.ext import commands
 
-from .. import bot, env
-from ..classes import PaginationEmbed
+from .. import bot
+from ..classes import Embed, PaginationEmbed
 from ..helpers.log import Log
-from ..helpers.utils import Embed, check_args
+from ..helpers.utils import check_args
 
 log = cast(Log, logging.getLogger(__name__))
 
@@ -88,7 +88,7 @@ class Administration(commands.Cog):
     async def generatelog(self, ctx: commands.Context) -> None:
         """Generates a link contains the content of debug.log. *BOT_OWNER"""
 
-        if not env.str("PASTEBIN_API"):
+        if not bot.env.str("PASTEBIN_API"):
             return await ctx.send(embed=Embed("Error. Pastebin API not found."))
 
         with open("./debug.log", "r") as f:
@@ -96,7 +96,7 @@ class Administration(commands.Cog):
         res = await self.session.post(
             "https://pastebin.com/api/api_post.php",
             data={
-                "api_dev_key": env.str("PASTEBIN_API"),
+                "api_dev_key": bot.env.str("PASTEBIN_API"),
                 "api_paste_code": text,
                 "api_option": "paste",
                 "api_paste_private": 1,

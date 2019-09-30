@@ -1,11 +1,43 @@
+from __future__ import annotations
+
 import asyncio
-from typing import Optional
+from typing import Any, Optional
 
 import discord
 from discord.ext import commands
 
-from ..helpers.constants import PAGINATION_EMOJI
-from ..helpers.utils import Embed
+from ..helpers.constants import CHOICES_EMOJI, PAGINATION_EMOJI
+
+
+class Embed(discord.Embed):
+    def __init__(self, description: Any = None, **kwargs: Any) -> None:
+        super().__init__(description=description and str(description), **kwargs)
+        self.color = 0x59ABE3
+
+    def add_field(self, name: Any, value: Any, *, inline: bool = True) -> None:
+        super().add_field(name=name, value=value, inline=inline)
+
+    def set_author(
+        self,
+        name: str,
+        url: str = discord.Embed.Empty,
+        *,
+        icon_url: str = discord.Embed.Empty,
+    ) -> None:
+        super().set_author(name=name, url=url, icon_url=icon_url)
+
+    def set_footer(
+        self, text: str = discord.Embed.Empty, *, icon_url: str = discord.Embed.Empty
+    ) -> None:
+        super().set_footer(text=text, icon_url=icon_url)
+
+    def set_image(self, url: str) -> None:
+        if url:
+            super().set_image(url=url)
+
+    def set_thumbnail(self, url: Optional[str]) -> None:
+        if url:
+            super().set_thumbnail(url=url)
 
 
 class PaginationEmbed:
@@ -134,3 +166,52 @@ class PaginationEmbed:
 
         if current_index != self.index:
             await self._send()
+
+
+class EmbedChoices:
+    def __init__(self, ctx: commands.Context, entries: list) -> None:
+        self.ctx = ctx
+        self.entries = entries
+
+    async def build(self) -> EmbedChoices:
+        if not self.entries:
+            return await self.ctx.send(embed=Embed("Empty choices."), delete_after=5)
+
+        await self._send_choices()
+        asyncio.ensure_future(self._react())
+        await self._listen()
+
+        return self
+
+    async def _send_choices(self) -> None:
+        embed = Embed(title=f"Choose 1-{len(self.entries)} below.")
+
+        for index, entry in enumerate(self.entries, start=1):
+            embed.add_field(f"{index}. {entry.title}", entry.url, inline=False)
+
+        self.msg = await self.ctx.send(embed=embed)
+
+    async def _listen(self) -> None:
+        try:
+            reaction, _ = await self.ctx.bot.wait_for(
+                "reaction_add",
+                timeout=10,
+                check=lambda reaction, user: reaction.emoji in CHOICES_EMOJI
+                and self.ctx.author == user
+                and reaction.message.id == self.msg.id,
+            )
+            if reaction.emoji == "🗑":
+                raise asyncio.TimeoutError
+        except asyncio.TimeoutError:
+            self.value = -1
+        else:
+            self.value = CHOICES_EMOJI.index(reaction.emoji)
+        finally:
+            await self.msg.delete()
+
+    async def _react(self) -> None:
+        for emoji in CHOICES_EMOJI[0 : len(self.entries)] + [CHOICES_EMOJI[-1]]:
+            try:
+                await self.msg.add_reaction(emoji)
+            except discord.NotFound:
+                break

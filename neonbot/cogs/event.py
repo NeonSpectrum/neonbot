@@ -1,18 +1,19 @@
 import logging
 import traceback
 from datetime import datetime
-from typing import List, Tuple, Union, cast
+from typing import List, Optional, Tuple, Union, cast
 
 import discord
 from addict import Dict
 from discord.ext import commands
+from discord.utils import escape_markdown
 
 from .. import bot
+from ..classes import Embed
 from ..helpers import exceptions
 from ..helpers.constants import EXCLUDED_TYPING, IGNORED_DELETEONCMD
 from ..helpers.date import date_format, format_seconds
 from ..helpers.log import Log
-from ..helpers.utils import Embed
 from .utility import chatbot
 
 log = cast(Log, logging.getLogger(__name__))
@@ -142,8 +143,6 @@ class Event(commands.Cog):
         config = bot.db.get_guild(before.guild.id).config
         log_channel = bot.get_channel(int(config.channel.log or -1))
 
-        msg = None
-
         embed = Embed()
         embed.set_footer(text=date_format())
 
@@ -157,12 +156,12 @@ class Event(commands.Cog):
 
             def get_image(
                 activity: Union[discord.Spotify, discord.Game, discord.Activity]
-            ) -> str:
+            ) -> Optional[str]:
                 if isinstance(activity, discord.Spotify):
                     return activity.album_cover_url
-                return getattr(activity, "large_image_url", None) or (
-                    getattr(activity, "small_image_url", None)
-                )
+                elif isinstance(activity, discord.Activity):
+                    return activity.large_image_url or activity.small_image_url
+                return None
 
             embed.description = f":bust_in_silhouette:**{before.name}** is"
             embed.set_author(
@@ -170,28 +169,21 @@ class Event(commands.Cog):
             )
 
             if isinstance(current, discord.Spotify):
-                if getattr(last, "title", None) == getattr(current, "title", None):
+                if getattr(last, "title", None) == current.title:
                     return
 
-                embed.set_thumbnail(url=get_image(current))
-                embed.add_field(name="Title", value=current.title)
-                embed.add_field(name="Artist", value=current.artist)
-            elif isinstance(current, (discord.Activity, discord.Game)):
-                if getattr(last, "name", None) == getattr(current, "name", None):
+                embed.set_thumbnail(get_image(current))
+                embed.add_field("Title", current.title)
+                embed.add_field("Artist", current.artist)
+            elif isinstance(current, discord.Activity):
+                if getattr(last, "name", None) == current.name:
                     return
 
-                image = get_image(current)
-                image and embed.set_thumbnail(url=image)
-                if current.details:
-                    embed.add_field(
-                        name="Details",
-                        value=discord.utils.escape_markdown(current.details),
-                        inline=False,
-                    )
+                embed.set_thumbnail(get_image(current))
+                embed.add_field("Details", escape_markdown(current.details or "N/A"))
 
             if not current:
-                image = get_image(last)
-                image and embed.set_thumbnail(url=image)
+                embed.set_thumbnail(get_image(last))
                 embed.description += f" done {last.type.name} **{last.name}**."
                 embed.add_field(
                     name="Time Elapsed",
