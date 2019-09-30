@@ -44,6 +44,7 @@ class Search(commands.Cog):
         """Searches for an image in Google Image."""
 
         msg = await ctx.send(embed=Embed("Searching..."))
+
         res = await self.session.get(
             "https://www.googleapis.com/customsearch/v1",
             params={
@@ -56,18 +57,21 @@ class Search(commands.Cog):
         )
         image = Dict(await res.json())
 
+        await msg.delete()
+
         if image.error:
-            raise ApiError(image.message)
+            raise ApiError(image.error.message)
 
         embed = Embed()
         embed.set_author(
             name=f"Google Images for {keyword}",
             icon_url="http://i.imgur.com/G46fm8J.png",
         )
-        embed.set_footer(text=f"Searched by {ctx.author}", icon_url=ctx.author.avatar_url)
+        embed.set_footer(
+            text=f"Searched by {ctx.author}", icon_url=ctx.author.avatar_url
+        )
         embed.set_image(url=image["items"][0].link)
 
-        await msg.delete()
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["dict"])

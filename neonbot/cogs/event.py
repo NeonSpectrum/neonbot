@@ -1,6 +1,7 @@
 import logging
 import traceback
-from typing import List, Tuple, cast
+from datetime import datetime
+from typing import List, Tuple, Union, cast
 
 import discord
 from addict import Dict
@@ -9,7 +10,7 @@ from discord.ext import commands
 from .. import bot
 from ..helpers import exceptions
 from ..helpers.constants import EXCLUDED_TYPING, IGNORED_DELETEONCMD
-from ..helpers.date import date_format
+from ..helpers.date import date_format, format_seconds
 from ..helpers.log import Log
 from ..helpers.utils import Embed
 from .utility import chatbot
@@ -154,7 +155,9 @@ class Event(commands.Cog):
             last = before.activities and before.activities[-1]
             current = after.activities and after.activities[-1]
 
-            if getattr(last, "name", None) == getattr(current, "name", None):
+            if not isinstance(current, discord.Spotify) and (
+                getattr(last, "name", None) == getattr(current, "name", None)
+            ):
                 return
 
             embed.description = f":bust_in_silhouette:**{before.name}** is"
@@ -162,14 +165,22 @@ class Event(commands.Cog):
                 name="Activity Presence Update", icon_url=bot.user.avatar_url
             )
 
-            if current and isinstance(current, discord.Spotify):
-                embed.set_thumbnail(url=current.album_cover_url)
-                embed.add_field(name="Title", value=current.title, inline=False)
-                embed.add_field(name="Artist", value=current.artist, inline=False)
+            def get_image(
+                activity: Union[discord.Spotify, discord.Game, discord.Activity]
+            ) -> str:
+                if isinstance(activity, discord.Spotify):
+                    return activity.album_cover_url
+                return getattr(current, "large_image_url", None) or (
+                    getattr(current, "small_image_url", None)
+                )
+
+            if isinstance(current, discord.Spotify):
+                embed.set_thumbnail(url=get_image(current))
+                embed.add_field(name="Title", value=current.title)
+                embed.add_field(name="Artist", value=current.artist)
             elif isinstance(current, (discord.Activity, discord.Game)):
-                image = getattr(current, "large_image_url") or getattr(current, "small_image_url")
-                if image:
-                    embed.set_thumbnail(url=image)
+                image = get_image(current)
+                image and embed.set_thumbnail(url=image)
                 if current.details:
                     embed.add_field(
                         name="Details",
@@ -178,9 +189,15 @@ class Event(commands.Cog):
                     )
 
             if not current:
+                image = get_image(last)
+                image and embed.set_thumbnail(url=image)
                 embed.description += f" done {last.type.name} **{last.name}**."
-                embed.clear_fields()
-                embed._thumbnail = {}
+                embed.add_field(
+                    name="Time Elapsed",
+                    value=format_seconds(
+                        datetime.utcnow().timestamp() - last.start.timestamp()
+                    ),
+                )
             else:
                 embed.description += f" now {current.type.name} **{current.name}**."
 
@@ -220,11 +237,12 @@ class Event(commands.Cog):
     async def on_command(ctx: commands.Context) -> None:
         bot.commands_executed.append(ctx.message.content)
 
+        log.cmd(ctx, ctx.message.content, guild=ctx.guild or "N/A")
+
         if ctx.channel.type.name == "private":
             return
 
         config = bot.db.get_guild(ctx.guild.id).config
-        log.cmd(ctx, ctx.message.content)
 
         if ctx.command.name not in IGNORED_DELETEONCMD and config.deleteoncmd:
             await ctx.message.delete()
@@ -266,7 +284,7 @@ class Event(commands.Cog):
 
         embed = Embed(
             title="Traceback Exception",
-            description=f"Command: ```{ctx.message.content}```\n```py\n{tb_msg}```",
+            description=f"Command: ```{ctx.message.content}``````py\n{tb_msg}```",
         )
 
         await bot.send_to_all_owners(embed=embed)
