@@ -154,7 +154,7 @@ class Event(commands.Cog):
             last = before.activities and before.activities[-1]
             current = after.activities and after.activities[-1]
 
-            if isinstance(current, discord.Game) and getattr(last, "title") == getattr(current, "title":
+            if getattr(last, "title") == getattr(current, "title"):
                 return
 
             embed.description = f":bust_in_silhouette:**{before.name}** is"
@@ -167,7 +167,7 @@ class Event(commands.Cog):
                 embed.add_field(name="Title", value=current.title, inline=False)
                 embed.add_field(name="Artist", value=current.artist, inline=False)
             elif isinstance(current, (discord.Activity, discord.Game)):
-                image = getattr(current, "small_image_url") or getattr(current, "large_image_url")
+                image = getattr(current, "large_image_url") or getattr(current, "small_image_url")
                 if image:
                     embed.set_thumbnail(url=image)
                 if current.details:
