@@ -154,7 +154,7 @@ class Event(commands.Cog):
             last = before.activities and before.activities[-1]
             current = after.activities and after.activities[-1]
 
-            if getattr(last, "title") == getattr(current, "title"):
+            if getattr(last, "title", None) == getattr(current, "title", None):
                 return
 
             embed.description = f":bust_in_silhouette:**{before.name}** is"
