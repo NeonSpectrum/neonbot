@@ -38,6 +38,7 @@ class Bot(commands.Bot):
 
         self.activity = self.get_activity()
         self.session = ClientSession(loop=self.loop, timeout=ClientTimeout(total=30))
+        self.user_agent = f"NeonBot v{__version__}"
 
         self.app_info: discord.AppInfo = None
         self.commands_executed: List[str] = []
@@ -113,17 +114,9 @@ class Bot(commands.Bot):
 
     async def logout(self) -> None:
         await self.session.close()
-        if self._closed:
-            return
-
         await self.http.close()
-        self._closed = True
-
         for voice in self.voice_clients:
             await voice.disconnect(force=True)
-
-        if self.ws is not None and self.ws.open:
-            await self.ws.close()
 
     async def restart(self) -> None:
         await self.logout()
