@@ -113,7 +113,17 @@ class Bot(commands.Bot):
 
     async def logout(self) -> None:
         await self.session.close()
-        await super().logout()
+        if self._closed:
+            return
+
+        await self.http.close()
+        self._closed = True
+
+        for voice in self.voice_clients:
+            await voice.disconnect(force=True)
+
+        if self.ws is not None and self.ws.open:
+            await self.ws.close()
 
     async def restart(self) -> None:
         await self.logout()
