@@ -186,12 +186,13 @@ class Event(commands.Cog):
             if not current:
                 embed.set_thumbnail(get_image(last))
                 embed.description += f" done {last.type.name} **{last.name}**."
-                embed.add_field(
-                    name="Time Elapsed",
-                    value=format_seconds(
-                        datetime.utcnow().timestamp() - last.start.timestamp()
-                    ),
-                )
+                if last.start:
+                    embed.add_field(
+                        name="Time Elapsed",
+                        value=format_seconds(
+                            datetime.utcnow().timestamp() - last.start.timestamp()
+                        ),
+                    )
             else:
                 embed.description += f" now {current.type.name} **{current.name}**."
 
