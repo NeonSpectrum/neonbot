@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 from discord.ext import commands
 from jikanpy import AioJikan
 
-from .. import bot, env
+from .. import bot
 from ..classes import Embed, EmbedChoices, PaginationEmbed
 from ..helpers.exceptions import ApiError
 from ..helpers.log import Log
@@ -50,8 +50,8 @@ class Search(commands.Cog):
                 "q": keyword,
                 "num": 1,
                 "searchType": "image",
-                "cx": env.str("GOOGLE_CX"),
-                "key": env.str("GOOGLE_API"),
+                "cx": bot.env.str("GOOGLE_CX"),
+                "key": bot.env.str("GOOGLE_API"),
             },
         )
         image = Dict(await res.json())
@@ -80,7 +80,7 @@ class Search(commands.Cog):
         msg = await ctx.send(embed=Embed("Searching..."))
         res = await self.session.get(
             f"https://www.dictionaryapi.com/api/v3/references/sd4/json/{word}",
-            params={"key": env.str("DICTIONARY_API")},
+            params={"key": bot.env.str("DICTIONARY_API")},
         )
 
         await msg.delete()
@@ -359,7 +359,7 @@ class Search(commands.Cog):
 
         try:
             res = await self.session.get(
-                links[choice].url, proxy=env.str("PROXY", None)
+                links[choice].url, proxy=bot.env.str("PROXY", None)
             )
             html = await res.text()
             soup = BeautifulSoup(html, "html.parser")
@@ -498,7 +498,7 @@ class Search(commands.Cog):
 
         res = await self.session.get(
             "https://translate.yandex.net/api/v1.5/tr.json/translate",
-            data={"key": env.str("YANDEX_API"), "text": sentence, "lang": lang},
+            data={"key": bot.env.str("YANDEX_API"), "text": sentence, "lang": lang},
         )
 
         json = Dict(await res.json())
