@@ -9,14 +9,13 @@ from urllib.parse import parse_qs, urlparse
 import youtube_dl
 from addict import Dict
 
-from .. import bot
+from .. import bot, env
 from ..helpers.date import date
 from ..helpers.exceptions import YtdlError
 
 
 class Ytdl:
     def __init__(self, extra_params: dict = {}) -> None:
-        self.bot = bot
         self.thread_pool = ThreadPoolExecutor(max_workers=3)
         self.loop = bot.loop
         self.ytdl = youtube_dl.YoutubeDL(
@@ -97,13 +96,13 @@ class Ytdl:
         return cls(extra_params)
 
     async def get_related_videos(self, video_id: str) -> Dict:
-        res = await self.bot.session.get(
+        res = await bot.session.get(
             "https://www.googleapis.com/youtube/v3/search",
             params={
                 "part": "snippet",
                 "relatedToVideoId": video_id,
                 "type": "video",
-                "key": self.bot.env.str("GOOGLE_API"),
+                "key": env.str("GOOGLE_API"),
             },
         )
         json = await res.json()

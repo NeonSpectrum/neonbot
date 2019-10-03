@@ -175,7 +175,7 @@ class Event(commands.Cog):
                 embed.set_thumbnail(get_image(current))
                 embed.add_field("Title", current.title)
                 embed.add_field("Artist", current.artist)
-            elif isinstance(current, discord.Activity):
+            elif isinstance(current, (discord.Activity, discord.Game)):
                 if getattr(last, "name", None) == current.name:
                     return
 
