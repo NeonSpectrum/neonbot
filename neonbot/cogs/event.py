@@ -180,7 +180,7 @@ class Event(commands.Cog):
                     return
 
                 embed.set_thumbnail(get_image(current))
-                if current.details:
+                if getattr(current, "details", None):
                     embed.add_field("Details", escape_markdown(current.details))
 
             if not current:
