@@ -4,15 +4,15 @@ import json
 import logging
 import sys
 from io import StringIO
-from typing import Generator, cast
+from typing import Generator, Optional, cast
 
 import discord
 from discord.ext import commands
 
 from .. import bot, env
 from ..classes import Embed, PaginationEmbed
+from ..classes.converters import Required
 from ..helpers.log import Log
-from ..helpers.utils import check_args
 
 log = cast(Log, logging.getLogger(__name__))
 
@@ -113,7 +113,10 @@ class Administration(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def prune(
-        self, ctx: commands.Context, count: int = 1, member: discord.Member = None
+        self,
+        ctx: commands.Context,
+        member: Optional[discord.Member] = None,
+        count: int = 1,
     ) -> None:
         """
         Deletes a number of messages. *MANAGE_MESSAGES
@@ -123,20 +126,15 @@ class Administration(commands.Cog):
         config = self.db.get_guild(ctx.guild.id).config
 
         if config.deleteoncmd:
-            count += 1
+            await ctx.message.delete()
 
-        limit = 100 if member else count
-
-        def check(message: discord.Message) -> bool:
-            nonlocal count
-
+        async for message in ctx.history(limit=1000 if member else count):
             if count <= 0:
-                return False
+                break
 
-            count -= 1
-            return not member or message.author.id == member.id
-
-        await ctx.channel.purge(limit=limit, check=check)
+            if not member or message.author == member:
+                await message.delete()
+                count -= 1
 
     @commands.command()
     @commands.has_permissions(administrator=True)
@@ -147,42 +145,48 @@ class Administration(commands.Cog):
         database = self.db.get_guild(ctx.guild.id)
         config = database.config
         config.prefix = prefix
-        config = database.update_config().config
+        config = database.update().config
         await ctx.send(embed=Embed(f"Prefix is now set to {config.prefix}."))
 
     @commands.command()
     @commands.is_owner()
-    async def setstatus(self, ctx: commands.Context, status: str) -> None:
+    async def setstatus(
+        self,
+        ctx: commands.Context,
+        status: Required("online", "offline", "dnd", "idle"),  # type:ignore
+    ) -> None:
         """Sets the status of the bot. *BOT_OWNER"""
 
-        if not await check_args(ctx, status, ["online", "offline", "dnd", "idle"]):
+        if status is False:
             return
 
         database = self.db.get_settings()
         settings = database.settings
         settings.status = status
-        settings = database.update_settings().settings
+        settings = database.update().settings
 
         await bot.change_presence(status=discord.Status[status])
-        await ctx.send(embed=Embed(f"Status is now set to {settings.prefix}."))
+        await ctx.send(embed=Embed(f"Status is now set to {settings.status}."))
 
     @commands.command()
     @commands.is_owner()
     async def setpresence(
-        self, ctx: commands.Context, presence_type: str, *, name: str
+        self,
+        ctx: commands.Context,
+        presence_type: Required("watching", "listening", "playing"),  # type:ignore
+        *,
+        name: str,
     ) -> None:
         """Sets the presence of the bot. *BOT_OWNER"""
 
-        if not await check_args(
-            ctx, presence_type, ["watching", "listening", "playing"]
-        ):
+        if presence_type is False:
             return
 
         database = self.db.get_settings()
         settings = database.settings
         settings.game.type = presence_type
         settings.game.name = name
-        settings = database.update_settings().settings
+        settings = database.update().settings
 
         await bot.change_presence(
             activity=discord.Activity(
@@ -223,7 +227,7 @@ class Administration(commands.Cog):
             database.config.aliases.append(
                 {"name": name, "cmd": command, "owner": ctx.author.id}
             )
-        database.update_config()
+        database.update()
         await ctx.send(
             embed=Embed(f"Message with exactly `{name}` will now execute `{command}`"),
             delete_after=10,
@@ -250,7 +254,7 @@ class Administration(commands.Cog):
                 embed=Embed(f"You are not the owner of the alias."), delete_after=5
             )
         del aliases[ids[0]]
-        database.update_config()
+        database.update()
         await ctx.send(embed=Embed(f"Alias`{name}` has been deleted."), delete_after=5)
 
     @commands.command()
@@ -266,7 +270,7 @@ class Administration(commands.Cog):
         database = self.db.get_guild(ctx.guild.id)
         config = database.config
         config.deleteoncmd = not config.deleteoncmd
-        config = database.update_config().config
+        config = database.update().config
         await ctx.send(
             embed=Embed(
                 f"Delete on command is now set to {'enabled' if config.deleteoncmd else 'disabled'}."
@@ -290,7 +294,7 @@ class Administration(commands.Cog):
         config.channel.voicetts = (
             ctx.channel.id if config.channel.voicetts != ctx.channel.id else None
         )
-        config = database.update_config().config
+        config = database.update().config
 
         if config.channel.voicetts:
             await ctx.send(embed=Embed(f"Voice TTS is now set to this channel."))
@@ -317,7 +321,7 @@ class Administration(commands.Cog):
         config.channel.log = (
             ctx.channel.id if config.channel.log != ctx.channel.id else None
         )
-        config = database.update_config().config
+        config = database.update().config
 
         if config.channel.log:
             await ctx.send(embed=Embed(f"Logger is now set to this channel."))

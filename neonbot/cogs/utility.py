@@ -5,6 +5,7 @@ from time import time
 from typing import cast
 
 import discord
+import emoji
 import psutil
 from addict import Dict
 from discord.ext import commands
@@ -21,7 +22,7 @@ async def chatbot(message: discord.Message, dm: bool = False) -> None:
     with message.channel.typing():
         msg = message.content if dm else " ".join(message.content.split(" ")[1:])
         res = await bot.session.get(
-            "https://program-o.com/v3/chat.php", params={"say": msg}
+            "https://program-o.com/v3/chat.php", params={"say": emoji.demojize(msg)}
         )
         response = Dict(await res.json())
         await message.channel.send(

@@ -20,6 +20,7 @@ CHOICES_EMOJI = [
     "🗑",
 ]
 
+
 FFMPEG_OPTIONS = (
     "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -err_detect ignore_err"
 )

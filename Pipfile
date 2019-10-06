@@ -25,6 +25,7 @@ beautifulsoup4 = "*"
 pokemon = "*"
 pillow = "*"
 jikanpy = {git = "git://github.com/AWConant/jikanpy.git"}
+emoji = "*"
 
 [requires]
 python_version = "3.7.4"

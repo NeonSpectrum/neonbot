@@ -6,7 +6,7 @@ import sys
 from glob import glob
 from os import path
 from time import time
-from typing import Any, Callable, List, Union, cast
+from typing import Any, Callable, List, Tuple, Union, cast
 
 import discord
 import psutil
@@ -36,7 +36,7 @@ class Bot(commands.Bot):
         self.default_prefix = env.str("DEFAULT_PREFIX", ".")
         self.owner_ids = set(env.list("OWNER_IDS", [], subcast=int))
 
-        self.activity = self.get_activity()
+        self.status, self.activity = self.get_presence()
         self.session = ClientSession(loop=self.loop, timeout=ClientTimeout(total=30))
         self.user_agent = f"NeonBot v{__version__}"
 
@@ -74,16 +74,17 @@ class Bot(commands.Bot):
         cprint(LOGO, "blue")
         log.info(f"Starting {__title__} v{__version__}")
 
-    def get_activity(self) -> discord.Activity:
+    def get_presence(self) -> Tuple[discord.Status, discord.Activity]:
         settings = self.db.get_settings().settings
         activity_type = settings.game.type.lower()
         activity_name = settings.game.name
         status = settings.status
 
-        return discord.Activity(
-            name=activity_name,
-            type=discord.ActivityType[activity_type],
-            status=discord.Status[status],
+        return (
+            discord.Status[status],
+            discord.Activity(
+                name=activity_name, type=discord.ActivityType[activity_type]
+            ),
         )
 
     async def fetch_app_info(self) -> None:

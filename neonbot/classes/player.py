@@ -365,6 +365,6 @@ class Player:
     def update_config(self, key: str, value: Union[str, int]) -> Dict:
         database = self.db
         database.config.music[key] = value
-        database.update_config().refresh_config()
+        database.update().refresh()
         self.config = database.config.music
         return self.config

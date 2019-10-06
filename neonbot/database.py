@@ -17,33 +17,33 @@ class GuildDatabase:
     def __init__(self, db: MongoClient, guild_id: int) -> None:
         self.db = db
         self.guild_id = str(guild_id)
-        self.refresh_config()
+        self.refresh()
 
-    def refresh_config(self) -> GuildDatabase:
+    def refresh(self) -> GuildDatabase:
         self.config = Dict(self.db.servers.find_one({"server_id": self.guild_id}))
         return self
 
-    def update_config(self) -> GuildDatabase:
+    def update(self) -> GuildDatabase:
         if isinstance(self.config, Dict):
             self.config = self.config.to_dict()
         self.db.servers.update_one({"server_id": self.guild_id}, {"$set": self.config})
-        return self.refresh_config()
+        return self.refresh()
 
 
 class BotDatabase:
     def __init__(self, db: MongoClient) -> None:
         self.db = db
-        self.refresh_settings()
+        self.refresh()
 
-    def refresh_settings(self) -> BotDatabase:
+    def refresh(self) -> BotDatabase:
         self.settings = Dict(self.db.settings.find_one())
         return self
 
-    def update_settings(self) -> BotDatabase:
+    def update(self) -> BotDatabase:
         if isinstance(self.settings, Dict):
             self.settings = self.settings.to_dict()
         self.db.settings.update_one({}, {"$set": self.settings})
-        return self.refresh_settings()
+        return self.refresh()
 
 
 class Database:

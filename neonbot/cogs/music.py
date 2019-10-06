@@ -7,10 +7,11 @@ from discord.ext import commands
 
 from .. import bot
 from ..classes import Embed, PaginationEmbed, Player
+from ..classes.converters import Required
 from ..helpers.constants import SPOTIFY_REGEX, YOUTUBE_REGEX
 from ..helpers.date import format_seconds
 from ..helpers.log import Log
-from ..helpers.utils import check_args, plural
+from ..helpers.utils import plural
 
 log = cast(Log, logging.getLogger(__name__))
 
@@ -225,17 +226,21 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(has_player)
     @commands.check(in_voice)
-    async def repeat(self, ctx: commands.Context, mode: Optional[str] = None) -> None:
+    async def repeat(
+        self,
+        ctx: commands.Context,
+        mode: Required("off", "single", "all") = None,  # type:ignore
+    ) -> None:
         """Sets or gets player's repeat mode."""
 
         player = get_player(ctx)
 
+        if mode is False:
+            return
         if mode is None:
             return await ctx.send(
                 embed=Embed(f"Repeat is set to {player.config.repeat}."), delete_after=5
             )
-        if not await check_args(ctx, mode, ["off", "single", "all"]):
-            return
 
         player.update_config("repeat", mode)
         await ctx.send(embed=Embed(f"Repeat changed to {mode}."), delete_after=5)
