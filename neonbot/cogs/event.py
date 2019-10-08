@@ -49,6 +49,13 @@ class Event(commands.Cog):
 
     @staticmethod
     @bot.event
+    async def on_resumed() -> None:
+        presence = bot.get_presence()
+        await bot.change_presence(status=presence[0], activity=presence[1])
+        log.info("Resumed!\n")
+
+    @staticmethod
+    @bot.event
     async def on_message(message: discord.Message) -> None:
         if message.author.id == bot.user.id:
             return
