@@ -28,7 +28,7 @@ jikanpy = {git = "git://github.com/AWConant/jikanpy.git"}
 emoji = "*"
 
 [requires]
-python_version = "3.7.4"
+python_version = "3.8.1"
 
 [pipenv]
 allow_prereleases = true
