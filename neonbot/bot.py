@@ -41,13 +41,15 @@ class Bot(commands.Bot):
         self.user_agent = f"NeonBot v{__version__}"
 
         self.app_info: discord.AppInfo = None
-        self.commands_executed: List[str] = []
+        self.set_storage()
+        self.load_music()
 
+    def set_storage(self) -> None:
+        self.commands_executed: List[str] = []
         self.game = Dict()
         self.music = Dict()
-
         self._music_cache = Dict()
-        self.load_music()
+
 
     def load_music(self) -> None:
         file = "./tmp/music.json"
@@ -114,6 +116,7 @@ class Bot(commands.Bot):
         log.info(f"Loaded {len(extensions)} cogs after {(time() - start_time):.2f}s")
 
     async def logout(self) -> None:
+        self.set_storage()
         await self.session.close()
         await self.http.close()
         for voice in self.voice_clients:
