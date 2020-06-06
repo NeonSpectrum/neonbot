@@ -50,7 +50,6 @@ class Bot(commands.Bot):
         self.music = Dict()
         self._music_cache = Dict()
 
-
     def load_music(self) -> None:
         file = "./tmp/music.json"
         if path.exists(file):
@@ -116,13 +115,13 @@ class Bot(commands.Bot):
         log.info(f"Loaded {len(extensions)} cogs after {(time() - start_time):.2f}s")
 
     async def logout(self) -> None:
-        self.set_storage()
         await self.session.close()
         await self.http.close()
         for voice in self.voice_clients:
             await voice.disconnect(force=True)
 
     async def restart(self) -> None:
+        self.set_storage()
         await self.logout()
         try:
             p = psutil.Process(os.getpid())
