@@ -75,7 +75,7 @@ class Player:
             await self.messages.auto_paused.delete()
         await self.reset()
 
-        msg = f"Player has been reset due to timeout."
+        msg = "Player has been reset due to timeout."
         log.cmd(self.ctx, msg)
         await self.ctx.send(embed=Embed(msg))
 
@@ -99,17 +99,20 @@ class Player:
                 now_playing.stream, before_options=FFMPEG_OPTIONS
             )
             source = discord.PCMVolumeTransformer(song, volume=self.config.volume / 100)
+
+            async def after(error: Exception) -> None:
+                if error:
+                    log.warn(f"After play error: {error}")
+                else:
+                    await self.next()
+
+            self.connection.play(source, after=after)
+
         except discord.ClientException:
             msg = "Error while playing the song."
             log.exception(msg)
             return await self.ctx.send(embed=Embed(msg))
 
-        def after(error: Exception) -> None:
-            if error:
-                log.warn(f"After play error: {error}")
-            self.bot.loop.create_task(self.next())
-
-        self.connection.play(source, after=after)
         await self.playing_message()
 
     async def next(self, *, index: int = -1, stop: bool = False) -> None:
