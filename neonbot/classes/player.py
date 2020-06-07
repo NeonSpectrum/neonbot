@@ -99,12 +99,12 @@ class Player:
                 now_playing.stream, before_options=FFMPEG_OPTIONS
             )
             source = discord.PCMVolumeTransformer(song, volume=self.config.volume / 100)
-
-            async def after(error: Exception) -> None:
+            
+            def after(error: Exception) -> None:
                 if error:
                     log.warn(f"After play error: {error}")
                 else:
-                    await self.next()
+                    self.bot.loop.create_task(self.next())
 
             self.connection.play(source, after=after)
 
