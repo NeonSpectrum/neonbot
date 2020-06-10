@@ -215,7 +215,7 @@ class Music(commands.Cog):
             )
         elif volume < 1 or volume > 100:
             return await ctx.send(
-                embed=Embed(f"Volume must be 1 - 100."), delete_after=5
+                embed=Embed("Volume must be 1 - 100."), delete_after=5
             )
 
         player.connection.source.volume = volume / 100

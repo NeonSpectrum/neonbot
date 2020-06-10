@@ -218,7 +218,7 @@ class Event(commands.Cog):
             embed = Embed(f":bust_in_silhouette:{msg}")
             embed.set_author(name="Member Join", icon_url=bot.user.avatar_url)
             embed.set_footer(text=date_format())
-            channel.send()
+            await channel.send()
 
     @staticmethod
     @bot.event
@@ -232,7 +232,7 @@ class Event(commands.Cog):
             embed = Embed(f":bust_in_silhouette:{msg}")
             embed.set_author(name="Member Leave", icon_url=bot.user.avatar_url)
             embed.set_footer(text=date_format())
-            channel.send()
+            await channel.send()
 
     @staticmethod
     @bot.event
@@ -280,7 +280,7 @@ class Event(commands.Cog):
 
         await ctx.send(
             embed=Embed(
-                f"There was an error executing the command. Please check the logs."
+                "There was an error executing the command. Please check the logs."
             )
         )
 

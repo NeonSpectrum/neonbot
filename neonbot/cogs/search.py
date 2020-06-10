@@ -91,7 +91,7 @@ class Search(commands.Cog):
             error = await res.text()
             raise ApiError(error)
 
-        if not isinstance(json[0], dict):
+        if not json or not isinstance(json[0], dict):
             return await ctx.send(embed=Embed("Word not found."), delete_after=5)
 
         dictionary = Dict(json[0])
@@ -131,7 +131,7 @@ class Search(commands.Cog):
 
         msg = await ctx.send(embed=Embed("Searching..."))
         res = await self.session.get(
-            f"http://api.openweathermap.org/data/2.5/weather",
+            "http://api.openweathermap.org/data/2.5/weather",
             params={
                 "q": location,
                 "units": "metric",
@@ -406,7 +406,7 @@ class Search(commands.Cog):
 
         loading_msg = await ctx.send(embed=Embed("Searching..."))
 
-        jikan = AioJikan(loop=bot.loop)
+        jikan = AioJikan()
         results = Dict(await jikan.search(search_type="anime", query=keyword)).results
 
         if not results:
@@ -448,7 +448,7 @@ class Search(commands.Cog):
     async def anime_top(self, ctx: commands.Context) -> None:
         """Lists top anime."""
 
-        jikan = AioJikan(loop=bot.loop)
+        jikan = AioJikan()
         result = Dict(await jikan.top(type="anime")).top
         await jikan.close()
 
@@ -471,7 +471,7 @@ class Search(commands.Cog):
     async def anime_upcoming(self, ctx: commands.Context) -> None:
         """Lists upcoming anime."""
 
-        jikan = AioJikan(loop=bot.loop)
+        jikan = AioJikan()
         result = Dict(await jikan.season_later()).anime
         await jikan.close()
 
