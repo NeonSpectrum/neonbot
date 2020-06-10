@@ -24,7 +24,7 @@ aiodns = "*"
 beautifulsoup4 = "*"
 pokemon = "*"
 pillow = "*"
-jikanpy = {git = "git://github.com/AWConant/jikanpy.git"}
+jikanpy = {git = "git://github.com/abhinavk99/jikanpy.git"}
 emoji = "*"
 
 [requires]
