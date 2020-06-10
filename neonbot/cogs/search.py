@@ -434,6 +434,7 @@ class Search(commands.Cog):
             value=anime.synopsis[:1000] + "..."
             if len(anime.synopsis) > 1000
             else anime.synopsis,
+            inline=False
         )
         embed.add_field("Episodes", anime.episodes)
         embed.add_field("Rank", anime.rank)
