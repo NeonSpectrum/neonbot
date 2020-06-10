@@ -263,7 +263,7 @@ class Event(commands.Cog):
             etype=type(error), value=error, tb=error.__traceback__
         )
 
-        tb_msg = "\n".join(tb)
+        tb_msg = "\n".join(tb)[:2000] + "..."
 
         if isinstance(error, ignored):
             return
