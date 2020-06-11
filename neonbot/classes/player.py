@@ -103,8 +103,7 @@ class Player:
             def after(error: Exception) -> None:
                 if error:
                     log.warn(f"After play error: {error}")
-                else:
-                    self.bot.loop.create_task(self.next())
+                self.bot.loop.create_task(self.next())
 
             self.connection.play(source, after=after)
 
