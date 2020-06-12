@@ -39,7 +39,7 @@ class Game(commands.Cog):
                 await pokemon.start()
 
             if pokemon.timed_out:
-                return pokemon.__init__(ctx.channel)
+                return pokemon.__init__(ctx)
 
             await pokemon.show_scoreboard()
         elif command == "stop":
