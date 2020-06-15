@@ -337,7 +337,7 @@ class Player:
         extracted = await self.ytdl.extract_info(keyword)
         ytdl_choices = self.ytdl.parse_choices(extracted)
 
-        await self.bot.delete_message(msg.delete)
+        await self.bot.delete_message(msg)
 
         if not ytdl_choices:
             return await self.ctx.send(embed=Embed("No songs available."))

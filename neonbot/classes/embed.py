@@ -171,6 +171,7 @@ class PaginationEmbed:
 class EmbedChoices:
     def __init__(self, ctx: commands.Context, entries: list) -> None:
         self.ctx = ctx
+        self.bot = ctx.bot
         self.entries = entries
 
     async def build(self) -> EmbedChoices:
