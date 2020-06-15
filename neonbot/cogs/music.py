@@ -79,7 +79,7 @@ class Music(commands.Cog):
         if info:
             player.add_to_queue(info, requested=ctx.author)
         if loading_msg:
-            await loading_msg.delete()
+            await self.bot.delete_message(loading_msg)
         if embed:
             await ctx.send(embed=embed, delete_after=5)
 
@@ -124,7 +124,7 @@ class Music(commands.Cog):
         log.cmd(ctx, "Player resumed.")
 
         if player.messages.paused:
-            await player.messages.paused.delete()
+            await self.bot.delete_message(player.messages.paused)
 
         await ctx.send(embed=Embed("Player resumed."), delete_after=5)
 

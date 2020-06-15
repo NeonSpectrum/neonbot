@@ -75,7 +75,7 @@ class Pokemon:
             f" got the correct answer!\nThe answer is **{name}**"
         )
 
-        await guess_msg.delete()
+        await self.bot.delete_message(guess_msg)
         await channel.send(
             embed=winner_embed, file=discord.File(original_img, "image.png")
         )

@@ -126,14 +126,14 @@ class Administration(commands.Cog):
         config = self.db.get_guild(ctx.guild.id).config
 
         if config.deleteoncmd:
-            await ctx.message.delete()
+            await self.bot.delete_message(ctx.message)
 
         async for message in ctx.history(limit=1000 if member else count):
             if count <= 0:
                 break
 
             if not member or message.author == member:
-                await message.delete()
+                await self.bot.delete_message(message)
                 count -= 1
 
     @commands.command()
@@ -216,7 +216,7 @@ class Administration(commands.Cog):
                 ctx.author
             ):
                 return await ctx.send(
-                    embed=Embed(f"You are not the owner of the alias."), delete_after=5
+                    embed=Embed("You are not the owner of the alias."), delete_after=5
                 )
             aliases[ids[0]].cmd = (
                 command.replace(ctx.prefix, "{0}", 1)
@@ -246,12 +246,12 @@ class Administration(commands.Cog):
         aliases = database.config.aliases
         ids = [i for i, x in enumerate(aliases) if x.name == name]
         if not ids:
-            return await ctx.send(embed=Embed(f"Alias doesn't exists."), delete_after=5)
+            return await ctx.send(embed=Embed("Alias doesn't exists."), delete_after=5)
         if int(aliases[ids[0]].owner) != ctx.author.id and await bot.is_owner(
             ctx.author
         ):
             return await ctx.send(
-                embed=Embed(f"You are not the owner of the alias."), delete_after=5
+                embed=Embed("You are not the owner of the alias."), delete_after=5
             )
         del aliases[ids[0]]
         database.update()
@@ -297,9 +297,9 @@ class Administration(commands.Cog):
         config = database.update().config
 
         if config.channel.voicetts:
-            await ctx.send(embed=Embed(f"Voice TTS is now set to this channel."))
+            await ctx.send(embed=Embed("Voice TTS is now set to this channel."))
         else:
-            await ctx.send(embed=Embed(f"Voice TTS is now disabled."))
+            await ctx.send(embed=Embed("Voice TTS is now disabled."))
 
     @commands.command()
     @commands.has_permissions(administrator=True)
@@ -324,9 +324,9 @@ class Administration(commands.Cog):
         config = database.update().config
 
         if config.channel.log:
-            await ctx.send(embed=Embed(f"Logger is now set to this channel."))
+            await ctx.send(embed=Embed("Logger is now set to this channel."))
         else:
-            await ctx.send(embed=Embed(f"Logger is now disabled."))
+            await ctx.send(embed=Embed("Logger is now disabled."))
 
     @commands.command()
     @commands.is_owner()

@@ -56,7 +56,7 @@ class Search(commands.Cog):
         )
         image = Dict(await res.json())
 
-        await msg.delete()
+        await self.bot.delete_message(msg)
 
         if image.error:
             raise ApiError(image.error.message)
@@ -83,7 +83,7 @@ class Search(commands.Cog):
             params={"key": env.str("DICTIONARY_API")},
         )
 
-        await msg.delete()
+        await self.bot.delete_message(msg)
 
         try:
             json = await res.json()
@@ -119,7 +119,7 @@ class Search(commands.Cog):
             text=f"Searched by {ctx.author}", icon_url=ctx.author.avatar_url
         )
 
-        await msg.delete()
+        await self.bot.delete_message(msg)
         await ctx.send(embed=embed)
         if audio:
             content = await res.read()
@@ -140,7 +140,7 @@ class Search(commands.Cog):
         )
         json = Dict(await res.json())
 
-        await msg.delete()
+        await self.bot.delete_message(msg)
 
         if json.cod == 401:
             raise ApiError(json.message)
@@ -210,7 +210,7 @@ class Search(commands.Cog):
         res = await self.session.get(
             f"https://www.leaguespy.net/league-of-legends/champion/{champion}/stats"
         )
-        await loading_msg.delete()
+        await self.bot.delete_message(loading_msg)
         if res.status == 404:
             return await ctx.send(embed=Embed("Champion not found."))
         html = await res.text()
@@ -350,7 +350,7 @@ class Search(commands.Cog):
             for link in soup.select("td.visitedlyr > a")
             if "/lyrics/" in link.get("href")
         ]
-        await loading_msg.delete()
+        await self.bot.delete_message(loading_msg)
         embed_choices = await EmbedChoices(ctx, links[:5]).build()
         choice = embed_choices.value
 
@@ -442,7 +442,7 @@ class Search(commands.Cog):
         embed.add_field("Aired", anime.aired.string)
         embed.add_field("Genres", ", ".join([genre.name for genre in anime.genres]))
 
-        await loading_msg.delete()
+        await self.bot.delete_message(loading_msg)
         await ctx.send(embed=embed)
 
     @anime.command(name="top")

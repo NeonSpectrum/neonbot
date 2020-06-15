@@ -108,7 +108,7 @@ class PaginationEmbed:
             await self._execute_command(PAGINATION_EMOJI.index(reaction.emoji))
 
             if reaction.emoji == "🗑":
-                return await self.msg.delete()
+                return await self.bot.delete_message(self.msg)
         except asyncio.TimeoutError:
             await msg.clear_reactions()
         else:
@@ -131,7 +131,7 @@ class PaginationEmbed:
                 return False
 
             if m.content.isdigit():
-                self.bot.loop.create_task(m.delete())
+                self.bot.loop.create_task(self.bot.delete_message(m))
                 if (
                     int(m.content) >= 0
                     and int(m.content) <= len(self.embeds)
@@ -148,7 +148,7 @@ class PaginationEmbed:
         else:
             self.index = int(msg.content) - 1
         finally:
-            await request_msg.delete()
+            await self.bot.delete_message(request_msg)
 
     async def _execute_command(self, cmd: int) -> None:
         current_index = self.index
@@ -208,7 +208,7 @@ class EmbedChoices:
         else:
             self.value = CHOICES_EMOJI.index(reaction.emoji)
         finally:
-            await self.msg.delete()
+            await self.bot.delete_message(self.msg)
 
     async def _react(self) -> None:
         for emoji in CHOICES_EMOJI[0 : len(self.entries)] + [CHOICES_EMOJI[-1]]:

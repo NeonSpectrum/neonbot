@@ -104,6 +104,7 @@ class Event(commands.Cog):
                 for member in voice_channel.members
                 if not member.bot and not member.voice.self_deaf
             ]
+
             if player.connection.is_playing() and not voice_members:
                 msg = "Player will reset after 10 minutes."
                 log.cmd(member, msg, channel=voice_channel, user="N/A")
@@ -112,7 +113,7 @@ class Event(commands.Cog):
                 player.reset_timeout.start()
             elif player.connection.is_paused() and any(voice_members):
                 if player.messages.auto_paused:
-                    await player.messages.auto_paused.delete()
+                    await bot.delete_message(player.messages.auto_paused)
                     player.messages.auto_paused = None
                 player.connection.resume()
                 player.reset_timeout.cancel()
@@ -247,7 +248,7 @@ class Event(commands.Cog):
         config = bot.db.get_guild(ctx.guild.id).config
 
         if ctx.command.name not in IGNORED_DELETEONCMD and config.deleteoncmd:
-            await ctx.message.delete()
+            await bot.delete_message(ctx.message)
 
     @staticmethod
     @bot.event

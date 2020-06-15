@@ -117,7 +117,7 @@ class Bot(commands.Bot):
     async def logout(self) -> None:
         await self.session.close()
         await self.http.close()
-        for voice in self.voice_clients:
+        for voice in list(self.voice_clients).copy():
             await voice.disconnect(force=True)
 
     async def restart(self) -> None:
@@ -145,7 +145,7 @@ class Bot(commands.Bot):
             except discord.NotFound:
                 pass
             else:
-                await message.delete()
+                await self.delete_message(message)
             await channel.send(embed=Embed("Bot Restarted."), delete_after=10)
 
     async def send_invite_link(self, channel: discord.DMChannel) -> None:
@@ -161,6 +161,15 @@ class Bot(commands.Bot):
     ) -> None:
         for owner in filter(lambda x: x not in excluded, self.owner_ids):
             await self.get_user(owner).send(*args, **kwargs)
+
+    async def delete_message(self, message: discord.Message) -> None:
+        if not isinstance(message, discord.Message):
+            return
+
+        try:
+            await message.delete()
+        except discord.NotFound as e:
+            log.exception(e)
 
     def run(self) -> None:
         self.load_cogs()

@@ -7,8 +7,6 @@ import discord
 from addict import Dict
 from discord.ext import commands, tasks
 
-from neonbot.helpers.utils import log_exception
-
 from ..helpers.constants import FFMPEG_OPTIONS
 from ..helpers.date import format_seconds
 from ..helpers.log import Log
@@ -74,7 +72,7 @@ class Player:
         await asyncio.sleep(60 * 10)
 
         if self.messages.auto_paused:
-            await self.messages.auto_paused.delete()
+            await self.bot.delete_message(self.messages.auto_paused)
         await self.reset()
 
         msg = "Player has been reset due to timeout."
@@ -105,7 +103,7 @@ class Player:
             def after(error: Exception) -> None:
                 if error:
                     log.warn(f"After play error: {error}")
-                self.bot.loop.create_task(log_exception(log, self.next()))
+                self.bot.loop.create_task(self.next())
 
             self.connection.play(source, after=after)
 
@@ -126,9 +124,7 @@ class Player:
             self.connection.stop()
 
             if stop:
-                if self.messages.last_playing:
-                    await self.messages.last_playing.delete()
-                return
+                return await self.bot.delete_message(self.messages.last_playing)
 
             if index < len(self.queue):
                 self.current_queue = index
@@ -154,8 +150,7 @@ class Player:
             self.ctx, f"Now playing {now_playing.title}", user=now_playing.requested
         )
 
-        if self.messages.last_playing:
-            await self.messages.last_playing.delete()
+        await self.bot.delete_message(self.messages.last_playing)
 
         footer = [
             str(now_playing.requested),
@@ -192,8 +187,7 @@ class Player:
             user=now_playing.requested,
         )
 
-        if self.messages.last_finished:
-            await self.messages.last_finished.delete()
+        await self.bot.delete_message(self.messages.last_finished)
 
         footer = [
             str(now_playing.requested),
@@ -283,7 +277,7 @@ class Player:
         info = Dict()
         embed: discord.Embed
 
-        await loading_msg.delete()
+        await self.bot.delete_message(loading_msg)
 
         if isinstance(ytdl_list, list):
             for entry in ytdl_list:
@@ -327,7 +321,7 @@ class Player:
                 ).extract_info(f"{artist} {name} lyrics")
                 ytdl_list.append(info[0])
 
-            await processing_msg.delete()
+            await self.bot.delete_message(processing_msg)
 
             return await self.process_youtube("", ytdl_list=ytdl_list)
         else:
@@ -342,9 +336,12 @@ class Player:
         msg = await self.ctx.send(embed=Embed("Searching..."))
         extracted = await self.ytdl.extract_info(keyword)
         ytdl_choices = self.ytdl.parse_choices(extracted)
-        await msg.delete()
+
+        await self.bot.delete_message(msg.delete)
+
         if not ytdl_choices:
             return await self.ctx.send(embed=Embed("No songs available."))
+
         if force_choice is None:
             embed_choices = await EmbedChoices(self.ctx, ytdl_choices).build()
             choice = embed_choices.value

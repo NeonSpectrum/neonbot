@@ -50,7 +50,7 @@ class Connect4:
                 self.join_timeout.start()
             else:
                 self.join_timeout.cancel()
-                await self.waiting_message.delete()
+                await self.bot.delete_message(self.waiting_message)
                 await self.show_board()
                 await self.start()
         else:
@@ -73,7 +73,7 @@ class Connect4:
 
         try:
             msg = await self.bot.wait_for("message", check=check, timeout=30)
-            await msg.delete()
+            await self.bot.delete_message(msg)
         except asyncio.TimeoutError:
             self.winner = self.next_player()
             await self.show_board(timeout=True)
@@ -105,7 +105,7 @@ class Connect4:
 
     @join_timeout.after_loop
     async def join_timeout_after(self) -> None:
-        await self.waiting_message.delete()
+        await self.bot.delete_message(self.waiting_message)
 
         if not self.join_timeout.is_being_cancelled():
             self.players = []
@@ -163,8 +163,7 @@ class Connect4:
             text=f"Started by {self.players[0]}", icon_url=self.players[0].avatar_url
         )
 
-        if self.last_board_message:
-            await self.last_board_message.delete()
+        await self.bot.delete_message(self.last_board_message)
         self.last_board_message = await self.channel.send(embed=embed)
 
         if winner:
