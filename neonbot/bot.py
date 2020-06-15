@@ -121,7 +121,6 @@ class Bot(commands.Bot):
             await voice.disconnect(force=True)
 
     async def restart(self) -> None:
-        self.set_storage()
         await self.logout()
         try:
             p = psutil.Process(os.getpid())

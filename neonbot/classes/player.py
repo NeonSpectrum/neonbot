@@ -7,6 +7,8 @@ import discord
 from addict import Dict
 from discord.ext import commands, tasks
 
+from neonbot.helpers.utils import log_exception
+
 from ..helpers.constants import FFMPEG_OPTIONS
 from ..helpers.date import format_seconds
 from ..helpers.log import Log
@@ -103,7 +105,7 @@ class Player:
             def after(error: Exception) -> None:
                 if error:
                     log.warn(f"After play error: {error}")
-                self.bot.loop.create_task(self.next())
+                self.bot.loop.create_task(log_exception(log, self.next()))
 
             self.connection.play(source, after=after)
 
