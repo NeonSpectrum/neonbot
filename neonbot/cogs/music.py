@@ -174,9 +174,10 @@ class Music(commands.Cog):
 
         index -= 1
         player = get_player(ctx)
-        queue = player.queue[index]
 
-        if not queue:
+        try:
+            queue = player.queue[index]
+        except IndexError:
             await ctx.send(
                 embed=Embed("There is no song in that index."), delete_after=5
             )
