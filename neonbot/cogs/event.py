@@ -194,7 +194,7 @@ class Event(commands.Cog):
             if not current:
                 embed.set_thumbnail(get_image(last))
                 embed.description += f" done {last.type.name} **{last.name}**."
-                if last.start:
+                if hasattr(last, 'start') and last.start:
                     embed.add_field(
                         name="Time Elapsed",
                         value=format_seconds(
