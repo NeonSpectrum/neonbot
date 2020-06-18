@@ -197,7 +197,7 @@ class Event(commands.Cog):
                 if hasattr(last, 'start') and last.start:
                     embed.add_field(
                         name="Time Elapsed",
-                        value=format_sec~onds(
+                        value=format_seconds(
                             datetime.utcnow().timestamp() - last.start.timestamp()
                         ),
                     )
