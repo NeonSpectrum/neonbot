@@ -17,7 +17,7 @@ log = cast(Log, logging.getLogger(__name__))
 
 
 def get_player(ctx: commands.Context) -> Player:
-    players = bot.music
+    players = ctx.bot.music
     if ctx.guild.id not in players.keys():
         players[ctx.guild.id] = Player(ctx)
 
@@ -45,6 +45,7 @@ async def has_player(ctx: commands.Context) -> bool:
 
 class Music(commands.Cog):
     def __init__(self) -> None:
+        self.bot = bot
         bot.load_music()
 
     @commands.command(aliases=["p"], usage="<url | keyword>")

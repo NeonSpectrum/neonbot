@@ -22,6 +22,7 @@ log = cast(Log, logging.getLogger(__name__))
 
 class Search(commands.Cog):
     def __init__(self) -> None:
+        self.bot = bot
         self.session = bot.session
 
         with open("./neonbot/assets/lang.json", "r") as f:
