@@ -340,7 +340,8 @@ class Player:
         await self.bot.delete_message(msg)
 
         if not ytdl_choices:
-            return await self.ctx.send(embed=Embed("No songs available."))
+            await self.ctx.send(embed=Embed("No songs available."))
+            return Dict(), Embed()
 
         if force_choice is None:
             embed_choices = await EmbedChoices(self.ctx, ytdl_choices).build()
