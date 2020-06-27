@@ -234,7 +234,7 @@ class Search(commands.Cog):
                 row.find("a").get_text().strip()
                 for row in champ_counter[0].find_all("div", "ls-table__row")
             ],
-        ]
+        ] if len(champ_counter) > 0 else []
 
         weak_against = [
             champ_counter[1]
@@ -247,7 +247,7 @@ class Search(commands.Cog):
                 row.find("a").get_text().strip()
                 for row in champ_counter[1].find_all("div", "ls-table__row")
             ],
-        ]
+        ] if len(champ_counter) > 1 else []
 
         skill_grid = soup.find("div", "skill-grid").select("div.skill-grid__column")
 
