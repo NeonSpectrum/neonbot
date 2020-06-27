@@ -213,14 +213,14 @@ class Player:
 
     def process_repeat(self) -> bool:
         config = self.config
+        is_last = self.current_queue == len(self.queue) - 1
 
-        if self.current_queue == len(self.queue) - 1:
-            if config.repeat == "all":
-                self.current_queue = 0
-            elif config.repeat == "off":
-                # reset queue to index 0 and stop playing
-                self.current_queue = 0
-                return False
+        if is_last and config.repeat == "all":
+            self.current_queue = 0
+        elif is_last and config.repeat == "off":
+            # reset queue to index 0 and stop playing
+            self.current_queue = 0
+            return False
         elif config.repeat != "single":
             self.current_queue += 1
 
