@@ -31,6 +31,7 @@ class Administration(commands.Cog):
 
     def __init__(self) -> None:
         self.session = bot.session
+        self.bot = bot
         self.db = bot.db
 
     @commands.command()
