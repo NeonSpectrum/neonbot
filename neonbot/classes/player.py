@@ -267,8 +267,8 @@ class Player:
         return True
 
     async def process_youtube(
-        self, keyword: str, *, ytdl_list: Optional[list] = None
-    ) -> Tuple[Dict, discord.Embed]:
+        self, ctx: commands.Context, keyword: str, *, ytdl_list: Optional[list] = None
+    ) -> Tuple[Union[Dict, List], discord.Embed]:
         loading_msg = await self.ctx.send(embed=Embed("Loading..."))
 
         if ytdl_list is None:
@@ -280,10 +280,11 @@ class Player:
         await self.bot.delete_message(loading_msg)
 
         if isinstance(ytdl_list, list):
+            info = []
             for entry in ytdl_list:
                 if entry.title != "[Deleted video]":
                     entry.url = f"https://www.youtube.com/watch?v={entry.id}"
-                    self.add_to_queue(entry)
+                    info.append(entry)
 
             embed = Embed(f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue.")
         elif ytdl_list:
@@ -297,7 +298,7 @@ class Player:
 
         return info, embed
 
-    async def process_spotify(self, url: str) -> Tuple[Dict, discord.Embed]:
+    async def process_spotify(self, ctx: commands.Context, url: str) -> Tuple[Dict, discord.Embed]:
         result = self.spotify.parse_url(url)
 
         if not result:
@@ -323,7 +324,7 @@ class Player:
 
             await self.bot.delete_message(processing_msg)
 
-            return await self.process_youtube("", ytdl_list=ytdl_list)
+            return await self.process_youtube(ctx, "", ytdl_list=ytdl_list)
         else:
             track = await self.spotify.get_track(result.id)
             return await self.process_search(
@@ -360,9 +361,13 @@ class Player:
 
         return info, embed
 
-    def add_to_queue(self, data: Dict, *, requested: discord.User = None) -> None:
-        data.requested = requested or self.ctx.author
-        self.queue.append(data)
+    def add_to_queue(self, data: Union[List, Dict], *, requested: discord.User = None) -> None:
+        if not isinstance(data, list):
+            data = [data]
+
+        for info in data:
+            info.requested = requested or self.ctx.author
+            self.queue.append(info)
 
     def update_config(self, key: str, value: Union[str, int]) -> Dict:
         database = self.db
