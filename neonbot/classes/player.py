@@ -63,6 +63,9 @@ class Player:
         )
 
     async def reset(self) -> None:
+        await self.bot.delete_message(self.message.paused)
+        await self.bot.delete_message(self.message.auto_paused)
+
         await self.next(stop=True)
         await self.connection.disconnect()
         self.load_defaults()
