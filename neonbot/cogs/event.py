@@ -70,9 +70,9 @@ class Event(commands.Cog):
                 return await bot.send_invite_link(message.channel)
 
             log.info(f"DM from {ctx.author}: {message.content}")
-            await bot.send_to_all_owners(
+            await bot.send_to_owner(
                 embed=Embed(title=f"DM from {ctx.author}", description=message.content),
-                excluded=[ctx.author.id],
+                sender=ctx.author.id,
             )
             if not ctx.command:
                 await chatbot(message, dm=True)
@@ -290,7 +290,7 @@ class Event(commands.Cog):
             description=f"Command: ```{ctx.message.content}``````py\n{tb_msg}```",
         )
 
-        await bot.send_to_all_owners(embed=embed)
+        await bot.send_to_owner(embed=embed)
 
         raise error
 

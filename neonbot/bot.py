@@ -163,6 +163,12 @@ class Bot(commands.Bot):
         for owner in filter(lambda x: x not in excluded, self.owner_ids):
             await self.get_user(owner).send(*args, **kwargs)
 
+    async def send_to_owner(
+        self, *args: Any, sender: int = None, **kwargs: Any
+    ) -> None:
+        if sender != self.app_info.owner.id:
+            await self.get_user(self.app_info.owner.id).send(*args, **kwargs)
+
     async def delete_message(self, message: Union[discord.Message, None]) -> None:
         if not isinstance(message, discord.Message):
             return

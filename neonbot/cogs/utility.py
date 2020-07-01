@@ -19,6 +19,9 @@ log = cast(Log, logging.getLogger(__name__))
 
 
 async def chatbot(message: discord.Message, dm: bool = False) -> None:
+    if message.author.id not in bot.owner_ids:
+        return
+
     with message.channel.typing():
         msg = message.content if dm else " ".join(message.content.split(" ")[1:])
         params = {
@@ -26,15 +29,18 @@ async def chatbot(message: discord.Message, dm: bool = False) -> None:
             "input": emoji.demojize(msg)
         }
 
-        if message.author.id in bot.chatbot:
-            params['sa'] = bot.chatbot[message.author.id]
+        if message.author.id in bot.chatbot and bot.chatbot[message.author.id]['time'] + 60 > time():
+            params['cs'] = bot.chatbot[message.author.id]['cs']
 
         res = await bot.session.get(
             "https://www.cleverbot.com/getreply", params=params
         )
         response = Dict(await res.json())
 
-        bot.chatbot[message.author.id] = response.cs
+        bot.chatbot[message.author.id] = {
+            "cs": response.cs,
+            "time": time()
+        }
         await message.channel.send(
             embed=Embed(
                 f"{'' if dm else message.author.mention} {response.output}"
