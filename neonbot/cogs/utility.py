@@ -21,14 +21,19 @@ log = cast(Log, logging.getLogger(__name__))
 async def chatbot(message: discord.Message, dm: bool = False) -> None:
     with message.channel.typing():
         msg = message.content if dm else " ".join(message.content.split(" ")[1:])
+        params = {
+            "key": env.str('CLEVERBOT_API'),
+            "input": emoji.demojize(msg)
+        }
+
+        if message.author.id in bot.chatbot:
+            params['sa'] = bot.chatbot[message.author.id]
+
         res = await bot.session.get(
-            "https://www.cleverbot.com/getreply", params={
-                "key": env.str('CLEVERBOT_API'),
-                "input": emoji.demojize(msg),
-                "cs": bot.chatbot.get(message.author.id, None)
-            }
+            "https://www.cleverbot.com/getreply", params=params
         )
         response = Dict(await res.json())
+
         bot.chatbot[message.author.id] = response.cs
         await message.channel.send(
             embed=Embed(
