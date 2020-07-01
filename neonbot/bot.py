@@ -48,6 +48,7 @@ class Bot(commands.Bot):
         self.commands_executed: List[str] = []
         self.game = Dict()
         self.music = Dict()
+        self.chatbot = Dict()
         self._music_cache = Dict()
 
     def load_music(self) -> None:

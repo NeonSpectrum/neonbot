@@ -10,7 +10,7 @@ import psutil
 from addict import Dict
 from discord.ext import commands
 
-from .. import __author__, __title__, __version__, bot
+from .. import __author__, __title__, __version__, bot, env
 from ..classes import Embed
 from ..helpers.date import format_seconds
 from ..helpers.log import Log
@@ -22,12 +22,17 @@ async def chatbot(message: discord.Message, dm: bool = False) -> None:
     with message.channel.typing():
         msg = message.content if dm else " ".join(message.content.split(" ")[1:])
         res = await bot.session.get(
-            "https://program-o.com/v3/chat.php", params={"say": emoji.demojize(msg)}
+            "https://www.cleverbot.com/getreply", params={
+                "key": env.str('CLEVERBOT_API'),
+                "input": emoji.demojize(msg),
+                "cs": bot.chatbot.get(message.author.id, None)
+            }
         )
         response = Dict(await res.json())
+        bot.chatbot[message.author.id] = response.cs
         await message.channel.send(
             embed=Embed(
-                f"{'' if dm else message.author.mention} {response.conversation.say.bot}"
+                f"{'' if dm else message.author.mention} {response.output}"
             )
         )
 
