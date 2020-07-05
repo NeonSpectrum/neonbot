@@ -170,7 +170,7 @@ class Bot(commands.Bot):
             await self.get_user(self.app_info.owner.id).send(*args, **kwargs)
 
     async def delete_message(self, message: Union[discord.Message, None]) -> None:
-        if not isinstance(message, discord.Message):
+        if message is None:
             return
 
         try:
