@@ -307,11 +307,11 @@ class Search(commands.Cog):
             icon_url="https://www.leaguespy.net/images/favicon/favicon-32x32.png",
         )
         embed.add_field("Role", info.role, inline=False)
-        embed.add_field("Win Rate", info.win_rate)
-        embed.add_field("Ban Rate", info.ban_rate)
-        embed.add_field("Weak Against", ", ".join(weak_against))
-        embed.add_field("Strong Against", ", ".join(strong_against))
-        embed.add_field("Skill Build", " > ".join(skill_build))
+        embed.add_field("Win Rate", info.win_rate if info.win_rate else 'N/A')
+        embed.add_field("Ban Rate", info.ban_rate if info.ban_rate else 'N/A')
+        embed.add_field("Weak Against", ", ".join(weak_against) if weak_against else 'N/A')
+        embed.add_field("Strong Against", ", ".join(strong_against) if strong_against else 'N/A')
+        embed.add_field("Skill Build", " > ".join(skill_build) if skill_build else 'N/A')
         embed.add_field(
             name="Item Build",
             value=textwrap.dedent(
@@ -320,7 +320,7 @@ class Search(commands.Cog):
                     **Boots:** {", ".join(item_build[1])}
                     **Core Items:** {", ".join(item_build[2])}
                     **Luxury Items:**  {", ".join(item_build[3])}
-                    """
+                """
             ),
         )
         embed.add_field(
