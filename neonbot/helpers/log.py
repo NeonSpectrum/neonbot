@@ -1,6 +1,7 @@
 import logging
 import sys
 from datetime import datetime
+from time import time
 from typing import Any, Callable, Optional, Union
 
 import discord
@@ -23,28 +24,14 @@ def cprint(*args: Any) -> None:
         print(args[0])
     termcolor.cprint(*args)
 
-class Formatter(logging.Formatter):
-    def converter(self, timestamp):
-        dt = datetime.datetime.fromtimestamp(timestamp)
-        return timezone(TIMEZONE).localize(dt)
-
-    def formatTime(self, record, datefmt=None):
-        dt = self.converter(record.created)
-        if datefmt:
-            s = dt.strftime(datefmt)
-        else:
-            try:
-                s = dt.isoformat(timespec='milliseconds')
-            except TypeError:
-                s = dt.isoformat()
-        return s
 
 class Log(logging.Logger):
     def __init__(self, *args: Any, **kwargs: Any):
         self._log: Callable
         super().__init__(*args, **kwargs)
 
-        self.formatter = Formatter(LOG_FORMAT, "%Y-%m-%d %I:%M:%S %p")
+        self.formatter = logging.Formatter(LOG_FORMAT, "%Y-%m-%d %I:%M:%S %p")
+        self.formatter.converter = time.gmtime
 
         self.setLevel(
             env.log_level("LOG_LEVEL")
