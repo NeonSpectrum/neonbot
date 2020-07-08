@@ -24,9 +24,6 @@ def cprint(*args: Any) -> None:
     termcolor.cprint(*args)
 
 
-logging.Formatter.converter = lambda *args: datetime.now(tz=timezone(TIMEZONE)).timetuple()
-
-
 class Log(logging.Logger):
     def __init__(self, *args: Any, **kwargs: Any):
         self._log: Callable
@@ -79,3 +76,4 @@ class Log(logging.Logger):
 
 
 logging.setLoggerClass(Log)
+logging.Formatter.converter = lambda *args: datetime.now(tz=timezone(TIMEZONE)).timetuple()
