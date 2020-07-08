@@ -1,7 +1,7 @@
 import logging
 import sys
 from datetime import datetime
-from time import time
+from time import gmtime
 from typing import Any, Callable, Optional, Union
 
 import discord
@@ -31,7 +31,7 @@ class Log(logging.Logger):
         super().__init__(*args, **kwargs)
 
         self.formatter = logging.Formatter(LOG_FORMAT, "%Y-%m-%d %I:%M:%S %p")
-        self.formatter.converter = time.gmtime
+        self.formatter.converter = gmtime
 
         self.setLevel(
             env.log_level("LOG_LEVEL")
