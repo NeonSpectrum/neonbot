@@ -28,6 +28,17 @@ class Formatter(logging.Formatter):
         dt = datetime.datetime.fromtimestamp(timestamp)
         return timezone(TIMEZONE).localize(dt)
 
+    def formatTime(self, record, datefmt=None):
+        dt = self.converter(record.created)
+        if datefmt:
+            s = dt.strftime(datefmt)
+        else:
+            try:
+                s = dt.isoformat(timespec='milliseconds')
+            except TypeError:
+                s = dt.isoformat()
+        return s
+
 class Log(logging.Logger):
     def __init__(self, *args: Any, **kwargs: Any):
         self._log: Callable
