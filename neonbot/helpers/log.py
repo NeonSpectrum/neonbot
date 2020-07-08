@@ -23,13 +23,17 @@ def cprint(*args: Any) -> None:
         print(args[0])
     termcolor.cprint(*args)
 
+class Formatter(logging.Formatter):
+    def converter(self, timestamp):
+        dt = datetime.datetime.fromtimestamp(timestamp)
+        return timezone(TIMEZONE).localize(dt)
 
 class Log(logging.Logger):
     def __init__(self, *args: Any, **kwargs: Any):
         self._log: Callable
         super().__init__(*args, **kwargs)
 
-        self.formatter = logging.Formatter(LOG_FORMAT, "%Y-%m-%d %I:%M:%S %p")
+        self.formatter = Formatter(LOG_FORMAT, "%Y-%m-%d %I:%M:%S %p")
 
         self.setLevel(
             env.log_level("LOG_LEVEL")
@@ -76,4 +80,3 @@ class Log(logging.Logger):
 
 
 logging.setLoggerClass(Log)
-logging.Formatter.converter = lambda *args: datetime.now(tz=timezone(TIMEZONE)).timetuple()
