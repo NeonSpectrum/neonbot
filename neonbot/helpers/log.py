@@ -1,13 +1,15 @@
 import logging
 import sys
+from datetime import datetime
 from typing import Any, Callable, Optional, Union
 
 import discord
 import termcolor
 from discord.ext import commands
+from pytz import timezone
 
 from ..env import env
-from .constants import LOG_FORMAT
+from .constants import LOG_FORMAT, TIMEZONE
 
 
 def colored(*args: Any) -> str:
@@ -28,6 +30,8 @@ class Log(logging.Logger):
         super().__init__(*args, **kwargs)
 
         self.formatter = logging.Formatter(LOG_FORMAT, "%Y-%m-%d %I:%M:%S %p")
+        self.formatter.converter = lambda *args: datetime.now(tz=timezone(TIMEZONE)).timetuple()
+
         self.setLevel(
             env.log_level("LOG_LEVEL")
             if self.name.startswith("neonbot")
