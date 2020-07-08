@@ -1,16 +1,13 @@
 import logging
 import sys
-from datetime import datetime
-from time import gmtime
 from typing import Any, Callable, Optional, Union
 
 import discord
 import termcolor
 from discord.ext import commands
-from pytz import timezone
 
 from ..env import env
-from .constants import LOG_FORMAT, TIMEZONE
+from .constants import LOG_FORMAT
 
 
 def colored(*args: Any) -> str:
@@ -31,7 +28,6 @@ class Log(logging.Logger):
         super().__init__(*args, **kwargs)
 
         self.formatter = logging.Formatter(LOG_FORMAT, "%Y-%m-%d %I:%M:%S %p")
-        self.formatter.converter = gmtime
 
         self.setLevel(
             env.log_level("LOG_LEVEL")
