@@ -233,10 +233,11 @@ class Player:
         if not self.config.shuffle:
             return False
 
+        if self.now_playing.id not in self.shuffled_list:
+            self.shuffled_list.append(self.now_playing.id)
+
         if len(self.shuffled_list) == len(self.queue):
             self.shuffled_list = [self.now_playing.id]
-        elif self.now_playing.id not in self.shuffled_list:
-            self.shuffled_list.append(self.now_playing.id)
 
         while True:
             index = random.randint(0, len(self.queue) - 1)
