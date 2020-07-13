@@ -63,8 +63,12 @@ class Player:
         )
 
     async def reset(self) -> None:
-        await self.bot.delete_message(self.messages.paused)
-        await self.bot.delete_message(self.messages.auto_paused)
+        await asyncio.gather(
+            self.bot.delete_message(self.messages.last_playing),
+            self.bot.delete_message(self.messages.last_finished),
+            self.bot.delete_message(self.messages.paused),
+            self.bot.delete_message(self.messages.auto_paused)
+        )
 
         await self.next(stop=True)
         await self.connection.disconnect()

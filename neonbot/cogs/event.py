@@ -98,7 +98,7 @@ class Event(commands.Cog):
         player = bot.music[member.guild.id]
         voice_channel = after.channel or before.channel
 
-        if player and player.connection:
+        if player and player.connection and player.connection.channel == voice_channel:
             voice_members = [
                 member
                 for member in voice_channel.members
