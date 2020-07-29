@@ -10,7 +10,7 @@ mypy = "*"
 
 [packages]
 addict = "*"
-discord-py = {git = "git://github.com/Rapptz/discord.py.git",ref = "master"}
+discord-py = "*"
 environs = "*"
 psutil = "*"
 pyasn1 = "*"
@@ -24,7 +24,7 @@ aiodns = "*"
 beautifulsoup4 = "*"
 pokemon = "*"
 pillow = "*"
-jikanpy = {git = "git://github.com/abhinavk99/jikanpy.git"}
+jikanpy = "*"
 emoji = "*"
 
 [requires]
