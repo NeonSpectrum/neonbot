@@ -100,8 +100,8 @@ class Utility(commands.Cog):
         embed.add_field(
             "Packages",
             f"""
-            Discord.py: {discord.__version__}
-            YoutubeDL: {youtube_dl.version.__version__}
+            discord.py `{discord.__version__}`
+            youtube-dl `{youtube_dl.version.__version__}`
             """
         )
 
