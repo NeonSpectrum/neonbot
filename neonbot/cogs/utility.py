@@ -7,6 +7,7 @@ from typing import cast
 import discord
 import emoji
 import psutil
+import youtube_dl
 from addict import Dict
 from discord.ext import commands
 
@@ -95,6 +96,13 @@ class Utility(commands.Cog):
         )
         embed.add_field(
             "Uptime", format_seconds(time() - process.create_time()).split(".")[0]
+        )
+        embed.add_field(
+            "Packages",
+            f"""
+            Discord.py: {discord.__version__}
+            YoutubeDL: {youtube_dl.version.__version__}
+            """
         )
 
         await ctx.send(embed=embed)
