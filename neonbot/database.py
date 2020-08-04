@@ -53,7 +53,7 @@ class Database:
     def load_database(self) -> MongoClient:
         mongo_url = env.str("MONGO_URL")
         db_name = env.str("MONGO_DBNAME")
-        client = MongoClient()
+        client = MongoClient(mongo_url)
 
         start_time = time()
         log.info(f"Connecting to Database...")
