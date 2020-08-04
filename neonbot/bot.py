@@ -176,7 +176,7 @@ class Bot(commands.Bot):
         try:
             await message.delete()
         except discord.NotFound as e:
-            log.exception(e)
+            pass
 
     def run(self) -> None:
         self.load_cogs()
