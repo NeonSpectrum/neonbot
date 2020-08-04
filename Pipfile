@@ -4,7 +4,6 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-black = {version = "*",pre = "true"}
 flake8 = "*"
 mypy = "*"
 
@@ -14,7 +13,6 @@ discord-py = "*"
 environs = "*"
 psutil = "*"
 pyasn1 = "*"
-pymongo = "*"
 pytz = "*"
 termcolor = "*"
 youtube-dl = "*"
@@ -32,3 +30,10 @@ python_version = "3.8.2"
 
 [pipenv]
 allow_prereleases = true
+
+[dev-packages.black]
+version = "*"
+pre = "true"
+
+[packages.pymongo]
+extras = [ "srv",]
