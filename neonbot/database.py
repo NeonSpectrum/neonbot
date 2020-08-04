@@ -51,25 +51,15 @@ class Database:
         self.db = self.load_database()
 
     def load_database(self) -> MongoClient:
-        username = env.str("DB_USER")
-        password = env.str("DB_PASS")
-        url = env.str("DB_HOST").split(":")
-        name = env.str("DB_NAME")
-
-        client = MongoClient(
-            host=url[0],
-            port=int(url[1]),
-            username=username,
-            password=password,
-            authSource=name,
-            retryWrites=False,
-        )
+        mongo_url = env.str("MONGO_URL")
+        db_name = env.str("MONGO_DBNAME")
+        client = MongoClient()
 
         start_time = time()
         log.info(f"Connecting to Database...")
         client.admin.command("ismaster")
         log.info(f"MongoDB connection established in {(time() - start_time):.2f}s")
-        return client[name]
+        return client[db_name]
 
     def process_database(self, guilds: list) -> None:
         for guild in guilds:
