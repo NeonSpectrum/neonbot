@@ -177,7 +177,8 @@ class EmbedChoices:
     async def build(self) -> EmbedChoices:
         if not self.entries:
             self.value = -1
-            return await self.ctx.send(embed=Embed("Empty choices."), delete_after=5)
+            await self.ctx.send(embed=Embed("Empty choices."), delete_after=5)
+            return self
 
         await self._send_choices()
         asyncio.ensure_future(self._react())
