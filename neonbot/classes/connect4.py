@@ -125,7 +125,7 @@ class Connect4:
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
         ]
 
     async def show_board(self, timeout: bool = False) -> None:
