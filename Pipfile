@@ -31,9 +31,5 @@ python_version = "3.8.2"
 [pipenv]
 allow_prereleases = true
 
-[dev-packages.black]
-version = "*"
-pre = "true"
-
 [packages.pymongo]
 extras = [ "srv",]
