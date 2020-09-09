@@ -39,7 +39,8 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_disconnect() -> None:
-        log.warn("Disconnected!")
+        # log.warn("Disconnected!")
+        pass
 
     @staticmethod
     @bot.event
@@ -52,7 +53,7 @@ class Event(commands.Cog):
     async def on_resumed() -> None:
         presence = bot.get_presence()
         await bot.change_presence(status=presence[0], activity=presence[1])
-        log.info("Resumed!\n")
+        # log.info("Resumed!\n")
 
     @staticmethod
     @bot.event
