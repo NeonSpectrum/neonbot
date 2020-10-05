@@ -27,7 +27,7 @@ log = cast(Log, logging.getLogger(__name__))
 
 class Bot(commands.Bot):
     def __init__(self) -> None:
-        super().__init__(command_prefix=self.get_command_prefix())
+        super().__init__(command_prefix=self.get_command_prefix(), intents=discord.Intents.all())
 
         self.start_message()
 
@@ -37,7 +37,6 @@ class Bot(commands.Bot):
         self.owner_ids = set(env.list("OWNER_IDS", [], subcast=int))
 
         self.status, self.activity = self.get_presence()
-        self.intents = discord.Intents(presences=True,members=True)
         self.session = ClientSession(loop=self.loop, timeout=ClientTimeout(total=30))
         self.user_agent = f"NeonBot v{__version__}"
 
