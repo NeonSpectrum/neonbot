@@ -37,6 +37,7 @@ class Bot(commands.Bot):
         self.owner_ids = set(env.list("OWNER_IDS", [], subcast=int))
 
         self.status, self.activity = self.get_presence()
+        self.intents = discord.Intents(presences=True,members=True)
         self.session = ClientSession(loop=self.loop, timeout=ClientTimeout(total=30))
         self.user_agent = f"NeonBot v{__version__}"
 
