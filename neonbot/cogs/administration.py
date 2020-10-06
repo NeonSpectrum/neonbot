@@ -392,7 +392,7 @@ class Administration(commands.Cog):
         seconds = convert_to_seconds(time)
 
         await member.edit(mute=True, reason=reason)
-        await ctx.send(embed=Embed(f"{member} has been muted for {(seconds / 1000):.2f} minutes."), delete_after=5)
+        await ctx.send(embed=Embed(f"{member} has been muted for {seconds} minutes."), delete_after=5)
 
         async def unmute():
             await asyncio.sleep(seconds)

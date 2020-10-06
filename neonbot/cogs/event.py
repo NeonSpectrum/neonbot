@@ -258,7 +258,7 @@ class Event(commands.Cog):
             return
 
         error = getattr(error, "original", error)
-        ignored = commands.CheckFailure, discord.NotFound, commands.BadArgument
+        ignored = discord.NotFound, commands.BadArgument
         send_msg = commands.CommandNotFound, exceptions.YtdlError
 
         tb = traceback.format_exception(
