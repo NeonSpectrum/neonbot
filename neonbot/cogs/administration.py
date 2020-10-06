@@ -382,6 +382,7 @@ class Administration(commands.Cog):
         await bot.restart()
 
     @commands.command()
+    @commands.has_permissions(mute_members=True)
     async def servermute(self, ctx: commands.Context, member: discord.Member, time: str, *, reason: str = "") -> None:
         """Server mute with timer."""
 
@@ -402,6 +403,7 @@ class Administration(commands.Cog):
         self.bot.loop.create_task(unmute())
 
     @commands.command()
+    @commands.has_permissions(mute_members=True)
     async def serverunmute(self, ctx: commands.Context, member: discord.Member, *, reason: str = "") -> None:
         """Server unmute."""
 
