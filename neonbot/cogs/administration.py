@@ -13,6 +13,7 @@ from .. import bot, env
 from ..classes import Embed, PaginationEmbed
 from ..classes.converters import Required
 from ..helpers.log import Log
+from ..helpers.utils import convert_to_seconds
 
 log = cast(Log, logging.getLogger(__name__))
 
@@ -379,6 +380,36 @@ class Administration(commands.Cog):
         with open("./tmp/restart_config.json", "w") as f:
             json.dump({"message_id": msg.id, "channel_id": ctx.channel.id}, f, indent=4)
         await bot.restart()
+
+    @commands.command()
+    async def servermute(self, ctx: commands.Context, member: discord.Member, time: str, *, reason: str = "") -> None:
+        """Server mute with timer."""
+
+        if member.voice.mute is True:
+            return await ctx.send(embed=Embed(f"{member} is already muted."))
+
+        seconds = convert_to_seconds(time)
+
+        await member.edit(mute=True, reason=reason)
+        await ctx.send(embed=Embed(f"{member} has been muted for {(seconds / 1000):.2f} minutes."), delete_after=5)
+
+        async def unmute():
+            await asyncio.sleep(seconds)
+            if member.voice.mute is True:
+                await member.edit(mute=False, reason='Revert unmute')
+                await ctx.send(embed=Embed(f"{member} is now unmuted."), delete_after=5)
+
+        self.bot.loop.create_task(unmute())
+
+    @commands.command()
+    async def serverunmute(self, ctx: commands.Context, member: discord.Member, *, reason: str = "") -> None:
+        """Server unmute."""
+
+        if member.voice.mute is False:
+            return await ctx.send(embed=Embed(f"{member} is already unmuted."))
+
+        await member.edit(mute=False, reason=reason)
+        await ctx.send(embed=Embed(f"{member} has been unmuted."), delete_after=5)
 
 
 def setup(bot: commands.Bot) -> None:
