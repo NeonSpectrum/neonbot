@@ -258,8 +258,8 @@ class Event(commands.Cog):
             return
 
         error = getattr(error, "original", error)
-        ignored = discord.NotFound, commands.BadArgument
-        send_msg = commands.CommandNotFound, exceptions.YtdlError
+        ignored = discord.NotFound, commands.BadArgument, commands.CheckFailure
+        send_msg = commands.CommandNotFound, exceptions.YtdlError, commands.MissingPermissions
 
         tb = traceback.format_exception(
             etype=type(error), value=error, tb=error.__traceback__
@@ -267,7 +267,7 @@ class Event(commands.Cog):
 
         tb_msg = "\n".join(tb)[:1000] + "..."
 
-        if isinstance(error, ignored):
+        if type(error) in ignored:
             return
 
         log.cmd(ctx, f"Command error: {error}")

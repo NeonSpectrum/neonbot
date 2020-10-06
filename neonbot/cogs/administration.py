@@ -112,7 +112,7 @@ class Administration(commands.Cog):
         )
 
     @commands.command()
-    @commands.has_permissions(manage_messages=True)
+    @commands.has_guild_permissions(manage_messages=True)
     @commands.guild_only()
     async def prune(
         self,
@@ -139,7 +139,7 @@ class Administration(commands.Cog):
                 count -= 1
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @commands.has_guild_permissions(administrator=True)
     @commands.guild_only()
     async def prefix(self, ctx: commands.Context, prefix: str) -> None:
         """Sets the prefix of the current server. *ADMINISTRATOR"""
@@ -280,7 +280,7 @@ class Administration(commands.Cog):
         )
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @commands.has_guild_permissions(administrator=True)
     @commands.guild_only()
     async def voicetts(self, ctx: commands.Context) -> None:
         """
@@ -304,7 +304,7 @@ class Administration(commands.Cog):
             await ctx.send(embed=Embed("Voice TTS is now disabled."))
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @commands.has_guild_permissions(administrator=True)
     @commands.guild_only()
     async def logger(self, ctx: commands.Context) -> None:
         """
@@ -382,7 +382,7 @@ class Administration(commands.Cog):
         await bot.restart()
 
     @commands.command()
-    @commands.has_permissions(mute_members=True)
+    @commands.has_guild_permissions(mute_members=True)
     async def servermute(self, ctx: commands.Context, member: discord.Member, time: str, *, reason: str = "") -> None:
         """Server mute with timer."""
 
@@ -392,7 +392,7 @@ class Administration(commands.Cog):
         seconds = convert_to_seconds(time)
 
         await member.edit(mute=True, reason=reason)
-        await ctx.send(embed=Embed(f"{member} has been muted for {seconds} minutes."), delete_after=5)
+        await ctx.send(embed=Embed(f"{member} has been muted for {seconds} seconds."), delete_after=5)
 
         async def unmute():
             await asyncio.sleep(seconds)
@@ -403,7 +403,7 @@ class Administration(commands.Cog):
         self.bot.loop.create_task(unmute())
 
     @commands.command()
-    @commands.has_permissions(mute_members=True)
+    @commands.has_guild_permissions(mute_members=True)
     async def serverunmute(self, ctx: commands.Context, member: discord.Member, *, reason: str = "") -> None:
         """Server unmute."""
 
