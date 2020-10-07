@@ -386,6 +386,9 @@ class Administration(commands.Cog):
     async def servermute(self, ctx: commands.Context, member: discord.Member, time: str, *, reason: str = "") -> None:
         """Server mute with timer."""
 
+        if member.voice is None:
+            return await ctx.send(embed=Embed(f"{member} is not in voice."))
+
         if member.voice.mute is True:
             return await ctx.send(embed=Embed(f"{member} is already muted."))
 
@@ -406,6 +409,9 @@ class Administration(commands.Cog):
     @commands.has_guild_permissions(mute_members=True)
     async def serverunmute(self, ctx: commands.Context, member: discord.Member, *, reason: str = "") -> None:
         """Server unmute."""
+
+        if member.voice is None:
+            return await ctx.send(embed=Embed(f"{member} is not in voice."))
 
         if member.voice.mute is False:
             return await ctx.send(embed=Embed(f"{member} is already unmuted."))
