@@ -15,7 +15,6 @@ psutil = "*"
 pyasn1 = "*"
 pytz = "*"
 termcolor = "*"
-youtube-dl = "*"
 PyNaCl = "*"
 aiohttp = "==3.6.2"
 aiodns = "*"
@@ -24,6 +23,7 @@ pokemon = "*"
 pillow = "*"
 jikanpy = "*"
 emoji = "*"
+youtube-dlc = "*"
 
 [pipenv]
 allow_prereleases = true

@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any, List, Union
 from urllib.parse import parse_qs, urlparse
 
-import youtube_dl
+import youtube_dlc as youtube_dl
 from addict import Dict
 
 from .. import bot, env
