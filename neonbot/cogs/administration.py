@@ -303,16 +303,15 @@ class Administration(commands.Cog):
         else:
             await ctx.send(embed=Embed("Voice TTS is now disabled."))
 
+    @commands.group(invoke_without_command=True)
     @commands.has_guild_permissions(administrator=True)
     @commands.guild_only()
-    @commands.group(invoke_without_command=True)
     async def logger(self, ctx: commands.Context) -> None:
         """
         Enables/Disables Logger. *ADMINISTRATOR
         """
 
         await ctx.send(embed=Embed("Incomplete command. <presence | message>"))
-
 
     @logger.command(name="presence")
     async def logger_presence(self, ctx: commands.Context) -> None:
@@ -337,8 +336,6 @@ class Administration(commands.Cog):
             await ctx.send(embed=Embed("Logger Presence is now set to this channel."))
         else:
             await ctx.send(embed=Embed("Logger Presence is now disabled."))
-        await ctx.send(embed=Embed("Incomplete command. <presence | message>"))
-
 
     @logger.command(name="message")
     async def logger_message(self, ctx: commands.Context) -> None:
