@@ -240,10 +240,10 @@ class Player:
         if self.now_playing.id not in self.shuffled_list:
             self.shuffled_list.append(self.now_playing.id)
 
-        if len(self.shuffled_list) == len(self.queue):
-            self.shuffled_list = [self.now_playing.id]
-
         while True:
+            if len(self.shuffled_list) == len(self.queue):
+                self.shuffled_list = [self.now_playing.id]
+
             index = random.randint(0, len(self.queue) - 1)
             if self.queue[index].id not in self.shuffled_list or len(self.queue) == 1:
                 self.current_queue = index
