@@ -89,6 +89,21 @@ class Event(commands.Cog):
 
     @staticmethod
     @bot.event
+    async def on_message_delete(message: discord.Message) -> None:
+        if message.author.id == bot.user.id:
+            return
+
+        config = bot.db.get_guild(message.guild.id).config
+        log_channel = bot.get_channel(int(config.channel.msgdelete or -1))
+
+        if log_channel:
+            embed = Embed(f"**{message.author}**\n{message.content}")
+            embed.set_author(name="Message Deletion", icon_url=bot.user.avatar_url)
+            embed.set_footer(text=date_format())
+            await log_channel.send(embed=embed)
+
+    @staticmethod
+    @bot.event
     async def on_voice_state_update(
         member: discord.Member, before: discord.VoiceState, after: discord.VoiceState
     ) -> None:

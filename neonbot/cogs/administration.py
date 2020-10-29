@@ -303,12 +303,21 @@ class Administration(commands.Cog):
         else:
             await ctx.send(embed=Embed("Voice TTS is now disabled."))
 
-    @commands.command()
     @commands.has_guild_permissions(administrator=True)
     @commands.guild_only()
+    @commands.group(invoke_without_command=True)
     async def logger(self, ctx: commands.Context) -> None:
         """
         Enables/Disables Logger. *ADMINISTRATOR
+        """
+
+        await ctx.send(embed=Embed("Incomplete command. <presence | message>"))
+
+
+    @logger.command(name="presence")
+    async def logger_presence(self, ctx: commands.Context) -> None:
+        """
+        Logs presence.
 
         If enabled, the bot will log the following:
             - If someone joins/leaves the guild.
@@ -317,7 +326,6 @@ class Administration(commands.Cog):
 
         Note: The message will be sent to the current channel this command last executed.
         """
-
         database = self.db.get_guild(ctx.guild.id)
         config = database.config
         config.channel.log = (
@@ -326,9 +334,33 @@ class Administration(commands.Cog):
         config = database.update().config
 
         if config.channel.log:
-            await ctx.send(embed=Embed("Logger is now set to this channel."))
+            await ctx.send(embed=Embed("Logger Presence is now set to this channel."))
         else:
-            await ctx.send(embed=Embed("Logger is now disabled."))
+            await ctx.send(embed=Embed("Logger Presence is now disabled."))
+        await ctx.send(embed=Embed("Incomplete command. <presence | message>"))
+
+
+    @logger.command(name="message")
+    async def logger_message(self, ctx: commands.Context) -> None:
+        """
+        Logs messages.
+
+        If enabled, the bot will log the following:
+            - If someone delete his message.
+
+        Note: The message will be sent to the current channel this command last executed.
+        """
+        database = self.db.get_guild(ctx.guild.id)
+        config = database.config
+        config.channel.msgdelete = (
+            ctx.channel.id if config.channel.msgdelete != ctx.channel.id else None
+        )
+        config = database.update().config
+
+        if config.channel.log:
+            await ctx.send(embed=Embed("Logger Message is now set to this channel."))
+        else:
+            await ctx.send(embed=Embed("Logger Message is now disabled."))
 
     @commands.command()
     @commands.is_owner()
