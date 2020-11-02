@@ -241,7 +241,7 @@ class Player:
             self.shuffled_list.append(self.now_playing.id)
 
         while True:
-            if len(self.shuffled_list) == len(self.queue):
+            if len(self.shuffled_list) >= len(self.queue):
                 self.shuffled_list = [self.now_playing.id]
 
             index = random.randint(0, len(self.queue) - 1)
