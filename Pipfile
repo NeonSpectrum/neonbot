@@ -23,7 +23,7 @@ pokemon = "*"
 pillow = "*"
 jikanpy = "*"
 emoji = "*"
-youtube-dlc = "*"
+youtube-dl = "*"
 
 [pipenv]
 allow_prereleases = true
