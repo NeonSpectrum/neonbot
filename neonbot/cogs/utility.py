@@ -7,7 +7,7 @@ from typing import cast
 import discord
 import emoji
 import psutil
-import youtube_dlc as youtube_dl
+import youtube_dl
 from addict import Dict
 from discord.ext import commands
 
