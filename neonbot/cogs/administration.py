@@ -387,6 +387,8 @@ class Administration(commands.Cog):
     async def pipupdate(self, ctx: commands.Context) -> None:
         """Updates the package of the bot. *BOT_OWNER"""
 
+        msg = await ctx.send(embed=Embed("Bot packages updating..."))
+
         process = await asyncio.create_subprocess_shell(
             "pipenv update", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
@@ -400,7 +402,7 @@ class Administration(commands.Cog):
 
         embed.description = result
 
-        await ctx.send(embed=embed)
+        await msg.edit(embed=embed)
 
     @commands.command()
     @commands.is_owner()
