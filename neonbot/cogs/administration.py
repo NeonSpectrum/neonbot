@@ -384,6 +384,26 @@ class Administration(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
+    async def pipupdate(self, ctx: commands.Context) -> None:
+        """Updates the package of the bot. *BOT_OWNER"""
+
+        process = await asyncio.create_subprocess_shell(
+            "pipenv update", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
+
+        stdout, stderr = await process.communicate()
+
+        result = stdout.decode().strip()
+
+        embed = Embed()
+        embed.set_author(name="Pipenv Update", icon_url="https://i.imgur.com/vzcWouB.png")
+
+        embed.description = result
+
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.is_owner()
     async def reload(self, ctx: commands.Context, *, ext: str = None) -> None:
         """Reloads a specific or all extension. *BOT_OWNER"""
 
