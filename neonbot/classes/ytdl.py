@@ -27,6 +27,7 @@ class Ytdl:
                 "ignoreerrors": True,
                 "source_address": "0.0.0.0",
                 "extract_flat": "in_playlist",
+                "cachedir": False,
                 **extra_params,
             }
         )
