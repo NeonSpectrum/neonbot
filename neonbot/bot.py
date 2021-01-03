@@ -198,7 +198,7 @@ class Bot(commands.Bot):
         except discord.NotFound as e:
             pass
 
-    async def auto_update(self) -> None:
+    def auto_update(self) -> None:
         async def update() -> None:
             await self.update_packages()
             importlib.reload(youtube_dl)
