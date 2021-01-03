@@ -234,20 +234,24 @@ class Player:
         return True
 
     def process_shuffle(self) -> bool:
-        if not self.config.shuffle:
+        if not self.config.shuffle or len(self.queue) === 0:
             return False
 
         if self.now_playing.id not in self.shuffled_list:
             self.shuffled_list.append(self.now_playing.id)
 
+        counter = 0
+
         while True:
-            if len(self.shuffled_list) >= len(self.queue):
+            if len(self.shuffled_list) >= len(self.queue) or counter >= 5:
                 self.shuffled_list = [self.now_playing.id]
 
             index = random.randint(0, len(self.queue) - 1)
-            if self.queue[index].id not in self.shuffled_list or len(self.queue) == 1:
+            if self.queue[index].id not in self.shuffled_list or len(self.queue) <= 1:
                 self.current_queue = index
                 return True
+
+            counter += 1
 
     async def process_autoplay(self) -> bool:
         if not self.config.autoplay or self.current_queue != len(self.queue) - 1:
