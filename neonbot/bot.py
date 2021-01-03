@@ -195,7 +195,8 @@ class Bot(commands.Bot):
     async def auto_update(self) -> None:
         while True:
             if datetime.time(6, 00) <= datetime.datetime.now().time():
-                await self.update_packages()
+                log.info(f"Executing update package...")
+                log.info(f"\n{await self.update_packages()}\n")
                 importlib.reload(youtube_dl)
 
             await asyncio.sleep(60)
