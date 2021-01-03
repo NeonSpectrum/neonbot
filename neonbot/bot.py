@@ -46,7 +46,7 @@ class Bot(commands.Bot):
         self.app_info: discord.AppInfo = None
         self.set_storage()
         self.load_music()
-        self.bot.loop.create_task(self.auto_update())
+        self.loop.create_task(self.auto_update())
 
     def set_storage(self) -> None:
         self.commands_executed: List[str] = []
