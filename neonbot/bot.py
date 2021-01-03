@@ -47,7 +47,7 @@ class Bot(commands.Bot):
         self.app_info: discord.AppInfo = None
         self.set_storage()
         self.load_music()
-        self.auto_update()
+        schedule.every().day.at("06:00").do(self.auto_update)
 
     def set_storage(self) -> None:
         self.commands_executed: List[str] = []
