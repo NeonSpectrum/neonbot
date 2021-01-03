@@ -191,7 +191,7 @@ class Bot(commands.Bot):
         except discord.NotFound as e:
             pass
 
-    async def auto_update() -> None:
+    async def auto_update(self) -> None:
         while True:
             if time(6, 00) <= datetime.now().time():
                 await self.update_packages()
