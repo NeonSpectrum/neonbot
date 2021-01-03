@@ -24,6 +24,7 @@ pillow = "*"
 jikanpy = "*"
 emoji = "*"
 youtube_dl = "*"
+aioschedule = "*"
 
 [pipenv]
 allow_prereleases = true

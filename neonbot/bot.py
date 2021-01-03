@@ -1,5 +1,4 @@
 import asyncio
-import datetime
 import importlib
 import json
 import logging
@@ -11,8 +10,10 @@ from os import path
 from time import time
 from typing import Any, Callable, List, Tuple, Union, cast
 
+import aioschedule as schedule
 import discord
 import psutil
+import schedule
 import youtube_dl
 from addict import Dict
 from aiohttp import ClientSession, ClientTimeout
@@ -47,7 +48,7 @@ class Bot(commands.Bot):
         self.app_info: discord.AppInfo = None
         self.set_storage()
         self.load_music()
-        self.loop.create_task(self.auto_update())
+        self.auto_update()
 
     def set_storage(self) -> None:
         self.commands_executed: List[str] = []
@@ -121,13 +122,19 @@ class Bot(commands.Bot):
         log.info(f"Loaded {len(extensions)} cogs after {(time() - start_time):.2f}s")
 
     async def update_packages(self) -> str:
+        log.info(f"Executing update package...")
+
         process = await asyncio.create_subprocess_shell(
             "pipenv update", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
 
         stdout, stderr = await process.communicate()
 
-        return stdout.decode().strip()
+        result = stdout.decode().strip()
+
+        log.info(f"\n{result}\n")
+
+        return result
 
     async def logout(self) -> None:
         await self.session.close()
@@ -193,13 +200,11 @@ class Bot(commands.Bot):
             pass
 
     async def auto_update(self) -> None:
-        while True:
-            if datetime.time(6, 00) <= datetime.datetime.now().time():
-                log.info(f"Executing update package...")
-                log.info(f"\n{await self.update_packages()}\n")
-                importlib.reload(youtube_dl)
+        async def update() -> None:
+            await self.update_packages()
+            importlib.reload(youtube_dl)
 
-            await asyncio.sleep(60)
+        self.loop.create_task(update())
 
     def run(self) -> None:
         self.load_cogs()
