@@ -234,7 +234,7 @@ class Player:
         return True
 
     def process_shuffle(self) -> bool:
-        if not self.config.shuffle or len(self.queue) === 0:
+        if not self.config.shuffle or len(self.queue) == 0:
             return False
 
         if self.now_playing.id not in self.shuffled_list:
