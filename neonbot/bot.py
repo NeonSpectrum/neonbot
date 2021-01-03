@@ -193,7 +193,7 @@ class Bot(commands.Bot):
 
     async def auto_update(self) -> None:
         while True:
-            if time(6, 00) <= datetime.now().time():
+            if datetime.time(6, 00) <= datetime.now().time():
                 await self.update_packages()
                 importlib.reload(youtube_dl)
 
