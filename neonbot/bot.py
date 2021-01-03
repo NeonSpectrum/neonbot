@@ -1,10 +1,10 @@
+import datetime
 import importlib
 import json
 import logging
 import os
 import re
 import sys
-from datetime import datetime
 from glob import glob
 from os import path
 from time import time
@@ -193,7 +193,7 @@ class Bot(commands.Bot):
 
     async def auto_update(self) -> None:
         while True:
-            if datetime.time(6, 00) <= datetime.now().time():
+            if datetime.time(6, 00) <= datetime.datetime.now().time():
                 await self.update_packages()
                 importlib.reload(youtube_dl)
 
