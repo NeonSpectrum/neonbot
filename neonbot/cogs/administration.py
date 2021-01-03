@@ -389,18 +389,10 @@ class Administration(commands.Cog):
 
         msg = await ctx.send(embed=Embed("Bot packages updating..."))
 
-        process = await asyncio.create_subprocess_shell(
-            "pipenv update", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-        )
-
-        stdout, stderr = await process.communicate()
-
-        result = stdout.decode().strip()
-
         embed = Embed()
         embed.set_author(name="Pipenv Update", icon_url="https://i.imgur.com/vzcWouB.png")
 
-        embed.description = result
+        embed.description = await self.bot.update_packages()
 
         await msg.edit(embed=embed)
 

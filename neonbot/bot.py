@@ -1,8 +1,10 @@
+import importlib
 import json
 import logging
 import os
 import re
 import sys
+from datetime import datetime
 from glob import glob
 from os import path
 from time import time
@@ -10,6 +12,7 @@ from typing import Any, Callable, List, Tuple, Union, cast
 
 import discord
 import psutil
+import youtube_dl
 from addict import Dict
 from aiohttp import ClientSession, ClientTimeout
 from discord.ext import commands
@@ -43,6 +46,7 @@ class Bot(commands.Bot):
         self.app_info: discord.AppInfo = None
         self.set_storage()
         self.load_music()
+        self.auto_update()
 
     def set_storage(self) -> None:
         self.commands_executed: List[str] = []
@@ -115,6 +119,15 @@ class Bot(commands.Bot):
 
         log.info(f"Loaded {len(extensions)} cogs after {(time() - start_time):.2f}s")
 
+    async def update_packages(self) -> str:
+        process = await asyncio.create_subprocess_shell(
+            "pipenv update", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
+
+        stdout, stderr = await process.communicate()
+
+        return stdout.decode().strip()
+
     async def logout(self) -> None:
         await self.session.close()
         await self.http.close()
@@ -177,6 +190,14 @@ class Bot(commands.Bot):
             await message.delete()
         except discord.NotFound as e:
             pass
+
+    async def auto_update() -> None:
+        while True:
+            if time(6, 00) <= datetime.now().time():
+                await self.update_packages()
+                importlib.reload(youtube_dl)
+
+            await asyncio.sleep(60)
 
     def run(self) -> None:
         self.load_cogs()
