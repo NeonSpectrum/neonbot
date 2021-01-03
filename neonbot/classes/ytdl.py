@@ -25,9 +25,9 @@ class Ytdl:
                 "quiet": True,
                 "nocheckcertificate": True,
                 "ignoreerrors": True,
-                "source_address": "0.0.0.0",
                 "extract_flat": "in_playlist",
                 "cachedir": False,
+                "geo_bypass": True,
                 **extra_params,
             }
         )
