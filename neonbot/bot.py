@@ -47,7 +47,7 @@ class Bot(commands.Bot):
         self.app_info: discord.AppInfo = None
         self.set_storage()
         self.load_music()
-        schedule.every().day.at("06:00").do(self.auto_update)
+        schedule.every().day.at("06:00").do(self.auto_update_ytdl)
 
     def set_storage(self) -> None:
         self.commands_executed: List[str] = []
@@ -120,11 +120,11 @@ class Bot(commands.Bot):
 
         log.info(f"Loaded {len(extensions)} cogs after {(time() - start_time):.2f}s")
 
-    async def update_packages(self) -> str:
+    async def update_package(self, *, packages) -> str:
         log.info(f"Executing update package...")
 
         process = await asyncio.create_subprocess_shell(
-            "pipenv update", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+            f"pipenv update {' '.join(packages)}", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
 
         stdout, stderr = await process.communicate()
@@ -198,9 +198,9 @@ class Bot(commands.Bot):
         except discord.NotFound as e:
             pass
 
-    def auto_update(self) -> None:
+    def auto_update_ytdl(self) -> None:
         async def update() -> None:
-            await self.update_packages()
+            await self.update_package('youtube_dl')
             importlib.reload(youtube_dl)
 
         self.loop.create_task(update())
