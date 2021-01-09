@@ -10,9 +10,9 @@ from os import path
 from time import time
 from typing import Any, Callable, List, Tuple, Union, cast
 
+import aioschedule as schedule
 import discord
 import psutil
-import schedule
 import youtube_dl
 from addict import Dict
 from aiohttp import ClientSession, ClientTimeout
@@ -47,7 +47,9 @@ class Bot(commands.Bot):
         self.app_info: discord.AppInfo = None
         self.set_storage()
         self.load_music()
+
         schedule.every().day.at("06:00").do(self.auto_update_ytdl)
+        self.loop.create_task(schedule.run_pending())
 
     def set_storage(self) -> None:
         self.commands_executed: List[str] = []
@@ -198,12 +200,9 @@ class Bot(commands.Bot):
         except discord.NotFound as e:
             pass
 
-    def auto_update_ytdl(self) -> None:
-        async def update() -> None:
-            await self.update_package('youtube_dl')
-            importlib.reload(youtube_dl)
-
-        self.loop.create_task(update())
+    async def auto_update_ytdl(self) -> None:
+        await self.update_package('youtube_dl')
+        importlib.reload(youtube_dl)
 
     def run(self) -> None:
         self.load_cogs()
