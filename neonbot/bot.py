@@ -204,7 +204,7 @@ class Bot(commands.Bot):
         await self.update_package('youtube_dl')
         importlib.reload(youtube_dl)
 
-    async def run_scheduler() -> None:
+    async def run_scheduler(self) -> None:
         while True:
             await schedule.run_pending()
             await asyncio.sleep(1)
