@@ -49,7 +49,7 @@ class Bot(commands.Bot):
         self.load_music()
 
         schedule.every().day.at("06:00").do(self.auto_update_ytdl)
-        self.loop.create_task(schedule.run_pending())
+        self.loop.create_task(self.run_scheduler())
 
     def set_storage(self) -> None:
         self.commands_executed: List[str] = []
@@ -203,6 +203,11 @@ class Bot(commands.Bot):
     async def auto_update_ytdl(self) -> None:
         await self.update_package('youtube_dl')
         importlib.reload(youtube_dl)
+
+    async def run_scheduler() -> None:
+        while True:
+            await schedule.run_pending()
+            await asyncio.sleep(1)
 
     def run(self) -> None:
         self.load_cogs()
