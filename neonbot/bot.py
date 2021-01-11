@@ -122,7 +122,7 @@ class Bot(commands.Bot):
 
         log.info(f"Loaded {len(extensions)} cogs after {(time() - start_time):.2f}s")
 
-    async def update_package(self, *, packages) -> str:
+    async def update_package(self, *packages) -> str:
         log.info(f"Executing update package...")
 
         process = await asyncio.create_subprocess_shell(
