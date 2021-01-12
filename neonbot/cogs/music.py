@@ -148,9 +148,12 @@ class Music(commands.Cog):
 
         player = get_player(ctx)
         await player.next(stop=True)
+
         player.current_queue = 0
-        log.cmd(ctx, "Player stopped.")
-        await ctx.send(embed=Embed("Player stopped."), delete_after=5)
+
+        msg = "Player stopped."
+        log.cmd(ctx, msg)
+        await ctx.send(embed=Embed(msg), delete_after=5)
 
     @commands.command()
     @commands.guild_only()

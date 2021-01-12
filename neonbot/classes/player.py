@@ -128,14 +128,18 @@ class Player:
         if stop or index != -1:
             if self.connection._player:
                 self.connection._player.after = None
+
             self.connection.stop()
 
             if stop:
-                return await self.bot.delete_message(self.messages.last_playing)
+                self.connection.disconnect()
+                await self.bot.delete_message(self.messages.last_playing)
+                return
 
             if index < len(self.queue):
                 self.current_queue = index
-                return await self.play()
+                await self.play()
+                return
 
             self.current_queue = index - 1
 
