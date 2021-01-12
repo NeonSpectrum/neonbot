@@ -7,7 +7,6 @@ from typing import cast
 import discord
 import emoji
 import psutil
-import youtube_dl
 from addict import Dict
 from discord.ext import commands
 
@@ -77,6 +76,8 @@ class Utility(commands.Cog):
     @commands.command(aliases=["stats"])
     async def status(self, ctx: commands.Context) -> None:
         """Shows the information of the bot."""
+
+        import youtube_dl
 
         process = psutil.Process(os.getpid())
 
