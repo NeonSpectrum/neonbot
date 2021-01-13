@@ -132,7 +132,7 @@ class Player:
             self.connection.stop()
 
             if stop:
-                self.connection.disconnect()
+                await self.connection.disconnect()
                 await self.bot.delete_message(self.messages.last_playing)
                 return
 
