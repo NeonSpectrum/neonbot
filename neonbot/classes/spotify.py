@@ -70,15 +70,21 @@ class Spotify:
         token = await self.get_token()
         playlist = []
 
+        limit = 100
+        offset = 0
+
         while True:
             res = await self.session.get(
                 self.BASE_URL + "/playlists/" + playlist_id + '/tracks',
                 headers={"Authorization": f"Bearer {token}"}
+                params={"offset": offset, "limit": limit}
             )
             data = Dict(await res.json())
             playlist.append(data.items)
 
             if data.next is None:
                 break
+
+            offset += limit
 
         return playlist
