@@ -329,9 +329,9 @@ class Player:
             playlist = await self.spotify.get_playlist(result.id)
             ytdl_list = []
 
-            for items in playlist.tracks["items"]:
-                name = items.track.name
-                artist = items.track.artists[0].name
+            for item in playlist:
+                name = item.track.name
+                artist = item.track.artists[0].name
 
                 info = await self.ytdl.create(
                     {"default_search": "ytsearch1"}

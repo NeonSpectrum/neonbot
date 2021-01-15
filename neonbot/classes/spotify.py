@@ -68,9 +68,17 @@ class Spotify:
 
     async def get_playlist(self, playlist_id: str) -> Dict:
         token = await self.get_token()
+        playlist = []
 
-        res = await self.session.get(
-            self.BASE_URL + "/playlists/" + playlist_id,
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        return Dict(await res.json())
+        while True:
+            res = await self.session.get(
+                self.BASE_URL + "/playlists/" + playlist_id + '/tracks',
+                headers={"Authorization": f"Bearer {token}"}
+            )
+            data = Dict(await res.json())
+            playlist.append(data.items)
+
+            if data.next is None:
+                break
+
+        return playlist
