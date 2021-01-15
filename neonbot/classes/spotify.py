@@ -76,7 +76,7 @@ class Spotify:
         while True:
             res = await self.session.get(
                 self.BASE_URL + "/playlists/" + playlist_id + '/tracks',
-                headers={"Authorization": f"Bearer {token}"}
+                headers={"Authorization": f"Bearer {token}"},
                 params={"offset": offset, "limit": limit}
             )
             data = Dict(await res.json())
