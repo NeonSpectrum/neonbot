@@ -345,7 +345,6 @@ class Search(commands.Cog):
             "https://search.azlyrics.com/search.php", params={"q": song}
         )
         html = await res.text()
-        log.info(html)
         soup = BeautifulSoup(html, "html.parser")
         links = [
             Dict(title=link.find("b").get_text(), url=link.get("href"))

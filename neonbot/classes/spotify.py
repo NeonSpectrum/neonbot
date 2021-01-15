@@ -79,9 +79,9 @@ class Spotify:
                 headers={"Authorization": f"Bearer {token}"},
                 params={"offset": offset, "limit": limit}
             )
-            data = Dict(await res.json())
+            data = await res.json()
             print(data)
-            playlist += data.items
+            playlist += data['items']
 
             if data.next is None:
                 break
