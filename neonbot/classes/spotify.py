@@ -88,4 +88,4 @@ class Spotify:
 
             offset += limit
 
-        return playlist
+        return Dict(playlist)
