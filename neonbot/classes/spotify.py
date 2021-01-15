@@ -83,7 +83,7 @@ class Spotify:
             print(data)
             playlist += data['items']
 
-            if data.next is None:
+            if data['next'] is None:
                 break
 
             offset += limit
