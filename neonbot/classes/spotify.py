@@ -80,7 +80,7 @@ class Spotify:
                 params={"offset": offset, "limit": limit}
             )
             data = Dict(await res.json())
-            playlist.append(data.items)
+            playlist += data.items
 
             if data.next is None:
                 break
