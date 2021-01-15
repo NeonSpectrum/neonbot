@@ -401,7 +401,7 @@ class Administration(commands.Cog):
     async def reload(self, ctx: commands.Context, *, ext: str = None) -> None:
         """Reloads a specific or all extension. *BOT_OWNER"""
 
-        extensions = bot.extensions.keys() if ext is None else ("neonbot.cogs." + ext)
+        extensions = bot.extensions.keys() if ext is None else ["neonbot.cogs." + ext]
 
         try:
             for extension in extensions:
