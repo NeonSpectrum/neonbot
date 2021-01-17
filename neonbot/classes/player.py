@@ -52,7 +52,8 @@ class Player:
             self.current_queue = cache.current_queue
             self.queue = cache.queue
             for queue in self.queue:
-                queue.requested = self.bot.get_user(queue.requested)
+                if queue.requested:
+                    queue.requested = self.bot.get_user(queue.requested)
 
     @property
     def now_playing(self) -> Dict:
