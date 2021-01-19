@@ -135,7 +135,7 @@ class Bot(commands.Bot):
 
         log.info(f"\n{result}\n")
 
-        return result
+        return result.split('\n')[-1]
 
     async def logout(self) -> None:
         await self.session.close()

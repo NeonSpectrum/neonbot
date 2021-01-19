@@ -16,6 +16,7 @@ class Embed(discord.Embed):
 
     def add_field(self, name: Any, value: Any, *, inline: bool = True) -> None:
         super().add_field(name=name, value=value, inline=inline)
+        return self
 
     def set_author(
         self,
@@ -25,19 +26,23 @@ class Embed(discord.Embed):
         icon_url: str = discord.Embed.Empty,
     ) -> None:
         super().set_author(name=name, url=url, icon_url=icon_url)
+        return self
 
     def set_footer(
         self, text: str = discord.Embed.Empty, *, icon_url: str = discord.Embed.Empty
     ) -> None:
         super().set_footer(text=text, icon_url=icon_url)
+        return self
 
     def set_image(self, url: str) -> None:
         if url:
             super().set_image(url=url)
+        return self
 
     def set_thumbnail(self, url: Optional[str]) -> None:
         if url:
             super().set_thumbnail(url=url)
+        return self
 
 
 class PaginationEmbed:

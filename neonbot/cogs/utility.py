@@ -1,9 +1,11 @@
+import json
 import logging
 import os
 import random
 from time import time
 from typing import cast
 
+import aiohttp
 import discord
 import emoji
 import psutil
@@ -12,7 +14,7 @@ from discord.ext import commands
 
 from .. import __author__, __title__, __version__, bot, env
 from ..classes import Embed
-from ..helpers.date import format_seconds
+from ..helpers.date import date_format, format_seconds
 from ..helpers.log import Log
 
 log = cast(Log, logging.getLogger(__name__))
@@ -107,6 +109,49 @@ class Utility(commands.Cog):
         )
 
         await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.is_owner()
+    async def sms(self, ctx: commands.Context, number: str, *, message: str) -> None:
+        print(number, message)
+        def generate_embed():
+            embed = Embed()
+            embed.set_author(name="✉ SMS")
+            embed.set_footer(
+                text="Powered by Twilio",
+                icon_url="https://assets.twilio.com/public_assets/console-js/2.9.0/images/favicons/Twilio_72.png"
+            )
+            embed.add_field("To:", number, inline=True)
+            embed.add_field("Body:", message, inline=True)
+
+            return embed
+
+        msg = await ctx.send(embed=generate_embed().add_field("Status:", "Sending...", inline=False))
+
+        account_sid = env.str("TWILIO_ACCOUNT_SID")
+        auth_token = env.str("TWILIO_AUTH_TOKEN")
+
+        body = f"{message}\n\nSent by {ctx.author} using {__title__}"
+
+        response = await bot.session.post(
+            f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json",
+            auth=aiohttp.BasicAuth(login=account_sid, password=auth_token),
+            data={"From": env.str("TWILIO_NUMBER"), "To": number, "Body": body}
+        )
+
+        response = Dict(await response.json())
+
+        if response.status >= 400:
+            await msg.edit(
+                embed=generate_embed().add_field("Status:", "Sending failed.", inline=False)
+                                      .add_field("Reason:", response.message, inline=False)
+                                      .add_field("Date sent:", date_format(), inline=False)
+            )
+        else:
+            await msg.edit(
+                embed=generate_embed().add_field("Status:", "Sent", inline=False)
+                                      .add_field("Date sent:", date_format(), inline=False)
+            )
 
 
 def setup(bot: commands.Bot) -> None:
