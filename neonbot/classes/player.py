@@ -324,6 +324,8 @@ class Player:
             )
 
         if result.type == "playlist":
+            error = 0
+
             processing_msg = await self.ctx.send(
                 embed=Embed("Converting to youtube playlist. Please wait...")
             )
@@ -334,19 +336,26 @@ class Player:
                 name = item.track.name
                 artist = item.track.artists[0].name
 
-                info = await self.ytdl.create(
-                    {"default_search": "ytsearch1"}
-                ).extract_info(f"{artist} {name} lyrics")
+                info = await self.ytdl.create({"default_search": "ytsearch1"}).extract_info(f"{artist} {name} lyrics")
+
+                if len(info) == 0:
+                    error += 1
+                    continue
+
                 ytdl_list.append(info[0])
 
             await self.bot.delete_message(processing_msg)
 
-            return await self.process_youtube(ctx, "", ytdl_list=ytdl_list)
+            info, embed = await self.process_youtube(ctx, "", ytdl_list=ytdl_list)
+
+            if error > 0:
+                embed = Embed(f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue. {error} failed to load.")
+
+            return info, embed
+
         else:
             track = await self.spotify.get_track(result.id)
-            return await self.process_search(
-                f"{track.artists[0].name} {track.name} lyrics", force_choice=0
-            )
+            return await self.process_search(f"{track.artists[0].name} {track.name} lyrics", force_choice=0)
 
     async def process_search(
         self, keyword: str, *, force_choice: Optional[int] = None
