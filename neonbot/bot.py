@@ -1,5 +1,4 @@
 import asyncio
-import importlib
 import json
 import logging
 import os
@@ -201,8 +200,10 @@ class Bot(commands.Bot):
             pass
 
     async def auto_update_ytdl(self) -> None:
-        await self.update_package('youtube_dl')
-        importlib.reload(youtube_dl)
+        response = await self.update_package('youtube_dl')
+
+        if "Successfully installed youtube-dl" in response:
+            self.restart()
 
     async def run_scheduler(self) -> None:
         while True:
