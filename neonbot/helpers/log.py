@@ -39,7 +39,7 @@ class Log(logging.Logger):
         self.set_console_handler()
 
     def set_file_handler(self) -> None:
-        file = logging.FileHandler(filename="debug.log", encoding="utf-8", mode="w")
+        file = logging.FileHandler(filename="debug.log", encoding="utf-8", mode="a")
         file.setFormatter(self.formatter)
         self.addHandler(file)
 
