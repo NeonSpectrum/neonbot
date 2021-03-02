@@ -40,16 +40,18 @@ class Administration(commands.Cog):
     async def eval(self, ctx: commands.Context, *, code: str) -> None:
         """Evaluates a line/s of python code. *BOT_OWNER"""
 
+        guild_id = ctx.guild.id if ctx.guild else None
+
         env = {
             "bot": bot,
             "discord": discord,
             "commands": commands,
             "ctx": ctx,
             "players": bot.music,
-            "player": bot.music[ctx.guild.id],
-            "config": self.db.get_guild(ctx.guild.id).config,
+            "player": bot.music.get(guild_id),
+            "config": self.db.get_guild(guild_id).config,
             "rooms": bot.game,
-            "room": bot.game[ctx.guild.id],
+            "room": bot.game.get(guild_id),
             "Embed": Embed,
             "send_to_all_owners": bot.send_to_all_owners,
             "p": print,
