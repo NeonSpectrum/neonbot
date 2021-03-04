@@ -28,6 +28,7 @@ class Ytdl:
                 "extract_flat": "in_playlist",
                 "geo_bypass": True,
                 "cookiefile": "cookie.txt",
+                "source_address": "0.0.0.0",
                 **extra_params,
             }
         )
