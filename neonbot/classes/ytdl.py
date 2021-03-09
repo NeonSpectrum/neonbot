@@ -21,7 +21,7 @@ class Ytdl:
         self.ytdl = youtube_dl.YoutubeDL(
             {
                 "default_search": "ytsearch5",
-                "format": "bestaudio",
+                "format": "95/bestaudio",
                 "quiet": True,
                 "nocheckcertificate": True,
                 "ignoreerrors": True,
