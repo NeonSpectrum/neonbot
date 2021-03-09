@@ -8,6 +8,7 @@ from urllib.parse import parse_qs, urlparse
 
 import youtube_dl
 from addict import Dict
+from bs4 import BeautifulSoup
 
 from .. import bot, env
 from ..helpers.date import date
@@ -18,10 +19,11 @@ class Ytdl:
     def __init__(self, extra_params: dict = {}) -> None:
         self.thread_pool = ThreadPoolExecutor(max_workers=3)
         self.loop = bot.loop
+        self.session = bot.session
         self.ytdl = youtube_dl.YoutubeDL(
             {
                 "default_search": "ytsearch5",
-                "format": "95/bestaudio",
+                "format": "bestaudio/best",
                 "quiet": True,
                 "nocheckcertificate": True,
                 "ignoreerrors": True,
@@ -29,6 +31,7 @@ class Ytdl:
                 "geo_bypass": True,
                 "source_address": "0.0.0.0",
                 "cachedir": False,
+                "youtube_include_dash_manifest": False,
                 **extra_params,
             }
         )
@@ -38,7 +41,15 @@ class Ytdl:
             self.thread_pool,
             functools.partial(self.ytdl.extract_info, *args, download=False, **kwargs),
         )
+
+        if result.get("is_live") is not None:
+            result = await self.loop.run_in_executor(
+                self.thread_pool,
+                functools.partial(Ytdl({"format": "95/bestaudio"}).extract_info, *args, download=False, **kwargs),
+            )
+
         info = Dict(result)
+
         return info.get("entries", info)
 
     async def process_entry(self, info: Dict) -> Dict:
@@ -96,19 +107,6 @@ class Ytdl:
     @classmethod
     def create(cls, extra_params: dict) -> Ytdl:
         return cls(extra_params)
-
-    async def get_related_videos(self, video_id: str) -> Dict:
-        res = await bot.session.get(
-            "https://www.googleapis.com/youtube/v3/search",
-            params={
-                "part": "snippet",
-                "relatedToVideoId": video_id,
-                "type": "video",
-                "key": env.str("GOOGLE_API"),
-            },
-        )
-        json = await res.json()
-        return Dict(json)["items"]
 
     def is_link_expired(self, url: str) -> bool:
         params = Dict(parse_qs(urlparse(url).query))

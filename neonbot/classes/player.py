@@ -19,7 +19,7 @@ log = cast(Log, logging.getLogger(__name__))
 class Player:
     """
     Initializes player that handles play, playlist, messages,
-    repeat, shuffle, autoplay.
+    repeat, shuffle.
     """
 
     def __init__(self, ctx: commands.Context):
@@ -146,7 +146,6 @@ class Player:
 
         if (
             self.process_shuffle()
-            or await self.process_autoplay()
             or self.process_repeat()
         ):
             await self.play()
@@ -169,8 +168,7 @@ class Player:
             format_seconds(now_playing.duration) if now_playing.duration else "N/A",
             f"Volume: {config.volume}%",
             f"Repeat: {config.repeat}",
-            f"Shuffle: {'on' if config.shuffle else 'off'}",
-            f"Autoplay: {'on' if config.autoplay else  'off'}",
+            f"Shuffle: {'on' if config.shuffle else 'off'}"
         ]
 
         embed = Embed(title=now_playing.title, url=now_playing.url)
@@ -207,7 +205,6 @@ class Player:
             f"Volume: {config.volume}%",
             f"Repeat: {config.repeat}",
             f"Shuffle: {'on' if config.shuffle else 'off'}",
-            f"Autoplay: {'on' if config.autoplay else  'off'}",
         ]
 
         embed = Embed(title=now_playing.title, url=now_playing.url)
@@ -257,31 +254,6 @@ class Player:
                 return True
 
             counter += 1
-
-    async def process_autoplay(self) -> bool:
-        if not self.config.autoplay or self.current_queue != len(self.queue) - 1:
-            return False
-
-        current_queue = self.now_playing
-
-        related_videos = await self.ytdl.get_related_videos(current_queue.id)
-        filtered_videos = []
-
-        for video in related_videos:
-            existing = any(
-                [queue for queue in self.queue if queue.id == video.id.videoId]
-            )
-            if not existing:
-                filtered_videos.append(video)
-
-        video_id = filtered_videos[0].id.videoId
-
-        info = await self.ytdl.extract_info(video_id)
-        info = self.ytdl.parse_info(info)
-        self.add_to_queue(info, requested=self.bot.user)
-        self.current_queue += 1
-
-        return True
 
     async def process_youtube(
         self, ctx: commands.Context, keyword: str, *, ytdl_list: Optional[list] = None

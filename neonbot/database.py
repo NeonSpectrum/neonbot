@@ -79,7 +79,6 @@ class Database:
                 "channel": {},
                 "music": {
                     "volume": 100,
-                    "autoplay": False,
                     "repeat": "off",
                     "autoresume": False,
                     "roles": {},

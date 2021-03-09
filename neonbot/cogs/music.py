@@ -254,22 +254,6 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(has_player)
     @commands.check(in_voice)
-    async def autoplay(self, ctx: commands.Context) -> None:
-        """Enables/disables player's autoplay mode."""
-
-        player = get_player(ctx)
-        config = player.update_config("autoplay", not player.config.autoplay)
-        await ctx.send(
-            embed=Embed(
-                f"Autoplay is set to {'enabled' if config.autoplay else 'disabled'}."
-            ),
-            delete_after=5,
-        )
-
-    @commands.command()
-    @commands.guild_only()
-    @commands.check(has_player)
-    @commands.check(in_voice)
     async def shuffle(self, ctx: commands.Context) -> None:
         """Enables/disables player's shuffle mode."""
 
@@ -302,7 +286,6 @@ class Music(commands.Cog):
             f"Volume: {config.volume}%",
             f"Repeat: {config.repeat}",
             f"Shuffle: {'on' if config.shuffle else 'off'}",
-            f"Autoplay: {'on' if config.autoplay else 'off'}",
         ]
 
         embed = Embed()
@@ -356,7 +339,6 @@ class Music(commands.Cog):
             f"Volume: {config.volume}%",
             f"Repeat: {config.repeat}",
             f"Shuffle: {'on' if config.shuffle else 'off'}",
-            f"Autoplay: {'on' if config.autoplay else 'off'}",
         ]
 
         pagination = PaginationEmbed(ctx, embeds=embeds)
