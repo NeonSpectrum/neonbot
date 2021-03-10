@@ -23,7 +23,7 @@ class Ytdl:
         self.ytdl = youtube_dl.YoutubeDL(
             {
                 "default_search": "ytsearch5",
-                "format": "bestaudio/best",
+                "format": "95/bestaudio",
                 "quiet": True,
                 "nocheckcertificate": True,
                 "ignoreerrors": True,
@@ -37,16 +37,16 @@ class Ytdl:
         )
 
     async def extract_info(self, *args: Any, **kwargs: Any) -> Union[list, Dict]:
-        result = await self.loop.run_in_executor(
-            self.thread_pool,
-            functools.partial(self.ytdl.extract_info, *args, download=True, **kwargs),
-        )
-
-        if result.get("is_live") is not None:
-            result = await self.loop.run_in_executor(
+        async def fetch(download: bool):
+            return await self.loop.run_in_executor(
                 self.thread_pool,
-                functools.partial(Ytdl({"format": "95/bestaudio"}).extract_info, *args, download=False, **kwargs),
+                functools.partial(self.ytdl.extract_info, *args, download=download, **kwargs),
             )
+
+        result = await fetch(download=False)
+
+        if result.get("is_live") is None:
+            result = await fetch(download=True)
 
         info = Dict(result)
 
@@ -108,8 +108,6 @@ class Ytdl:
     @classmethod
     def create(cls, extra_params: dict) -> Ytdl:
         return cls(extra_params)
-
-    @
 
     def is_link_expired(self, url: str) -> bool:
         params = Dict(parse_qs(urlparse(url).query))
