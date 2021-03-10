@@ -104,7 +104,7 @@ class Player:
 
         try:
             song = discord.FFmpegPCMAudio(
-                now_playing.stream, before_options=FFMPEG_OPTIONS
+                now_playing.stream, before_options=None if not now_playing.is_live else FFMPEG_OPTIONS
             )
             source = discord.PCMVolumeTransformer(song, volume=self.config.volume / 100)
 

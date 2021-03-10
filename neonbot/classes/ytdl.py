@@ -30,8 +30,8 @@ class Ytdl:
                 "extract_flat": "in_playlist",
                 "geo_bypass": True,
                 "source_address": "0.0.0.0",
-                "cachedir": False,
                 "youtube_include_dash_manifest": False,
+                "outtmpl": "./tmp/youtube_dl/%(id)s",
                 **extra_params,
             }
         )
@@ -39,7 +39,7 @@ class Ytdl:
     async def extract_info(self, *args: Any, **kwargs: Any) -> Union[list, Dict]:
         result = await self.loop.run_in_executor(
             self.thread_pool,
-            functools.partial(self.ytdl.extract_info, *args, download=False, **kwargs),
+            functools.partial(self.ytdl.extract_info, *args, download=True, **kwargs),
         )
 
         if result.get("is_live") is not None:
@@ -55,7 +55,7 @@ class Ytdl:
     async def process_entry(self, info: Dict) -> Dict:
         result = await self.loop.run_in_executor(
             self.thread_pool,
-            functools.partial(self.ytdl.process_ie_result, info, download=False),
+            functools.partial(self.ytdl.process_ie_result, info, download=True),
         )
         if not result:
             raise YtdlError(
@@ -91,8 +91,9 @@ class Ytdl:
                 uploader=entry.uploader,
                 duration=entry.duration,
                 thumbnail=entry.thumbnail,
-                stream=entry.url,
+                stream=entry.url if entry.is_live else f"./tmp/youtube_dl/{entry.id}",
                 url=entry.webpage_url,
+                is_live=entry.is_live,
                 view_count=f"{entry.view_count:,}",
                 upload_date=datetime.strptime(entry.upload_date, "%Y%m%d").strftime(
                     "%b %d, %Y"
@@ -107,6 +108,8 @@ class Ytdl:
     @classmethod
     def create(cls, extra_params: dict) -> Ytdl:
         return cls(extra_params)
+
+    @
 
     def is_link_expired(self, url: str) -> bool:
         params = Dict(parse_qs(urlparse(url).query))

@@ -14,7 +14,7 @@ def main() -> None:
     if os.name == "nt":
         os.system("color")
 
-    os.makedirs("./tmp", exist_ok=True)
+    os.makedirs("./tmp/youtube_dl", exist_ok=True)
 
     bot.run()
 

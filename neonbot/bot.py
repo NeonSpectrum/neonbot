@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import sys
 from glob import glob
 from os import path
@@ -49,6 +50,7 @@ class Bot(commands.Bot):
 
         schedule.every().day.at("06:00").do(self.auto_update_ytdl)
         self.loop.create_task(self.run_scheduler())
+        self.clear_youtube_dl_cache()
 
     def set_storage(self) -> None:
         self.commands_executed: List[str] = []
@@ -200,6 +202,7 @@ class Bot(commands.Bot):
             pass
 
     async def auto_update_ytdl(self) -> None:
+        self.clear_youtube_dl_cache()
         response = await self.update_package('youtube_dl')
 
         if "Successfully installed youtube-dl" in response:
@@ -209,6 +212,12 @@ class Bot(commands.Bot):
         while True:
             await schedule.run_pending()
             await asyncio.sleep(1)
+
+    def clear_youtube_dl_cache(self) -> None:
+        try:
+            shutil.rmtree('./tmp/youtube_dl')
+        except:
+            pass
 
     def run(self) -> None:
         self.load_cogs()
