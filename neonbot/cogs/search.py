@@ -512,7 +512,7 @@ class Search(commands.Cog):
         else:
             data["target"] = lang[0]
 
-        res = await self.session.get(
+        res = await self.session.post(
             "https://translation.googleapis.com/language/translate/v2",
             data=data,
             headers={"Authorization": f"Bearer {google_token}"}
