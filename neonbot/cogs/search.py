@@ -518,7 +518,7 @@ class Search(commands.Cog):
             headers={"Authorization": f"Bearer {google_token}"}
         )
 
-        json = Dict(await res.json())
+        json = Dict(await res.json(content_type=None))
 
         if "error" in json:
             raise ApiError("There was an issue translating this text.")
