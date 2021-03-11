@@ -527,7 +527,7 @@ class Search(commands.Cog):
             raise ApiError(json.error.message)
 
 
-        source_lang = self.lang_listjson.data.translations[0].get("detectedSourceLanguage", data.get("source"))
+        source_lang = json.data.translations[0].get("detectedSourceLanguage", data.get("source"))
         target_lang = data["target"]
         translated_text = json.data.translations[0].translatedText
 
