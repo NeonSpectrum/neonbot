@@ -532,7 +532,7 @@ class Search(commands.Cog):
         translated_text = json.data.translations[0].translatedText
 
         embed = Embed()
-        embed.set_author("Google Translate", "https://ssl.gstatic.com/translate/favicon.ico")
+        embed.set_author(name="Google Translate", icon_url="https://ssl.gstatic.com/translate/favicon.ico")
         embed.add_field(f"**{self.lang_list[source_lang]}**", sentence)
         embed.add_field(f"**{self.lang_list[target_lang]}**", translated_text)
 
