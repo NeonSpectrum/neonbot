@@ -72,7 +72,7 @@ class Database:
         self.db.servers.insert_one(
             {
                 "server_id": str(guild_id),
-                "prefix": env.str("PREFIX"),
+                "prefix": env.str("DEFAULT_PREFIX"),
                 "deleteoncmd": False,
                 "strictmode": False,
                 "aliases": [],
