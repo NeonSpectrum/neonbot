@@ -518,15 +518,15 @@ class Search(commands.Cog):
             data=data,
             headers={"Authorization": f"Bearer {google_token}"}
         )
-        log.info(data)
 
-        json = Dict(await res.json(content_type=None))
+        json = Dict(await res.json())
 
         if "error" in json:
-            raise ApiError("There was an issue translating this text.")
+            if json.error.code == 400 and json.error.message == "Invalid Value":
+                return await ctx.send(embed=Embed("Invalid language."), delete_after=5)
 
-        if json.message:
-            return await ctx.send(embed=Embed(json.message), delete_after=5)
+            raise ApiError(json.error.message)
+
 
         source_lang = json.data.translations[0].get("detectedSourceLanguage", data.get("source"))
         target_lang = data["target"]
