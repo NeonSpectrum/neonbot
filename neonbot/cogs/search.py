@@ -528,13 +528,13 @@ class Search(commands.Cog):
             raise ApiError(json.error.message)
 
 
-        source_lang = json.data.translations[0].get("detectedSourceLanguage", data.get("source"))
+        source_lang = self.lang_listjson.data.translations[0].get("detectedSourceLanguage", data.get("source"))
         target_lang = data["target"]
         translated_text = json.data.translations[0].translatedText
 
         await ctx.send(
             embed=Embed(
-                title=f"Translated from `{source_lang}` to `{target_lang}`",
+                title=f"Translated from `{self.lang_list[source_lang]}` to `{self.lang_list[target_lang]}`",
                 description=f"`{sentence}` → `{translated_text}`",
             )
         )
