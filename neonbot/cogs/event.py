@@ -35,6 +35,7 @@ class Event(commands.Cog):
     async def on_connect() -> None:
         await bot.fetch_app_info()
         bot.db.process_database(await bot.fetch_guilds().flatten())
+        log.info(await bot.fetch_guilds().flatten())
         log.info(f"Logged in as {bot.user}")
 
     @staticmethod
