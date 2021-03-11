@@ -527,7 +527,7 @@ class Search(commands.Cog):
         if json.message:
             return await ctx.send(embed=Embed(json.message), delete_after=5)
 
-        source_lang = json.data.translations[0].get("detectedSourceLanguage", data["source"])
+        source_lang = json.data.translations[0].get("detectedSourceLanguage", data.get("source"))
         target_lang = data["target"]
         translated_text = json.data.translations[0].translatedText
 
