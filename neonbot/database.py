@@ -63,7 +63,7 @@ class Database:
 
     def process_database(self, guilds: list) -> None:
         for guild in guilds:
-            count = self.db.servers.find({"server_id": str(guild.id)}).count
+            count = self.db.servers.find({"server_id": str(guild.id)}).count()
             log.info(count)
 
             if count == 0:
