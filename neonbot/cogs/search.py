@@ -531,12 +531,12 @@ class Search(commands.Cog):
         target_lang = data["target"]
         translated_text = json.data.translations[0].translatedText
 
-        await ctx.send(
-            embed=Embed(
-                title=f"Translated from `{self.lang_list[source_lang]}` to `{self.lang_list[target_lang]}`",
-                description=f"`{sentence}` → `{translated_text}`",
-            )
-        )
+        embed = Embed()
+        embed.set_author("Google Translate", "https://ssl.gstatic.com/translate/favicon.ico")
+        embed.add_field(f"**{self.lang_list[source_lang]}**", sentence)
+        embed.add_field(f"**{self.lang_list[target_lang]}**", translated_text)
+
+        await ctx.send(embed=embed)
 
     @commands.command()
     async def langlist(self, ctx: commands.Context) -> None:
