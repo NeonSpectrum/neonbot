@@ -517,7 +517,7 @@ class Search(commands.Cog):
             data=data,
             headers={"Authorization": f"Bearer {google_token}"}
         )
-
+        log.error(await res.text())
         json = Dict(await res.json(content_type=None))
 
         if "error" in json:
