@@ -85,9 +85,6 @@ class Database:
                 },
             }
         )
-        self.db.servers.insert_one(
-            {"status": "online", "game": {"type": "WATCHING", "name": "NANI?!"}}
-        )
 
     def get_guild(self, guild_id: int) -> GuildDatabase:
         return GuildDatabase(self.db, guild_id)
