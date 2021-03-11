@@ -12,6 +12,8 @@ from bs4 import BeautifulSoup
 from discord.ext import commands
 from jikanpy import AioJikan
 
+from neonbot.helpers.utils import shell_exec
+
 from .. import bot, env
 from ..classes import Embed, EmbedChoices, PaginationEmbed
 from ..helpers.exceptions import ApiError
@@ -498,25 +500,40 @@ class Search(commands.Cog):
     ) -> None:
         """Translates sentence based on language code given."""
 
+        google_token = shell_exec("gcloud auth application-default print-access-token")
+
+        data = {"q": sentence, "format": "text"}
+
+        lang = lang.split(">")
+
+        if len(lang) > 1:
+            data["source"] = lang[0]
+            data["target"] = lang[1]
+        else:
+            data["target"] = lang[0]
+
         res = await self.session.get(
-            "https://translate.yandex.net/api/v1.5/tr.json/translate",
-            data={"key": env.str("YANDEX_API"), "text": sentence, "lang": lang},
+            "https://translation.googleapis.com/language/translate/v2",
+            data=data,
+            headers={"Authorization": f"Bearer {google_token}"}
         )
 
         json = Dict(await res.json())
 
-        if json.code == 401:
-            raise ApiError(json.message)
+        if "error" in json:
+            raise ApiError("There was an issue translating this text.")
 
         if json.message:
             return await ctx.send(embed=Embed(json.message), delete_after=5)
 
-        translate_langs = [self.lang_list.get(code) for code in json.lang.split("-")]
+        source_lang = json.data.translations[0].get("detectedSourceLanguage", data["source"])
+        target_lang = data["target"]
+        translated_text = json.data.translations[0].translatedText
 
         await ctx.send(
             embed=Embed(
-                title=f"Translated from `{translate_langs[0]}` to `{translate_langs[1]}`",
-                description=f"`{sentence}` → `{json.text[0]}`",
+                title=f"Translated from `{source_lang}` to `{target_lang}`",
+                description=f"`{sentence}` → `{translated_text}`",
             )
         )
 

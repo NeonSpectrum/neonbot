@@ -13,7 +13,7 @@ from .. import bot, env
 from ..classes import Embed, PaginationEmbed
 from ..classes.converters import Required
 from ..helpers.log import Log
-from ..helpers.utils import convert_to_seconds
+from ..helpers.utils import convert_to_seconds, shell_exec
 
 log = cast(Log, logging.getLogger(__name__))
 
@@ -366,13 +366,7 @@ class Administration(commands.Cog):
     async def update(self, ctx: commands.Context) -> None:
         """Updates the bot from github. *BOT_OWNER"""
 
-        process = await asyncio.create_subprocess_shell(
-            "git pull", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-        )
-
-        stdout, stderr = await process.communicate()
-
-        result = stdout.decode().strip()
+        result = await shell_exec("git pull")
 
         embed = Embed()
         embed.set_author(

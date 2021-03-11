@@ -19,6 +19,8 @@ from aiohttp import ClientSession, ClientTimeout
 from discord.ext import commands
 from discord.utils import oauth_url
 
+from neonbot.helpers.utils import shell_exec
+
 from . import __title__, __version__
 from .classes import Embed
 from .database import Database
@@ -126,13 +128,7 @@ class Bot(commands.Bot):
     async def update_package(self, *packages) -> str:
         log.info(f"Executing update package...")
 
-        process = await asyncio.create_subprocess_shell(
-            f"pipenv update {' '.join(packages)}", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-        )
-
-        stdout, stderr = await process.communicate()
-
-        result = stdout.decode().strip()
+        result = shell_exec(f"pipenv update {' '.join(packages)}")
 
         log.info(f"\n{result}\n")
 
