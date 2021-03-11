@@ -128,7 +128,7 @@ class Bot(commands.Bot):
     async def update_package(self, *packages) -> str:
         log.info(f"Executing update package...")
 
-        result = shell_exec(f"pipenv update {' '.join(packages)}")
+        result = await shell_exec(f"pipenv update {' '.join(packages)}")
 
         log.info(f"\n{result}\n")
 

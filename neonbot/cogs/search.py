@@ -500,7 +500,7 @@ class Search(commands.Cog):
     ) -> None:
         """Translates sentence based on language code given."""
 
-        google_token = shell_exec("gcloud auth application-default print-access-token")
+        google_token = await shell_exec("gcloud auth application-default print-access-token")
 
         data = {"q": sentence, "format": "text"}
 
