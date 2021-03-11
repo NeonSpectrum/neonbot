@@ -34,8 +34,6 @@ class Event(commands.Cog):
     @bot.event
     async def on_connect() -> None:
         await bot.fetch_app_info()
-        bot.db.process_database(await bot.fetch_guilds().flatten())
-        log.info(await bot.fetch_guilds().flatten())
         log.info(f"Logged in as {bot.user}")
 
     @staticmethod
@@ -257,6 +255,7 @@ class Event(commands.Cog):
     @bot.event
     async def on_guild_join(guild: discord.Guild) -> None:
         bot.db.process_database([guild.id])
+        log.info(f"Bot joined {guild.name}")
 
     @staticmethod
     @bot.event
