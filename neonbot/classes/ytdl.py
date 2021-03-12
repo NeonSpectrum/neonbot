@@ -45,6 +45,11 @@ class Ytdl:
 
         result = await fetch(download=False)
 
+        if not result:
+            raise YtdlError(
+                "Video not available or rate limited due to many song requests. Try again later."
+            )
+
         if result.get("is_live") is None:
             result = await fetch(download=True)
 
