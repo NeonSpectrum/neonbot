@@ -11,7 +11,10 @@ from ..helpers.constants import CHOICES_EMOJI, PAGINATION_EMOJI
 
 class Embed(discord.Embed):
     def __init__(self, description: Any = None, **kwargs: Any) -> None:
-        super().__init__(description=description and str(description), **kwargs)
+        if description is not None:
+            super().__init__(description=description and str(description), **kwargs)
+        else:
+            super().__init__(**kwargs)
         self.color = 0x59ABE3
 
     def add_field(self, name: Any, value: Any, *, inline: bool = True) -> None:
