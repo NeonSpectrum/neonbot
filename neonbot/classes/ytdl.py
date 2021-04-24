@@ -29,6 +29,7 @@ class Ytdl:
                 "ignoreerrors": True,
                 "extract_flat": "in_playlist",
                 "geo_bypass": True,
+                "geo_bypass_country": "PH",
                 "source_address": "0.0.0.0",
                 "youtube_include_dash_manifest": False,
                 "outtmpl": "./tmp/youtube_dl/%(id)s",
