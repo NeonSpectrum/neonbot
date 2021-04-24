@@ -343,9 +343,6 @@ class Player:
         finally:
             await self.bot.delete_message(msg)
 
-        if not ytdl_choices:
-            
-
         if force_choice is None:
             embed_choices = await EmbedChoices(self.ctx, ytdl_choices).build()
             choice = embed_choices.value
