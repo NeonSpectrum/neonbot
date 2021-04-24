@@ -333,14 +333,18 @@ class Player:
         self, keyword: str, *, force_choice: Optional[int] = None
     ) -> Tuple[Dict, discord.Embed]:
         msg = await self.ctx.send(embed=Embed("Searching..."))
-        extracted = await self.ytdl.extract_info(keyword)
-        ytdl_choices = self.ytdl.parse_choices(extracted)
 
-        await self.bot.delete_message(msg)
-
-        if not ytdl_choices:
+        try:
+            extracted = await self.ytdl.extract_info(keyword)
+            ytdl_choices = self.ytdl.parse_choices(extracted)
+        except YtdlError:
             await self.ctx.send(embed=Embed("No songs available."))
             return Dict(), Embed()
+        finally:
+            await self.bot.delete_message(msg)
+
+        if not ytdl_choices:
+            
 
         if force_choice is None:
             embed_choices = await EmbedChoices(self.ctx, ytdl_choices).build()
