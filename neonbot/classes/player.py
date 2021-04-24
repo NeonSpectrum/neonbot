@@ -9,6 +9,7 @@ from discord.ext import commands, tasks
 
 from ..helpers.constants import FFMPEG_OPTIONS
 from ..helpers.date import format_seconds
+from ..helpers.exceptions import YtdlError
 from ..helpers.log import Log
 from ..helpers.utils import plural
 from . import Embed, EmbedChoices
