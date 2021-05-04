@@ -127,10 +127,9 @@ class Event(commands.Cog):
                 player.messages.auto_paused = await player.ctx.send(embed=Embed(msg))
                 player.connection.pause()
                 player.reset_timeout.start()
-            elif player.connection.is_paused() and any(voice_members):
-                if player.messages.auto_paused:
-                    await bot.delete_message(player.messages.auto_paused)
-                    player.messages.auto_paused = None
+            elif player.connection.is_paused() and any(voice_members) and player.messages.auto_paused:
+                await bot.delete_message(player.messages.auto_paused)
+                player.messages.auto_paused = None
                 player.connection.resume()
                 player.reset_timeout.cancel()
 
