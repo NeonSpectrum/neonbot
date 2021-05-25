@@ -434,13 +434,13 @@ class Administration(commands.Cog):
         seconds = convert_to_seconds(time)
 
         await member.edit(mute=True, reason=reason)
-        await ctx.send(embed=Embed(f"{member} has been muted for {seconds} seconds."), delete_after=5)
+        await ctx.send(embed=Embed(f"{member} has been muted for {seconds} seconds."))
 
         async def unmute():
             await asyncio.sleep(seconds)
             if member.voice.mute is True:
                 await member.edit(mute=False, reason='Revert unmute')
-                await ctx.send(embed=Embed(f"{member} is now unmuted."), delete_after=5)
+                await ctx.send(embed=Embed(f"{member} is now unmuted."))
 
         self.bot.loop.create_task(unmute())
 
@@ -456,7 +456,7 @@ class Administration(commands.Cog):
             return await ctx.send(embed=Embed(f"{member} is already unmuted."))
 
         await member.edit(mute=False, reason=reason)
-        await ctx.send(embed=Embed(f"{member} has been unmuted."), delete_after=5)
+        await ctx.send(embed=Embed(f"{member} has been unmuted."))
 
 
 def setup(bot: commands.Bot) -> None:
