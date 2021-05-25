@@ -13,7 +13,6 @@ from typing import Any, Callable, List, Tuple, Union, cast
 import aioschedule as schedule
 import discord
 import psutil
-import youtube_dl
 from addict import Dict
 from aiohttp import ClientSession, ClientTimeout
 from discord.ext import commands

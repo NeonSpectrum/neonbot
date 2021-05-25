@@ -229,7 +229,7 @@ class Player:
             self.current_queue = 0
         elif is_last and config.repeat == "off":
             # reset queue to index 0 and stop playing
-            self.current_queue = 0
+            self.current_queue += 1
             return False
         elif config.repeat != "single":
             self.current_queue += 1

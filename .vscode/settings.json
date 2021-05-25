@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "/home/neonspectrum/.virtualenvs/neonbot-python-wj0002JO/bin/python",
+    "python.pythonPath": "/home/neonspectrum/.local/share/virtualenvs/neonbot-python-wj0002JO/bin/python3",
     "python.linting.enabled": true,
     "python.linting.flake8Enabled": true,
     "python.linting.mypyEnabled": true
