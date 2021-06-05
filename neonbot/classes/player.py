@@ -73,15 +73,18 @@ class Player:
         )
 
         await self.next(stop=True)
-        await self.connection.disconnect()
+
         self.load_defaults()
+
+        if self.connection:
+            await self.connection.disconnect()
+
 
     @tasks.loop(count=1)
     async def reset_timeout(self) -> None:
         await asyncio.sleep(60 * 10)
 
-        if self.messages.auto_paused:
-            await self.bot.delete_message(self.messages.auto_paused)
+        await self.bot.delete_message(self.messages.auto_paused)
         await self.reset()
 
         msg = "Player has been reset due to timeout."
@@ -115,13 +118,12 @@ class Player:
                 self.bot.loop.create_task(self.next())
 
             self.connection.play(source, after=after)
-
+            await self.playing_message()
         except discord.ClientException:
             msg = "Error while playing the song."
             log.exception(msg)
-            return await self.ctx.send(embed=Embed(msg))
+            await self.ctx.send(embed=Embed(msg))
 
-        await self.playing_message()
 
     async def next(self, *, index: int = -1, stop: bool = False) -> None:
         if not stop or (stop and self.connection.is_playing()):

@@ -77,12 +77,14 @@ class Music(commands.Cog):
                 if not info:
                     return
 
-        if info:
-            player.add_to_queue(info, requested=ctx.author)
-        if loading_msg:
-            await self.bot.delete_message(loading_msg)
-        if embed:
-            await ctx.send(embed=embed, delete_after=5)
+            if info:
+                player.add_to_queue(info, requested=ctx.author)
+            if loading_msg:
+                await self.bot.delete_message(loading_msg)
+            if embed:
+                await ctx.send(embed=embed, delete_after=5)
+        elif player.current_queue >= len(player.queue):
+            player.current_queue = 0
 
         if any(player.queue) and not ctx.voice_client:
             player.connection = await ctx.author.voice.channel.connect()
@@ -124,8 +126,7 @@ class Music(commands.Cog):
         player.connection.resume()
         log.cmd(ctx, "Player resumed.")
 
-        if player.messages.paused:
-            await self.bot.delete_message(player.messages.paused)
+        await self.bot.delete_message(player.messages.paused)
 
         await ctx.send(embed=Embed("Player resumed."), delete_after=5)
 
