@@ -64,6 +64,14 @@ class Player:
             else Dict()
         )
 
+    async def stop(self) -> None:
+        await self.next(stop=True)
+
+        if self.connection:
+            await self.connection.disconnect()
+
+        self.current_queue = 0
+
     async def reset(self) -> None:
         await asyncio.gather(
             self.bot.delete_message(self.messages.last_playing),

@@ -148,9 +148,7 @@ class Music(commands.Cog):
         """Stops the current player and resets the track number to 1."""
 
         player = get_player(ctx)
-        await player.next(stop=True)
-
-        player.current_queue = 0
+        await player.stop()
 
         msg = "Player stopped."
         log.cmd(ctx, msg)
