@@ -137,13 +137,12 @@ class Utility(commands.Cog):
             data={"From": env.str("TWILIO_NUMBER"), "To": number, "Body": body}
         )
 
-        response = Dict(await response.json())
-        print(response)
+        if response.status >= 400:
+            data = Dict(await response.json())
 
-        if int(response.status) >= 400:
             await msg.edit(
                 embed=generate_embed().add_field("Status:", "Sending failed.", inline=False)
-                                      .add_field("Reason:", response.message, inline=False)
+                                      .add_field("Reason:", data.message, inline=False)
                                       .add_field("Date sent:", date_format(), inline=False)
             )
         else:
