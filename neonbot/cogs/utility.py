@@ -111,7 +111,6 @@ class Utility(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def sms(self, ctx: commands.Context, number: str, *, message: str) -> None:
-        print(number, message)
         def generate_embed():
             embed = Embed()
             embed.set_author(name="✉ SMS")
