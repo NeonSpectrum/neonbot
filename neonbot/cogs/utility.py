@@ -139,7 +139,7 @@ class Utility(commands.Cog):
 
         response = Dict(await response.json())
 
-        if response.status >= 400:
+        if int(response.status) >= 400:
             await msg.edit(
                 embed=generate_embed().add_field("Status:", "Sending failed.", inline=False)
                                       .add_field("Reason:", response.message, inline=False)
