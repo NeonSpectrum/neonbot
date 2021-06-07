@@ -138,6 +138,7 @@ class Utility(commands.Cog):
         )
 
         response = Dict(await response.json())
+        print(response)
 
         if int(response.status) >= 400:
             await msg.edit(
