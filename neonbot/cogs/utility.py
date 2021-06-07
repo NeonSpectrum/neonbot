@@ -134,7 +134,7 @@ class Utility(commands.Cog):
         response = await bot.session.post(
             f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json",
             auth=aiohttp.BasicAuth(login=account_sid, password=auth_token),
-            data={"From": env.str("TWILIO_NUMBER"), "To": number, "Body": body}
+            data={"From": "NeonBot", "To": number, "Body": body}
         )
 
         if response.status >= 400:
