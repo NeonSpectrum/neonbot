@@ -121,16 +121,16 @@ class Event(commands.Cog):
                 if not member.bot and not member.voice.self_deaf
             ]
 
-            if player.connection.is_playing() and not voice_members:
+            if not voice_members:
                 msg = "Player will reset after 10 minutes."
                 log.cmd(member, msg, channel=voice_channel, user="N/A")
                 player.messages.auto_paused = await player.ctx.send(embed=Embed(msg))
-                player.connection.pause()
+                if player.connection.is_playing(): player.connection.pause()
                 player.reset_timeout.start()
-            elif player.connection.is_paused() and any(voice_members) and player.messages.auto_paused:
+            elif any(voice_members):
                 await bot.delete_message(player.messages.auto_paused)
                 player.messages.auto_paused = None
-                player.connection.resume()
+                if player.connection.is_paused(): player.connection.resume()
                 player.reset_timeout.cancel()
 
         if before.channel != after.channel:
