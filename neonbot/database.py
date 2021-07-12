@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import ssl
 from time import time
 from typing import cast
 
@@ -53,7 +54,7 @@ class Database:
     def load_database(self) -> MongoClient:
         mongo_url = env.str("MONGO_URL")
         db_name = env.str("MONGO_DBNAME")
-        client = MongoClient(mongo_url)
+        client = MongoClient(mongo_url, ssl=True, ssl_cert_reqs=ssl.CERT_NONE)
 
         start_time = time()
         log.info(f"Connecting to Database...")
