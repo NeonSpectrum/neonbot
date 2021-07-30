@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any, List, Union
 from urllib.parse import parse_qs, urlparse
 
-import youtube_dl
+import yt_dlp
 from addict import Dict
 from bs4 import BeautifulSoup
 
@@ -20,7 +20,7 @@ class Ytdl:
         self.thread_pool = ThreadPoolExecutor(max_workers=3)
         self.loop = bot.loop
         self.session = bot.session
-        self.ytdl = youtube_dl.YoutubeDL(
+        self.ytdl = yt_dlp.YoutubeDL(
             {
                 "default_search": "ytsearch5",
                 "format": "95/bestaudio",

@@ -388,7 +388,7 @@ class Administration(commands.Cog):
         embed = Embed()
         embed.set_author(name="Pipenv Update", icon_url="https://i.imgur.com/vzcWouB.png")
 
-        embed.description = await self.bot.update_package('discord.py', 'youtube_dl')
+        embed.description = await self.bot.update_package('discord.py', 'yt-dlp')
 
         await msg.edit(embed=embed)
 

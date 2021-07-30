@@ -8,7 +8,7 @@ import aiohttp
 import discord
 import emoji
 import psutil
-import youtube_dl
+import yt_dlp
 from addict import Dict
 from discord.ext import commands
 
@@ -102,7 +102,7 @@ class Utility(commands.Cog):
             "Packages",
             f"""
             discord.py `{discord.__version__}`
-            youtube-dl `{youtube_dl.version.__version__}`
+            youtube-dl `{yt_dlp.version.__version__}`
             """
         )
 
