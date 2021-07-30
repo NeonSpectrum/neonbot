@@ -160,6 +160,8 @@ class Player:
             or self.process_repeat()
         ):
             await self.play()
+        else:
+            await self.connection.disconnect()
 
     async def playing_message(self, *, delete_after: Optional[int] = None) -> None:
         config = self.config
