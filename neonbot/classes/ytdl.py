@@ -32,7 +32,7 @@ class Ytdl:
                 "geo_bypass_country": "PH",
                 "source_address": "0.0.0.0",
                 "youtube_include_dash_manifest": False,
-                "outtmpl": "./tmp/youtube_dl/%(id)s-%(title)s",
+                "outtmpl": "./tmp/youtube_dl/[%(id)s]%(title)s",
                 **extra_params,
             }
         )
@@ -97,7 +97,7 @@ class Ytdl:
                 uploader=entry.uploader,
                 duration=entry.duration,
                 thumbnail=entry.thumbnail,
-                stream=entry.url if entry.is_live else f"./tmp/youtube_dl/{entry.id}-{entry.title}",
+                stream=entry.url if entry.is_live else f"./tmp/youtube_dl/[{entry.id}]{entry.title}",
                 url=entry.webpage_url,
                 is_live=entry.is_live,
                 view_count=f"{entry.view_count:,}",
