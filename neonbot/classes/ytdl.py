@@ -51,8 +51,8 @@ class Ytdl:
                 "Video not available or rate limited due to many song requests. Try again later."
             )
 
-        #if result.get("is_live") is None:
-        #    result = await fetch(download=True)
+        if result.get("is_live") is None:
+            result = await self.process_entry(result)
 
         info = Dict(result)
 
