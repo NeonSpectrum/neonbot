@@ -44,15 +44,15 @@ class Ytdl:
                 functools.partial(self.ytdl.extract_info, *args, download=download, **kwargs),
             )
 
-        result = await fetch(download=False)
+        result = await fetch(download=True)
 
         if not result:
             raise YtdlError(
                 "Video not available or rate limited due to many song requests. Try again later."
             )
 
-        if result.get("is_live") is None:
-            result = await fetch(download=True)
+        #if result.get("is_live") is None:
+        #    result = await fetch(download=True)
 
         info = Dict(result)
 
