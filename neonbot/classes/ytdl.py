@@ -44,7 +44,7 @@ class Ytdl:
                 functools.partial(self.ytdl.extract_info, *args, download=download, **kwargs),
             )
 
-        result = await fetch(download=True)
+        result = await fetch(download=False)
 
         if not result:
             raise YtdlError(
