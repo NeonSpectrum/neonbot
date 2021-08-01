@@ -38,7 +38,7 @@ class Ytdl:
         )
 
     async def extract_info(self, *args: Any, **kwargs: Any) -> Union[list, Dict]:
-        await self.loop.run_in_executor(
+        result = await self.loop.run_in_executor(
             self.thread_pool,
             functools.partial(self.ytdl.extract_info, *args, download=False, process=False, **kwargs),
         )
