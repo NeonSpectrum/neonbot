@@ -31,7 +31,7 @@ class Ytdl:
                 "geo_bypass": True,
                 "geo_bypass_country": "PH",
                 "source_address": "0.0.0.0",
-                "youtube_include_dash_manifest": False,
+                #"youtube_include_dash_manifest": False,
                 "outtmpl": "./tmp/youtube_dl/[%(id)s]%(title)s",
                 **extra_params,
             }
