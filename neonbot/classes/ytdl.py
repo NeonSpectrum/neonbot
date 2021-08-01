@@ -47,8 +47,8 @@ class Ytdl:
             raise YtdlError(
                 "Video not available or rate limited due to many song requests. Try again later."
             )
-        print(result)
-        if result.get("is_live") is None:
+            
+        if not result.get("is_live"):
             result = await self.process_entry(result)
 
         info = Dict(result)
