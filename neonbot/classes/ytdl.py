@@ -48,14 +48,13 @@ class Ytdl:
                 "Video not available or rate limited due to many song requests. Try again later."
             )
             
-        if not result.get("is_live"):
-            result = await self.process_entry(result)
+        result = await self.process_entry(result, download=not result.get("is_live"))
 
         info = Dict(result)
 
         return info.get("entries", info)
 
-    async def process_entry(self, info: Dict) -> Dict:
+    async def process_entry(self, info: Dict, download: bool) -> Dict:
         result = await self.loop.run_in_executor(
             self.thread_pool,
             functools.partial(self.ytdl.process_ie_result, info, download=True),
