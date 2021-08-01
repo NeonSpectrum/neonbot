@@ -38,13 +38,10 @@ class Ytdl:
         )
 
     async def extract_info(self, *args: Any, **kwargs: Any) -> Union[list, Dict]:
-        async def fetch(download: bool):
-            return await self.loop.run_in_executor(
-                self.thread_pool,
-                functools.partial(self.ytdl.extract_info, *args, download=download, **kwargs),
-            )
-
-        result = await fetch(download=False)
+        await self.loop.run_in_executor(
+            self.thread_pool,
+            functools.partial(self.ytdl.extract_info, *args, download=False, process=False, **kwargs),
+        )
 
         if not result:
             raise YtdlError(
