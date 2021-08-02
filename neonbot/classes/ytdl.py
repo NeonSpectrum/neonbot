@@ -54,7 +54,7 @@ class Ytdl:
 
         return info.get("entries", info)
 
-    async def process_entry(self, info: Dict, download: bool) -> Dict:
+    async def process_entry(self, info: Dict, download: bool = True) -> Dict:
         result = await self.loop.run_in_executor(
             self.thread_pool,
             functools.partial(self.ytdl.process_ie_result, info, download=download),
