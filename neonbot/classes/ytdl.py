@@ -23,7 +23,7 @@ class Ytdl:
         self.ytdl = yt_dlp.YoutubeDL(
             {
                 "default_search": "ytsearch5",
-                "format": "95/bestaudio",
+                "format": "95/bestaudio/best/worst",
                 "quiet": True,
                 "nocheckcertificate": True,
                 "ignoreerrors": True,
@@ -32,7 +32,7 @@ class Ytdl:
                 "geo_bypass_country": "PH",
                 "source_address": "0.0.0.0",
                 #"youtube_include_dash_manifest": False,
-                "outtmpl": "./tmp/youtube_dl/[%(id)s]%(title)s",
+                "outtmpl": "./tmp/youtube_dl/%(id)s",
                 **extra_params,
             }
         )
@@ -47,7 +47,7 @@ class Ytdl:
             raise YtdlError(
                 "Video not available or rate limited due to many song requests. Try again later."
             )
-            
+
         result = await self.process_entry(result, download=not result.get("is_live"))
 
         info = Dict(result)
@@ -93,7 +93,7 @@ class Ytdl:
                 uploader=entry.uploader,
                 duration=entry.duration,
                 thumbnail=entry.thumbnail,
-                stream=entry.url if entry.is_live else f"./tmp/youtube_dl/[{entry.id}]{entry.title}",
+                stream=entry.url if entry.is_live else f"./tmp/youtube_dl/{entry.id}",
                 url=entry.webpage_url,
                 is_live=entry.is_live,
                 view_count=f"{entry.view_count:,}",
