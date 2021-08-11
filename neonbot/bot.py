@@ -198,7 +198,7 @@ class Bot(commands.Bot):
 
     async def auto_update_ytdl(self) -> None:
         self.clear_youtube_dl_cache()
-        response = await self.update_package('youtube_dl')
+        response = await self.update_package('yt-dlp')
 
         if "Successfully installed youtube-dl" in response:
             self.restart()
