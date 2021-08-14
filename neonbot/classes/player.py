@@ -103,14 +103,13 @@ class Player:
     async def on_member_leave(self, member: discord.Member, voice_channel: discord.VoiceChannel):
         if not self.connection.is_playing(): return self.reset()
 
-        msg = "Player will reset after 10 minutes."
+        msg = "Player paused and will reset after 10 minutes if no one will listen :("
         log.cmd(member, msg, channel=voice_channel, user="N/A")
         self.messages.auto_paused = await self.ctx.send(embed=Embed(msg))
         if self.connection.is_playing(): self.connection.pause()
         self.reset_timeout.start()
-        await self.ctx.send(embed=Embed(msg))
 
-    async def on_member_join(self, member: discord.Member, voice_channel: discord.VoiceChannel):
+    async def on_member_join(self):
         if not self.reset_timeout.is_running(): return
 
         await self.bot.delete_message(self.messages.auto_paused)
