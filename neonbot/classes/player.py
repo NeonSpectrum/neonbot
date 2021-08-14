@@ -111,7 +111,7 @@ class Player:
         await self.ctx.send(embed=Embed(msg))
 
     async def on_member_join(self, member: discord.Member, voice_channel: discord.VoiceChannel):
-        if not self.reset_timeout.is_running: return
+        if not self.reset_timeout.is_running(): return
 
         await self.bot.delete_message(self.messages.auto_paused)
         self.messages.auto_paused = None
