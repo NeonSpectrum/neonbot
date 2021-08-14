@@ -124,7 +124,7 @@ class Event(commands.Cog):
             if not voice_members:
                 await player.on_member_leave(member, voice_channel);
             elif any(voice_members):
-                await player.on_member_join(member, voice_channel);
+                await player.on_member_join();
 
         if before.channel != after.channel:
             voice_tts_channel = bot.get_channel(int(config.channel.voicetts or -1))
