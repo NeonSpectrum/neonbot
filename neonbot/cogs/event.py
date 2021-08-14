@@ -122,16 +122,9 @@ class Event(commands.Cog):
             ]
 
             if not voice_members:
-                msg = "Player will reset after 10 minutes."
-                log.cmd(member, msg, channel=voice_channel, user="N/A")
-                player.messages.auto_paused = await player.ctx.send(embed=Embed(msg))
-                if player.connection.is_playing(): player.connection.pause()
-                player.reset_timeout.start()
+                player.on_member_leave(member, voice_channel);
             elif any(voice_members):
-                await bot.delete_message(player.messages.auto_paused)
-                player.messages.auto_paused = None
-                if player.connection.is_paused(): player.connection.resume()
-                player.reset_timeout.cancel()
+                player.on_member_join(member, voice_channel);
 
         if before.channel != after.channel:
             voice_tts_channel = bot.get_channel(int(config.channel.voicetts or -1))

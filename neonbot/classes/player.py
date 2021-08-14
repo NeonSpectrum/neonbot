@@ -46,6 +46,7 @@ class Player:
         self.messages = Dict(
             last_playing=None, last_finished=None, paused=None, auto_paused=None
         )
+        self.timeout_pause = False
 
     def _load_music_cache(self) -> None:
         cache = self.bot._music_cache.get(str(self.ctx.guild.id))
@@ -99,6 +100,24 @@ class Player:
         log.cmd(self.ctx, msg)
         await self.ctx.send(embed=Embed(msg))
 
+    async def on_member_leave(self, member: discord.Member, voice_channel: discord.VoiceChannel):
+        if not self.connection.is_playing(): return self.reset()
+
+        msg = "Player will reset after 10 minutes."
+        log.cmd(member, msg, channel=voice_channel, user="N/A")
+        self.messages.auto_paused = await self.ctx.send(embed=Embed(msg))
+        if self.connection.is_playing(): self.connection.pause()
+        self.reset_timeout.start()
+        await self.ctx.send(embed=Embed(msg))
+
+    async def on_member_join(self, member: discord.Member, voice_channel: discord.VoiceChannel):
+        if not self.reset_timeout.is_running: return
+
+        await self.bot.delete_message(self.messages.auto_paused)
+        self.messages.auto_paused = None
+        if self.connection.is_paused(): self.connection.resume()
+        self.reset_timeout.cancel()
+
     async def play(self) -> None:
         now_playing = self.now_playing
 
@@ -119,18 +138,18 @@ class Player:
                 now_playing.stream, before_options=None if not now_playing.is_live else FFMPEG_OPTIONS
             )
             source = discord.PCMVolumeTransformer(song, volume=self.config.volume / 100)
-
-            def after(error: Exception) -> None:
-                if error:
-                    log.warn(f"After play error: {error}")
-                self.bot.loop.create_task(self.next())
-
-            self.connection.play(source, after=after)
-            await self.playing_message()
         except discord.ClientException:
             msg = "Error while playing the song."
             log.exception(msg)
             await self.ctx.send(embed=Embed(msg))
+
+        def after(error: Exception) -> None:
+            if error:
+                log.warn(f"After play error: {error}")
+            self.bot.loop.create_task(self.next())
+
+        self.connection.play(source, after=after)
+        await self.playing_message()
 
 
     async def next(self, *, index: int = -1, stop: bool = False) -> None:
