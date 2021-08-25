@@ -101,7 +101,7 @@ class Player:
         log.cmd(self.ctx, msg)
         await self.ctx.send(embed=Embed(msg))
 
-    async def on_member_leave(self, member: discord.Member):
+    async def on_member_leave(self):
         if not self.connection.is_playing(): return self.reset()
 
         msg = "Player paused and will reset after 10 minutes if no one will listen :("
