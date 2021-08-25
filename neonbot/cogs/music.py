@@ -88,6 +88,7 @@ class Music(commands.Cog):
 
         if any(player.queue) and not ctx.voice_client:
             player.connection = await ctx.author.voice.channel.connect()
+            player.last_voice_channel = player.connection.voice_channel
             log.cmd(ctx, f"Connected to {ctx.author.voice.channel}.")
         if player.connection and not player.connection.is_playing():
             await player.play()

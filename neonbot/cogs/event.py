@@ -44,7 +44,7 @@ class Event(commands.Cog):
 
     @staticmethod
     @bot.event
-    async def on_ready() -> None:
+    async def on_ready() -> None:w
         log.info("Ready!\n")
         await bot.send_restart_message()
 
@@ -111,10 +111,10 @@ class Event(commands.Cog):
             return
 
         config = bot.db.get_guild(member.guild.id).config
-        player = bot.music[member.guild.id]
+        player = bot.music.get(member.guild.id)
         voice_channel = after.channel or before.channel
 
-        if player and player.connection and player.connection.channel == voice_channel:
+        if player and player.last_voice_channel == voice_channel:
             voice_members = [
                 member
                 for member in voice_channel.members
@@ -122,7 +122,7 @@ class Event(commands.Cog):
             ]
 
             if not voice_members:
-                await player.on_member_leave(member, voice_channel);
+                await player.on_member_leave();
             elif any(voice_members):
                 await player.on_member_join();
 

@@ -40,6 +40,7 @@ class Player:
 
     def load_defaults(self) -> None:
         self.connection: discord.VoiceClient = None
+        self.last_voice_channel: discord.VoiceChannel = None
         self.current_queue = 0
         self.queue: List[Dict] = []
         self.shuffled_list: List[str] = []
@@ -100,11 +101,11 @@ class Player:
         log.cmd(self.ctx, msg)
         await self.ctx.send(embed=Embed(msg))
 
-    async def on_member_leave(self, member: discord.Member, voice_channel: discord.VoiceChannel):
+    async def on_member_leave(self, member: discord.Member):
         if not self.connection.is_playing(): return self.reset()
 
         msg = "Player paused and will reset after 10 minutes if no one will listen :("
-        log.cmd(member, msg, channel=voice_channel, user="N/A")
+        log.cmd(self.ctx, msg, channel=self.last_voice_channel, user="N/A")
         self.messages.auto_paused = await self.ctx.send(embed=Embed(msg))
         if self.connection.is_playing(): self.connection.pause()
         self.reset_timeout.start()
