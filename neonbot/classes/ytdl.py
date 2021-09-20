@@ -49,7 +49,6 @@ class Ytdl:
             )
 
         # result = await self.process_entry(result, download=not result.get("is_live"))
-        result = await self.process_entry(result, download=False)
 
         info = Dict(result)
 
