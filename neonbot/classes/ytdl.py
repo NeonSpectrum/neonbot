@@ -95,6 +95,7 @@ class Ytdl:
                 duration=entry.duration,
                 thumbnail=entry.thumbnail,
                 # stream=entry.url if entry.is_live else f"./tmp/youtube_dl/{entry.id}",
+                stream=entry.stream,
                 url=entry.webpage_url,
                 is_live=entry.is_live,
                 view_count=f"{entry.view_count:,}",
