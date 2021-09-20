@@ -40,7 +40,7 @@ class Ytdl:
     async def extract_info(self, *args: Any, **kwargs: Any) -> Union[list, Dict]:
         result = await self.loop.run_in_executor(
             self.thread_pool,
-            functools.partial(self.ytdl.extract_info, *args, download=False, process=False, **kwargs),
+            functools.partial(self.ytdl.extract_info, *args, download=False, **kwargs),
         )
 
         if not result:
@@ -95,7 +95,7 @@ class Ytdl:
                 duration=entry.duration,
                 thumbnail=entry.thumbnail,
                 # stream=entry.url if entry.is_live else f"./tmp/youtube_dl/{entry.id}",
-                stream=entry.stream,
+                stream=entry.url,
                 url=entry.webpage_url,
                 is_live=entry.is_live,
                 view_count=f"{entry.view_count:,}",
