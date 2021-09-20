@@ -32,7 +32,7 @@ class Ytdl:
                 "geo_bypass_country": "PH",
                 "source_address": "0.0.0.0",
                 #"youtube_include_dash_manifest": False,
-                "outtmpl": "./tmp/youtube_dl/%(id)s",
+                # "outtmpl": "./tmp/youtube_dl/%(id)s",
                 **extra_params,
             }
         )
@@ -48,7 +48,8 @@ class Ytdl:
                 "Video not available or rate limited due to many song requests. Try again later."
             )
 
-        result = await self.process_entry(result, download=not result.get("is_live"))
+        # result = await self.process_entry(result, download=not result.get("is_live"))
+        result = await self.process_entry(result, download=False)
 
         info = Dict(result)
 
@@ -93,7 +94,7 @@ class Ytdl:
                 uploader=entry.uploader,
                 duration=entry.duration,
                 thumbnail=entry.thumbnail,
-                stream=entry.url if entry.is_live else f"./tmp/youtube_dl/{entry.id}",
+                # stream=entry.url if entry.is_live else f"./tmp/youtube_dl/{entry.id}",
                 url=entry.webpage_url,
                 is_live=entry.is_live,
                 view_count=f"{entry.view_count:,}",
