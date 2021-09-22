@@ -24,9 +24,7 @@ class Ytdl:
             {
                 "default_search": "ytsearch5",
                 "format": "bestaudio",
-                "quiet": True,
                 "nocheckcertificate": True,
-                "ignoreerrors": True,
                 "extract_flat": "in_playlist",
                 "geo_bypass": True,
                 "geo_bypass_country": "PH",
