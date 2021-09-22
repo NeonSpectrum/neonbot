@@ -23,16 +23,15 @@ class Ytdl:
         self.ytdl = yt_dlp.YoutubeDL(
             {
                 "default_search": "ytsearch5",
-                "format": "bestvideo/bestaudio/best",
+                "format": "95/bestaudio/best/worst",
                 "quiet": True,
                 "nocheckcertificate": True,
                 "ignoreerrors": True,
-                "extract_flat": "in_playlist",
                 "geo_bypass": True,
                 "geo_bypass_country": "PH",
                 "source_address": "0.0.0.0",
                 #"youtube_include_dash_manifest": False,
-                # "outtmpl": "./tmp/youtube_dl/%(id)s",
+                "outtmpl": "./tmp/youtube_dl/%(id)s",
                 **extra_params,
             }
         )
@@ -48,13 +47,13 @@ class Ytdl:
                 "Video not available or rate limited due to many song requests. Try again later."
             )
 
-        # result = await self.process_entry(result, download=not result.get("is_live"))
+        result = await self.process_entry(result, download=not result.get("is_live"))
 
         info = Dict(result)
 
         return info.get("entries", info)
 
-    async def process_entry(self, info: Dict, download: bool = False) -> Dict:
+    async def process_entry(self, info: Dict, download: bool = True) -> Dict:
         result = await self.loop.run_in_executor(
             self.thread_pool,
             functools.partial(self.ytdl.process_ie_result, info, download=download),
@@ -93,8 +92,8 @@ class Ytdl:
                 uploader=entry.uploader,
                 duration=entry.duration,
                 thumbnail=entry.thumbnail,
-                # stream=entry.url if entry.is_live else f"./tmp/youtube_dl/{entry.id}",
-                stream=entry.url,
+                stream=entry.url if entry.is_live else f"./tmp/youtube_dl/{entry.id}",
+                # stream=entry.url,
                 url=entry.webpage_url,
                 is_live=entry.is_live,
                 view_count=f"{entry.view_count:,}",
