@@ -360,7 +360,7 @@ class Player:
 
         else:
             track = await self.spotify.get_track(result.id)
-            return await self.process_search(f"{track.artists[0].name} {track.name} lyrics", force_choice=0)
+            return await self.process_search(f"{track.artists[0].name} {track.name} lyrics", force_choice=0, display_downloading=False)
 
     async def process_search(
         self, keyword: str, *, force_choice: Optional[int] = None
@@ -384,8 +384,13 @@ class Player:
         else:
             choice = force_choice
 
+        msg = await self.ctx.send(embed=Embed(f"Loading..."))
+
         info = await self.ytdl.process_entry(extracted[choice])
         info = self.ytdl.parse_info(info)
+
+        await self.bot.delete_message(msg);
+
         embed = Embed(
             title=f"{'You have selected #{choice+1}.' if force_choice else'' }Adding song to queue #{len(self.queue)+1}",
             description=info.title,
