@@ -23,8 +23,10 @@ class Ytdl:
         self.ytdl = yt_dlp.YoutubeDL(
             {
                 "default_search": "ytsearch5",
-                "format": "bestaudio",
+                "format": "bestvideo*+bestaudio/best",
+                "quiet": True,
                 "nocheckcertificate": True,
+                "ignoreerrors": True,
                 "extract_flat": "in_playlist",
                 "geo_bypass": True,
                 "geo_bypass_country": "PH",
