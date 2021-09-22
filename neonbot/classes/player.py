@@ -135,12 +135,13 @@ class Player:
 
         try:
             song = discord.FFmpegPCMAudio(
-                now_playing.stream
+                now_playing.stream, before_options=None if not now_playing.is_live else FFMPEG_OPTIONS
             )
             source = discord.PCMVolumeTransformer(song, volume=self.config.volume / 100)
-        except discord.ClientException:
+        except Exception as e:
             msg = "Error while playing the song."
             log.exception(msg)
+            log.exception(e)
             await self.ctx.send(embed=Embed(msg))
 
         def after(error: Exception) -> None:
