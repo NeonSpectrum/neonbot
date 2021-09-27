@@ -102,7 +102,7 @@ class Event(commands.Cog):
             if len(message.attachments) > 0:
                 content = '\n'.join([content] + [attachment.proxy_url for attachment in message.attachments])
 
-            embed = Embed(f"**{message.author}**\n{message.content}")
+            embed = Embed(f"**{message.author}**\n{content}")
             embed.set_author(name="Message Deletion", icon_url=bot.user.avatar_url)
             embed.set_footer(text=date_format())
             await log_channel.send(embed=embed)
