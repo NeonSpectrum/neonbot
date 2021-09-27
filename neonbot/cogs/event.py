@@ -97,6 +97,11 @@ class Event(commands.Cog):
         log_channel = bot.get_channel(int(config.channel.msgdelete or -1))
 
         if log_channel:
+            content = message.content
+
+            if len(message.attachments) > 0:
+                content = '\n'.join([content] + [attachment.proxy_url for attachment in message.attachments])
+
             embed = Embed(f"**{message.author}**\n{message.content}")
             embed.set_author(name="Message Deletion", icon_url=bot.user.avatar_url)
             embed.set_footer(text=date_format())
