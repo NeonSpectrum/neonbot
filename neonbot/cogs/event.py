@@ -251,7 +251,7 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_guild_join(guild: discord.Guild) -> None:
-        bot.db.process_database([guild.id])
+        bot.db.process_database([guild])
         log.info(f"Bot joined {guild.name}")
 
     @staticmethod
