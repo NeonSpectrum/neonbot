@@ -360,7 +360,7 @@ class Player:
 
         else:
             track = await self.spotify.get_track(result.id)
-            return await self.process_search(f"{track.artists[0].name} {track.name} lyrics", force_choice=0, display_downloading=False)
+            return await self.process_search(f"{track.artists[0].name} {track.name} lyrics", force_choice=0)
 
     async def process_search(
         self, keyword: str, *, force_choice: Optional[int] = None
