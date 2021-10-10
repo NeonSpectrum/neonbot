@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import inspect
 import json
+import logging
 import threading
 import time
 import typing
@@ -10,6 +11,10 @@ import aiohttp
 import discord
 import requests
 from discord.ext import commands
+
+from neonbot.helpers.log import Log
+
+log = typing.cast(Log, logging.getLogger(__name__))
 
 button_functions = []
 
@@ -259,9 +264,9 @@ def _add_commands(bot_commands, command_list, choices, hidden, client):
                        headers=_get_headers(client))
         try:
             if w["name"] == x["name"]:
-                print(f"Synced command {x['name']}")
+                log.info(f"Synced command {x['name']}")
         except KeyError:
-            print(f"Error syncing command {x['name']}: {w}")
+            log.error(f"Error syncing command {x['name']}: {w}")
         time.sleep(10)
 
     slash_commands = _get_sync(f"https://discord.com/api/v9/applications/{client.user.id}/commands",
@@ -274,7 +279,9 @@ def _add_commands(bot_commands, command_list, choices, hidden, client):
             t = _get_sync(f"https://discord.com/api/v9/applications/{client.user.id}/commands/{x['id']}",
                           headers=_get_headers(client))
             if t == "":
-                print(f"Removed command {x['name']}")
+                log.info(f"Removed command {x['name']}")
+
+    log.info(f"Finished syncing command")
 
 
 async def sync_all_commands(client: typing.Union[
