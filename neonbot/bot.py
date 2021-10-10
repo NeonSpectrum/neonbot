@@ -170,7 +170,9 @@ class Bot(commands.Bot):
     async def send_invite_link(self, channel: discord.DMChannel) -> None:
         with channel.typing():
             url = oauth_url(
-                self.app_info.id, permissions=discord.Permissions(permissions=PERMISSIONS)
+                self.app_info.id,
+                permissions=discord.Permissions(permissions=PERMISSIONS),
+                scopes=('bot', 'applications.commands')
             )
             await channel.send(f"Bot invite link: {url}")
             log.info(f"Sent an invite link to: {channel.recipient}")

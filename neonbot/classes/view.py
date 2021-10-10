@@ -34,7 +34,10 @@ class View(discord.ui.View):
         self.stop()
 
         if self.msg:
-            await self.msg.edit(view=self)
+            try:
+                await self.msg.edit(view=self)
+            except discord.NotFound:
+                pass
 
     def set_message(self, msg: discord.Message):
         self.msg = msg
