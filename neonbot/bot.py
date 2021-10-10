@@ -189,6 +189,15 @@ class Bot(commands.Bot):
         if sender != self.app_info.owner.id:
             await self.get_user(self.app_info.owner.id).send(*args, **kwargs)
 
+    async def edit_message(self, message: Union[discord.Message, None], **kwargs) -> None:
+        if message is None:
+            return
+
+        try:
+            await message.edit(**kwargs)
+        except discord.NotFound:
+            pass
+
     async def delete_message(self, message: Union[discord.Message, None]) -> None:
         if message is None:
             return

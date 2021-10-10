@@ -48,7 +48,6 @@ class Event(commands.Cog):
         #bot.db.process_database(bot.guilds)
         log.info("Ready!\n")
         await bot.send_restart_message()
-        await sync_all_commands(bot)
 
     @staticmethod
     @bot.event

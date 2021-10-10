@@ -114,7 +114,7 @@ def _patch_sync(url, json_dict=None, headers=None):
 
 
 def _delete_sync(url, json_dict=None, headers=None):
-    return json.loads(requests.delete(url, json=json_dict, headers=headers).text)
+    return requests.delete(url, json=json_dict, headers=headers)
 
 
 class SlashContext:
@@ -250,7 +250,7 @@ class Button:
         }
 
 
-def _add_commands(bot_commands, command_list, choices, hidden, client):
+async def _add_commands(bot_commands, command_list, choices, hidden, client):
     for x in bot_commands:
         command = _create_info(x, choices)
 
@@ -258,7 +258,7 @@ def _add_commands(bot_commands, command_list, choices, hidden, client):
             command_list.append(command)
 
     for x in command_list:
-        w = _post_sync(f"https://discord.com/api/v9/applications/{client.user.id}/commands", json_dict=x,
+        w = await _post(f"https://discord.com/api/v9/applications/{client.user.id}/commands", json_dict=x,
                        headers=_get_headers(client))
         try:
             if w["name"] == x["name"]:
@@ -267,17 +267,22 @@ def _add_commands(bot_commands, command_list, choices, hidden, client):
             log.error(f"Error syncing command {x['name']}: {w}")
         time.sleep(10)
 
-    slash_commands = _get_sync(f"https://discord.com/api/v9/applications/{client.user.id}/commands",
+    slash_commands = await _get(f"https://discord.com/api/v9/applications/{client.user.id}/commands",
                                headers=_get_headers(client))
+
     name_list = []
     for x in command_list:
         name_list.append(x["name"])
     for x in slash_commands:
         if x["name"] not in name_list or x["name"] in hidden:
-            t = _get_sync(f"https://discord.com/api/v9/applications/{client.user.id}/commands/{x['id']}",
+            t = await _delete(f"https://discord.com/api/v9/applications/{client.user.id}/commands/{x['id']}",
                           headers=_get_headers(client))
             if t == "":
                 log.info(f"Removed command {x['name']}")
+            else:
+                log.error(f"Error removing command {x['name']}: {t.text}")
+
+            time.sleep(10)
 
     log.info(f"Finished syncing command")
 
@@ -294,8 +299,7 @@ async def sync_all_commands(client: typing.Union[
             if x[1] == True:
                 intent_enabled = True
 
-    threading.Thread(target=_add_commands, args=[client.commands, commands, choices, hidden_commands, client],
-                     daemon=True).start()
+    await _add_commands(client.commands, commands, choices, hidden_commands, client)
 
     flags = 64
 
