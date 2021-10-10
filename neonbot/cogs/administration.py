@@ -199,13 +199,10 @@ class Administration(commands.Cog):
         )
 
     @commands.command()
+    @commands.has_guild_permissions(administrator=True)
     @commands.guild_only()
     async def alias(self, ctx: commands.Context, name: str, *, command: str) -> None:
-        """
-        Sets or updates an alias command.
-
-        You must be the owner of the alias to update it.
-        """
+        """Sets or updates an alias command. *ADMINISTRATOR"""
 
         guild = self.db.get_guild(ctx.guild.id)
         aliases = guild.get('aliases')
@@ -235,13 +232,10 @@ class Administration(commands.Cog):
         )
 
     @commands.command()
+    @commands.has_guild_permissions(administrator=True)
     @commands.guild_only()
     async def deletealias(self, ctx: commands.Context, name: str) -> None:
-        """
-        Removes an alias command.
-
-        You must be the owner of the alias to delete it.
-        """
+        """Removes an alias command. *ADMINISTRATOR"""
 
         guild = self.db.get_guild(ctx.guild.id)
         aliases = guild.get('aliases')
