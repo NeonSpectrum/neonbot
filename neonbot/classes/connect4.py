@@ -1,12 +1,12 @@
 import asyncio
 import random
-from typing import List
+from typing import List, Optional
 
 import discord
 from discord.ext import commands, tasks
 
-from ..helpers.constants import CHOICES_EMOJI
 from . import Embed
+from ..helpers.constants import CHOICES_EMOJI
 
 
 class Connect4:
@@ -18,7 +18,6 @@ class Connect4:
     def __init__(self, ctx: commands.Context):
         self.bot = ctx.bot
         self.channel = ctx.channel
-        self.config = self.bot.db.get_guild(ctx.guild.id).config
 
         self.reset()
 
@@ -26,8 +25,8 @@ class Connect4:
         self.board: list = []
         self.players: List[discord.User] = []
         self.turn = random.randint(0, 1)
-        self.last_board_message: discord.Message = None
-        self.waiting_message: discord.Message = None
+        self.last_board_message: Optional[discord.Message] = None
+        self.waiting_message: Optional[discord.Message] = None
         self.winner: int = 0
 
         self.reset_board()
@@ -40,9 +39,10 @@ class Connect4:
         user : discord.User
         """
         if len(self.players) == 2:
-            return self.channel.send(
+            await self.channel.send(
                 embed=Embed("Game already started."), delete_after=5
             )
+            return
 
         if user not in self.players:
             self.players.append(user)
@@ -65,9 +65,9 @@ class Connect4:
             return (
                 m.content.isdigit()
                 and any(
-                    x.id == m.author.id and i == self.turn
-                    for i, x in enumerate(self.players)
-                )
+                x.id == m.author.id and i == self.turn
+                for i, x in enumerate(self.players)
+            )
                 and 1 <= int(m.content) <= 7
             )
 
@@ -97,7 +97,7 @@ class Connect4:
 
         self.waiting_message = await self.channel.send(
             embed=Embed(
-                f"Waiting for players to join. To join the game please use`{self.config.prefix}connect4`"
+                f"Waiting for players to join. To join the game please use`{self.bot.default_prefix}connect4`"
             )
         )
 
@@ -151,16 +151,16 @@ class Connect4:
             embed = Embed(title="Congratulations.\nIt's a draw!")
         else:
             embed = Embed(
-                title=f"Congratulations.\n**{self.players[winner-1]}** won the game!"
+                title=f"Congratulations.\n**{self.players[winner - 1]}** won the game!"
             )
             if timeout:
                 other_player = 1 if winner == 0 else 0
                 embed.title = (
-                    f"**{self.players[other_player-1]}** didn't answer.\n" + embed.title
+                    f"**{self.players[other_player - 1]}** didn't answer.\n" + embed.title
                 )
         embed.description = "\n".join(["".join(b) for b in board])
         embed.set_footer(
-            text=f"Started by {self.players[0]}", icon_url=self.players[0].avatar_url
+            text=f"Started by {self.players[0]}", icon_url=self.players[0].avatar.url
         )
 
         await self.bot.delete_message(self.last_board_message)
@@ -174,7 +174,6 @@ class Connect4:
 
         Parameters
         ----------
-        user : discord.User
         index : int
             Location to where the player moves
 
@@ -189,7 +188,7 @@ class Connect4:
                 return True
         return False
 
-    def _check_line(self, a: int, b: int, c: int, d: int) -> bool:
+    def check_line(self, a: int, b: int, c: int, d: int) -> bool:
         return a != 0 and a == b and a == c and a == d
 
     def check_winner(self) -> int:
@@ -206,7 +205,7 @@ class Connect4:
 
         for i in range(0, 3):
             for j in range(0, 7):
-                if self._check_line(
+                if self.check_line(
                     board[i][j], board[i + 1][j], board[i + 2][j], board[i + 3][j]
                 ):
                     return board[i][j]
@@ -214,7 +213,7 @@ class Connect4:
         # Check right
         for i in range(0, 6):
             for j in range(0, 4):
-                if self._check_line(
+                if self.check_line(
                     board[i][j], board[i][j + 1], board[i][j + 2], board[i][j + 3]
                 ):
                     return board[i][j]
@@ -222,7 +221,7 @@ class Connect4:
         # Check down-right
         for i in range(0, 3):
             for j in range(0, 4):
-                if self._check_line(
+                if self.check_line(
                     board[i][j],
                     board[i + 1][j + 1],
                     board[i + 2][j + 2],
@@ -233,7 +232,7 @@ class Connect4:
         # Check down-left
         for i in range(0, 6):
             for j in range(0, 4):
-                if self._check_line(
+                if self.check_line(
                     board[i][j],
                     board[i - 1][j + 1],
                     board[i - 2][j + 2],

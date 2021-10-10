@@ -8,8 +8,6 @@ flake8 = "*"
 mypy = "*"
 
 [packages]
-addict = "*"
-"discord.py" = "*"
 environs = "*"
 psutil = "*"
 pyasn1 = "*"
@@ -28,6 +26,9 @@ yt-dlp = "*"
 
 [pipenv]
 allow_prereleases = true
+
+[packages.discord]
+git = "https://github.com/Rapptz/discord.py"
 
 [packages.pymongo]
 extras = [ "srv",]

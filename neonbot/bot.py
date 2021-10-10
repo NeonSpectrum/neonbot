@@ -8,18 +8,16 @@ import sys
 from glob import glob
 from os import path
 from time import time
-from typing import Any, Callable, List, Tuple, Union, cast
+from typing import Any, Callable, List, Tuple, Union, cast, Optional
 
 import aioschedule as schedule
 import discord
 import psutil
-from addict import Dict
 from aiohttp import ClientSession, ClientTimeout
 from discord.ext import commands
 from discord.utils import oauth_url
 
 from neonbot.helpers.utils import shell_exec
-
 from . import __title__, __version__
 from .classes import Embed
 from .database import Database
@@ -32,7 +30,9 @@ log = cast(Log, logging.getLogger(__name__))
 
 class Bot(commands.Bot):
     def __init__(self) -> None:
-        super().__init__(command_prefix=self.get_command_prefix(), intents=discord.Intents.all())
+        super().__init__(
+            command_prefix=self.get_command_prefix(), intents=discord.Intents.all()
+        )
 
         self.start_message()
 
@@ -45,7 +45,7 @@ class Bot(commands.Bot):
         self.session = ClientSession(loop=self.loop, timeout=ClientTimeout(total=30))
         self.user_agent = f"NeonBot v{__version__}"
 
-        self.app_info: discord.AppInfo = None
+        self.app_info: Optional[discord.AppInfo] = None
         self.set_storage()
         self.load_music()
 
@@ -55,22 +55,22 @@ class Bot(commands.Bot):
 
     def set_storage(self) -> None:
         self.commands_executed: List[str] = []
-        self.game = Dict()
-        self.music = Dict()
-        self.chatbot = Dict()
-        self._music_cache = Dict()
+        self.game = {}
+        self.music = {}
+        self.chatbot = {}
+        self._music_cache = {}
 
     def load_music(self) -> None:
         file = "./tmp/music.json"
         if path.exists(file):
             with open(file, "r") as f:
-                self._music_cache = Dict(json.load(f))
+                self._music_cache = json.load(f)
             os.remove(file)
 
     def save_music(self) -> None:
         file = "./tmp/music.json"
         with open(file, "w") as f:
-            cache = Dict()
+            cache = {}
             for key, player in self.music.items():
                 cache[key] = {
                     "current_queue": player.current_queue,
@@ -86,10 +86,10 @@ class Bot(commands.Bot):
         log.info(f"Starting {__title__} v{__version__}")
 
     def get_presence(self) -> Tuple[discord.Status, discord.Activity]:
-        settings = self.db.get_settings().settings
-        activity_type = settings.game.type.lower()
-        activity_name = settings.game.name
-        status = settings.status
+        settings = self.db.get_settings()
+        activity_type = settings.get('game')['type'].lower()
+        activity_name = settings.get('game')['name']
+        status = settings.get('status')
 
         return (
             discord.Status[status],
@@ -104,7 +104,7 @@ class Bot(commands.Bot):
 
     def get_command_prefix(self) -> Union[Callable, str]:
         return (
-            lambda _, message: self.db.get_guild(message.guild.id).config.prefix
+            lambda _, message: self.db.get_guild(message.guild.id).get('prefix')
             if message.guild
             else self.default_prefix
         )
@@ -131,7 +131,7 @@ class Bot(commands.Bot):
 
         log.info(f"\n{result}\n")
 
-        return result.split('\n')[-1]
+        return result.split("\n")[-1]
 
     async def logout(self) -> None:
         await self.session.close()
@@ -155,7 +155,7 @@ class Bot(commands.Bot):
         file = "./tmp/restart_config.json"
         if path.exists(file):
             with open(file, "r") as f:
-                data = Dict(json.load(f))
+                data = json.load(f)
             os.remove(file)
 
             channel = self.get_channel(data.channel_id)
@@ -170,7 +170,7 @@ class Bot(commands.Bot):
     async def send_invite_link(self, channel: discord.DMChannel) -> None:
         with channel.typing():
             url = oauth_url(
-                self.app_info.id, discord.Permissions(permissions=PERMISSIONS)
+                self.app_info.id, permissions=discord.Permissions(permissions=PERMISSIONS)
             )
             await channel.send(f"Bot invite link: {url}")
             log.info(f"Sent an invite link to: {channel.recipient}")
@@ -193,14 +193,14 @@ class Bot(commands.Bot):
 
         try:
             await message.delete()
-        except discord.NotFound as e:
+        except discord.NotFound:
             pass
 
     async def auto_update_ytdl(self) -> None:
-        response = await self.update_package('yt-dlp')
+        response = await self.update_package("yt-dlp")
 
         if "Successfully installed yt-dlp" in response:
-            self.restart()
+            await self.restart()
 
     async def run_scheduler(self) -> None:
         while True:
@@ -209,7 +209,7 @@ class Bot(commands.Bot):
 
     def clear_youtube_dl_cache(self) -> None:
         try:
-            shutil.rmtree('./tmp/youtube_dl')
+            shutil.rmtree("./tmp/youtube_dl")
         except:
             pass
 

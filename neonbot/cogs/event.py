@@ -4,28 +4,27 @@ from datetime import datetime
 from typing import List, Optional, Tuple, Union, cast
 
 import discord
-from addict import Dict
 from discord.ext import commands
 from discord.utils import escape_markdown
 
+from .utility import chatbot
 from .. import bot
 from ..classes import Embed
 from ..helpers import exceptions
 from ..helpers.constants import EXCLUDED_TYPING, IGNORED_DELETEONCMD
 from ..helpers.date import date_format, format_seconds
 from ..helpers.log import Log
-from .utility import chatbot
 
 log = cast(Log, logging.getLogger(__name__))
 
 
 async def get_ctx(message: discord.Message) -> Tuple[bool, commands.Context]:
-    aliases: List[Dict] = []
+    aliases: List[dict] = []
     if message.guild:
-        config = bot.db.get_guild(message.guild.id).config
-        aliases = [x for x in config.aliases if x.name == message.content]
+        guild = bot.db.get_guild(message.guild.id)
+        aliases = [x for x in guild.get('aliases') if x['name'] == message.content]
         if any(aliases):
-            message.content = aliases[0].cmd.format(config.prefix)
+            message.content = aliases[0]['cmd'].format(guild.get('prefix'))
     return any(aliases), await bot.get_context(message)
 
 
@@ -45,6 +44,7 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_ready() -> None:
+        #bot.db.process_database(bot.guilds)
         log.info("Ready!\n")
         await bot.send_restart_message()
 
@@ -66,7 +66,7 @@ class Event(commands.Cog):
         if message.content.replace("<@!", "<@", 1).startswith(bot.user.mention):
             log.cmd(ctx, message.content)
             return await chatbot(message)
-        elif ctx.channel.type.name == "private":
+        elif str(ctx.channel.type.name) == "private":
             if message.content.lower() == "invite":
                 return await bot.send_invite_link(message.channel)
 
@@ -93,8 +93,8 @@ class Event(commands.Cog):
         if message.author.id == bot.user.id:
             return
 
-        config = bot.db.get_guild(message.guild.id).config
-        log_channel = bot.get_channel(int(config.channel.msgdelete or -1))
+        guild = bot.db.get_guild(message.guild.id)
+        log_channel = bot.get_channel(int(guild.get('channel')['msgdelete'] or -1))
 
         if log_channel:
             content = message.content
@@ -103,7 +103,7 @@ class Event(commands.Cog):
                 content = '\n'.join([content] + [attachment.proxy_url for attachment in message.attachments])
 
             embed = Embed(f"**{message.author}**\n{content}")
-            embed.set_author(name="Message Deletion", icon_url=bot.user.avatar_url)
+            embed.set_author(name="Message Deletion", icon_url=bot.user.avatar.url)
             embed.set_footer(text=date_format())
             await log_channel.send(embed=embed)
 
@@ -115,7 +115,7 @@ class Event(commands.Cog):
         if member.bot:
             return
 
-        config = bot.db.get_guild(member.guild.id).config
+        guild = bot.db.get_guild(member.guild.id)
         player = bot.music.get(member.guild.id)
         voice_channel = after.channel or before.channel
 
@@ -132,8 +132,8 @@ class Event(commands.Cog):
                 await player.on_member_join()
 
         if before.channel != after.channel:
-            voice_tts_channel = bot.get_channel(int(config.channel.voicetts or -1))
-            log_channel = bot.get_channel(int(config.channel.log or -1))
+            voice_tts_channel = bot.get_channel(int(guild.get('channel')['voicetts'] or -1))
+            log_channel = bot.get_channel(int(guild.get('channel')['log'] or -1))
 
             role = voice_channel.guild.default_role
             readable = voice_channel.overwrites_for(role).read_messages is not False
@@ -150,7 +150,7 @@ class Event(commands.Cog):
             if log_channel and readable:
                 embed = Embed(f":bust_in_silhouette:{msg}")
                 embed.set_author(
-                    name="Voice Presence Update", icon_url=bot.user.avatar_url
+                    name="Voice Presence Update", icon_url=bot.user.avatar.url
                 )
                 embed.set_footer(text=date_format())
                 await log_channel.send(embed=embed)
@@ -161,14 +161,14 @@ class Event(commands.Cog):
         if before.bot:
             return
 
-        config = bot.db.get_guild(before.guild.id).config
-        log_channel = bot.get_channel(int(config.channel.log or -1))
+        guild = bot.db.get_guild(before.guild.id)
+        log_channel = bot.get_channel(int(guild.get('channel')['log'] or -1))
 
         embed = Embed()
         embed.set_footer(text=date_format())
 
         if before.status != after.status:
-            embed.set_author(name="User Presence Update", icon_url=bot.user.avatar_url)
+            embed.set_author(name="User Presence Update", icon_url=bot.user.avatar.url)
             msg = f"**{before.name}** is now **{after.status}**."
             embed.description = f":bust_in_silhouette:{msg}"
         elif before.activities != after.activities:
@@ -186,7 +186,7 @@ class Event(commands.Cog):
 
             embed.description = f":bust_in_silhouette:**{before.name}** is"
             embed.set_author(
-                name="Activity Presence Update", icon_url=bot.user.avatar_url
+                name="Activity Presence Update", icon_url=bot.user.avatar.url
             )
 
             if isinstance(current, discord.Spotify):
@@ -223,28 +223,28 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_member_join(member: discord.Member) -> None:
-        config = bot.db.get_guild(member.guild.id).config
-        channel = bot.get_channel(int(config.channel.log or -1))
+        guild = bot.db.get_guild(member.guild.id)
+        channel = bot.get_channel(int(guild.get('channel')['log'] or -1))
 
         msg = f"**{member.name}** joined the server."
 
         if channel:
             embed = Embed(f":bust_in_silhouette:{msg}")
-            embed.set_author(name="Member Join", icon_url=bot.user.avatar_url)
+            embed.set_author(name="Member Join", icon_url=bot.user.avatar.url)
             embed.set_footer(text=date_format())
             await channel.send(embed=embed)
 
     @staticmethod
     @bot.event
     async def on_member_remove(member: discord.Member) -> None:
-        config = bot.db.get_guild(member.guild.id).config
-        channel = bot.get_channel(int(config.channel.log or -1))
+        guild = bot.db.get_guild(member.guild.id)
+        channel = bot.get_channel(int(guild.get('channel')['log'] or -1))
 
         msg = f"**{member.name}** left the server."
 
         if channel:
             embed = Embed(f":bust_in_silhouette:{msg}")
-            embed.set_author(name="Member Leave", icon_url=bot.user.avatar_url)
+            embed.set_author(name="Member Leave", icon_url=bot.user.avatar.url)
             embed.set_footer(text=date_format())
             await channel.send(embed=embed)
 
@@ -264,9 +264,9 @@ class Event(commands.Cog):
         if ctx.channel.type.name == "private":
             return
 
-        config = bot.db.get_guild(ctx.guild.id).config
+        guild = bot.db.get_guild(ctx.guild.id)
 
-        if ctx.command.name not in IGNORED_DELETEONCMD and config.deleteoncmd:
+        if ctx.command.name not in IGNORED_DELETEONCMD and guild.get('deleteoncmd'):
             await bot.delete_message(ctx.message)
 
     @staticmethod
@@ -291,12 +291,14 @@ class Event(commands.Cog):
         log.cmd(ctx, f"Command error: {error}")
 
         if isinstance(error, send_msg):
-            return await ctx.send(embed=Embed(error))
+            await ctx.send(embed=Embed(error))
+            return
 
         if isinstance(error, commands.MissingRequiredArgument):
-            return await ctx.send(
+            await ctx.send(
                 embed=Embed(f"{str(error).capitalize()} {ctx.command.usage or ''}")
             )
+            return
 
         await ctx.send(
             embed=Embed(

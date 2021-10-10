@@ -8,5 +8,3 @@ trim_trailing_whitespace = true
 insert_final_newline = false
 
 [*.py]
-multi_line_output = 3
-include_trailing_comma = True

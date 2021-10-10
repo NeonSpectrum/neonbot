@@ -1,6 +1,6 @@
 __title__ = "NeonBot"
 __author__ = "NeonSpectrum"
-__version__ = "1.2.0"
+__version__ = "2.0.0"
 
 from .bot import Bot
 
