@@ -1,3 +1,4 @@
+import asyncio
 import inspect
 
 import discord
@@ -28,5 +29,12 @@ class View(discord.ui.View):
 
         return view
 
-    def on_timeout(self) -> None:
+    async def on_timeout(self) -> None:
         self.clear_items()
+        self.stop()
+
+        if self.msg:
+            await self.msg.edit(view=self)
+
+    def set_message(self, msg: discord.Message):
+        self.msg = msg

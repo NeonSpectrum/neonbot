@@ -93,6 +93,7 @@ class PaginationEmbed:
         buttons = self.get_buttons()
 
         self.msg = await self.ctx.send(embed=embed, view=buttons)
+        buttons.set_message(self.msg)
 
     def get_buttons(self) -> discord.ui.View:
         async def callback(button: discord.ui.Button, interaction: discord.Interaction):
