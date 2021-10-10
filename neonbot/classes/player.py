@@ -80,7 +80,7 @@ class Player:
         await self.disconnect()
 
     async def disconnect(self) -> None:
-        if self.connection.is_connected():
+        if self.connection and self.connection.is_connected():
             await self.connection.disconnect()
 
     async def repeat(self, mode) -> None:
