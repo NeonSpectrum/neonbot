@@ -45,15 +45,19 @@ class Database:
         self.db.servers.insert_one(
             {
                 "server_id": str(guild_id),
-                "prefix": env.str("DEFAULT_PREFIX", ";"),
-                "deleteoncmd": False,
+                "prefix": env.str("DEFAULT_PREFIX", "."),
+                "deleteoncmd": True,
                 "aliases": [],
-                "channel": {},
+                "channel": {
+                    "log": None,
+                    "voicetts": None,
+                    "debug": None,
+                    "msgdelete": None,
+                },
                 "music": {
                     "volume": 100,
                     "repeat": "off",
                     "shuffle": False,
-                    "roles": {},
                 },
             }
         )

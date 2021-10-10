@@ -176,10 +176,7 @@ class Player:
 
         log.cmd(self.ctx, f"Now playing {self.now_playing['title']}", user=self.now_playing['requested'])
 
-        await asyncio.gather(
-            self.bot.delete_message(self.messages['last_playing']),
-            self.bot.delete_message(self.messages['last_finished'])
-        )
+        await self.clear_playing_messages()
 
         footer = [
             str(self.now_playing['requested']),
@@ -212,10 +209,7 @@ class Player:
             user=self.previous_track['requested'],
         )
 
-        await asyncio.gather(
-            self.bot.delete_message(self.messages['last_playing']),
-            self.bot.delete_message(self.messages['last_finished'])
-        )
+        await self.clear_playing_messages()
 
         footer = self.get_footer(self.previous_track)
 
@@ -229,7 +223,7 @@ class Player:
         )
 
         self.messages['last_finished'] = await self.ctx.send(
-            embed=embed, view=self.player_controls(), delete_after=delete_after
+            embed=embed, view=self.player_controls() if delete_after is None else None, delete_after=delete_after
         )
 
     def process_repeat(self) -> bool:
@@ -417,7 +411,11 @@ class Player:
             if button.emoji.name == "▶️": # play
                 button.emoji = "⏸️"
                 await message.edit(view=button.view)
-                await self.resume()
+                if self.connection.is_paused():
+                    await self.resume()
+                else:
+                    self.current_queue = 0
+                    await self.play()
             elif button.emoji.name == "⏸️": # pause
                 button.emoji = "▶️"
                 await message.edit(view=button.view)
@@ -458,3 +456,11 @@ class Player:
             f"Repeat: {self.config['repeat']}",
             f"Shuffle: {'on' if self.config['shuffle'] else 'off'}",
         ]
+
+    async def clear_playing_messages(self):
+        await asyncio.gather(
+            self.bot.delete_message(self.messages['last_playing']),
+            self.bot.delete_message(self.messages['last_finished'])
+        )
+        self.messages['last_playing'] = None
+        self.messages['last_finished'] = None
