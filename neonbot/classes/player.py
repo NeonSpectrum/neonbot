@@ -441,7 +441,7 @@ class Player:
         ]]
         update_buttons(buttons)
 
-        return View.create_button(buttons, callback)
+        return View.create_button(buttons, callback, timeout=None)
 
     def update_config(self, key: str, value: Union[str, int]) -> None:
         self.db.set('music', {key: value})

@@ -19,8 +19,8 @@ class Button(discord.ui.Button):
 
 class View(discord.ui.View):
     @staticmethod
-    def create_button(data, callback):
-        view = View()
+    def create_button(data, callback, *, timeout=180):
+        view = View(timeout=timeout)
 
         for row in data:
             row['callback'] = callback
