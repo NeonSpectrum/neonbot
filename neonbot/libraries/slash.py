@@ -256,8 +256,6 @@ def _add_commands(bot_commands, command_list, choices, hidden, client):
 
         if "*ADMINISTRATOR" not in command['description'] and "*BOT_OWNER" not in command['description']:
             command_list.append(command)
-        else:
-            hidden.append(command['name'])
 
     for x in command_list:
         w = _post_sync(f"https://discord.com/api/v9/applications/{client.user.id}/commands", json_dict=x,
