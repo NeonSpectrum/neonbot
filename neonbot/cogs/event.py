@@ -103,7 +103,7 @@ class Event(commands.Cog):
                 content = '\n'.join([content] + [attachment.proxy_url for attachment in message.attachments])
 
             embed = Embed(f"**{message.author}**\n{content}")
-            embed.set_author(name="Message Deletion", icon_url=bot.user.avatar.url)
+            embed.set_author(name="Message Deletion", icon_url=bot.user.display_avatar)
             embed.set_footer(text=date_format())
             await log_channel.send(embed=embed)
 
@@ -150,7 +150,7 @@ class Event(commands.Cog):
             if log_channel and readable:
                 embed = Embed(f":bust_in_silhouette:{msg}")
                 embed.set_author(
-                    name="Voice Presence Update", icon_url=bot.user.avatar.url
+                    name="Voice Presence Update", icon_url=bot.user.display_avatar
                 )
                 embed.set_footer(text=date_format())
                 await log_channel.send(embed=embed)
@@ -168,7 +168,7 @@ class Event(commands.Cog):
         embed.set_footer(text=date_format())
 
         if before.status != after.status:
-            embed.set_author(name="User Presence Update", icon_url=bot.user.avatar.url)
+            embed.set_author(name="User Presence Update", icon_url=bot.user.display_avatar)
             msg = f"**{before.name}** is now **{after.status}**."
             embed.description = f":bust_in_silhouette:{msg}"
         elif before.activities != after.activities:
@@ -186,7 +186,7 @@ class Event(commands.Cog):
 
             embed.description = f":bust_in_silhouette:**{before.name}** is"
             embed.set_author(
-                name="Activity Presence Update", icon_url=bot.user.avatar.url
+                name="Activity Presence Update", icon_url=bot.user.display_avatar
             )
 
             if isinstance(current, discord.Spotify):
@@ -230,7 +230,7 @@ class Event(commands.Cog):
 
         if channel:
             embed = Embed(f":bust_in_silhouette:{msg}")
-            embed.set_author(name="Member Join", icon_url=bot.user.avatar.url)
+            embed.set_author(name="Member Join", icon_url=bot.user.display_avatar)
             embed.set_footer(text=date_format())
             await channel.send(embed=embed)
 
@@ -244,7 +244,7 @@ class Event(commands.Cog):
 
         if channel:
             embed = Embed(f":bust_in_silhouette:{msg}")
-            embed.set_author(name="Member Leave", icon_url=bot.user.avatar.url)
+            embed.set_author(name="Member Leave", icon_url=bot.user.display_avatar)
             embed.set_footer(text=date_format())
             await channel.send(embed=embed)
 

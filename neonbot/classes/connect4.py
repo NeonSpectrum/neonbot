@@ -160,7 +160,7 @@ class Connect4:
                 )
         embed.description = "\n".join(["".join(b) for b in board])
         embed.set_footer(
-            text=f"Started by {self.players[0]}", icon_url=self.players[0].avatar.url
+            text=f"Started by {self.players[0]}", icon_url=self.players[0].display_avatar
         )
 
         await self.bot.delete_message(self.last_board_message)

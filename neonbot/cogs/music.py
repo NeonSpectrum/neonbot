@@ -164,7 +164,7 @@ class Music(commands.Cog):
         embed.set_author(
             name=f"Removed song #{index + 1}", icon_url="https://i.imgur.com/SBMH84I.png"
         )
-        embed.set_footer(text=queue['requested'], icon_url=queue['requested'].avatar.url)
+        embed.set_footer(text=queue['requested'], icon_url=queue['requested'].display_avatar)
 
         await ctx.send(embed=embed, delete_after=5)
 
@@ -265,7 +265,7 @@ class Music(commands.Cog):
         )
         embed.set_thumbnail(url=now_playing['thumbnail'])
         embed.set_footer(
-            text=" | ".join(footer), icon_url=now_playing['requested'].avatar.url
+            text=" | ".join(footer), icon_url=now_playing['requested'].display_avatar
         )
         await ctx.send(embed=embed)
 
@@ -310,7 +310,7 @@ class Music(commands.Cog):
             name="Player Queue", icon_url="https://i.imgur.com/SBMH84I.png"
         )
         pagination.embed.set_footer(
-            text=" | ".join(footer), icon_url=self.bot.user.avatar.url
+            text=" | ".join(footer), icon_url=self.bot.user.display_avatar
         )
         await pagination.build()
 

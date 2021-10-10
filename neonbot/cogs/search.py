@@ -67,7 +67,7 @@ class Search(commands.Cog):
             icon_url="https://i.imgur.com/G46fm8J.png",
         )
         embed.set_footer(
-            text=f"Searched by {ctx.author}", icon_url=ctx.author.avatar.url
+            text=f"Searched by {ctx.author}", icon_url=ctx.author.display_avatar
         )
         embed.set_image(url=image["items"][0].link)
 
@@ -118,7 +118,7 @@ class Search(commands.Cog):
             icon_url="https://dictionaryapi.com/images/MWLogo.png",
         )
         embed.set_footer(
-            text=f"Searched by {ctx.author}", icon_url=ctx.author.avatar.url
+            text=f"Searched by {ctx.author}", icon_url=ctx.author.display_avatar
         )
 
         await self.bot.delete_message(msg)

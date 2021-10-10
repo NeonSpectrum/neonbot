@@ -192,7 +192,7 @@ class Player:
             icon_url="https://i.imgur.com/SBMH84I.png",
         )
         embed.set_footer(
-            text=" | ".join(footer), icon_url=self.now_playing['requested'].avatar.url
+            text=" | ".join(footer), icon_url=self.now_playing['requested'].display_avatar
         )
 
         self.messages['last_playing'] = await self.ctx.send(
@@ -219,7 +219,7 @@ class Player:
             icon_url="https://i.imgur.com/SBMH84I.png",
         )
         embed.set_footer(
-            text=" | ".join(footer), icon_url=self.previous_track['requested'].avatar.url
+            text=" | ".join(footer), icon_url=self.previous_track['requested'].display_avatar
         )
 
         self.messages['last_finished'] = await self.ctx.send(

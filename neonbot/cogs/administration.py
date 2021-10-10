@@ -82,7 +82,7 @@ class Administration(commands.Cog):
                 name="Python Interpreter", icon_url="https://i.imgur.com/vzcWouB.png"
             )
             pagination.embed.set_footer(
-                text=f"Executed by {ctx.author}", icon_url=ctx.author.avatar.url
+                text=f"Executed by {ctx.author}", icon_url=ctx.author.display_avatar
             )
             await pagination.build()
 
