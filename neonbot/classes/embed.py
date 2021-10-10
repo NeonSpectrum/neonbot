@@ -15,7 +15,7 @@ class Embed(discord.Embed):
             super().__init__(description=description and str(description), **kwargs)
         else:
             super().__init__(**kwargs)
-        self.color = 0x59ABE3
+        self.color = 0xE91E63
 
     def add_field(self, name: Any, value: Any, *, inline: bool = True) -> Embed:
         super().add_field(name=name, value=value, inline=inline)
