@@ -24,6 +24,7 @@ emoji = "*"
 aioschedule = "*"
 yt-dlp = "*"
 addict = "*"
+discordpy-slash = "*"
 
 [pipenv]
 allow_prereleases = true

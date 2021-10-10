@@ -6,6 +6,7 @@ from typing import List, Optional, Tuple, Union, cast
 import discord
 from discord.ext import commands
 from discord.utils import escape_markdown
+from discordpy_slash.slash import sync_all_commands
 
 from .utility import chatbot
 from .. import bot
@@ -47,6 +48,7 @@ class Event(commands.Cog):
         #bot.db.process_database(bot.guilds)
         log.info("Ready!\n")
         await bot.send_restart_message()
+        await sync_all_commands(bot)
 
     @staticmethod
     @bot.event
