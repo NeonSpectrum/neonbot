@@ -19,8 +19,8 @@ intent_enabled = False
 
 
 def _create_info(command, choices):
-    description = command.description or command.help
-    if description == "":
+    description = command.help
+    if not description:
         description = "No description provided"
     options = []
     command_choices = None
@@ -247,7 +247,10 @@ class Button:
 
 def _add_commands(bot_commands, command_list, choices, hidden, client):
     for x in bot_commands:
-        command_list.append(_create_info(x, choices))
+        command = _create_info(x, choices)
+
+        if "*ADMINISTRATOR" not in command['description'] and "*BOT_OWNER" not in command['description']:
+            command_list.append(command)
 
     for x in command_list:
         w = _post_sync(f"https://discord.com/api/v9/applications/{client.user.id}/commands", json_dict=x,

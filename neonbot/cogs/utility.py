@@ -110,6 +110,8 @@ class Utility(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def sms(self, ctx: commands.Context, number: str, *, message: str) -> None:
+        """Send SMS using NeonBot. *BOT_OWNER"""
+
         def generate_embed():
             embed = Embed()
             embed.set_author(name="✉ SMS")

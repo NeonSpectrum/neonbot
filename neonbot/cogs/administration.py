@@ -122,10 +122,7 @@ class Administration(commands.Cog):
         member: Optional[discord.Member] = None,
         count: int = 1,
     ) -> None:
-        """
-        Deletes a number of messages. *MANAGE_MESSAGES
-        If member is specified, it will delete message of that member.
-        """
+        """Deletes a number of messages of a specific member (if specified). *MANAGE_MESSAGES"""
 
         guild = self.db.get_guild(ctx.guild.id)
 
@@ -273,9 +270,7 @@ class Administration(commands.Cog):
     @commands.guild_only()
     async def deleteoncmd(self, ctx: commands.Context) -> None:
         """
-        Enables/Disables delete on cmd. *BOT_OWNER
-
-        If enabled, it will delete the command message of the user.
+        Enables/Disables the deletion of message after execution. *BOT_OWNER
         """
 
         guild = self.db.get_guild(ctx.guild.id)
@@ -291,13 +286,7 @@ class Administration(commands.Cog):
     @commands.has_guild_permissions(administrator=True)
     @commands.guild_only()
     async def voicetts(self, ctx: commands.Context) -> None:
-        """
-        Enables/Disables Voice TTS. *ADMINISTRATOR
-
-        If enabled, the bot will send a tts message if someone joins/leaves a voice channel.
-
-        Note: The message will be sent to the current channel this command last executed.
-        """
+        """Enables/Disables Voice TTS. *ADMINISTRATOR"""
 
         guild = self.db.get_guild(ctx.guild.id)
         guild.update({
@@ -315,24 +304,13 @@ class Administration(commands.Cog):
     @commands.has_guild_permissions(administrator=True)
     @commands.guild_only()
     async def logger(self, ctx: commands.Context) -> None:
-        """
-        Enables/Disables Logger. *ADMINISTRATOR
-        """
+        """Enables/Disables Logger. *ADMINISTRATOR"""
 
         await ctx.send(embed=Embed("Incomplete command. <presence | message>"))
 
     @logger.command(name="presence")
     async def logger_presence(self, ctx: commands.Context) -> None:
-        """
-        Logs presence.
-
-        If enabled, the bot will log the following:
-            - If someone joins/leaves the guild.
-            - If someone joins/leaves the voice channel.
-            - If someone updates his/her status or presence.
-
-        Note: The message will be sent to the current channel this command last executed.
-        """
+        """Logs presence when someone joins/leaves the guild or voice channel and status updates."""
 
         guild = self.db.get_guild(ctx.guild.id)
         guild.update({
@@ -349,12 +327,7 @@ class Administration(commands.Cog):
     @logger.command(name="message")
     async def logger_message(self, ctx: commands.Context) -> None:
         """
-        Logs messages.
-
-        If enabled, the bot will log the following:
-            - If someone delete his message.
-
-        Note: The message will be sent to the current channel this command last executed.
+        Logs messages when someone delete his message.
         """
 
         guild = self.db.get_guild(ctx.guild.id)
