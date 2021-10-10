@@ -213,7 +213,7 @@ class EmbedChoices:
             if button.emoji and button.emoji.name == CHOICES_EMOJI[-1]:
                 self.value = -1
             else:
-                self.value = int(button.label)
+                self.value = int(button.label) - 1
 
             button.view.stop()
             await self.bot.delete_message(self.msg)
