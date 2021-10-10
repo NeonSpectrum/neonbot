@@ -23,6 +23,7 @@ jikanpy = "*"
 emoji = "*"
 aioschedule = "*"
 yt-dlp = "*"
+addict = "*"
 
 [pipenv]
 allow_prereleases = true

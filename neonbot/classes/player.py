@@ -1,14 +1,15 @@
 import asyncio
 import logging
 import random
-from typing import List, Optional, Union, cast, Dict
+from typing import List, Optional, Union, Dict, cast
 
 import discord
+from addict import Dict as DictToObject
 from discord.ext import commands, tasks
 
 from . import Embed, EmbedChoices
 from .spotify import Spotify
-from .view import Button, View
+from .view import View
 from .ytdl import Ytdl
 from ..helpers.constants import FFMPEG_OPTIONS
 from ..helpers.date import format_seconds
@@ -178,25 +179,8 @@ class Player:
 
         await self.clear_playing_messages()
 
-        footer = [
-            str(self.now_playing['requested']),
-            format_seconds(self.now_playing['duration']) if self.now_playing['duration'] else "N/A",
-            f"Volume: {self.config['volume']}%",
-            f"Repeat: {self.config['repeat']}",
-            f"Shuffle: {'on' if self.config['shuffle'] else 'off'}",
-        ]
-
-        embed = Embed(title=self.now_playing['title'], url=self.now_playing['url'])
-        embed.set_author(
-            name=f"Now Playing #{self.current_queue + 1}",
-            icon_url="https://i.imgur.com/SBMH84I.png",
-        )
-        embed.set_footer(
-            text=" | ".join(footer), icon_url=self.now_playing['requested'].display_avatar
-        )
-
         self.messages['last_playing'] = await self.ctx.send(
-            embed=embed, view=self.player_controls(), delete_after=delete_after
+            embed=self.get_playing_embed(), view=self.player_controls(), delete_after=delete_after
         )
 
     async def finished_message(self, *, delete_after: Optional[int] = None) -> None:
@@ -211,19 +195,10 @@ class Player:
 
         await self.clear_playing_messages()
 
-        footer = self.get_footer(self.previous_track)
-
-        embed = Embed(title=self.previous_track['title'], url=self.previous_track['url'])
-        embed.set_author(
-            name=f"Finished Playing #{self.current_queue + 1}",
-            icon_url="https://i.imgur.com/SBMH84I.png",
-        )
-        embed.set_footer(
-            text=" | ".join(footer), icon_url=self.previous_track['requested'].display_avatar
-        )
-
         self.messages['last_finished'] = await self.ctx.send(
-            embed=embed, view=self.player_controls() if delete_after is None else None, delete_after=delete_after
+            embed=self.get_finished_embed(),
+            view=self.player_controls() if delete_after is None else None,
+            delete_after=delete_after
         )
 
     def process_repeat(self) -> bool:
@@ -355,7 +330,7 @@ class Player:
         await self.bot.delete_message(msg)
 
         await self.ctx.send(embed=Embed(
-            title=f"You have selected #{choice}. Adding song to queue #{len(self.queue) + 1}",
+            title=f"You have selected #{choice + 1}. Adding song to queue #{len(self.queue) + 1}",
             description=info['title'],
         ), delete_after=5)
 
@@ -405,47 +380,73 @@ class Player:
             self.queue.append(info)
 
     def player_controls(self):
-        async def callback(button: discord.ui.Button, interaction: discord.Interaction):
-            message = self.messages['last_playing'] or self.messages['last_finished']
+        def update_buttons(views):
+            for view in views:
+                view.style = discord.ButtonStyle.primary
 
-            if button.emoji.name == "▶️": # play
+            if self.config['repeat'] == 'off':
+                views[4].emoji = "🔁"
+                views[4].style = discord.ButtonStyle.secondary
+            elif self.config['repeat'] == 'single':
+                views[4].emoji = "🔂"
+                views[4].style = discord.ButtonStyle.primary
+            elif self.config['repeat'] == 'all':
+                views[4].emoji = "🔁"
+                views[4].style = discord.ButtonStyle.primary
+
+            views[0].style = discord.ButtonStyle.primary if self.config['shuffle'] else discord.ButtonStyle.secondary
+
+            return views
+
+        async def callback(button: discord.ui.Button, interaction: discord.Interaction):
+            async def refresh_message():
+                button.view.children = update_buttons(button.view.children)
+
+                if self.messages['last_playing']:
+                    await self.messages['last_playing'].edit(embed=self.get_playing_embed(), view=button.view)
+                elif self.messages['last_finished']:
+                    await self.messages['last_finished'].edit(embed=self.get_finished_embed(), view=button.view)
+
+            if button.emoji.name == "▶️":  # play
                 button.emoji = "⏸️"
-                await message.edit(view=button.view)
+                await refresh_message()
                 if self.connection.is_paused():
                     await self.resume()
                 else:
                     self.current_queue = 0
                     await self.play()
-            elif button.emoji.name == "⏸️": # pause
+            elif button.emoji.name == "⏸️":  # pause
                 button.emoji = "▶️"
-                await message.edit(view=button.view)
+                await refresh_message()
                 await self.pause()
-            elif button.emoji.name == "⏮️": # prev
-                await self.next(index=self.previous_track['index'])
-            elif button.emoji.name == "⏭️": # next
+            elif button.emoji.name == "⏮️":  # prev
+                await self.next(index=self.current_queue - 1)
+            elif button.emoji.name == "⏭️":  # next
                 self.connection.stop()
-            elif button.emoji.name == "🔁": # repeat
+            elif button.emoji.name in ("🔁", "🔂"):  # repeat
                 modes = ["off", "single", "all"]
                 index = (modes.index(self.config['repeat']) + 1) % 3
                 await self.repeat(modes[index])
-            elif button.emoji.name == "🔀": # shuffle
+                await refresh_message()
+            elif button.emoji.name == "🔀":  # shuffle
                 await self.shuffle()
+                await refresh_message()
 
-        buttons = [
+        buttons = [DictToObject(row) for row in [
+            {"emoji": "🔀"},
+            {"emoji": "⏮️", "disabled": self.current_queue == 0},
             {"emoji": "⏸️" if self.connection.is_playing() else "▶️"},
             {"emoji": "⏭️"},
             {"emoji": "🔁"},
-            {"emoji": "🔀"},
-        ]
-
-        if self.previous_track:
-            buttons.insert(1, {"emoji": "⏮️"})
+        ]]
+        update_buttons(buttons)
 
         return View.create_button(buttons, callback)
 
-
     def update_config(self, key: str, value: Union[str, int]) -> None:
-        self.db.set('music', { key: value })
+        self.db.set('music', {key: value})
+        self.db.save()
+
         self.config = self.db.get('music')
 
     def get_footer(self, now_playing):
@@ -457,10 +458,46 @@ class Player:
             f"Shuffle: {'on' if self.config['shuffle'] else 'off'}",
         ]
 
+    def get_playing_embed(self):
+        footer = [
+            str(self.now_playing['requested']),
+            format_seconds(self.now_playing['duration']) if self.now_playing['duration'] else "N/A",
+            f"Volume: {self.config['volume']}%",
+            f"Repeat: {self.config['repeat']}",
+            f"Shuffle: {'on' if self.config['shuffle'] else 'off'}",
+        ]
+
+        embed = Embed(title=self.now_playing['title'], url=self.now_playing['url'])
+        embed.set_author(
+            name=f"Now Playing #{self.current_queue + 1}",
+            icon_url="https://i.imgur.com/SBMH84I.png",
+        )
+        embed.set_footer(
+            text=" | ".join(footer), icon_url=self.now_playing['requested'].display_avatar
+        )
+
+        return embed
+
+    def get_finished_embed(self):
+        footer = self.get_footer(self.previous_track)
+
+        embed = Embed(title=self.previous_track['title'], url=self.previous_track['url'])
+        embed.set_author(
+            name=f"Finished Playing #{self.current_queue + 1}",
+            icon_url="https://i.imgur.com/SBMH84I.png",
+        )
+        embed.set_footer(
+            text=" | ".join(footer), icon_url=self.previous_track['requested'].display_avatar
+        )
+
+        return embed
+
     async def clear_playing_messages(self):
         await asyncio.gather(
             self.bot.delete_message(self.messages['last_playing']),
-            self.bot.delete_message(self.messages['last_finished'])
+            self.bot.delete_message(self.messages['last_finished']),
+            self.bot.delete_message(self.messages['paused']),
+            self.bot.delete_message(self.messages['resumed'])
         )
         self.messages['last_playing'] = None
         self.messages['last_finished'] = None
