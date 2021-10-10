@@ -16,10 +16,10 @@ class Button(discord.ui.Button):
         if inspect.iscoroutinefunction(self._callback):
             await self._callback(self, interaction)
 
-class View:
+class View(discord.ui.View):
     @staticmethod
     def create_button(data, callback):
-        view = discord.ui.View()
+        view = View()
 
         for row in data:
             row['callback'] = callback
@@ -27,3 +27,6 @@ class View:
             view.add_item(button)
 
         return view
+
+    def on_timeout(self) -> None:
+        self.clear_items()

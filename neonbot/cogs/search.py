@@ -58,7 +58,7 @@ class Search(commands.Cog):
 
         await self.bot.delete_message(msg)
 
-        if image.error:
+        if image['error']:
             raise ApiError(image["error"]["message"])
 
         embed = Embed()
@@ -417,7 +417,7 @@ class Search(commands.Cog):
             await ctx.send(embed=Embed("Anime not found."), delete_after=5)
             return
 
-        anime = await jikan._get("anime", results[0].mal_id, None)
+        anime = await jikan._get("anime", results[0]['mal_id'], None)
         await jikan.close()
 
         if anime['title_english'] and not anime['title_japanese']:
@@ -427,12 +427,13 @@ class Search(commands.Cog):
         else:
             title = f"{anime['title_english']} ({anime['title_japanese']})"
 
+        print(anime)
         embed = Embed()
         embed.set_author(name=title, url=anime['url'])
         embed.set_thumbnail(url=anime['image_url'])
         embed.set_footer(
             text="Powered by MyAnimeList",
-            icon_url="https://cdn.myanime['ist'].net/images/faviconv5.ico",
+            icon_url="https://i.imgur.com/XMQsLF5.png",
         )
         embed.add_field(
             name="Synopsis",
@@ -445,7 +446,7 @@ class Search(commands.Cog):
         embed.add_field("Rank", anime['rank'])
         embed.add_field("Status", anime['status'])
         embed.add_field("Aired", anime['aired']['string'])
-        embed.add_field("Genres", ", ".join([genre.name for genre in anime['genres']]))
+        embed.add_field("Genres", ", ".join([genre['name'] for genre in anime['genres']]))
 
         await self.bot.delete_message(loading_msg)
         await ctx.send(embed=embed)
@@ -462,14 +463,14 @@ class Search(commands.Cog):
         for i in range(0, len(result), 10):
             temp = []
             for index, value in enumerate(result[i: i + 10]):
-                temp.append(f"`{i + index + 1}.` [{value.title}]({value.url})")
+                temp.append(f"`{i + index + 1}.` [{value['title']}]({value['url']})")
             embeds.append(Embed("\n".join(temp)))
 
         pagination = PaginationEmbed(ctx, embeds=embeds)
         pagination.embed.title = ":trophy: Top 50 Anime"
         pagination.embed.set_footer(
             text="Powered by MyAnimeList",
-            icon_url="https://cdn.myanimelist.net/images/faviconv5.ico",
+            icon_url="https://i.imgur.com/XMQsLF5.png",
         )
         await pagination.build()
 
@@ -485,14 +486,14 @@ class Search(commands.Cog):
         for i in range(0, len(result), 10):
             temp = []
             for index, value in enumerate(result[i: i + 10], i):
-                temp.append(f"`{index + 1}.` [{value.title}]({value.url})")
+                temp.append(f"`{index + 1}.` [{value['title']}]({value['url']})")
             embeds.append(Embed("\n".join(temp)))
 
         pagination = PaginationEmbed(ctx, embeds=embeds)
         pagination.embed.title = ":clock3: Upcoming Anime"
         pagination.embed.set_footer(
             text="Powered by MyAnimeList",
-            icon_url="https://cdn.myanimelist.net/images/faviconv5.ico",
+            icon_url="https://i.imgur.com/XMQsLF5.png",
         )
         await pagination.build()
 
