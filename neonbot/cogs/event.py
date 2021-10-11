@@ -6,7 +6,6 @@ from typing import List, Optional, Tuple, Union, cast
 import discord
 from discord.ext import commands
 from discord.utils import escape_markdown
-from ..libraries.slash import sync_all_commands
 
 from .utility import chatbot
 from .. import bot

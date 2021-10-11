@@ -13,7 +13,6 @@ from ..classes import Embed, PaginationEmbed
 from ..classes.converters import Required
 from ..helpers.log import Log
 from ..helpers.utils import convert_to_seconds, shell_exec
-from ..libraries.slash import sync_all_commands
 
 log = cast(Log, logging.getLogger(__name__))
 
@@ -437,16 +436,6 @@ class Administration(commands.Cog):
 
         await member.edit(mute=False, reason=reason)
         await ctx.send(embed=Embed(f"{member} has been unmuted."))
-
-    @commands.command()
-    @commands.is_owner()
-    async def updateslash(self, ctx: commands.Context) -> None:
-        """Update slash commands. *BOT_OWNER"""
-
-        msg = await ctx.send(embed=Embed('Updating slash commands...'))
-        await sync_all_commands(self.bot)
-
-        await self.bot.edit_message(msg, embed=Embed('Done updating slash commands.'))
 
 
 def setup(bot: commands.Bot) -> None:
