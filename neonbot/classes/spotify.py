@@ -29,7 +29,7 @@ class Spotify:
                 "Content-Type": "application/x-www-form-urlencoded",
             },
         )
-        data = await res.data()
+        data = await res.json()
 
         if data['error_description']:
             raise ApiError(data['error_description'])
