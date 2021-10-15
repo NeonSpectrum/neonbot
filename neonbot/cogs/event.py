@@ -122,8 +122,8 @@ class Event(commands.Cog):
         if player and player.last_voice_channel == voice_channel:
             voice_members = [
                 member
-                for member in voice_channel.members
-                if not member.bot and not member.voice.self_deaf
+                for member in player.last_voice_channel.members
+                if not member.bot
             ]
 
             if not voice_members:

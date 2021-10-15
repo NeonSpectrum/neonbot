@@ -68,7 +68,7 @@ class Music(commands.Cog):
                     player.current_queue = index - 1
             elif re.search(YOUTUBE_REGEX, keyword):
                 await player.process_youtube(keyword)
-            elif re.search(SPOTIFY_REGEX, keyword):
+        elif re.search(SPOTIFY_REGEX, keyword):
                 await player.process_spotify(keyword)
             elif keyword:
                 await player.process_search(keyword)
@@ -78,7 +78,7 @@ class Music(commands.Cog):
 
         if any(player.queue) and not ctx.voice_client:
             player.connection = await ctx.author.voice.channel.connect()
-            player.last_voice_channel = player.connection.channel
+            player.last_voice_channel = ctx.author.voice.channel
             log.cmd(ctx, f"Connected to {ctx.author.voice.channel}.")
 
         if player.connection and not player.connection.is_playing():

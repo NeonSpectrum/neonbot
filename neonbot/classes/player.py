@@ -266,7 +266,7 @@ class Player:
 
     async def process_spotify(self, url: str) -> None:
         url = self.spotify.parse_url(url)
-        ytdl = self.ytdl.create({"default_search": "ytsearch1"})
+        ytdl = self.ytdl.create(self.bot, {"default_search": "ytsearch1"})
 
         if not url:
             await self.ctx.send(embed=Embed("Invalid spotify url."), delete_after=5)

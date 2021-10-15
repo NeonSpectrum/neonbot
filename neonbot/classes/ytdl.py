@@ -104,5 +104,5 @@ class Ytdl:
         return parse_entry(info) if info else None
 
     @classmethod
-    def create(cls, extra_params) -> Ytdl:
-        return cls(extra_params)
+    def create(cls, bot, extra_params) -> Ytdl:
+        return cls(bot, extra_params)
