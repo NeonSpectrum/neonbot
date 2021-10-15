@@ -68,7 +68,7 @@ class Music(commands.Cog):
                     player.current_queue = index - 1
             elif re.search(YOUTUBE_REGEX, keyword):
                 await player.process_youtube(keyword)
-        elif re.search(SPOTIFY_REGEX, keyword):
+            elif re.search(SPOTIFY_REGEX, keyword):
                 await player.process_spotify(keyword)
             elif keyword:
                 await player.process_search(keyword)
