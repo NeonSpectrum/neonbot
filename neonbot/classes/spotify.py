@@ -31,11 +31,11 @@ class Spotify:
         )
         data = await res.json()
 
-        if data['error_description']:
+        if data.get('error_description'):
             raise ApiError(data['error_description'])
 
-        Spotify.CREDENTIALS['token'] = data.access_token
-        Spotify.CREDENTIALS['expiration'] = time() + data.expires_in - 600
+        Spotify.CREDENTIALS['token'] = data['access_token']
+        Spotify.CREDENTIALS['expiration'] = time() + data['expires_in'] - 600
 
         return Spotify.CREDENTIALS['token']
 
@@ -49,7 +49,7 @@ class Spotify:
 
         try:
             if hostname == "open.spotify.com" or "open.spotify.com" in path:
-                url_type, url_id = path.split("/")[1:3]
+                url_type, url_id = path.split("/")[-2:]
             elif scheme == "spotify":
                 url_type, url_id = path.split(":")
             if not url_type or not url_id:

@@ -280,7 +280,7 @@ class Player:
             ytdl_list = []
 
             for item in playlist:
-                info = await ytdl.extract_info(f"{item.track.name} {item.track.artists[0].name}")
+                info = await ytdl.extract_info(f"{item['track']['name']} {item['track']['artists'][0]['name']}")
 
                 if len(info) == 0:
                     error += 1
@@ -300,7 +300,9 @@ class Player:
                 await self.ctx.send(embed=Embed(f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue."))
 
         else:
+            print(url)
             track = await self.spotify.get_track(url['id'])
+            print(track)
             info = await ytdl.extract_info(f"{track['artists'][0]['name']} {track['name']}")
 
             self.add_to_queue(info)
