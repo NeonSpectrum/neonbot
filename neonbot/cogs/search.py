@@ -69,7 +69,7 @@ class Search(commands.Cog):
         embed.set_footer(
             text=f"Searched by {ctx.author}", icon_url=ctx.author.display_avatar
         )
-        embed.set_image(url=image["items"][0].link)
+        embed.set_image(url=image["items"][0]['link'])
 
         await ctx.send(embed=embed)
 
