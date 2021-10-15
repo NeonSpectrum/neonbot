@@ -300,10 +300,11 @@ class Player:
             if error > 0:
                 await self.ctx.send(
                     embed=Embed(
-                        f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue. {error} failed to load.")
+                        f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue. {error} failed to load."),
+                    delete_after=10
                 )
             else:
-                await self.ctx.send(embed=Embed(f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue."))
+                await self.ctx.send(embed=Embed(f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue."), delete_after=10)
 
         else:
             track = await self.spotify.get_track(url['id'])

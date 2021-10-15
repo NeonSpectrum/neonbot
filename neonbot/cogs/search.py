@@ -58,7 +58,7 @@ class Search(commands.Cog):
 
         await self.bot.delete_message(msg)
 
-        if image['error']:
+        if image.get('error'):
             raise ApiError(image["error"]["message"])
 
         embed = Embed()

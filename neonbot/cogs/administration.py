@@ -48,7 +48,7 @@ class Administration(commands.Cog):
             "ctx": ctx,
             "players": self.bot.music,
             "player": self.bot.music.get(guild_id),
-            "config": self.db.get_guild(guild_id).config,
+            "guild": self.db.get_guild(guild_id),
             "rooms": self.bot.game,
             "room": self.bot.game.get(guild_id),
             "Embed": Embed,
