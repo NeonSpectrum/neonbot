@@ -123,6 +123,12 @@ class Player:
 
     async def play(self) -> None:
         try:
+            if not self.now_playing.get('stream'):
+                info = await self.ytdl.process_entry(self.now_playing)
+                info = self.ytdl.parse_info(info)
+                info['requested'] = self.now_playing['requested']
+                self.queue[self.current_queue] = info
+
             song = discord.FFmpegPCMAudio(
                 self.now_playing['stream'],
                 before_options=None if not self.now_playing['is_live'] else FFMPEG_OPTIONS,
@@ -300,9 +306,7 @@ class Player:
                 await self.ctx.send(embed=Embed(f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue."))
 
         else:
-            print(url)
             track = await self.spotify.get_track(url['id'])
-            print(track)
             info = await ytdl.extract_info(f"{track['artists'][0]['name']} {track['name']}")
 
             self.add_to_queue(info)
