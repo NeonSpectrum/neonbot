@@ -375,7 +375,7 @@ class Administration(commands.Cog):
         extensions = self.bot.extensions.keys() if ext is None else ["neonbot.cogs." + ext]
 
         try:
-            for extension in extensions:
+            for extension in list(extensions):
                 self.bot.reload_extension(extension)
         except Exception as e:
             await ctx.send(embed=Embed(str(e)))
