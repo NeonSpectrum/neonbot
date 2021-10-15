@@ -8,7 +8,7 @@ from ..helpers.exceptions import ApiError
 class Spotify:
     CREDENTIALS = {
         'token': None,
-        'expiration': None
+        'expiration': 0
     }
     BASE_URL = "https://api.spotify.com/v1"
 
@@ -17,9 +17,9 @@ class Spotify:
         self.client_id = bot.env.str("SPOTIFY_CLIENT_ID")
         self.client_secret = bot.env.str("SPOTIFY_CLIENT_SECRET")
 
-    async def get_token(self) -> str:
-        if Spotify.CREDENTIALS.expiration and time() < Spotify.CREDENTIALS.expiration:
-            return Spotify.CREDENTIALS.token
+    async def get_token(self) -> Optional[str]:
+        if Spotify.CREDENTIALS['expiration'] and time() < Spotify.CREDENTIALS['expiration']:
+            return Spotify.CREDENTIALS['token']
 
         res = await self.session.post(
             f"https://{self.client_id}:{self.client_secret}@accounts.spotify.com/api/token",
@@ -34,10 +34,10 @@ class Spotify:
         if data['error_description']:
             raise ApiError(data['error_description'])
 
-        Spotify.CREDENTIALS.token = data.access_token
-        Spotify.CREDENTIALS.expiration = time() + data.expires_in - 600
+        Spotify.CREDENTIALS['token'] = data.access_token
+        Spotify.CREDENTIALS['expiration'] = time() + data.expires_in - 600
 
-        return Spotify.CREDENTIALS.token
+        return Spotify.CREDENTIALS['token']
 
     def parse_url(self, url: str) -> Optional[dict]:
         parsed = urlparse(url)
