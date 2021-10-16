@@ -53,13 +53,28 @@ class Player:
         )
         self.timeout_pause = False
         self.previous_track = None
+        self.track_list: List[int] = [0]
+
+    @property
+    def is_latest_track(self):
+        return self.current_queue == len(self.track_list) - 1
 
     @property
     def now_playing(self) -> Union[dict, None]:
         try:
-            return self.queue[self.current_queue]
+            return {
+                "index": self.track_list[self.current_queue] + 1,
+                **self.queue[self.track_list[self.current_queue]]
+            }
         except IndexError:
             return None
+
+    @now_playing.setter
+    def now_playing(self, value) -> None:
+        try:
+            self.queue[self.track_list[self.current_queue]] = value
+        except IndexError:
+            pass
 
     async def stop(self) -> None:
         await self.next(stop=True)
@@ -122,12 +137,15 @@ class Player:
         self.messages['resumed'] = await self.ctx.send(embed=Embed("Player resumed."), delete_after=5)
 
     async def play(self) -> None:
+        print('track list: ', self.track_list)
+        print('current queue: ', self.current_queue)
+
         try:
             if not self.now_playing.get('stream'):
                 info = await self.ytdl.process_entry(self.now_playing)
                 info = self.ytdl.parse_info(info)
                 info['requested'] = self.now_playing['requested']
-                self.queue[self.current_queue] = info
+                self.now_playing = info
 
             song = discord.FFmpegPCMAudio(
                 self.now_playing['stream'],
@@ -149,33 +167,32 @@ class Player:
 
         await self.playing_message()
 
-    async def next(self, *, index: int = -1, stop: bool = False) -> None:
-        if not stop or (stop and self.connection.is_playing()):
-            self.previous_track = {"index": self.current_queue, **self.now_playing}
-            await self.finished_message(delete_after=5 if stop else None)
-
-        if stop or index != -1:
-            if self.connection._player:
-                self.connection._player.after = None
-
+    async def next(self, *, index: Optional[int] = None, stop: bool = False) -> None:
+        if self.connection._player:
+            self.connection._player.after = None
+        if self.connection.is_playing():
             self.connection.stop()
 
+        if not stop or (stop and self.connection.is_playing()):
+            await self.finished_message(delete_after=5 if stop else None)
+
+        if stop or index is not None:
             if stop:
                 await self.connection.disconnect()
                 await self.bot.delete_message(self.messages['last_playing'])
                 return
 
-            if index < len(self.queue):
-                self.current_queue = index
-                await self.play()
-                return
-
-            self.current_queue = index - 1
-
-        if self.process_shuffle() or self.process_repeat():
+            self.track_list.append(index)
+            self.current_queue = len(self.track_list) - 1
             await self.play()
-        # else:
-        #    await self.disconnect()
+            return
+
+        if not self.is_latest_track:
+            self.current_queue += 1
+        elif not (self.process_shuffle() or self.process_repeat()):
+            return
+
+        await self.play()
 
     async def playing_message(self, *, delete_after: Optional[int] = None) -> None:
         if not self.now_playing:
@@ -188,6 +205,7 @@ class Player:
         self.messages['last_playing'] = await self.ctx.send(
             embed=self.get_playing_embed(), view=self.player_controls(), delete_after=delete_after
         )
+        self.previous_track = self.now_playing
 
     async def finished_message(self, *, delete_after: Optional[int] = None) -> None:
         if not self.previous_track:
@@ -214,9 +232,10 @@ class Player:
             self.current_queue = 0
         elif is_last and self.config['repeat'] == "off":
             # reset queue to index 0 and stop playing
-            self.current_queue += 1
+            self.current_queue = 0
             return False
         elif self.config['repeat'] != "single":
+            self.track_list.append(self.current_queue + 1)
             self.current_queue += 1
 
         return True
@@ -236,7 +255,7 @@ class Player:
 
             index = random.randint(0, len(self.queue) - 1)
             if self.queue[index]['id'] not in self.shuffled_list or len(self.queue) <= 1:
-                self.current_queue = index
+                self.track_list.append(index)
                 return True
 
             counter += 1
@@ -427,9 +446,10 @@ class Player:
                 await refresh_message()
                 await self.pause()
             elif button.emoji.name == "⏮️":  # prev
-                await self.next(index=self.current_queue - 1)
+                self.current_queue -= 2
+                await self.next()
             elif button.emoji.name == "⏭️":  # next
-                self.connection.stop()
+                await self.next()
             elif button.emoji.name in ("🔁", "🔂"):  # repeat
                 modes = ["off", "single", "all"]
                 index = (modes.index(self.config['repeat']) + 1) % 3
@@ -461,8 +481,8 @@ class Player:
             str(now_playing['requested']),
             format_seconds(now_playing['duration']) if now_playing['duration'] else "N/A",
             f"Volume: {self.config['volume']}%",
-            f"Repeat: {self.config['repeat']}",
             f"Shuffle: {'on' if self.config['shuffle'] else 'off'}",
+            f"Repeat: {self.config['repeat']}",
         ]
 
     def get_playing_embed(self):
@@ -470,13 +490,13 @@ class Player:
             str(self.now_playing['requested']),
             format_seconds(self.now_playing['duration']) if self.now_playing['duration'] else "N/A",
             f"Volume: {self.config['volume']}%",
-            f"Repeat: {self.config['repeat']}",
             f"Shuffle: {'on' if self.config['shuffle'] else 'off'}",
+            f"Repeat: {self.config['repeat']}",
         ]
 
         embed = Embed(title=self.now_playing['title'], url=self.now_playing['url'])
         embed.set_author(
-            name=f"Now Playing #{self.current_queue + 1}",
+            name=f"Now Playing #{self.now_playing['index']}",
             icon_url="https://i.imgur.com/SBMH84I.png",
         )
         embed.set_footer(
@@ -490,7 +510,7 @@ class Player:
 
         embed = Embed(title=self.previous_track['title'], url=self.previous_track['url'])
         embed.set_author(
-            name=f"Finished Playing #{self.current_queue + 1}",
+            name=f"Finished Playing #{self.previous_track['index']}",
             icon_url="https://i.imgur.com/SBMH84I.png",
         )
         embed.set_footer(

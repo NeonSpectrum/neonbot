@@ -103,7 +103,6 @@ class Music(commands.Cog):
 
         player = get_player(ctx)
 
-
     @commands.command(aliases=["next"])
     @commands.guild_only()
     @commands.check(has_player)
@@ -159,6 +158,7 @@ class Music(commands.Cog):
             await ctx.send(
                 embed=Embed("There is no song in that index."), delete_after=5
             )
+            return
 
         embed = Embed(title=queue['title'], url=queue['url'])
         embed.set_author(
@@ -168,7 +168,7 @@ class Music(commands.Cog):
 
         await ctx.send(embed=embed, delete_after=5)
 
-        del player.queue[index]
+        player.queue[index] = None
 
         if index < player.current_queue:
             player.current_queue -= 1
@@ -176,7 +176,7 @@ class Music(commands.Cog):
             if not player.queue:
                 await player.next(stop=True)
             else:
-                await player.next(index=player.current_queue)
+                await player.next()
 
     @commands.command(aliases=["vol"], usage="<1 - 100>")
     @commands.guild_only()
@@ -301,8 +301,8 @@ class Music(commands.Cog):
             f"{plural(len(queue), 'song', 'songs')}",
             format_seconds(duration),
             f"Volume: {config['volume']}%",
-            f"Repeat: {config['repeat']}",
             f"Shuffle: {'on' if config['shuffle'] else 'off'}",
+            f"Repeat: {config['repeat']}",
         ]
 
         pagination = PaginationEmbed(ctx, embeds=embeds)

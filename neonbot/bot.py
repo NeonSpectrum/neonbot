@@ -51,7 +51,7 @@ class Bot(commands.Bot):
 
         schedule.every().day.at("06:00").do(self.auto_update_ytdl)
         self.loop.create_task(self.run_scheduler())
-        self.clear_youtube_dl_cache()
+        # self.clear_youtube_dl_cache()
 
     def set_storage(self) -> None:
         self.commands_executed: List[str] = []
