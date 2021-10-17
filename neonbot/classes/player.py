@@ -121,7 +121,7 @@ class Player:
         self.connection.pause()
         log.cmd(self.ctx, "Player paused.")
 
-        await self.bot.delete_message(self.messages['resumed'])
+        await self.bot.delete_message(self.messages['paused'], self.messages['resumed'])
         self.messages['paused'] = await self.ctx.send(
             embed=Embed(f"Player paused. `{self.ctx.prefix}resume` to resume.")
         )
@@ -133,7 +133,7 @@ class Player:
         self.connection.resume()
         log.cmd(self.ctx, "Player resumed.")
 
-        await self.bot.delete_message(self.messages['paused'])
+        await self.bot.delete_message(self.messages['paused'], self.messages['resumed'])
         self.messages['resumed'] = await self.ctx.send(embed=Embed("Player resumed."), delete_after=5)
 
     async def play(self) -> None:
@@ -520,11 +520,11 @@ class Player:
         return embed
 
     async def clear_playing_messages(self):
-        await asyncio.gather(
-            self.bot.delete_message(self.messages['last_playing']),
-            self.bot.delete_message(self.messages['last_finished']),
-            self.bot.delete_message(self.messages['paused']),
-            self.bot.delete_message(self.messages['resumed'])
+        await self.bot.delete_message(
+            self.messages['last_playing'],
+            self.messages['last_finished'],
+            self.messages['paused'],
+            self.messages['resumed']
         )
         self.messages['last_playing'] = None
         self.messages['last_finished'] = None

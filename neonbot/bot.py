@@ -198,12 +198,9 @@ class Bot(commands.Bot):
         except discord.NotFound:
             pass
 
-    async def delete_message(self, message: Union[discord.Message, None]) -> None:
-        if message is None:
-            return
-
+    async def delete_message(self, *messages: Union[discord.Message, None]) -> None:
         try:
-            await message.delete()
+            await asyncio.gather([message.delete() for message in messages if message is not None])
         except discord.NotFound:
             pass
 
