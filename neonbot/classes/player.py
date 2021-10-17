@@ -272,8 +272,8 @@ class Player:
         if isinstance(ytdl_list, list):
             info = []
             for entry in ytdl_list:
-                if entry.title != "[Deleted video]":
-                    entry.url = f"https://www.youtube.com/watch?v={entry.id}"
+                if entry['title'] != "[Deleted video]":
+                    entry['url'] = f"https://www.youtube.com/watch?v={entry['id']}"
                     info.append(entry)
 
             await self.ctx.send(embed=Embed(f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue."),
