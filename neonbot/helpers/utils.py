@@ -30,9 +30,3 @@ async def shell_exec(command: str) -> str:
     stdout, stderr = await process.communicate()
 
     return stdout.decode().strip()
-
-def get_index(arr: list, index: int) -> any:
-    try:
-        return arr[index]
-    except IndexError:
-        return None
