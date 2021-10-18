@@ -15,7 +15,7 @@ from ..helpers.constants import FFMPEG_OPTIONS
 from ..helpers.date import format_seconds
 from ..helpers.exceptions import YtdlError
 from ..helpers.log import Log
-from ..helpers.utils import plural, get_index
+from ..helpers.utils import plural
 
 log = cast(Log, logging.getLogger(__name__))
 
