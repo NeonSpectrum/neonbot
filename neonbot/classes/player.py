@@ -15,7 +15,7 @@ from ..helpers.constants import FFMPEG_OPTIONS
 from ..helpers.date import format_seconds
 from ..helpers.exceptions import YtdlError
 from ..helpers.log import Log
-from ..helpers.utils import plural
+from ..helpers.utils import plural, get_index
 
 log = cast(Log, logging.getLogger(__name__))
 
@@ -228,15 +228,15 @@ class Player:
     def process_repeat(self) -> bool:
         is_last = self.current_queue == len(self.queue) - 1
 
-        if is_last and self.config['repeat'] == "all":
-            self.current_queue = 0
-        elif is_last and self.config['repeat'] == "off":
-            # reset queue to index 0 and stop playing
-            self.current_queue = 0
+        if is_last and self.config['repeat'] == "off":
             return False
+
+        if is_last and self.config['repeat'] == "all":
+            self.track_list.append(0)
         elif self.config['repeat'] != "single":
             self.track_list.append(self.current_queue + 1)
-            self.current_queue += 1
+
+        self.current_queue += 1
 
         return True
 
