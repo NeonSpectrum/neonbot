@@ -234,7 +234,7 @@ class Player:
         if is_last and self.config['repeat'] == "all":
             self.track_list.append(0)
         elif self.config['repeat'] != "single":
-            self.track_list.append(self.track_list[self.current_queue + 1])
+            self.track_list.append(self.track_list[self.current_queue] + 1)
 
         self.current_queue += 1
 
