@@ -226,7 +226,7 @@ class Player:
         )
 
     def process_repeat(self) -> bool:
-        is_last = self.current_queue == len(self.queue) - 1
+        is_last = self.track_list[self.current_queue] == len(self.queue) - 1
 
         if is_last and self.config['repeat'] == "off":
             return False
