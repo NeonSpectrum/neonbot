@@ -6,10 +6,8 @@ from io import BytesIO
 from typing import Tuple
 
 import discord
-from addict import Dict
-from discord.ext import commands
 from PIL import Image, ImageEnhance
-
+from discord.ext import commands
 from pokemon.master import catch_em_all, get_pokemon
 
 from . import Embed
@@ -22,7 +20,7 @@ class Pokemon:
         self.bot = ctx.bot
         self.channel = ctx.channel
         self.status = 0
-        self.scoreboard = Dict()
+        self.scoreboard = dict()
         self.timed_out = False
 
     async def start(self) -> None:
@@ -87,7 +85,7 @@ class Pokemon:
             )
 
     async def get(self) -> Tuple[str, BytesIO, BytesIO]:
-        pokemon = Dict(list(get_pokemon(pokemons=pokemons).values())[0])
+        pokemon = list(get_pokemon(pokemons=pokemons).values())[0]
         res = await self.bot.session.get(
             f"https://gearoid.me/pokemon/images/artwork/{pokemon.id}.png"
         )
@@ -100,12 +98,11 @@ class Pokemon:
         enh.enhance(0).save(black_img, "PNG")
         black_img.seek(0)
 
-        return (pokemon.name, original_img, black_img)
+        return pokemon['name'], original_img, black_img
 
     async def show_scoreboard(self) -> None:
-        scoreboard = self.scoreboard
 
-        scores = sorted(scoreboard.items(), key=lambda kv: kv[1], reverse=True)
+        scores = sorted(self.scoreboard.items(), key=lambda kv: kv[1], reverse=True)
         scores = list(map(lambda x: f"**{self.bot.get_user(x[0])}: {x[1]}**", scores))
 
         if self.status == 0:

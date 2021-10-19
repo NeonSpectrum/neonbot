@@ -4,19 +4,14 @@ import functools
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from typing import Any, List, Union
-from urllib.parse import parse_qs, urlparse
 
 import yt_dlp
-from addict import Dict
-from bs4 import BeautifulSoup
 
-from .. import bot, env
-from ..helpers.date import date
 from ..helpers.exceptions import YtdlError
 
 
 class Ytdl:
-    def __init__(self, extra_params: dict = {}) -> None:
+    def __init__(self, bot, extra_params: dict = {}) -> None:
         self.thread_pool = ThreadPoolExecutor()
         self.loop = bot.loop
         self.session = bot.session
@@ -31,16 +26,18 @@ class Ytdl:
                 "geo_bypass": True,
                 "geo_bypass_country": "PH",
                 "source_address": "0.0.0.0",
-                #"youtube_include_dash_manifest": False,
+                # "youtube_include_dash_manifest": False,
                 "outtmpl": "./tmp/youtube_dl/%(id)s",
                 **extra_params,
             }
         )
 
-    async def extract_info(self, *args: Any, **kwargs: Any) -> Union[list, Dict]:
+    async def extract_info(self, *args: Any, **kwargs: Any) -> Union[list, dict]:
         result = await self.loop.run_in_executor(
             self.thread_pool,
-            functools.partial(self.ytdl.extract_info, *args, download=False, process=False, **kwargs),
+            functools.partial(
+                self.ytdl.extract_info, *args, download=False, process=False, **kwargs
+            ),
         )
 
         if not result:
@@ -50,11 +47,9 @@ class Ytdl:
 
         result = await self.process_entry(result, download=not result.get("is_live"))
 
-        info = Dict(result)
+        return result.get("entries", result)
 
-        return info.get("entries", info)
-
-    async def process_entry(self, info: Dict, download: bool = True) -> Dict:
+    async def process_entry(self, info: dict, download: bool = True) -> dict:
         result = await self.loop.run_in_executor(
             self.thread_pool,
             functools.partial(self.ytdl.process_ie_result, info, download=download),
@@ -64,20 +59,20 @@ class Ytdl:
                 "Video not available or rate limited due to many song requests. Try again later."
             )
 
-        return Dict(result)
+        return result
 
-    def parse_choices(self, info: Dict) -> list:
+    def parse_choices(self, info: dict) -> list:
         return [
-            Dict(
-                id=entry.id,
+            dict(
+                id=entry.get('id'),
                 title=entry.get("title", "*Not Available*"),
-                url=f"https://www.youtube.com/watch?v={entry.id}",
+                url=f"https://www.youtube.com/watch?v={entry.get('id')}",
             )
             for entry in info
         ]
 
-    def parse_info(self, info: Dict) -> Union[List[Dict], Dict]:
-        def parse_description(description: str) -> str:
+    def parse_info(self, info: dict) -> Union[List[dict], dict]:
+        def format_description(description: str) -> str:
             description_arr = description.split("\n")[:15]
             while len("\n".join(description_arr)) > 1000:
                 description_arr.pop()
@@ -85,20 +80,20 @@ class Ytdl:
                 description_arr.append("...")
             return "\n".join(description_arr)
 
-        def parse_entry(entry: Dict) -> Dict:
-            return Dict(
-                id=entry.id,
-                title=entry.title,
-                description=parse_description(entry.description),
-                uploader=entry.uploader,
-                duration=entry.duration,
-                thumbnail=entry.thumbnail,
-                stream=entry.url if entry.is_live else f"./tmp/youtube_dl/{entry.id}",
-                # stream=entry.url,
-                url=entry.webpage_url,
-                is_live=entry.is_live,
-                view_count=f"{entry.view_count:,}",
-                upload_date=datetime.strptime(entry.upload_date, "%Y%m%d").strftime(
+        def parse_entry(entry: dict) -> dict:
+            return dict(
+                id=entry.get('id'),
+                title=entry.get('title'),
+                description=format_description(entry.get('description')),
+                uploader=entry.get('uploader'),
+                duration=entry.get('duration'),
+                thumbnail=entry.get('thumbnail'),
+                stream=entry.get('url') if entry.get('is_live') else f"./tmp/youtube_dl/{entry.get('id')}",
+                # stream=entry.get('url'),
+                url=entry.get('webpage_url'),
+                is_live=entry.get('is_live'),
+                view_count=f"{entry.get('view_count'):,}",
+                upload_date=datetime.strptime(entry.get('upload_date'), "%Y%m%d").strftime(
                     "%b %d, %Y"
                 ),
             )
@@ -109,9 +104,5 @@ class Ytdl:
         return parse_entry(info) if info else None
 
     @classmethod
-    def create(cls, extra_params: dict) -> Ytdl:
-        return cls(extra_params)
-
-    def is_link_expired(self, url: str) -> bool:
-        params = Dict(parse_qs(urlparse(url).query))
-        return date().timestamp() > int(params.expire[0]) - 1800 if params else False
+    def create(cls, bot, extra_params) -> Ytdl:
+        return cls(bot, extra_params)

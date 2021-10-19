@@ -8,8 +8,7 @@ import aiohttp
 import discord
 import emoji
 import psutil
-import yt_dlp
-from addict import Dict
+from yt_dlp import version as ytdl_version
 from discord.ext import commands
 
 from .. import __author__, __title__, __version__, bot, env
@@ -37,15 +36,15 @@ async def chatbot(message: discord.Message, dm: bool = False) -> None:
         res = await bot.session.get(
             "https://www.cleverbot.com/getreply", params=params
         )
-        response = Dict(await res.json())
+        response = await res.json()
 
         bot.chatbot[message.author.id] = {
-            "cs": response.cs,
+            "cs": response['cs'],
             "time": time()
         }
         await message.channel.send(
             embed=Embed(
-                f"{'' if dm else message.author.mention} {response.output}"
+                f"{'' if dm else message.author.mention} {response['output']}"
             )
         )
 
@@ -82,10 +81,10 @@ class Utility(commands.Cog):
         process = psutil.Process(os.getpid())
 
         embed = Embed()
-        embed.set_author(f"{__title__} v{__version__}", icon_url=bot.user.avatar_url)
+        embed.set_author(f"{__title__} v{__version__}", icon_url=bot.user.display_avatar)
         embed.add_field("Username", bot.user.name)
         embed.add_field("Created On", f"{bot.user.created_at:%Y-%m-%d %I:%M:%S %p}")
-        embed.add_field("Created By", __author__)
+        embed.add_field("Created By", __author__ + '#0001')
         embed.add_field("Guilds", len(bot.guilds))
         embed.add_field("Channels", sum(1 for _ in bot.get_all_channels()))
         embed.add_field("Users", len(bot.users))
@@ -102,7 +101,7 @@ class Utility(commands.Cog):
             "Packages",
             f"""
             discord.py `{discord.__version__}`
-            youtube-dl `{yt_dlp.version.__version__}`
+            youtube-dl `{ytdl_version.__version__}`
             """
         )
 
@@ -111,6 +110,8 @@ class Utility(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def sms(self, ctx: commands.Context, number: str, *, message: str) -> None:
+        """Send SMS using NeonBot. *BOT_OWNER"""
+
         def generate_embed():
             embed = Embed()
             embed.set_author(name="✉ SMS")
@@ -137,18 +138,19 @@ class Utility(commands.Cog):
         )
 
         if response.status >= 400:
-            data = Dict(await response.json())
+            data = await response.json()
 
             await msg.edit(
                 embed=generate_embed().add_field("Status:", "Sending failed.", inline=False)
-                                      .add_field("Reason:", data.message, inline=False)
-                                      .add_field("Date sent:", date_format(), inline=False)
+                    .add_field("Reason:", data['message'], inline=False)
+                    .add_field("Date sent:", date_format(), inline=False)
             )
         else:
             await msg.edit(
                 embed=generate_embed().add_field("Status:", "Sent", inline=False)
-                                      .add_field("Date sent:", date_format(), inline=False)
+                    .add_field("Date sent:", date_format(), inline=False)
             )
+
 
 
 def setup(bot: commands.Bot) -> None:

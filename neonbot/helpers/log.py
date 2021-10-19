@@ -6,8 +6,8 @@ import discord
 import termcolor
 from discord.ext import commands
 
-from ..env import env
 from .constants import LOG_FORMAT
+from ..env import env
 
 
 def colored(*args: Any) -> str:
@@ -55,7 +55,7 @@ class Log(logging.Logger):
         *,
         guild: Optional[discord.Guild] = None,
         channel: Optional[Union[discord.TextChannel, discord.VoiceChannel]] = None,
-        user: Optional[discord.User] = None,
+        user: Optional[Union[str, discord.User]] = None,
     ) -> None:
         guild = guild or ctx.guild
         channel = channel or ctx.channel
@@ -69,7 +69,7 @@ class Log(logging.Logger):
     Channel: {channel}
     User: {user}
     Message: {str(msg)}""",
-            [],
+            ()
         )
 
 

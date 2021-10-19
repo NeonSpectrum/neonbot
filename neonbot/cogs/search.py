@@ -7,14 +7,11 @@ from typing import List, cast
 
 import aiohttp
 import discord
-from addict import Dict
 from bs4 import BeautifulSoup
 from discord.ext import commands
 from jikanpy import AioJikan
 
 from neonbot.helpers.utils import shell_exec
-
-from .. import bot, env
 from ..classes import Embed, EmbedChoices, PaginationEmbed
 from ..helpers.exceptions import ApiError
 from ..helpers.log import Log
@@ -23,9 +20,9 @@ log = cast(Log, logging.getLogger(__name__))
 
 
 class Search(commands.Cog):
-    def __init__(self) -> None:
+    def __init__(self, bot) -> None:
         self.bot = bot
-        self.session = bot.session
+        self.session = self.bot.session
 
         with open("./neonbot/assets/lang.json", "r") as f:
             self.lang_list = json.load(f)
@@ -37,9 +34,9 @@ class Search(commands.Cog):
         res = await self.session.get(
             "https://icanhazdadjoke.com", headers={"Accept": "application/json"}
         )
-        json = Dict(await res.json())
+        data = await res.json()
 
-        await ctx.send(embed=Embed(json.joke))
+        await ctx.send(embed=Embed(data['joke']))
 
     @commands.command()
     async def image(self, ctx: commands.Context, *, keyword: str) -> None:
@@ -53,26 +50,26 @@ class Search(commands.Cog):
                 "q": keyword,
                 "num": 1,
                 "searchType": "image",
-                "cx": env.str("GOOGLE_CX"),
-                "key": env.str("GOOGLE_API"),
+                "cx": self.bot.env.str("GOOGLE_CX"),
+                "key": self.bot.env.str("GOOGLE_API"),
             },
         )
-        image = Dict(await res.json())
+        image = await res.json()
 
         await self.bot.delete_message(msg)
 
-        if image.error:
-            raise ApiError(image.error.message)
+        if image.get('error'):
+            raise ApiError(image["error"]["message"])
 
         embed = Embed()
         embed.set_author(
             name=f"Google Images for {keyword}",
-            icon_url="http://i.imgur.com/G46fm8J.png",
+            icon_url="https://i.imgur.com/G46fm8J.png",
         )
         embed.set_footer(
-            text=f"Searched by {ctx.author}", icon_url=ctx.author.avatar_url
+            text=f"Searched by {ctx.author}", icon_url=ctx.author.display_avatar
         )
-        embed.set_image(url=image["items"][0].link)
+        embed.set_image(url=image["items"][0]['link'])
 
         await ctx.send(embed=embed)
 
@@ -83,43 +80,45 @@ class Search(commands.Cog):
         msg = await ctx.send(embed=Embed("Searching..."))
         res = await self.session.get(
             f"https://www.dictionaryapi.com/api/v3/references/sd4/json/{word}",
-            params={"key": env.str("DICTIONARY_API")},
+            params={"key": self.bot.env.str("DICTIONARY_API")},
         )
 
         await self.bot.delete_message(msg)
 
         try:
-            json = await res.json()
+            data = await res.json()
         except aiohttp.ContentTypeError:
             error = await res.text()
             raise ApiError(error)
 
-        if not json or not isinstance(json[0], dict):
-            return await ctx.send(embed=Embed("Word not found."), delete_after=5)
+        if not data or not isinstance(data[0], dict):
+            await ctx.send(embed=Embed("Word not found."), delete_after=5)
+            return
 
-        dictionary = Dict(json[0])
-        prs = dictionary.hwi.prs[0] or dictionary.vrs[0].prs[0]
-        audio = prs.sound.audio
+        dictionary = data[0]
+        prs = dictionary['hwi']['prs'][0] or dictionary['vrs'][0]['prs'][0]
+        audio = prs['sound']['audio']
+
         if audio:
             url = f"https://media.merriam-webster.com/soundc11/{audio[0]}/{audio}.wav"
             res = await self.session.get(url)
 
-        term = dictionary.meta.id
+        term = dictionary['meta']['id']
 
         if ":" in term:
-            term = dictionary.meta.id[0 : dictionary.meta.id.rfind(":")]
+            term = term[0: term.rfind(":")]
 
         embed = Embed()
         embed.add_field(
             name=term,
-            value=(f"*{prs.mw}*" if prs.mw else "") + "\n" + dictionary.shortdef[0],
+            value=(f"*{prs['mw']}*" if prs['mw'] else "") + "\n" + dictionary['shortdef'][0],
         )
         embed.set_author(
             name="Merriam-Webster Dictionary",
             icon_url="https://dictionaryapi.com/images/MWLogo.png",
         )
         embed.set_footer(
-            text=f"Searched by {ctx.author}", icon_url=ctx.author.avatar_url
+            text=f"Searched by {ctx.author}", icon_url=ctx.author.display_avatar
         )
 
         await self.bot.delete_message(msg)
@@ -134,74 +133,75 @@ class Search(commands.Cog):
 
         msg = await ctx.send(embed=Embed("Searching..."))
         res = await self.session.get(
-            "http://api.openweathermap.org/data/2.5/weather",
+            "https://api.openweathermap.org/data/2.5/weather",
             params={
                 "q": location,
                 "units": "metric",
                 "appid": "a88701020436549755f42d7e4be71762",
             },
         )
-        json = Dict(await res.json())
+        data = await res.json()
 
         await self.bot.delete_message(msg)
 
-        if json.cod == 401:
-            raise ApiError(json.message)
+        if data['cod'] == 401:
+            raise ApiError(data.message)
 
-        if int(json.cod) == 404:
-            return await ctx.send(embed=Embed("City not found."), delete_after=5)
+        if int(data['cod']) == 404:
+            await ctx.send(embed=Embed("City not found."), delete_after=5)
+            return
 
         embed = Embed()
         embed.set_author(
-            f"{json.sys.country} - {json.name}",
-            f"https://openweathermap.org/city/{json.id}",
-            icon_url=f"https://www.countryflags.io/{json.sys.country.lower()}/flat/32.png",
+            f"{data['sys']['country']} - {data['name']}",
+            f"https://openweathermap.org/city/{data['id']}",
+            icon_url=f"https://www.countryflags.io/{data['sys']['country'].lower()}/flat/32.png",
         )
         embed.set_footer(
             text="Powered by OpenWeatherMap",
             icon_url="https://media.dragstone.com/content/icon-openweathermap-1.png",
         )
         embed.set_thumbnail(
-            url=f"http://openweathermap.org/img/w/{json.weather[0].icon}.png"
+            url=f"https://openweathermap.org/img/w/{data['weather'][0]['icon']}.png"
         )
         embed.add_field(
             "☁ Weather",
-            f"{json.weather[0].main} - {json.weather[0].description}",
+            f"{data['weather'][0]['main']} - {data['weather'][0]['description']}",
             inline=False,
         )
         embed.add_field(
             "🌡 Temperature",
             textwrap.dedent(
                 f"""
-                Minimum Temperature: {json.main.temp_min}°C
-                Maximum Temperature: {json.main.temp_max}°C
-                Temperature: {json.main.temp}°C
+                Minimum Temperature: {data['main']['temp_min']}°C
+                Maximum Temperature: {data['main']['temp_max']}°C
+                Temperature: {data['main']['temp']}°C
                 """
             ),
             inline=False,
         )
         embed.add_field(
             "💨 Wind",
-            f"Speed: {json.wind.speed} m/s\nDegrees: {json.wind.deg or 'N/A'}°",
+            f"Speed: {data['wind']['speed']} m/s\nDegrees: {data['wind']['deg'] or 'N/A'}°",
             inline=False,
         )
         embed.add_field(
             "🌤 Sunrise",
-            datetime.fromtimestamp(json.sys.sunrise).strftime("%b %d, %Y %-I:%M:%S %p"),
+            datetime.fromtimestamp(data['sys']['sunrise']).strftime("%b %d, %Y %-I:%M:%S %p"),
             inline=False,
         )
         embed.add_field(
             "🌥 Sunset",
-            datetime.fromtimestamp(json.sys.sunset).strftime("%b %d, %Y %-I:%M:%S %p"),
+            datetime.fromtimestamp(data['sys']['sunset']).strftime("%b %d, %Y %-I:%M:%S %p"),
             inline=False,
         )
         embed.add_field(
             "🔘 Coordinates",
-            f"Longitude: {json.coord.lon}\nLatitude: {json.coord.lat}",
+            f"Longitude: {data['coord']['lon']}\nLatitude: {data['coord']['lat']}",
             inline=False,
         )
-        embed.add_field("🎛 Pressure", f"{json.main.pressure} hpa", inline=False)
-        embed.add_field("💧 Humidity", f"{json.main.humidity}%", inline=False)
+        embed.add_field("🎛 Pressure", f"{data['main']['pressure']} hpa", inline=False)
+        embed.add_field("💧 Humidity", f"{data['main']['humidity']}%", inline=False)
 
         await ctx.send(embed=embed)
 
@@ -215,7 +215,8 @@ class Search(commands.Cog):
         )
         await self.bot.delete_message(loading_msg)
         if res.status == 404:
-            return await ctx.send(embed=Embed("Champion not found."))
+            await ctx.send(embed=Embed("Champion not found."))
+            return
         html = await res.text()
         soup = BeautifulSoup(html, "html.parser")
 
@@ -227,11 +228,11 @@ class Search(commands.Cog):
 
         strong_against = [
             champ_counter[0]
-            .select("div.champ__counters__radials__big > a > span")[0]
-            .get_text(),
+                .select("div.champ__counters__radials__big > a > span")[0]
+                .get_text(),
             champ_counter[0]
-            .select("div.champ__counters__radials__small > a > span")[0]
-            .get_text(),
+                .select("div.champ__counters__radials__small > a > span")[0]
+                .get_text(),
             *[
                 row.find("a").get_text().strip()
                 for row in champ_counter[0].find_all("div", "ls-table__row")
@@ -240,11 +241,11 @@ class Search(commands.Cog):
 
         weak_against = [
             champ_counter[1]
-            .select("div.champ__counters__radials__big > a > span")[0]
-            .get_text(),
+                .select("div.champ__counters__radials__big > a > span")[0]
+                .get_text(),
             champ_counter[1]
-            .select("div.champ__counters__radials__small > a > span")[0]
-            .get_text(),
+                .select("div.champ__counters__radials__small > a > span")[0]
+                .get_text(),
             *[
                 row.find("a").get_text().strip()
                 for row in champ_counter[1].find_all("div", "ls-table__row")
@@ -279,38 +280,38 @@ class Search(commands.Cog):
         for rune in rune_block.select(".rune-block__stat-shards .rune-block__shard"):
             rune_build[2].append(rune.get("title"))
 
-        info = Dict(
+        info = dict(
             name=soup.select(".champ__header__left__main > h2")[0].get_text(),
             icon=soup.select(".champ__header__left__radial img")[0].get("src"),
             role=soup.select(".stat-source > .stat-source__btn[active=true] > a")[0]
-            .get_text()
-            .split(" ")[0],
+                .get_text()
+                .split(" ")[0],
             role_icon="https://www.leaguespy.net"
-            + soup.select(".champ__header__left__radial > .overlay > img")[0].get(
+                      + soup.select(".champ__header__left__radial > .overlay > img")[0].get(
                 "src"
             ),
             win_rate=soup.select(".champ__header__left__main > .stats-bar")[0]
-            .find("span")
-            .get_text(),
+                .find("span")
+                .get_text(),
             ban_rate=soup.select(".champ__header__left__main > .stats-bar")[1]
-            .find("span")
-            .get_text(),
+                .find("span")
+                .get_text(),
         )
 
         embed = Embed()
         embed.set_author(
-            name=info.name,
-            icon_url=info.role_icon,
+            name=info['name'],
+            icon_url=info['role_icon'],
             url=f"https://www.leaguespy.net/league-of-legends/champion/{champion}/stats",
         )
-        embed.set_thumbnail(url=info.icon)
+        embed.set_thumbnail(url=info['icon'])
         embed.set_footer(
             text="Powered by LeagueSpy",
             icon_url="https://www.leaguespy.net/images/favicon/favicon-32x32.png",
         )
-        embed.add_field("Role", info.role, inline=False)
-        embed.add_field("Win Rate", info.win_rate if info.win_rate else 'N/A')
-        embed.add_field("Ban Rate", info.ban_rate if info.ban_rate else 'N/A')
+        embed.add_field("Role", info['role'], inline=False)
+        embed.add_field("Win Rate", info['win_rate'] if info['win_rate'] else 'N/A')
+        embed.add_field("Ban Rate", info['ban_rate'] if info['ban_rate'] else 'N/A')
         embed.add_field("Weak Against", ", ".join(weak_against) if weak_against else 'N/A')
         embed.add_field("Strong Against", ", ".join(strong_against) if strong_against else 'N/A')
         embed.add_field("Skill Build", " > ".join(skill_build) if skill_build else 'N/A')
@@ -349,7 +350,7 @@ class Search(commands.Cog):
         html = await res.text()
         soup = BeautifulSoup(html, "html.parser")
         links = [
-            Dict(title=link.find("b").get_text(), url=link.get("href"))
+            dict(title=link.find("b").get_text(), url=link.get("href"))
             for link in soup.select("td.visitedlyr > a")
             if "/lyrics/" in link.get("href")
         ]
@@ -362,14 +363,14 @@ class Search(commands.Cog):
 
         try:
             res = await self.session.get(
-                links[choice].url, proxy=env.str("PROXY", None)
+                links[choice]['url'], proxy=self.bot.env.str("PROXY", None)
             )
             html = await res.text()
             soup = BeautifulSoup(html, "html.parser")
             div = soup.select("div.col-xs-12.col-lg-8.text-center")[0]
             title = div.select("b")[0].get_text()
             lyrics = div.select("div:nth-of-type(5)")[0].get_text().splitlines()
-        except Exception:
+        except:
             log.exception("There was an error parsing the url.")
             await ctx.send(
                 embed=Embed("There was error fetching the lyrics."), delete_after=5
@@ -378,7 +379,7 @@ class Search(commands.Cog):
             lines = []
 
             for i in range(0, len(lyrics), 25):
-                line = lyrics[i : i + 25]
+                line = lyrics[i: i + 25]
                 while not line[-1]:
                     del line[-1]
                 while not line[0]:
@@ -410,40 +411,42 @@ class Search(commands.Cog):
         loading_msg = await ctx.send(embed=Embed("Searching..."))
 
         jikan = AioJikan()
-        results = Dict(await jikan.search(search_type="anime", query=keyword)).results
+        results = (await jikan.search(search_type="anime", query=keyword))['results']
 
         if not results:
-            return await ctx.send(embed=Embed("Anime not found."), delete_after=5)
+            await ctx.send(embed=Embed("Anime not found."), delete_after=5)
+            return
 
-        anime = Dict(await jikan._get("anime", results[0].mal_id, None))
+        anime = await jikan._get("anime", results[0]['mal_id'], None)
         await jikan.close()
 
-        if anime.title_english and not anime.title_japanese:
-            title = anime.title_english
-        elif not anime.title_english and anime.title_japanese:
-            title = anime.title_japanese
+        if anime['title_english'] and not anime['title_japanese']:
+            title = anime['title_english']
+        elif not anime['title_english'] and anime['title_japanese']:
+            title = anime['title_japanese']
         else:
-            title = f"{anime.title_english} ({anime.title_japanese})"
+            title = f"{anime['title_english']} ({anime['title_japanese']})"
 
+        print(anime)
         embed = Embed()
-        embed.set_author(name=title, url=anime.url)
-        embed.set_thumbnail(url=anime.image_url)
+        embed.set_author(name=title, url=anime['url'])
+        embed.set_thumbnail(url=anime['image_url'])
         embed.set_footer(
             text="Powered by MyAnimeList",
-            icon_url="https://cdn.myanimelist.net/images/faviconv5.ico",
+            icon_url="https://i.imgur.com/XMQsLF5.png",
         )
         embed.add_field(
             name="Synopsis",
-            value=anime.synopsis[:1000] + "..."
-            if len(anime.synopsis) > 1000
-            else anime.synopsis,
+            value=anime['synopsis'][:1000] + "..."
+            if len(anime['synopsis']) > 1000
+            else anime['synopsis'],
             inline=False
         )
-        embed.add_field("Episodes", anime.episodes)
-        embed.add_field("Rank", anime.rank)
-        embed.add_field("Status", anime.status)
-        embed.add_field("Aired", anime.aired.string)
-        embed.add_field("Genres", ", ".join([genre.name for genre in anime.genres]))
+        embed.add_field("Episodes", anime['episodes'])
+        embed.add_field("Rank", anime['rank'])
+        embed.add_field("Status", anime['status'])
+        embed.add_field("Aired", anime['aired']['string'])
+        embed.add_field("Genres", ", ".join([genre['name'] for genre in anime['genres']]))
 
         await self.bot.delete_message(loading_msg)
         await ctx.send(embed=embed)
@@ -453,21 +456,21 @@ class Search(commands.Cog):
         """Lists top anime."""
 
         jikan = AioJikan()
-        result = Dict(await jikan.top(type="anime")).top
+        result = (await jikan.top(type="anime"))['top']
         await jikan.close()
 
         embeds = []
         for i in range(0, len(result), 10):
             temp = []
-            for index, value in enumerate(result[i : i + 10]):
-                temp.append(f"`{i+index+1}.` [{value.title}]({value.url})")
+            for index, value in enumerate(result[i: i + 10]):
+                temp.append(f"`{i + index + 1}.` [{value['title']}]({value['url']})")
             embeds.append(Embed("\n".join(temp)))
 
         pagination = PaginationEmbed(ctx, embeds=embeds)
         pagination.embed.title = ":trophy: Top 50 Anime"
         pagination.embed.set_footer(
             text="Powered by MyAnimeList",
-            icon_url="https://cdn.myanimelist.net/images/faviconv5.ico",
+            icon_url="https://i.imgur.com/XMQsLF5.png",
         )
         await pagination.build()
 
@@ -476,21 +479,21 @@ class Search(commands.Cog):
         """Lists upcoming anime."""
 
         jikan = AioJikan()
-        result = Dict(await jikan.season_later()).anime
+        result = (await jikan.season_later())['anime']
         await jikan.close()
 
         embeds = []
         for i in range(0, len(result), 10):
             temp = []
-            for index, value in enumerate(result[i : i + 10], i):
-                temp.append(f"`{index+1}.` [{value.title}]({value.url})")
+            for index, value in enumerate(result[i: i + 10], i):
+                temp.append(f"`{index + 1}.` [{value['title']}]({value['url']})")
             embeds.append(Embed("\n".join(temp)))
 
         pagination = PaginationEmbed(ctx, embeds=embeds)
         pagination.embed.title = ":clock3: Upcoming Anime"
         pagination.embed.set_footer(
             text="Powered by MyAnimeList",
-            icon_url="https://cdn.myanimelist.net/images/faviconv5.ico",
+            icon_url="https://i.imgur.com/XMQsLF5.png",
         )
         await pagination.build()
 
@@ -502,34 +505,34 @@ class Search(commands.Cog):
 
         google_token = await shell_exec("gcloud auth application-default print-access-token")
 
-        data = {"q": sentence, "format": "text"}
+        query = {"q": sentence, "format": "text"}
 
         lang = lang.split(">")
 
         if len(lang) > 1:
-            data["source"] = lang[0]
-            data["target"] = lang[1]
+            query["source"] = lang[0]
+            query["target"] = lang[1]
         else:
-            data["target"] = lang[0]
+            query["target"] = lang[0]
 
         res = await self.session.post(
             "https://translation.googleapis.com/language/translate/v2",
-            data=data,
+            data=query,
             headers={"Authorization": f"Bearer {google_token}"}
         )
 
-        json = Dict(await res.json())
+        data = await res.json()
 
-        if "error" in json:
-            if json.error.code == 400 and json.error.message == "Invalid Value":
-                return await ctx.send(embed=Embed("Invalid language."), delete_after=5)
+        if "error" in data:
+            if data['error']['code'] == 400 and data['error']['message'] == "Invalid Value":
+                await ctx.send(embed=Embed("Invalid language."), delete_after=5)
+                return
 
-            raise ApiError(json.error.message)
+            raise ApiError(data.error.message)
 
-
-        source_lang = json.data.translations[0].get("detectedSourceLanguage", data.get("source"))
-        target_lang = data["target"]
-        translated_text = json.data.translations[0].translatedText
+        source_lang = data['data']['translations'][0].get("detectedSourceLanguage", data.get("source"))
+        target_lang = query["target"]
+        translated_text = data['data']['translations'][0]['translatedText']
 
         embed = Embed()
         embed.set_author(name="Google Translate", icon_url="https://ssl.gstatic.com/translate/favicon.ico")
@@ -547,7 +550,7 @@ class Search(commands.Cog):
         embeds = []
         for i in range(0, len(items), 25):
             temp = []
-            for code, lang in items[i : i + 25]:
+            for code, lang in items[i: i + 25]:
                 temp.append(f"`{code}` → `{lang}`")
             embeds.append(Embed("\n".join(temp)))
 
@@ -557,4 +560,4 @@ class Search(commands.Cog):
 
 
 def setup(bot: commands.Bot) -> None:
-    bot.add_cog(Search())
+    bot.add_cog(Search(bot))

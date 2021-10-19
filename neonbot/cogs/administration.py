@@ -9,7 +9,6 @@ from typing import Generator, Optional, cast
 import discord
 from discord.ext import commands
 
-from .. import bot, env
 from ..classes import Embed, PaginationEmbed
 from ..classes.converters import Required
 from ..helpers.log import Log
@@ -19,7 +18,7 @@ log = cast(Log, logging.getLogger(__name__))
 
 
 @contextlib.contextmanager
-def stdoutIO() -> Generator[StringIO, None, None]:
+def stdout_io() -> Generator[StringIO, None, None]:
     old = sys.stdout
     stdout = StringIO()
     sys.stdout = stdout
@@ -30,10 +29,10 @@ def stdoutIO() -> Generator[StringIO, None, None]:
 class Administration(commands.Cog):
     """Administration commands that handles the management of the bot"""
 
-    def __init__(self) -> None:
-        self.session = bot.session
+    def __init__(self, bot) -> None:
         self.bot = bot
-        self.db = bot.db
+        self.session = self.bot.session
+        self.db = self.bot.db
 
     @commands.command()
     @commands.is_owner()
@@ -42,18 +41,18 @@ class Administration(commands.Cog):
 
         guild_id = ctx.guild.id if ctx.guild else None
 
-        env = {
-            "bot": bot,
+        variables = {
+            "bot": self.bot,
             "discord": discord,
             "commands": commands,
             "ctx": ctx,
-            "players": bot.music,
-            "player": bot.music.get(guild_id),
-            "config": self.db.get_guild(guild_id).config,
-            "rooms": bot.game,
-            "room": bot.game.get(guild_id),
+            "players": self.bot.music,
+            "player": self.bot.music.get(guild_id),
+            "guild": self.db.get_guild(guild_id),
+            "rooms": self.bot.game,
+            "room": self.bot.game.get(guild_id),
             "Embed": Embed,
-            "send_to_all_owners": bot.send_to_all_owners,
+            "send_to_all_owners": self.bot.send_to_all_owners,
             "p": print,
         }
 
@@ -63,9 +62,9 @@ class Administration(commands.Cog):
         try:
             lines = "\n".join([f"  {i}" for i in code.splitlines()])
 
-            with stdoutIO() as s:
-                exec(f"async def x():\n{lines}\n", env)
-                await eval("x()", env)
+            with stdout_io() as s:
+                exec(f"async def x():\n{lines}\n", variables)
+                await eval("x()", variables)
             output = s.getvalue()
         except Exception as e:
             output = str(e)
@@ -74,7 +73,7 @@ class Administration(commands.Cog):
             await ctx.message.add_reaction("👌")
 
         if output:
-            msg_array = [output[i : i + 1900] for i in range(0, len(output), 1900)]
+            msg_array = [output[i: i + 1900] for i in range(0, len(output), 1900)]
 
             embeds = [Embed("```py\n" + msg.strip("\n") + "```") for msg in msg_array]
 
@@ -83,7 +82,7 @@ class Administration(commands.Cog):
                 name="Python Interpreter", icon_url="https://i.imgur.com/vzcWouB.png"
             )
             pagination.embed.set_footer(
-                text=f"Executed by {ctx.author}", icon_url=ctx.author.avatar_url
+                text=f"Executed by {ctx.author}", icon_url=ctx.author.display_avatar
             )
             await pagination.build()
 
@@ -92,15 +91,16 @@ class Administration(commands.Cog):
     async def generatelog(self, ctx: commands.Context) -> None:
         """Generates a link contains the content of debug.log. *BOT_OWNER"""
 
-        if not env.str("PASTEBIN_API"):
-            return await ctx.send(embed=Embed("Error. Pastebin API not found."))
+        if not self.bot.env.str("PASTEBIN_API"):
+            await ctx.send(embed=Embed("Error. Pastebin API not found."))
+            return
 
         with open("./debug.log", "r") as f:
             text = f.read()
         res = await self.session.post(
             "https://pastebin.com/api/api_post.php",
             data={
-                "api_dev_key": env.str("PASTEBIN_API"),
+                "api_dev_key": self.bot.env.str("PASTEBIN_API"),
                 "api_paste_code": text,
                 "api_option": "paste",
                 "api_paste_private": 1,
@@ -122,14 +122,11 @@ class Administration(commands.Cog):
         member: Optional[discord.Member] = None,
         count: int = 1,
     ) -> None:
-        """
-        Deletes a number of messages. *MANAGE_MESSAGES
-        If member is specified, it will delete message of that member.
-        """
+        """Deletes a number of messages of a specific member (if specified). *MANAGE_MESSAGES"""
 
-        config = self.db.get_guild(ctx.guild.id).config
+        guild = self.db.get_guild(ctx.guild.id)
 
-        if config.deleteoncmd:
+        if guild.get('deleteoncmd'):
             await self.bot.delete_message(ctx.message)
 
         async for message in ctx.history(limit=1000 if member else count):
@@ -146,11 +143,10 @@ class Administration(commands.Cog):
     async def prefix(self, ctx: commands.Context, prefix: str) -> None:
         """Sets the prefix of the current server. *ADMINISTRATOR"""
 
-        database = self.db.get_guild(ctx.guild.id)
-        config = database.config
-        config.prefix = prefix
-        config = database.update().config
-        await ctx.send(embed=Embed(f"Prefix is now set to {config.prefix}."))
+        guild = self.db.get_guild(ctx.guild.id)
+        guild.update({'prefix': prefix})
+
+        await ctx.send(embed=Embed(f"Prefix is now set to `{guild.get('prefix')}`."))
 
     @commands.command()
     @commands.is_owner()
@@ -164,13 +160,11 @@ class Administration(commands.Cog):
         if status is False:
             return
 
-        database = self.db.get_settings()
-        settings = database.settings
-        settings.status = status
-        settings = database.update().settings
+        settings = self.db.get_settings()
+        settings.update({'status': status})
 
-        await bot.change_presence(status=discord.Status[status])
-        await ctx.send(embed=Embed(f"Status is now set to {settings.status}."))
+        await self.bot.change_presence(status=discord.Status[settings.get('status')])
+        await ctx.send(embed=Embed(f"Status is now set to {settings.get('status')}."))
 
     @commands.command()
     @commands.is_owner()
@@ -186,79 +180,83 @@ class Administration(commands.Cog):
         if presence_type is False:
             return
 
-        database = self.db.get_settings()
-        settings = database.settings
-        settings.game.type = presence_type
-        settings.game.name = name
-        settings = database.update().settings
+        settings = self.db.get_settings()
+        settings.set('game', {
+            'type': presence_type,
+            'name': name
+        })
+        settings.save()
 
-        await bot.change_presence(
+        await self.bot.change_presence(
             activity=discord.Activity(
-                name=name, type=discord.ActivityType[settings.game.type]
+                name=name, type=discord.ActivityType[settings.get('game')['type']]
             )
         )
         await ctx.send(
             embed=Embed(
-                f"Presence is now set to {settings.game.type} {settings.game.name}."
+                f"Presence is now set to {settings.get('game')['type']} {settings.get('game')['name']}."
             )
         )
 
     @commands.command()
+    @commands.has_guild_permissions(administrator=True)
     @commands.guild_only()
     async def alias(self, ctx: commands.Context, name: str, *, command: str) -> None:
-        """
-        Sets or updates an alias command.
+        """Sets or updates an alias command. *ADMINISTRATOR"""
 
-        You must be the owner of the alias to update it.
-        """
-
-        database = self.db.get_guild(ctx.guild.id)
-        aliases = database.config.aliases
+        guild = self.db.get_guild(ctx.guild.id)
+        aliases = guild.get('aliases')
         ids = [i for i, x in enumerate(aliases) if x.name == name]
+
         if any(ids):
-            if int(aliases[ids[0]].owner) != ctx.author.id and await bot.is_owner(
-                ctx.author
-            ):
-                return await ctx.send(
+            if int(aliases[ids[0]].owner) != ctx.author.id and await self.bot.is_owner(ctx.author):
+                await ctx.send(
                     embed=Embed("You are not the owner of the alias."), delete_after=5
                 )
+                return
+
             aliases[ids[0]].cmd = (
                 command.replace(ctx.prefix, "{0}", 1)
                 if command.startswith(ctx.prefix)
                 else command
             )
         else:
-            database.config.aliases.append(
+            aliases.append(
                 {"name": name, "cmd": command, "owner": ctx.author.id}
             )
-        database.update()
+
+        guild.update({'aliases': aliases})
         await ctx.send(
             embed=Embed(f"Message with exactly `{name}` will now execute `{command}`"),
             delete_after=10,
         )
 
     @commands.command()
+    @commands.has_guild_permissions(administrator=True)
     @commands.guild_only()
     async def deletealias(self, ctx: commands.Context, name: str) -> None:
-        """
-        Removes an alias command.
+        """Removes an alias command. *ADMINISTRATOR"""
 
-        You must be the owner of the alias to delete it.
-        """
+        guild = self.db.get_guild(ctx.guild.id)
+        aliases = guild.get('aliases')
 
-        database = self.db.get_guild(ctx.guild.id)
-        aliases = database.config.aliases
         ids = [i for i, x in enumerate(aliases) if x.name == name]
+
         if not ids:
-            return await ctx.send(embed=Embed("Alias doesn't exists."), delete_after=5)
-        if int(aliases[ids[0]].owner) != ctx.author.id and await bot.is_owner(
+            await ctx.send(embed=Embed("Alias doesn't exists."), delete_after=5)
+            return
+
+        if int(aliases[ids[0]].owner) != ctx.author.id and await self.bot.is_owner(
             ctx.author
         ):
-            return await ctx.send(
+            await ctx.send(
                 embed=Embed("You are not the owner of the alias."), delete_after=5
             )
+            return
+
         del aliases[ids[0]]
-        database.update()
+
+        guild.update({'aliases': aliases})
         await ctx.send(embed=Embed(f"Alias`{name}` has been deleted."), delete_after=5)
 
     @commands.command()
@@ -266,18 +264,15 @@ class Administration(commands.Cog):
     @commands.guild_only()
     async def deleteoncmd(self, ctx: commands.Context) -> None:
         """
-        Enables/Disables delete on cmd. *BOT_OWNER
-
-        If enabled, it will delete the command message of the user.
+        Enables/Disables the deletion of message after execution. *BOT_OWNER
         """
 
-        database = self.db.get_guild(ctx.guild.id)
-        config = database.config
-        config.deleteoncmd = not config.deleteoncmd
-        config = database.update().config
+        guild = self.db.get_guild(ctx.guild.id)
+        guild.update({'deleteoncmd': not guild.get('deleteoncmd')})
+
         await ctx.send(
             embed=Embed(
-                f"Delete on command is now set to {'enabled' if config.deleteoncmd else 'disabled'}."
+                f"Delete on command is now set to {'enabled' if guild.get('deleteoncmd') else 'disabled'}."
             )
         )
 
@@ -285,22 +280,16 @@ class Administration(commands.Cog):
     @commands.has_guild_permissions(administrator=True)
     @commands.guild_only()
     async def voicetts(self, ctx: commands.Context) -> None:
-        """
-        Enables/Disables Voice TTS. *ADMINISTRATOR
+        """Enables/Disables Voice TTS. *ADMINISTRATOR"""
 
-        If enabled, the bot will send a tts message if someone joins/leaves a voice channel.
+        guild = self.db.get_guild(ctx.guild.id)
+        guild.update({
+            'channel': {
+                'voicetts': (ctx.channel.id if guild.get('channel')['voicetts'] != ctx.channel.id else None)
+            }
+        })
 
-        Note: The message will be sent to the current channel this command last executed.
-        """
-
-        database = self.db.get_guild(ctx.guild.id)
-        config = database.config
-        config.channel.voicetts = (
-            ctx.channel.id if config.channel.voicetts != ctx.channel.id else None
-        )
-        config = database.update().config
-
-        if config.channel.voicetts:
+        if guild.get('channel')['voicetts']:
             await ctx.send(embed=Embed("Voice TTS is now set to this channel."))
         else:
             await ctx.send(embed=Embed("Voice TTS is now disabled."))
@@ -309,32 +298,22 @@ class Administration(commands.Cog):
     @commands.has_guild_permissions(administrator=True)
     @commands.guild_only()
     async def logger(self, ctx: commands.Context) -> None:
-        """
-        Enables/Disables Logger. *ADMINISTRATOR
-        """
+        """Enables/Disables Logger. *ADMINISTRATOR"""
 
         await ctx.send(embed=Embed("Incomplete command. <presence | message>"))
 
     @logger.command(name="presence")
     async def logger_presence(self, ctx: commands.Context) -> None:
-        """
-        Logs presence.
+        """Logs presence when someone joins/leaves the guild or voice channel and status updates."""
 
-        If enabled, the bot will log the following:
-            - If someone joins/leaves the guild.
-            - If someone joins/leaves the voice channel.
-            - If someone updates his/her status or presence.
+        guild = self.db.get_guild(ctx.guild.id)
+        guild.update({
+            'channel': {
+                'log': (ctx.channel.id if guild.get('channel')['log'] != ctx.channel.id else None)
+            }
+        })
 
-        Note: The message will be sent to the current channel this command last executed.
-        """
-        database = self.db.get_guild(ctx.guild.id)
-        config = database.config
-        config.channel.log = (
-            ctx.channel.id if config.channel.log != ctx.channel.id else None
-        )
-        config = database.update().config
-
-        if config.channel.log:
+        if guild.get('channel')['log']:
             await ctx.send(embed=Embed("Logger Presence is now set to this channel."))
         else:
             await ctx.send(embed=Embed("Logger Presence is now disabled."))
@@ -342,21 +321,17 @@ class Administration(commands.Cog):
     @logger.command(name="message")
     async def logger_message(self, ctx: commands.Context) -> None:
         """
-        Logs messages.
-
-        If enabled, the bot will log the following:
-            - If someone delete his message.
-
-        Note: The message will be sent to the current channel this command last executed.
+        Logs messages when someone delete his message.
         """
-        database = self.db.get_guild(ctx.guild.id)
-        config = database.config
-        config.channel.msgdelete = (
-            ctx.channel.id if config.channel.msgdelete != ctx.channel.id else None
-        )
-        config = database.update().config
 
-        if config.channel.log:
+        guild = self.db.get_guild(ctx.guild.id)
+        guild.update({
+            'channel': {
+                'msgdelete': (ctx.channel.id if guild.get('channel')['msgdelete'] != ctx.channel.id else None)
+            }
+        })
+
+        if guild.get('channel')['msgdelete']:
             await ctx.send(embed=Embed("Logger Message is now set to this channel."))
         else:
             await ctx.send(embed=Embed("Logger Message is now disabled."))
@@ -397,11 +372,11 @@ class Administration(commands.Cog):
     async def reload(self, ctx: commands.Context, *, ext: str = None) -> None:
         """Reloads a specific or all extension. *BOT_OWNER"""
 
-        extensions = bot.extensions.keys() if ext is None else ["neonbot.cogs." + ext]
+        extensions = self.bot.extensions.keys() if ext is None else ["neonbot.cogs." + ext]
 
         try:
-            for extension in extensions:
-                bot.reload_extension(extension)
+            for extension in list(extensions):
+                self.bot.reload_extension(extension)
         except Exception as e:
             await ctx.send(embed=Embed(str(e)))
         else:
@@ -414,11 +389,11 @@ class Administration(commands.Cog):
     async def restart(self, ctx: commands.Context) -> None:
         """Restarts bot. *BOT_OWNER"""
 
-        bot.save_music()
+        self.bot.save_music()
         msg = await ctx.send(embed=Embed("Bot Restarting..."))
         with open("./tmp/restart_config.json", "w") as f:
             json.dump({"message_id": msg.id, "channel_id": ctx.channel.id}, f, indent=4)
-        await bot.restart()
+        await self.bot.restart()
 
     @commands.command()
     @commands.has_guild_permissions(mute_members=True)
@@ -426,10 +401,12 @@ class Administration(commands.Cog):
         """Server mute with timer."""
 
         if member.voice is None:
-            return await ctx.send(embed=Embed(f"{member} is not in voice."))
+            await ctx.send(embed=Embed(f"{member} is not in voice."))
+            return
 
         if member.voice.mute is True:
-            return await ctx.send(embed=Embed(f"{member} is already muted."))
+            await ctx.send(embed=Embed(f"{member} is already muted."))
+            return
 
         seconds = convert_to_seconds(time)
 
@@ -450,14 +427,16 @@ class Administration(commands.Cog):
         """Server unmute."""
 
         if member.voice is None:
-            return await ctx.send(embed=Embed(f"{member} is not in voice."))
+            await ctx.send(embed=Embed(f"{member} is not in voice."))
+            return
 
         if member.voice.mute is False:
-            return await ctx.send(embed=Embed(f"{member} is already unmuted."))
+            await ctx.send(embed=Embed(f"{member} is already unmuted."))
+            return
 
         await member.edit(mute=False, reason=reason)
         await ctx.send(embed=Embed(f"{member} has been unmuted."))
 
 
 def setup(bot: commands.Bot) -> None:
-    bot.add_cog(Administration())
+    bot.add_cog(Administration(bot))

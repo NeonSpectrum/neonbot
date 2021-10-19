@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import asyncio
 from typing import Any, Optional
 
 import discord
 from discord.ext import commands
 
+from .view import View
 from ..helpers.constants import CHOICES_EMOJI, PAGINATION_EMOJI
 
 
@@ -15,9 +15,9 @@ class Embed(discord.Embed):
             super().__init__(description=description and str(description), **kwargs)
         else:
             super().__init__(**kwargs)
-        self.color = 0x59ABE3
+        self.color = 0xE91E63
 
-    def add_field(self, name: Any, value: Any, *, inline: bool = True) -> None:
+    def add_field(self, name: Any, value: Any, *, inline: bool = True) -> Embed:
         super().add_field(name=name, value=value, inline=inline)
         return self
 
@@ -27,22 +27,22 @@ class Embed(discord.Embed):
         url: str = discord.Embed.Empty,
         *,
         icon_url: str = discord.Embed.Empty,
-    ) -> None:
+    ) -> Embed:
         super().set_author(name=name, url=url, icon_url=icon_url)
         return self
 
     def set_footer(
         self, text: str = discord.Embed.Empty, *, icon_url: str = discord.Embed.Empty
-    ) -> None:
+    ) -> Embed:
         super().set_footer(text=text, icon_url=icon_url)
         return self
 
-    def set_image(self, url: str) -> None:
+    def set_image(self, url: str) -> Embed:
         if url:
             super().set_image(url=url)
         return self
 
-    def set_thumbnail(self, url: Optional[str]) -> None:
+    def set_thumbnail(self, url: Optional[str]) -> Embed:
         if url:
             super().set_thumbnail(url=url)
         return self
@@ -72,95 +72,46 @@ class PaginationEmbed:
         self.index = 0
         self.embed = Embed()
 
-        self.msg: discord.Message = None
+        self.msg: Optional[discord.Message] = None
 
     async def build(self) -> None:
         self.authorized_users.append(self.ctx.author.id)
         self.title = self.embed.title
-        await self._send()
+        await self.send()
 
-        if len(self.embeds) > 1:
-            asyncio.gather(self._add_reactions(), self._listen())
-
-    async def _send(self) -> None:
+    async def send(self) -> None:
         embed = self.embed.copy()
         embed.description = self.embeds[self.index].description
 
         if len(self.embeds) > 1:
-            embed.description += f"\n\n**Page {self.index+1}/{len(self.embeds)}**"
+            embed.description += f"\n\n**Page {self.index + 1}/{len(self.embeds)}**"
 
         if self.msg:
-            return await self.msg.edit(embed=embed)
+            await self.msg.edit(embed=embed)
+            return
 
-        self.msg = await self.ctx.send(embed=embed)
+        buttons = self.get_buttons()
 
-    async def _listen(self) -> None:
-        """Listens to react of the user and execute commands."""
+        self.msg = await self.ctx.send(embed=embed, view=buttons)
+        buttons.set_message(self.msg)
 
-        msg = self.msg
+    def get_buttons(self) -> discord.ui.View:
+        async def callback(button: discord.ui.Button, interaction: discord.Interaction):
+            if interaction.user != self.ctx.author:
+                return
 
-        def check(reaction: discord.Reaction, user: discord.User) -> bool:
-            if not user.bot and reaction.emoji != "🗑":
-                asyncio.ensure_future(reaction.remove(user))
-            return (
-                reaction.emoji in PAGINATION_EMOJI
-                and user.id in self.authorized_users
-                and reaction.message.id == msg.id
-            )
+            index = PAGINATION_EMOJI.index(button.emoji.name)
 
-        try:
-            reaction, _ = await self.bot.wait_for(
-                "reaction_add", timeout=self.timeout, check=check
-            )
+            if index == 4: # trash
+                await self.bot.delete_message(self.msg)
+                return
 
-            await self._execute_command(PAGINATION_EMOJI.index(reaction.emoji))
+            self.execute_command(index)
+            await self.send()
 
-            if reaction.emoji == "🗑":
-                return await self.bot.delete_message(self.msg)
-        except asyncio.TimeoutError:
-            await msg.clear_reactions()
-        else:
-            await self._listen()
+        return View.create_button([{"emoji": emoji} for emoji in PAGINATION_EMOJI], callback)
 
-    async def _add_reactions(self) -> None:
-        for emoji in PAGINATION_EMOJI:
-            try:
-                await self.msg.add_reaction(emoji)
-            except discord.NotFound:
-                break
-
-    async def _request_jump(self) -> None:
-        request_msg = await self.ctx.send(
-            embed=Embed(f"Enter page number (1-{len(self.embeds)}):")
-        )
-
-        def check(m: discord.Message) -> bool:
-            if m.author.bot:
-                return False
-
-            if m.content.isdigit():
-                self.bot.loop.create_task(self.bot.delete_message(m))
-                if (
-                    int(m.content) >= 0
-                    and int(m.content) <= len(self.embeds)
-                    and m.channel.id == self.ctx.channel.id
-                ):
-                    return True
-
-            return False
-
-        try:
-            msg = await self.bot.wait_for("message", check=check, timeout=10)
-        except asyncio.TimeoutError:
-            pass
-        else:
-            self.index = int(msg.content) - 1
-        finally:
-            await self.bot.delete_message(request_msg)
-
-    async def _execute_command(self, cmd: int) -> None:
-        current_index = self.index
-
+    def execute_command(self, cmd: int) -> None:
         if cmd == 0:
             self.index = 0
         elif cmd == 1 and self.index > 0:
@@ -169,11 +120,6 @@ class PaginationEmbed:
             self.index += 1
         elif cmd == 3:
             self.index = len(self.embeds) - 1
-        elif cmd == 4:
-            await self._request_jump()
-
-        if current_index != self.index:
-            await self._send()
 
 
 class EmbedChoices:
@@ -188,41 +134,43 @@ class EmbedChoices:
             await self.ctx.send(embed=Embed("Empty choices."), delete_after=5)
             return self
 
-        await self._send_choices()
-        asyncio.ensure_future(self._react())
-        await self._listen()
+        await self.send_choices()
 
         return self
 
-    async def _send_choices(self) -> None:
+    async def send_choices(self) -> None:
         embed = Embed(title=f"Choose 1-{len(self.entries)} below.")
 
         for index, entry in enumerate(self.entries, start=1):
-            embed.add_field(f"{index}. {entry.title}", entry.url, inline=False)
+            embed.add_field(f"{index}. {entry['title']}", entry['url'], inline=False)
 
-        self.msg = await self.ctx.send(embed=embed)
+        buttons = self.get_buttons()
 
-    async def _listen(self) -> None:
-        try:
-            reaction, _ = await self.ctx.bot.wait_for(
-                "reaction_add",
-                timeout=10,
-                check=lambda reaction, user: reaction.emoji in CHOICES_EMOJI
-                and self.ctx.author == user
-                and reaction.message.id == self.msg.id,
-            )
-            if reaction.emoji == "🗑":
-                raise asyncio.TimeoutError
-        except asyncio.TimeoutError:
-            self.value = -1
-        else:
-            self.value = CHOICES_EMOJI.index(reaction.emoji)
-        finally:
+        self.msg = await self.ctx.send(embed=embed, view=buttons)
+
+        await buttons.wait()
+
+    def get_buttons(self) -> discord.ui.View:
+        async def callback(button: discord.ui.Button, interaction: discord.Interaction):
+            if interaction.user != self.ctx.author:
+                return
+
+            if button.emoji and button.emoji.name == CHOICES_EMOJI[-1]:
+                self.value = -1
+            else:
+                self.value = int(button.label) - 1
+
+            button.view.stop()
             await self.bot.delete_message(self.msg)
 
-    async def _react(self) -> None:
-        for emoji in CHOICES_EMOJI[0 : len(self.entries)] + [CHOICES_EMOJI[-1]]:
-            try:
-                await self.msg.add_reaction(emoji)
-            except discord.NotFound:
-                break
+
+        buttons = [
+            {"label": 1},
+            {"label": 2},
+            {"label": 3},
+            {"label": 4},
+            {"label": 5},
+            {"emoji": CHOICES_EMOJI[-1]},
+        ]
+
+        return View.create_button(buttons, callback)

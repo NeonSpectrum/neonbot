@@ -1,21 +1,18 @@
 import logging
 from typing import cast
 
-import discord
-from addict import Dict
 from discord.ext import commands
 
-from .. import bot
 from ..classes import Connect4, Embed, Pokemon
 from ..helpers.log import Log
 
 log = cast(Log, logging.getLogger(__name__))
 
 
-def get_channel(ctx: commands.Context) -> Dict:
-    rooms = bot.game
+def get_channel(ctx: commands.Context) -> dict:
+    rooms = ctx.bot.game
     if ctx.channel.id not in rooms.keys():
-        rooms[ctx.channel.id] = Dict(pokemon=Pokemon(ctx), connect4=Connect4(ctx))
+        rooms[ctx.channel.id] = dict(pokemon=Pokemon(ctx), connect4=Connect4(ctx))
 
     return rooms[ctx.channel.id]
 
@@ -26,13 +23,14 @@ class Game(commands.Cog):
     async def pokemon(self, ctx: commands.Context, *, command: str) -> None:
         """Starts, stops, or shows the scoreboard of the pokemon game."""
 
-        pokemon = get_channel(ctx).pokemon
+        pokemon = get_channel(ctx)['pokemon']
 
         if command == "start":
             if pokemon.status == 1:
-                return await ctx.send(
+                await ctx.send(
                     embed=Embed("Pokemon game already started."), delete_after=5
                 )
+                return
 
             pokemon.status = 1
             while pokemon.status != 0:
@@ -53,7 +51,7 @@ class Game(commands.Cog):
     async def connect4(self, ctx: commands.Context) -> None:
         """Starts connect4 game and waits for the players if players are insufficient."""
 
-        connect4 = get_channel(ctx).connect4
+        connect4 = get_channel(ctx)['connect4']
         if connect4.players == 2:
             await ctx.send(
                 embed=Embed("Connect4 game is already running"), delete_after=5
@@ -63,4 +61,4 @@ class Game(commands.Cog):
 
 
 def setup(bot: commands.Bot) -> None:
-    bot.add_cog(Game())
+    bot.add_cog(Game(bot))

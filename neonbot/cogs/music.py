@@ -1,11 +1,10 @@
 import logging
 import re
 import textwrap
-from typing import List, Optional, cast
+from typing import Optional, cast
 
 from discord.ext import commands
 
-from .. import bot
 from ..classes import Embed, PaginationEmbed, Player
 from ..classes.converters import Required
 from ..helpers.constants import SPOTIFY_REGEX, YOUTUBE_REGEX
@@ -44,9 +43,9 @@ async def has_player(ctx: commands.Context) -> bool:
 
 
 class Music(commands.Cog):
-    def __init__(self) -> None:
+    def __init__(self, bot) -> None:
         self.bot = bot
-        bot.load_music()
+        self.bot.load_music()
 
     @commands.command(aliases=["p"], usage="<url | keyword>")
     @commands.guild_only()
@@ -57,39 +56,31 @@ class Music(commands.Cog):
         player = get_player(ctx)
         player.ctx = ctx
 
-        embed = info = loading_msg = None
-
         if keyword:
             if keyword.isdigit():
                 index = int(keyword)
                 if index > len(player.queue) or index < 0:
-                    return await ctx.send(embed=Embed("Invalid index."), delete_after=5)
+                    await ctx.send(embed=Embed("Invalid index."), delete_after=5)
+                    return
                 if player.connection:
                     await player.next(index=index - 1)
                 else:
                     player.current_queue = index - 1
             elif re.search(YOUTUBE_REGEX, keyword):
-                info, embed = await player.process_youtube(ctx, keyword)
+                await player.process_youtube(keyword)
             elif re.search(SPOTIFY_REGEX, keyword):
-                info, embed = await player.process_spotify(ctx, keyword)
+                await player.process_spotify(keyword)
             elif keyword:
-                info, embed = await player.process_search(keyword)
-                if not info:
-                    return
+                await player.process_search(keyword)
 
-            if info:
-                player.add_to_queue(info, requested=ctx.author)
-            if loading_msg:
-                await self.bot.delete_message(loading_msg)
-            if embed:
-                await ctx.send(embed=embed, delete_after=5)
         elif player.current_queue >= len(player.queue):
             player.current_queue = 0
 
         if any(player.queue) and not ctx.voice_client:
             player.connection = await ctx.author.voice.channel.connect()
-            player.last_voice_channel = player.connection.channel
+            player.last_voice_channel = ctx.author.voice.channel
             log.cmd(ctx, f"Connected to {ctx.author.voice.channel}.")
+
         if player.connection and not player.connection.is_playing():
             await player.play()
 
@@ -101,16 +92,7 @@ class Music(commands.Cog):
         """Pauses the current player."""
 
         player = get_player(ctx)
-
-        if player.connection.is_paused():
-            return
-
-        player.connection.pause()
-        log.cmd(ctx, "Player paused.")
-
-        player.messages.paused = await ctx.send(
-            embed=Embed(f"Player paused. `{ctx.prefix}resume` to resume.")
-        )
+        await player.pause()
 
     @commands.command()
     @commands.guild_only()
@@ -120,16 +102,6 @@ class Music(commands.Cog):
         """Resumes the current player."""
 
         player = get_player(ctx)
-
-        if player.connection.is_playing():
-            return
-
-        player.connection.resume()
-        log.cmd(ctx, "Player resumed.")
-
-        await self.bot.delete_message(player.messages.paused)
-
-        await ctx.send(embed=Embed("Player resumed."), delete_after=5)
 
     @commands.command(aliases=["next"])
     @commands.guild_only()
@@ -178,6 +150,7 @@ class Music(commands.Cog):
 
         index -= 1
         player = get_player(ctx)
+        queue = None
 
         try:
             queue = player.queue[index]
@@ -185,16 +158,17 @@ class Music(commands.Cog):
             await ctx.send(
                 embed=Embed("There is no song in that index."), delete_after=5
             )
+            return
 
-        embed = Embed(title=queue.title, url=queue.url)
+        embed = Embed(title=queue['title'], url=queue['url'])
         embed.set_author(
-            name=f"Removed song #{index+1}", icon_url="https://i.imgur.com/SBMH84I.png"
+            name=f"Removed song #{index + 1}", icon_url="https://i.imgur.com/SBMH84I.png"
         )
-        embed.set_footer(text=queue.requested, icon_url=queue.requested.avatar_url)
+        embed.set_footer(text=queue['requested'], icon_url=queue['requested'].display_avatar)
 
         await ctx.send(embed=embed, delete_after=5)
 
-        del player.queue[index]
+        player.queue[index] = None
 
         if index < player.current_queue:
             player.current_queue -= 1
@@ -202,7 +176,7 @@ class Music(commands.Cog):
             if not player.queue:
                 await player.next(stop=True)
             else:
-                await player.next(index=player.current_queue)
+                await player.next()
 
     @commands.command(aliases=["vol"], usage="<1 - 100>")
     @commands.guild_only()
@@ -214,14 +188,16 @@ class Music(commands.Cog):
         player = get_player(ctx)
 
         if volume is None:
-            return await ctx.send(
-                embed=Embed(f"Volume is set to {player.config.volume}%."),
+            await ctx.send(
+                embed=Embed(f"Volume is set to {player.config['volume']}%."),
                 delete_after=5,
             )
+            return
         elif volume < 1 or volume > 100:
-            return await ctx.send(
+            await ctx.send(
                 embed=Embed("Volume must be 1 - 100."), delete_after=5
             )
+            return
 
         player.connection.source.volume = volume / 100
         player.update_config("volume", volume)
@@ -240,15 +216,13 @@ class Music(commands.Cog):
 
         player = get_player(ctx)
 
-        if mode is False:
-            return
         if mode is None:
-            return await ctx.send(
-                embed=Embed(f"Repeat is set to {player.config.repeat}."), delete_after=5
+            await ctx.send(
+                embed=Embed(f"Repeat is set to {player.config['repeat']}."), delete_after=5
             )
+            return
 
-        player.update_config("repeat", mode)
-        await ctx.send(embed=Embed(f"Repeat changed to {mode}."), delete_after=5)
+        await player.repeat(mode)
 
     @commands.command()
     @commands.guild_only()
@@ -258,13 +232,7 @@ class Music(commands.Cog):
         """Enables/disables player's shuffle mode."""
 
         player = get_player(ctx)
-        config = player.update_config("shuffle", not player.config.shuffle)
-        await ctx.send(
-            embed=Embed(
-                f"Shuffle is set to {'enabled' if config.shuffle else 'disabled'}."
-            ),
-            delete_after=5,
-        )
+        await player.shuffle()
 
     @commands.command(aliases=["np"])
     @commands.guild_only()
@@ -274,34 +242,30 @@ class Music(commands.Cog):
         """Displays in brief description of the current playing."""
 
         player = get_player(ctx)
-        config = player.config
 
         if not player.connection.is_playing():
-            return await ctx.send(embed=Embed("No song playing."), delete_after=5)
+            await ctx.send(embed=Embed("No song playing."), delete_after=5)
+            return
 
         now_playing = player.now_playing
 
-        footer = [
-            str(now_playing.requested),
-            f"Volume: {config.volume}%",
-            f"Repeat: {config.repeat}",
-            f"Shuffle: {'on' if config.shuffle else 'off'}",
-        ]
+        footer = player.get_footer(now_playing)
+        footer.pop(1)
 
         embed = Embed()
-        embed.add_field("Uploader", now_playing.uploader)
-        embed.add_field("Upload Date", now_playing.upload_date)
-        embed.add_field("Duration", format_seconds(now_playing.duration))
-        embed.add_field("Views", now_playing.view_count)
-        embed.add_field("Description", now_playing.description, inline=False)
+        embed.add_field("Uploader", now_playing['uploader'])
+        embed.add_field("Upload Date", now_playing['upload_date'])
+        embed.add_field("Duration", format_seconds(now_playing['duration']))
+        embed.add_field("Views", now_playing['view_count'])
+        embed.add_field("Description", now_playing['description'], inline=False)
         embed.set_author(
-            name=now_playing.title,
-            url=now_playing.url,
+            name=now_playing['title'],
+            url=now_playing['url'],
             icon_url="https://i.imgur.com/mG8QKe7.png",
         )
-        embed.set_thumbnail(url=now_playing.thumbnail)
+        embed.set_thumbnail(url=now_playing['thumbnail'])
         embed.set_footer(
-            text=" | ".join(footer), icon_url=now_playing.requested.avatar_url
+            text=" | ".join(footer), icon_url=now_playing['requested'].display_avatar
         )
         await ctx.send(embed=embed)
 
@@ -315,30 +279,30 @@ class Music(commands.Cog):
         config = player.config
         queue = player.queue
         embeds = []
-        temp: List[str] = []
         duration = 0
 
         if not queue:
-            return await ctx.send(embed=Embed("Empty playlist."), delete_after=5)
+            await ctx.send(embed=Embed("Empty playlist."), delete_after=5)
+            return
 
         for i in range(0, len(player.queue), 10):
             temp = []
-            for index, song in enumerate(player.queue[i : i + 10], i):
+            for index, song in enumerate(player.queue[i: i + 10], i):
                 description = textwrap.dedent(
                     f"""\
-                `{'*' if player.current_queue == index else ''}{index+1}.` [{song.title}]({song.url})
-                - - - `{format_seconds(song.duration) if song.duration else 'N/A'}` `{song.requested}`"""
+                `{'*' if player.current_queue == index else ''}{index + 1}.` [{song['title']}]({song['url']})
+                - - - `{format_seconds(song['duration']) if song['duration'] else 'N/A'}` `{song['requested']}`"""
                 )
                 temp.append(description)
-                duration += song.duration or 0
+                duration += song['duration'] or 0
             embeds.append(Embed("\n".join(temp)))
 
         footer = [
             f"{plural(len(queue), 'song', 'songs')}",
             format_seconds(duration),
-            f"Volume: {config.volume}%",
-            f"Repeat: {config.repeat}",
-            f"Shuffle: {'on' if config.shuffle else 'off'}",
+            f"Volume: {config['volume']}%",
+            f"Shuffle: {'on' if config['shuffle'] else 'off'}",
+            f"Repeat: {config['repeat']}",
         ]
 
         pagination = PaginationEmbed(ctx, embeds=embeds)
@@ -346,10 +310,10 @@ class Music(commands.Cog):
             name="Player Queue", icon_url="https://i.imgur.com/SBMH84I.png"
         )
         pagination.embed.set_footer(
-            text=" | ".join(footer), icon_url=bot.user.avatar_url
+            text=" | ".join(footer), icon_url=self.bot.user.display_avatar
         )
         await pagination.build()
 
 
 def setup(bot: commands.Bot) -> None:
-    bot.add_cog(Music())
+    bot.add_cog(Music(bot))

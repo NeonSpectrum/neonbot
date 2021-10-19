@@ -5,7 +5,7 @@ LOG_FORMAT = (
 
 PERMISSIONS = 506723399
 
-PAGINATION_EMOJI = ["⏮", "◀", "▶", "⏭", "↗", "🗑"]
+PAGINATION_EMOJI = ["⏮", "◀", "▶", "⏭", "🗑"]
 CHOICES_EMOJI = [
     "\u0031\u20E3",
     "\u0032\u20E3",
@@ -20,12 +20,11 @@ CHOICES_EMOJI = [
     "🗑",
 ]
 
-
 FFMPEG_OPTIONS = (
-    "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -err_detect buffer" # deleted -err_detect ignore_err
+    "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -err_detect buffer"  # deleted -err_detect ignore_err
 )
 
-YOUTUBE_REGEX = r"^(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+"
+YOUTUBE_REGEX = r"^(http(s)?:\/\/)?(((w){3}|music).)?youtu(be|.be)?(\.com)?\/.+"
 SPOTIFY_REGEX = r"^(spotify:|https:\/\/[a-z]+\.spotify\.com\/)"
 
 IGNORED_DELETEONCMD = ["eval", "prune"]
