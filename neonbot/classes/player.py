@@ -137,9 +137,6 @@ class Player:
         self.messages['resumed'] = await self.ctx.send(embed=Embed("Player resumed."), delete_after=5)
 
     async def play(self) -> None:
-        print('track list: ', self.track_list)
-        print('current queue: ', self.current_queue)
-
         try:
             if not self.now_playing.get('stream'):
                 info = await self.ytdl.process_entry(self.now_playing)
