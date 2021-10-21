@@ -170,13 +170,11 @@ class Player:
         if self.connection.is_playing():
             self.connection.stop()
 
-        if not stop or (stop and self.connection.is_playing()):
-            await self.finished_message(delete_after=5 if stop else None)
+        await self.finished_message(delete_after=5 if not stop else None)
 
         if stop or index is not None:
             if stop:
                 await self.connection.disconnect()
-                await self.bot.delete_message(self.messages['last_playing'])
                 return
 
             self.track_list.append(index)
