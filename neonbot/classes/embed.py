@@ -129,8 +129,9 @@ class EmbedChoices:
         self.entries = entries
 
     async def build(self) -> EmbedChoices:
+        self.value = -1
+
         if not self.entries:
-            self.value = -1
             await self.ctx.send(embed=Embed("Empty choices."), delete_after=5)
             return self
 

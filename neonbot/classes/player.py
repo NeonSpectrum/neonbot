@@ -170,7 +170,7 @@ class Player:
         if self.connection.is_playing():
             self.connection.stop()
 
-        await self.finished_message(delete_after=5 if not stop else None)
+        await self.finished_message(delete_after=None)
 
         if stop or index is not None:
             if stop:
