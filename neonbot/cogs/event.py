@@ -303,7 +303,8 @@ class Event(commands.Cog):
         await ctx.send(
             embed=Embed(
                 "There was an error executing the command. Please check the logs."
-            )
+            ),
+            delete_after=60
         )
 
         embed = Embed(
