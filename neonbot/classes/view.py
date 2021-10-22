@@ -18,6 +18,10 @@ class Button(discord.ui.Button):
             await self._callback(self, interaction)
 
 class View(discord.ui.View):
+    def __init__(self, **kwargs):
+        self.msg = None
+        super().__init__(**kwargs)
+
     @staticmethod
     def create_button(data, callback, *, timeout=180):
         view = View(timeout=timeout)
