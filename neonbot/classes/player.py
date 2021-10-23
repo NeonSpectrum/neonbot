@@ -83,14 +83,13 @@ class Player:
         await self.disconnect()
 
     async def reset(self) -> None:
-        await asyncio.gather(
-            self.bot.delete_message(self.messages['last_playing']),
-            self.bot.delete_message(self.messages['last_finished']),
-            self.bot.delete_message(self.messages['paused']),
-            self.bot.delete_message(self.messages['auto_paused']),
-        )
-
         await self.next(stop=True)
+        await self.bot.delete_message(
+            self.messages['last_playing'],
+            self.messages['last_finished'],
+            self.messages['paused'],
+            self.messages['auto_paused']
+        )
 
         self.load_default()
         await self.disconnect()
@@ -170,13 +169,13 @@ class Player:
         if self.connection.is_playing():
             self.connection.stop()
 
-        await self.finished_message(delete_after=None)
+        await self.finished_message()
 
-        if stop or index is not None:
-            if stop:
-                await self.connection.disconnect()
-                return
+        if stop:
+            await self.connection.disconnect()
+            return
 
+        if index is not None:
             self.track_list.append(index)
             self.current_queue = len(self.track_list) - 1
             await self.play()
