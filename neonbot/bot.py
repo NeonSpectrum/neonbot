@@ -199,10 +199,10 @@ class Bot(commands.Bot):
             pass
 
     async def delete_message(self, *messages: Union[discord.Message, None]) -> None:
-        try:
-            await asyncio.gather(*[message.delete() for message in messages if message is not None])
-        except discord.NotFound:
-            pass
+        await asyncio.gather(
+            *[message.delete() for message in messages if message is not None],
+            return_exceptions=True
+        )
 
     async def auto_update_ytdl(self) -> None:
         response = await shell_exec("yt-dlp -U")
