@@ -205,6 +205,11 @@ class Bot(commands.Bot):
             pass
 
     async def auto_update_ytdl(self) -> None:
+        response = await shell_exec("yt-dlp -U")
+
+        if "up to date" in response:
+            return
+
         response = await self.update_package("yt-dlp")
 
         if "Successfully installed yt-dlp" in response:
