@@ -67,11 +67,11 @@ class Music(commands.Cog):
                 else:
                     player.current_queue = index - 1
             elif re.search(YOUTUBE_REGEX, keyword):
-                await player.process_youtube(keyword)
+                await player.process_youtube(ctx, keyword)
             elif re.search(SPOTIFY_REGEX, keyword):
-                await player.process_spotify(keyword)
+                await player.process_spotify(ctx, keyword)
             elif keyword:
-                await player.process_search(keyword)
+                await player.process_search(ctx, keyword)
 
         elif player.current_queue >= len(player.queue):
             player.current_queue = 0
@@ -199,8 +199,7 @@ class Music(commands.Cog):
             )
             return
 
-        player.connection.source.volume = volume / 100
-        player.update_config("volume", volume)
+        await player.volume(volume)
         await ctx.send(embed=Embed(f"Volume changed to {volume}%"), delete_after=5)
 
     @commands.command(usage="<off | single | all>")

@@ -6,6 +6,7 @@ from typing import List, Optional, Union, Dict, cast
 import discord
 from addict import Dict as DictToObject
 from discord.ext import commands, tasks
+from discord.utils import MISSING
 
 from . import Embed, EmbedChoices
 from .spotify import Spotify
@@ -30,7 +31,6 @@ class Player:
         self.ctx = ctx
         self.bot = ctx.bot
         self.db = self.bot.db.get_guild(ctx.guild.id)
-        self.config = self.db.get('music')
         self.spotify = Spotify(self.bot)
         self.ytdl = Ytdl(self.bot)
 
@@ -54,6 +54,10 @@ class Player:
         self.timeout_pause = False
         self.previous_track = None
         self.track_list: List[int] = [0]
+
+    @property
+    def config(self):
+        return self.db.get('music')
 
     @property
     def is_latest_track(self):
@@ -128,13 +132,18 @@ class Player:
         await self.bot.delete_message(self.messages['paused'], self.messages['resumed'])
         self.messages['resumed'] = await self.ctx.send(embed=Embed("Player resumed."), delete_after=5)
 
+    async def volume(self, volume: int):
+        self.connection.source.volume = volume / 100
+        self.update_config("volume", volume)
+
+        await self.refresh_player_message()
+
     async def play(self) -> None:
         try:
             if not self.now_playing.get('stream'):
                 info = await self.ytdl.process_entry(self.now_playing)
                 info = self.ytdl.parse_info(info)
-                info['requested'] = self.now_playing['requested']
-                self.now_playing = info
+                self.now_playing = {**self.now_playing, **info}
 
             song = discord.FFmpegPCMAudio(
                 self.now_playing['stream'],
@@ -247,8 +256,8 @@ class Player:
 
             counter += 1
 
-    async def process_youtube(self, keyword: str):
-        loading_msg = await self.ctx.send(embed=Embed("Loading..."))
+    async def process_youtube(self, ctx: discord.Context, keyword: str):
+        loading_msg = await ctx.send(embed=Embed("Loading..."))
 
         ytdl_list = await self.ytdl.extract_info(keyword)
 
@@ -263,31 +272,31 @@ class Player:
                     entry['url'] = f"https://www.youtube.com/watch?v={entry['id']}"
                     info.append(entry)
 
-            await self.ctx.send(embed=Embed(f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue."),
+            await ctx.send(embed=Embed(f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue."),
                                 delete_after=5)
         elif ytdl_list:
             info = self.ytdl.parse_info(ytdl_list)
-            await self.ctx.send(embed=Embed(
+            await ctx.send(embed=Embed(
                 title=f"Added song to queue #{len(self.queue) + 1}",
                 description=info['title'],
             ), delete_after=5)
         else:
-            await self.ctx.send(embed=Embed("Song failed to load."), delete_after=5)
+            await ctx.send(embed=Embed("Song failed to load."), delete_after=5)
 
-        self.add_to_queue(info)
+        self.add_to_queue(info, requested=ctx.author)
 
-    async def process_spotify(self, url: str) -> None:
+    async def process_spotify(self, ctx: discord.Context, url: str) -> None:
         url = self.spotify.parse_url(url)
         ytdl = self.ytdl.create(self.bot, {"default_search": "ytsearch1"})
 
         if not url:
-            await self.ctx.send(embed=Embed("Invalid spotify url."), delete_after=5)
+            await ctx.send(embed=Embed("Invalid spotify url."), delete_after=5)
             return
 
         if url['type'] == "playlist":
             error = 0
 
-            processing_msg = await self.ctx.send(embed=Embed("Converting to youtube playlist. Please wait..."))
+            processing_msg = await ctx.send(embed=Embed("Converting to youtube playlist. Please wait..."))
             playlist = await self.spotify.get_playlist(url['id'])
             ytdl_list = []
 
@@ -300,54 +309,54 @@ class Player:
 
                 ytdl_list.append(info[0])
 
-            self.add_to_queue(ytdl_list)
+            self.add_to_queue(ytdl_list, requested=ctx.author)
             await self.bot.delete_message(processing_msg)
 
             if error > 0:
-                await self.ctx.send(
+                await ctx.send(
                     embed=Embed(
                         f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue. {error} failed to load."),
                     delete_after=10
                 )
             else:
-                await self.ctx.send(embed=Embed(f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue."), delete_after=10)
+                await ctx.send(embed=Embed(f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue."), delete_after=10)
 
         else:
             track = await self.spotify.get_track(url['id'])
             info = await ytdl.extract_info(f"{track['artists'][0]['name']} {track['name']}")
 
-            self.add_to_queue(info)
+            self.add_to_queue(info, requested=ctx.author)
 
-    async def process_search(self, keyword: str) -> None:
-        msg = await self.ctx.send(embed=Embed("Searching..."))
+    async def process_search(self, ctx: discord.Context, keyword: str) -> None:
+        msg = await ctx.send(embed=Embed("Searching..."))
 
         try:
             extracted = await self.ytdl.extract_info(keyword)
             ytdl_choices = self.ytdl.parse_choices(extracted)
         except YtdlError:
-            await self.ctx.send(embed=Embed("No songs available."), delete_after=10)
+            await ctx.send(embed=Embed("No songs available."), delete_after=10)
             return
 
         await self.bot.delete_message(msg)
 
-        choice = (await EmbedChoices(self.ctx, ytdl_choices).build()).value
+        choice = (await EmbedChoices(ctx, ytdl_choices).build()).value
 
         if choice < 0:
             return
 
-        msg = await self.ctx.send(embed=Embed("Loading..."))
+        msg = await ctx.send(embed=Embed("Loading..."))
 
         info = await self.ytdl.process_entry(extracted[choice])
         info = self.ytdl.parse_info(info)
 
         await self.bot.delete_message(msg)
 
-        await self.ctx.send(embed=Embed(
+        await ctx.send(embed=Embed(
             title=f"You have selected #{choice + 1}. Adding song to queue #{len(self.queue) + 1}",
             description=info['title'],
         ), delete_after=5)
 
-        self.add_to_queue(info)
+        self.add_to_queue(info, requested=ctx.author)
 
     @tasks.loop(count=1)
     async def reset_timeout(self) -> None:
@@ -415,10 +424,7 @@ class Player:
             async def refresh_message():
                 button.view.children = update_buttons(button.view.children)
 
-                if self.messages['last_playing']:
-                    await self.messages['last_playing'].edit(embed=self.get_playing_embed(), view=button.view)
-                elif self.messages['last_finished']:
-                    await self.messages['last_finished'].edit(embed=self.get_finished_embed(), view=button.view)
+                await self.refresh_player_message(view=button.view)
 
             if button.emoji.name == "▶️":  # play
                 button.emoji = "⏸️"
@@ -460,8 +466,6 @@ class Player:
     def update_config(self, key: str, value: Union[str, int]) -> None:
         self.db.set('music', {key: value})
         self.db.save()
-
-        self.config = self.db.get('music')
 
     def get_footer(self, now_playing):
         return [
@@ -505,6 +509,12 @@ class Player:
         )
 
         return embed
+
+    async def refresh_player_message(self, *, view = MISSING):
+        if self.messages['last_playing']:
+            await self.messages['last_playing'].edit(embed=self.get_playing_embed(), view=view)
+        elif self.messages['last_finished']:
+            await self.messages['last_finished'].edit(embed=self.get_finished_embed(), view=view)
 
     async def clear_playing_messages(self):
         await self.bot.delete_message(
