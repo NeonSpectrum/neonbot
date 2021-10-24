@@ -133,16 +133,16 @@ class Bot(commands.Bot):
 
         return result.split("\n")[-1]
 
-    async def logout(self) -> None:
+    async def close(self) -> None:
         await asyncio.gather(
-            self.session.close(),
-            self.http.close(),
             *[self.music[key].reset() for key in self.music],
+            self.session.close(),
             return_exceptions=True
         )
+        await super().close()
 
     async def restart(self) -> None:
-        await self.logout()
+        await self.close()
         try:
             p = psutil.Process(os.getpid())
             for handler in p.open_files() + p.connections():
