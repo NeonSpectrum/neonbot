@@ -80,19 +80,12 @@ class Player:
         await self.next(stop=True)
 
         self.current_queue = 0
-        await self.disconnect()
 
     async def reset(self) -> None:
         await self.next(stop=True)
-        await self.bot.delete_message(
-            self.messages['last_playing'],
-            self.messages['last_finished'],
-            self.messages['paused'],
-            self.messages['auto_paused']
-        )
+        await self.bot.delete_message(*[self.messages[key] for key in self.messages])
 
         self.load_default()
-        await self.disconnect()
 
     async def disconnect(self) -> None:
         if self.connection and self.connection.is_connected():

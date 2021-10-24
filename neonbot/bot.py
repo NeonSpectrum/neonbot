@@ -134,10 +134,12 @@ class Bot(commands.Bot):
         return result.split("\n")[-1]
 
     async def logout(self) -> None:
-        await self.session.close()
-        await self.http.close()
-        for voice in list(self.voice_clients).copy():
-            await voice.disconnect(force=True)
+        await asyncio.gather(
+            self.session.close(),
+            self.http.close(),
+            *[self.music[key].reset() for key in self.music],
+            return_exceptions=True
+        )
 
     async def restart(self) -> None:
         await self.logout()
