@@ -40,14 +40,14 @@ class PlayerControls:
             if self.player.connection.is_paused():
                 await self.player.resume()
             else:
-                self.current_queue = 0
+                self.player.current_queue = 0
                 await self.player.play()
         elif button.emoji.name == "⏸️":  # pause
             button.emoji = "▶️"
             await self.player.refresh_player_message()
             await self.player.pause()
         elif button.emoji.name == "⏮️":  # prev
-            self.current_queue -= 2
+            self.player.current_queue -= 2
             await self.player.next()
         elif button.emoji.name == "⏭️":  # next
             await self.player.next()
