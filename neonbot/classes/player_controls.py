@@ -63,7 +63,7 @@ class PlayerControls:
     def initialize(self) -> None:
         buttons = [DictToObject(row) for row in [
             {"emoji": "🔀"},
-            {"emoji": "⏮️", "disabled": self.current_queue == 0},
+            {"emoji": "⏮️", "disabled": self.player.current_queue == 0},
             {"emoji": "⏸️" if self.player.connection.is_playing() else "▶️"},
             {"emoji": "⏭️"},
             {"emoji": "🔁"},
