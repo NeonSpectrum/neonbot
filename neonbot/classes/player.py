@@ -256,7 +256,7 @@ class Player:
 
             counter += 1
 
-    async def process_youtube(self, ctx: discord.Context, keyword: str):
+    async def process_youtube(self, ctx: commands.Context, keyword: str):
         loading_msg = await ctx.send(embed=Embed("Loading..."))
 
         ytdl_list = await self.ytdl.extract_info(keyword)
@@ -285,7 +285,7 @@ class Player:
 
         self.add_to_queue(info, requested=ctx.author)
 
-    async def process_spotify(self, ctx: discord.Context, url: str) -> None:
+    async def process_spotify(self, ctx: commands.Context, url: str) -> None:
         url = self.spotify.parse_url(url)
         ytdl = self.ytdl.create(self.bot, {"default_search": "ytsearch1"})
 
@@ -327,7 +327,7 @@ class Player:
 
             self.add_to_queue(info, requested=ctx.author)
 
-    async def process_search(self, ctx: discord.Context, keyword: str) -> None:
+    async def process_search(self, ctx: commands.Context, keyword: str) -> None:
         msg = await ctx.send(embed=Embed("Searching..."))
 
         try:
