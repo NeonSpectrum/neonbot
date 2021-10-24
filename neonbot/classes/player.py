@@ -4,11 +4,10 @@ import random
 from typing import List, Optional, Union, Dict, cast
 
 import discord
-from addict import Dict as DictToObject
 from discord.ext import commands, tasks
 from discord.utils import MISSING
 
-from . import Embed, EmbedChoices
+from . import Embed, EmbedChoices, PlayerControls
 from .spotify import Spotify
 from .view import View
 from .ytdl import Ytdl
@@ -33,6 +32,8 @@ class Player:
         self.db = self.bot.db.get_guild(ctx.guild.id)
         self.spotify = Spotify(self.bot)
         self.ytdl = Ytdl(self.bot)
+        self.player_controls = PlayerControls(self)
+        self.after = None
 
         self.load_default()
 
@@ -99,16 +100,16 @@ class Player:
         self.update_config("repeat", mode)
         await self.bot.delete_message(self.messages['repeat'])
         self.messages['repeat'] = await self.ctx.send(embed=Embed(f"Repeat changed to {mode}."), delete_after=5)
+        await self.refresh_player_message(embed=True)
 
     async def shuffle(self) -> None:
         self.update_config("shuffle", not self.config['shuffle'])
         await self.bot.delete_message(self.messages['shuffle'])
         self.messages['shuffle'] = await self.ctx.send(
-            embed=Embed(
-                f"Shuffle is set to {'enabled' if self.config['shuffle'] else 'disabled'}."
-            ),
+            embed=Embed(f"Shuffle is set to {'enabled' if self.config['shuffle'] else 'disabled'}."),
             delete_after=5,
         )
+        await self.refresh_player_message(embed=True)
 
     async def pause(self):
         if self.connection.is_paused():
@@ -121,6 +122,7 @@ class Player:
         self.messages['paused'] = await self.ctx.send(
             embed=Embed(f"Player paused. `{self.ctx.prefix}resume` to resume.")
         )
+        await self.refresh_player_message()
 
     async def resume(self):
         if self.connection.is_playing():
@@ -131,12 +133,12 @@ class Player:
 
         await self.bot.delete_message(self.messages['paused'], self.messages['resumed'])
         self.messages['resumed'] = await self.ctx.send(embed=Embed("Player resumed."), delete_after=5)
+        await self.refresh_player_message()
 
     async def volume(self, volume: int):
         self.connection.source.volume = volume / 100
         self.update_config("volume", volume)
-
-        await self.refresh_player_message()
+        await self.refresh_player_message(embed=True)
 
     async def play(self) -> None:
         try:
@@ -154,8 +156,10 @@ class Player:
             def after(error: Exception) -> None:
                 if error:
                     log.warning(f"After play error: {error}")
-                self.bot.loop.create_task(self.next())
+                if self.after:
+                    self.bot.loop.create_task(self.after())
 
+            self.after = self.next
             self.connection.play(source, after=after)
 
         except Exception as e:
@@ -166,8 +170,8 @@ class Player:
         await self.playing_message()
 
     async def next(self, *, index: Optional[int] = None, stop: bool = False) -> None:
-        if self.connection._player:
-            self.connection._player.after = None
+        self.after = None
+
         if self.connection.is_playing():
             self.connection.stop()
 
@@ -197,9 +201,10 @@ class Player:
         log.cmd(self.ctx, f"Now playing {self.now_playing['title']}", user=self.now_playing['requested'])
 
         await self.clear_playing_messages()
+        self.player_controls.initialize()
 
         self.messages['last_playing'] = await self.ctx.send(
-            embed=self.get_playing_embed(), view=self.player_controls(), delete_after=delete_after
+            embed=self.get_playing_embed(), view=self.player_controls.get(), delete_after=delete_after
         )
         self.previous_track = self.now_playing
 
@@ -214,10 +219,11 @@ class Player:
         )
 
         await self.clear_playing_messages()
+        self.player_controls.initialize()
 
         self.messages['last_finished'] = await self.ctx.send(
             embed=self.get_finished_embed(),
-            view=self.player_controls() if delete_after is None else None,
+            view=self.player_controls.get() if delete_after is None else None,
             delete_after=delete_after
         )
 
@@ -401,68 +407,6 @@ class Player:
             info['requested'] = requested or self.ctx.author
             self.queue.append(info)
 
-    def player_controls(self):
-        def update_buttons(views):
-            for view in views:
-                view.style = discord.ButtonStyle.primary
-
-            if self.config['repeat'] == 'off':
-                views[4].emoji = "🔁"
-                views[4].style = discord.ButtonStyle.secondary
-            elif self.config['repeat'] == 'single':
-                views[4].emoji = "🔂"
-                views[4].style = discord.ButtonStyle.primary
-            elif self.config['repeat'] == 'all':
-                views[4].emoji = "🔁"
-                views[4].style = discord.ButtonStyle.primary
-
-            views[0].style = discord.ButtonStyle.primary if self.config['shuffle'] else discord.ButtonStyle.secondary
-
-            return views
-
-        async def callback(button: discord.ui.Button, interaction: discord.Interaction):
-            async def refresh_message():
-                button.view.children = update_buttons(button.view.children)
-
-                await self.refresh_player_message(view=button.view)
-
-            if button.emoji.name == "▶️":  # play
-                button.emoji = "⏸️"
-                await refresh_message()
-                if self.connection.is_paused():
-                    await self.resume()
-                else:
-                    self.current_queue = 0
-                    await self.play()
-            elif button.emoji.name == "⏸️":  # pause
-                button.emoji = "▶️"
-                await refresh_message()
-                await self.pause()
-            elif button.emoji.name == "⏮️":  # prev
-                self.current_queue -= 2
-                await self.next()
-            elif button.emoji.name == "⏭️":  # next
-                await self.next()
-            elif button.emoji.name in ("🔁", "🔂"):  # repeat
-                modes = ["off", "single", "all"]
-                index = (modes.index(self.config['repeat']) + 1) % 3
-                await self.repeat(modes[index])
-                await refresh_message()
-            elif button.emoji.name == "🔀":  # shuffle
-                await self.shuffle()
-                await refresh_message()
-
-        buttons = [DictToObject(row) for row in [
-            {"emoji": "🔀"},
-            {"emoji": "⏮️", "disabled": self.current_queue == 0},
-            {"emoji": "⏸️" if self.connection.is_playing() else "▶️"},
-            {"emoji": "⏭️"},
-            {"emoji": "🔁"},
-        ]]
-        update_buttons(buttons)
-
-        return View.create_button(buttons, callback, timeout=None)
-
     def update_config(self, key: str, value: Union[str, int]) -> None:
         self.db.set('music', {key: value})
         self.db.save()
@@ -510,11 +454,19 @@ class Player:
 
         return embed
 
-    async def refresh_player_message(self, *, view = MISSING):
+    async def refresh_player_message(self, *, embed = False):
+        self.player_controls.refresh()
+
         if self.messages['last_playing']:
-            await self.messages['last_playing'].edit(embed=self.get_playing_embed(), view=view)
+            await self.messages['last_playing'].edit(
+                embed=self.get_playing_embed() if embed else MISSING,
+                view=self.player_controls.get()
+            )
         elif self.messages['last_finished']:
-            await self.messages['last_finished'].edit(embed=self.get_finished_embed(), view=view)
+            await self.messages['last_finished'].edit(
+                embed=self.get_finished_embed() if embed else MISSING,
+                view=self.player_controls.get()
+            )
 
     async def clear_playing_messages(self):
         await self.bot.delete_message(
