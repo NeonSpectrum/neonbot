@@ -42,7 +42,7 @@ class Player:
         self.last_voice_channel: Optional[discord.VoiceChannel] = None
         self.current_queue = 0
         self.queue: List[dict] = []
-        self.shuffled_list: List[str] = []
+        self.shuffled_list: List[int] = []
         self.messages: Dict[str, Optional[discord.Message]] = dict(
             last_playing=None,
             last_finished=None,
@@ -246,21 +246,17 @@ class Player:
         if not self.config['shuffle'] or len(self.queue) == 0:
             return False
 
-        if self.now_playing['id'] not in self.shuffled_list:
-            self.shuffled_list.append(self.now_playing['id'])
+        choices = lambda: [x for x in range(0, len(self.queue)) if x not in self.shuffled_list]
 
-        counter = 0
+        if len(self.shuffled_list) == 0 or len(choices()) == 0:
+            self.shuffled_list = [self.current_queue]
 
-        while True:
-            if len(self.shuffled_list) >= len(self.queue) or counter >= 5:
-                self.shuffled_list = [self.now_playing['id']]
+        index = random.choice(choices())
+        self.shuffled_list.append(index)
+        self.track_list.append(index)
+        self.current_queue += 1
 
-            index = random.randint(0, len(self.queue) - 1)
-            if self.queue[index]['id'] not in self.shuffled_list or len(self.queue) <= 1:
-                self.track_list.append(index)
-                return True
-
-            counter += 1
+        return True
 
     async def process_youtube(self, ctx: commands.Context, keyword: str):
         loading_msg = await ctx.send(embed=Embed("Loading..."))
