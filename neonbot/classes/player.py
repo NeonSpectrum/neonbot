@@ -249,7 +249,7 @@ class Player:
         choices = lambda: [x for x in range(0, len(self.queue)) if x not in self.shuffled_list]
 
         if len(self.shuffled_list) == 0 or len(choices()) == 0:
-            self.shuffled_list = [self.current_queue]
+            self.shuffled_list = [self.track_list[self.current_queue]]
 
         index = random.choice(choices())
         self.shuffled_list.append(index)
