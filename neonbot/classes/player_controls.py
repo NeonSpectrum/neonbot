@@ -60,7 +60,7 @@ class PlayerControls:
             await self.player.shuffle()
             await self.player.refresh_player_message()
 
-        await interaction.channel.send(embed=Embed(f"{interaction.user} clicked {button.emoji.name}"), delete_after=10)
+        await interaction.channel.send(embed=Embed(f"{interaction.user} clicked {button.emoji.name}"), delete_after=3)
 
     def initialize(self) -> None:
         buttons = [DictToObject(row) for row in [
