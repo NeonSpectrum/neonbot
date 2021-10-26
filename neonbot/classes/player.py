@@ -243,16 +243,18 @@ class Player:
         return True
 
     def process_shuffle(self) -> bool:
-        if not self.config['shuffle'] or len(self.queue) == 0:
+        if not self.config['shuffle']:
             return False
 
-        choices = [x for x in range(0, len(self.queue)) if x not in self.shuffled_list]
+        choices = lambda: [x for x in range(0, len(self.queue)) if x not in self.shuffled_list]
 
-        if len(self.shuffled_list) == 0 or len(choices) == 0:
+        if len(self.queue) == 1:
+            self.shuffled_list = []
+        elif len(self.shuffled_list) == 0 or len(choices()) == 0:
             self.shuffled_list = [self.track_list[self.current_queue]]
-            choices += self.shuffled_list
+            return self.process_shuffle()
 
-        index = random.choice(choices) if len(choices) > 0 else 0
+        index = random.choice(choices())
         self.shuffled_list.append(index)
         self.track_list.append(index)
         self.current_queue += 1
