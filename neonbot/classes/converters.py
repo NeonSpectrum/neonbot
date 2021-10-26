@@ -2,7 +2,7 @@ from typing import Union
 
 from discord.ext import commands
 
-from . import Embed
+from .embed import Embed
 
 
 class Required(commands.Converter):

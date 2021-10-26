@@ -7,9 +7,9 @@ import discord
 from discord.ext import commands, tasks
 from discord.utils import MISSING
 
-from . import Embed, EmbedChoices, PlayerControls
+from .embed import Embed, EmbedChoices
+from .player_controls import PlayerControls
 from .spotify import Spotify
-from .view import View
 from .ytdl import Ytdl
 from ..helpers.constants import FFMPEG_OPTIONS
 from ..helpers.date import format_seconds
@@ -41,7 +41,7 @@ class Player:
         self.connection: Optional[discord.VoiceClient] = None
         self.last_voice_channel: Optional[discord.VoiceChannel] = None
         self.current_queue = 0
-        self.queue: List[dict] = []
+        self.queue: List[Optional[dict]] = []
         self.shuffled_list: List[int] = []
         self.messages: Dict[str, Optional[discord.Message]] = dict(
             last_playing=None,

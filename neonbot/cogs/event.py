@@ -9,7 +9,7 @@ from discord.utils import escape_markdown
 
 from .utility import chatbot
 from .. import bot
-from ..classes import Embed
+from ..classes.embed import Embed
 from ..helpers import exceptions
 from ..helpers.constants import EXCLUDED_TYPING, IGNORED_DELETEONCMD
 from ..helpers.date import date_format, format_seconds

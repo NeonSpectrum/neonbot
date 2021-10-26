@@ -9,8 +9,8 @@ from typing import Generator, Optional, cast
 import discord
 from discord.ext import commands
 
-from ..classes import Embed, PaginationEmbed
 from ..classes.converters import Required
+from ..classes.embed import Embed, PaginationEmbed
 from ..helpers.log import Log
 from ..helpers.utils import convert_to_seconds, shell_exec
 

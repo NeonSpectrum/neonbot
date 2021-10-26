@@ -5,8 +5,9 @@ from typing import Optional, cast
 
 from discord.ext import commands
 
-from ..classes import Embed, PaginationEmbed, Player
 from ..classes.converters import Required
+from ..classes.embed import Embed, PaginationEmbed
+from ..classes.player import Player
 from ..helpers.constants import SPOTIFY_REGEX, YOUTUBE_REGEX
 from ..helpers.date import format_seconds
 from ..helpers.log import Log
@@ -102,6 +103,7 @@ class Music(commands.Cog):
         """Resumes the current player."""
 
         player = get_player(ctx)
+        await player.resume()
 
     @commands.command(aliases=["next"])
     @commands.guild_only()
@@ -150,7 +152,6 @@ class Music(commands.Cog):
 
         index -= 1
         player = get_player(ctx)
-        queue = None
 
         try:
             queue = player.queue[index]

@@ -5,7 +5,7 @@ from typing import List, Optional
 import discord
 from discord.ext import commands, tasks
 
-from . import Embed
+from .embed import Embed
 from ..helpers.constants import CHOICES_EMOJI
 
 
@@ -160,7 +160,7 @@ class Connect4:
                 )
         embed.description = "\n".join(["".join(b) for b in board])
         embed.set_footer(
-            text=f"Started by {self.players[0]}", icon_url=self.players[0].display_avatar
+            text=f"Started by {self.players[0]}", icon_url=self.players[0].display_avatar.url
         )
 
         await self.bot.delete_message(self.last_board_message)

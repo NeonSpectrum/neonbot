@@ -1,8 +1,8 @@
 import discord
 from addict import Dict as DictToObject
-from discord.utils import MISSING
 
-from neonbot.classes.view import View
+from .embed import Embed
+from .view import View
 
 
 class PlayerControls:
@@ -59,6 +59,8 @@ class PlayerControls:
         elif button.emoji.name == "🔀":  # shuffle
             await self.player.shuffle()
             await self.player.refresh_player_message()
+
+        await interaction.channel.send(embed=Embed(f"{interaction.user} clicked {button.emoji.name}"))
 
     def initialize(self) -> None:
         buttons = [DictToObject(row) for row in [

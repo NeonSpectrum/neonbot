@@ -12,7 +12,7 @@ from yt_dlp import version as ytdl_version
 from discord.ext import commands
 
 from .. import __author__, __title__, __version__, bot, env
-from ..classes import Embed
+from ..classes.embed import Embed
 from ..helpers.date import date_format, format_seconds
 from ..helpers.log import Log
 

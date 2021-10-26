@@ -3,7 +3,9 @@ from typing import cast
 
 from discord.ext import commands
 
-from ..classes import Connect4, Embed, Pokemon
+from ..classes.connect4 import Connect4
+from ..classes.embed import Embed
+from ..classes.pokemon import Pokemon
 from ..helpers.log import Log
 
 log = cast(Log, logging.getLogger(__name__))

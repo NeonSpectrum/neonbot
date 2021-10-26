@@ -95,7 +95,7 @@ class PaginationEmbed:
         self.msg = await self.ctx.send(embed=embed, view=buttons)
         buttons.set_message(self.msg)
 
-    def get_buttons(self) -> discord.ui.View:
+    def get_buttons(self) -> View:
         async def callback(button: discord.ui.Button, interaction: discord.Interaction):
             if interaction.user != self.ctx.author:
                 return

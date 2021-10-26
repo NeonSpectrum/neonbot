@@ -19,7 +19,7 @@ from discord.utils import oauth_url
 
 from neonbot.helpers.utils import shell_exec
 from . import __title__, __version__
-from .classes import Embed
+from .classes.embed import Embed
 from .database import Database
 from .env import env
 from .helpers.constants import LOGO, PERMISSIONS

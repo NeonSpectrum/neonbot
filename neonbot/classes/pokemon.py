@@ -10,7 +10,7 @@ from PIL import Image, ImageEnhance
 from discord.ext import commands
 from pokemon.master import catch_em_all, get_pokemon
 
-from . import Embed
+from .embed import Embed
 
 pokemons = catch_em_all()
 

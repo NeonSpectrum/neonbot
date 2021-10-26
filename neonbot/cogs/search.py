@@ -12,7 +12,7 @@ from discord.ext import commands
 from jikanpy import AioJikan
 
 from neonbot.helpers.utils import shell_exec
-from ..classes import Embed, EmbedChoices, PaginationEmbed
+from ..classes.embed import Embed, PaginationEmbed, EmbedChoices
 from ..helpers.exceptions import ApiError
 from ..helpers.log import Log
 
@@ -67,7 +67,7 @@ class Search(commands.Cog):
             icon_url="https://i.imgur.com/G46fm8J.png",
         )
         embed.set_footer(
-            text=f"Searched by {ctx.author}", icon_url=ctx.author.display_avatar
+            text=f"Searched by {ctx.author}", icon_url=ctx.author.display_avatar.url
         )
         embed.set_image(url=image["items"][0]['link'])
 
@@ -118,7 +118,7 @@ class Search(commands.Cog):
             icon_url="https://dictionaryapi.com/images/MWLogo.png",
         )
         embed.set_footer(
-            text=f"Searched by {ctx.author}", icon_url=ctx.author.display_avatar
+            text=f"Searched by {ctx.author}", icon_url=ctx.author.display_avatar.url
         )
 
         await self.bot.delete_message(msg)
@@ -417,7 +417,7 @@ class Search(commands.Cog):
             await ctx.send(embed=Embed("Anime not found."), delete_after=5)
             return
 
-        anime = await jikan._get("anime", results[0]['mal_id'], None)
+        anime = await jikan.anime(results[0]['mal_id'])
         await jikan.close()
 
         if anime['title_english'] and not anime['title_japanese']:
@@ -427,7 +427,6 @@ class Search(commands.Cog):
         else:
             title = f"{anime['title_english']} ({anime['title_japanese']})"
 
-        print(anime)
         embed = Embed()
         embed.set_author(name=title, url=anime['url'])
         embed.set_thumbnail(url=anime['image_url'])
