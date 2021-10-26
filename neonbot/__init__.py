@@ -5,4 +5,3 @@ __version__ = "2.0.0"
 from .bot import Bot
 
 bot = Bot()
-env = bot.env

@@ -11,7 +11,7 @@ import psutil
 from yt_dlp import version as ytdl_version
 from discord.ext import commands
 
-from .. import __author__, __title__, __version__, bot, env
+from .. import __author__, __title__, __version__, bot
 from ..classes.embed import Embed
 from ..helpers.date import date_format, format_seconds
 from ..helpers.log import Log
@@ -26,7 +26,7 @@ async def chatbot(message: discord.Message, dm: bool = False) -> None:
     with message.channel.typing():
         msg = message.content if dm else " ".join(message.content.split(" ")[1:])
         params = {
-            "key": env.str('CLEVERBOT_API'),
+            "key": bot.env.str('CLEVERBOT_API'),
             "input": emoji.demojize(msg)
         }
 
@@ -126,15 +126,15 @@ class Utility(commands.Cog):
 
         msg = await ctx.send(embed=generate_embed().add_field("Status:", "Sending...", inline=False))
 
-        account_sid = env.str("TWILIO_ACCOUNT_SID")
-        auth_token = env.str("TWILIO_AUTH_TOKEN")
+        account_sid = bot.env.str("TWILIO_ACCOUNT_SID")
+        auth_token = bot.env.str("TWILIO_AUTH_TOKEN")
 
         body = f"{message}\n\nSent by {ctx.author} using {__title__}"
 
         response = await bot.session.post(
             f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json",
             auth=aiohttp.BasicAuth(login=account_sid, password=auth_token),
-            data={"From": env.str("TWILIO_NUMBER"), "To": number, "Body": body}
+            data={"From": bot.env.str("TWILIO_NUMBER"), "To": number, "Body": body}
         )
 
         if response.status >= 400:
