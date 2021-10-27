@@ -157,7 +157,7 @@ class Event(commands.Cog):
 
     @staticmethod
     @bot.event
-    async def on_member_update(before: discord.Member, after: discord.Member) -> None:
+    async def on_presence_update(before: discord.Member, after: discord.Member) -> None:
         if before.bot:
             return
 
