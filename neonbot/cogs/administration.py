@@ -321,9 +321,9 @@ class Administration(commands.Cog):
         guild.save()
 
         if guild.get('channel.voice_log'):
-            await ctx.send(embed=Embed("Logger Presence is now set to this channel."))
+            await ctx.send(embed=Embed("Logger Voice is now set to this channel."))
         else:
-            await ctx.send(embed=Embed("Logger Presence is now disabled."))
+            await ctx.send(embed=Embed("Logger Voice is now disabled."))
 
     @logger.command(name="message")
     async def logger_message(self, ctx: commands.Context) -> None:
