@@ -11,14 +11,30 @@ class Model:
     def refresh(self) -> None:
         self.data = self.db[self.table].find_one(self.where)
 
-    def get(self, key: str, default: any = "") -> any:
-        return self.data.get(key, default)
+    def get(self, key: str, default: any = None) -> any:
+        keys = key.split(".")
+        value = None
+
+        for key in keys:
+            value = value.get(key, default) if value else self.data.get(key)
+
+        return value
 
     def set(self, key: str, value: any) -> None:
-        if isinstance(value, dict):
-            self.data[key] = {**self.data[key], **value}
-        else:
-            self.data[key] = value
+        keys = key.split(".")
+        current = None
+
+        for i, key in enumerate(keys):
+            if len(keys) == 1:
+                self.data[key] = value
+            elif current is None:
+                current = self.data[key]
+            elif i < len(keys) - 1:
+                current = current[key]
+            elif isinstance(value, dict):
+                current[key] = {**current[key], **value}
+            else:
+                current[key] = value
 
     def save(self):
         self.db.servers.update_one(self.where, {"$set": self.data})

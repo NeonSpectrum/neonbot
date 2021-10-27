@@ -94,7 +94,7 @@ class Event(commands.Cog):
             return
 
         guild = bot.db.get_guild(message.guild.id)
-        log_channel = bot.get_channel(int(guild.get('channel')['msgdelete'] or -1))
+        log_channel = bot.get_channel(int(guild.get('channel.msgdelete') or -1))
 
         if log_channel:
             content = message.content
@@ -132,8 +132,8 @@ class Event(commands.Cog):
                 await player.on_member_join()
 
         if before.channel != after.channel:
-            voice_tts_channel = bot.get_channel(int(guild.get('channel')['voicetts'] or -1))
-            log_channel = bot.get_channel(int(guild.get('channel')['log'] or -1))
+            voice_tts_channel = bot.get_channel(int(guild.get('channel.voicetts') or -1))
+            log_channel = bot.get_channel(int(guild.get('channel.voice_log') or -1))
 
             role = voice_channel.guild.default_role
             readable = voice_channel.overwrites_for(role).read_messages is not False
@@ -162,7 +162,7 @@ class Event(commands.Cog):
             return
 
         guild = bot.db.get_guild(before.guild.id)
-        log_channel = bot.get_channel(int(guild.get('channel')['log'] or -1))
+        log_channel = bot.get_channel(int(guild.get('channel.presence_log') or -1))
 
         embed = Embed()
         embed.set_footer(text=date_format())
@@ -224,7 +224,7 @@ class Event(commands.Cog):
     @bot.event
     async def on_member_join(member: discord.Member) -> None:
         guild = bot.db.get_guild(member.guild.id)
-        channel = bot.get_channel(int(guild.get('channel')['log'] or -1))
+        channel = bot.get_channel(int(guild.get('channel.log') or -1))
 
         msg = f"**{member.name}** joined the server."
 
@@ -238,7 +238,7 @@ class Event(commands.Cog):
     @bot.event
     async def on_member_remove(member: discord.Member) -> None:
         guild = bot.db.get_guild(member.guild.id)
-        channel = bot.get_channel(int(guild.get('channel')['log'] or -1))
+        channel = bot.get_channel(int(guild.get('channel.log') or -1))
 
         msg = f"**{member.name}** left the server."
 

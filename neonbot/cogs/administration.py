@@ -189,12 +189,12 @@ class Administration(commands.Cog):
 
         await self.bot.change_presence(
             activity=discord.Activity(
-                name=name, type=discord.ActivityType[settings.get('game')['type']]
+                name=name, type=discord.ActivityType[settings.get('game.type')]
             )
         )
         await ctx.send(
             embed=Embed(
-                f"Presence is now set to {settings.get('game')['type']} {settings.get('game')['name']}."
+                f"Presence is now set to {settings.get('game.type')} {settings.get('game.name')}."
             )
         )
 
@@ -283,13 +283,10 @@ class Administration(commands.Cog):
         """Enables/Disables Voice TTS. *ADMINISTRATOR"""
 
         guild = self.db.get_guild(ctx.guild.id)
-        guild.update({
-            'channel': {
-                'voicetts': (ctx.channel.id if guild.get('channel')['voicetts'] != ctx.channel.id else None)
-            }
-        })
+        guild.set('channel.voicetts', ctx.channel.id if guild.get('channel.voicetts') != ctx.channel.id else None)
+        guild.save()
 
-        if guild.get('channel')['voicetts']:
+        if guild.get('channel.voicetts'):
             await ctx.send(embed=Embed("Voice TTS is now set to this channel."))
         else:
             await ctx.send(embed=Embed("Voice TTS is now disabled."))
@@ -307,13 +304,23 @@ class Administration(commands.Cog):
         """Logs presence when someone joins/leaves the guild or voice channel and status updates."""
 
         guild = self.db.get_guild(ctx.guild.id)
-        guild.update({
-            'channel': {
-                'log': (ctx.channel.id if guild.get('channel')['log'] != ctx.channel.id else None)
-            }
-        })
+        guild.set('channel.presence_log', ctx.channel.id if guild.get('channel.presence_log') != ctx.channel.id else None)
+        guild.save()
 
-        if guild.get('channel')['log']:
+        if guild.get('channel.presence_log'):
+            await ctx.send(embed=Embed("Logger Presence is now set to this channel."))
+        else:
+            await ctx.send(embed=Embed("Logger Presence is now disabled."))
+
+    @logger.command(name="voice")
+    async def logger_voice(self, ctx: commands.Context) -> None:
+        """Logs presence when someone joins/leaves the voice channel."""
+
+        guild = self.db.get_guild(ctx.guild.id)
+        guild.set('channel.voice_log', ctx.channel.id if guild.get('channel.voice_log') != ctx.channel.id else None)
+        guild.save()
+
+        if guild.get('channel.voice_log'):
             await ctx.send(embed=Embed("Logger Presence is now set to this channel."))
         else:
             await ctx.send(embed=Embed("Logger Presence is now disabled."))
@@ -325,13 +332,10 @@ class Administration(commands.Cog):
         """
 
         guild = self.db.get_guild(ctx.guild.id)
-        guild.update({
-            'channel': {
-                'msgdelete': (ctx.channel.id if guild.get('channel')['msgdelete'] != ctx.channel.id else None)
-            }
-        })
+        guild.set('channel.msgdelete', ctx.channel.id if guild.get('channel.msgdelete') != ctx.channel.id else None)
+        guild.save()
 
-        if guild.get('channel')['msgdelete']:
+        if guild.get('channel.msgdelete'):
             await ctx.send(embed=Embed("Logger Message is now set to this channel."))
         else:
             await ctx.send(embed=Embed("Logger Message is now disabled."))

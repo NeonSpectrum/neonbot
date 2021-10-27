@@ -87,8 +87,8 @@ class Bot(commands.Bot):
 
     def get_presence(self) -> Tuple[discord.Status, discord.Activity]:
         settings = self.db.get_settings()
-        activity_type = settings.get('game')['type'].lower()
-        activity_name = settings.get('game')['name']
+        activity_type = settings.get('game.type').lower()
+        activity_name = settings.get('game.name')
         status = settings.get('status')
 
         return (
