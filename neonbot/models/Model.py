@@ -26,8 +26,9 @@ class Model:
 
         for i, key in enumerate(keys):
             if len(keys) == 1:
-                self.data[key] = {**self.data[key], **value} if isinstance(value, dict) else value
-            elif current is None:
+                current = self.data
+
+            if current is None:
                 current = self.data[key]
             elif i < len(keys) - 1:
                 current = current[key]
