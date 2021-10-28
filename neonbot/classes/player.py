@@ -407,7 +407,7 @@ class Player:
             self.queue.append(info)
 
     def update_config(self, key: str, value: Union[str, int]) -> None:
-        self.db.set('music', {key: value})
+        self.db.set('music.' + key, value)
         self.db.save()
 
     def get_footer(self, now_playing):
