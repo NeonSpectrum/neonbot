@@ -26,15 +26,13 @@ class Model:
 
         for i, key in enumerate(keys):
             if len(keys) == 1:
-                self.data[key] = value
+                self.data[key] = {**self.data[key], **value} if isinstance(value, dict) else value
             elif current is None:
                 current = self.data[key]
             elif i < len(keys) - 1:
                 current = current[key]
-            elif isinstance(value, dict):
-                current[key] = {**current[key], **value}
             else:
-                current[key] = value
+                current[key] = {**current[key], **value} if isinstance(value, dict) else value
 
     def save(self):
         self.db.servers.update_one(self.where, {"$set": self.data})
