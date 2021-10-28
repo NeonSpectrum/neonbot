@@ -119,17 +119,17 @@ class Event(commands.Cog):
         player = bot.music.get(member.guild.id)
         voice_channel = after.channel or before.channel
 
-        if player and player.last_voice_channel == before.channel:
+        if player:
             voice_members = [
                 member
                 for member in player.last_voice_channel.members
                 if not member.bot
             ]
 
-            if not voice_members:
-                await player.on_member_leave()
-            elif any(voice_members):
+            if any(voice_members):
                 await player.on_member_join()
+            else:
+                await player.on_member_leave()
 
         if before.channel != after.channel:
             voice_tts_channel = bot.get_channel(int(guild.get('channel.voicetts') or -1))

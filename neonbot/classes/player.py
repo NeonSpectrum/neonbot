@@ -375,7 +375,7 @@ class Player:
         await self.ctx.send(embed=Embed(msg))
 
     async def on_member_leave(self):
-        if not self.connection.is_playing():
+        if self.connection and not self.connection.is_playing():
             return await self.reset()
 
         msg = "Player paused and will reset after 10 minutes if no one will listen :("
