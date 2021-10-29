@@ -224,7 +224,7 @@ class Event(commands.Cog):
     @bot.event
     async def on_member_join(member: discord.Member) -> None:
         guild = bot.db.get_guild(member.guild.id)
-        channel = bot.get_channel(int(guild.get('channel.log') or -1))
+        channel = bot.get_channel(int(guild.get('channel.presence_log') or -1))
 
         msg = f"**{member.name}** joined the server."
 
@@ -238,7 +238,7 @@ class Event(commands.Cog):
     @bot.event
     async def on_member_remove(member: discord.Member) -> None:
         guild = bot.db.get_guild(member.guild.id)
-        channel = bot.get_channel(int(guild.get('channel.log') or -1))
+        channel = bot.get_channel(int(guild.get('channel.presence_log') or -1))
 
         msg = f"**{member.name}** left the server."
 
