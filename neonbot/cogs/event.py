@@ -90,7 +90,7 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_message_delete(message: discord.Message) -> None:
-        if message.author.id == bot.user.id:
+        if message.author.bot:
             return
 
         guild = bot.db.get_guild(message.guild.id)
