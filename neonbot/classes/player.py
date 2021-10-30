@@ -331,7 +331,7 @@ class Player:
             info = await ytdl.extract_info(f"{track['artists'][0]['name']} {track['name']}")
             await ctx.send(embed=Embed(
                 title=f"Added song to queue #{len(self.queue) + 1}",
-                description=info['title'],
+                description=info[0]['title'],
             ), delete_after=5)
 
             self.add_to_queue(info, requested=ctx.author)
