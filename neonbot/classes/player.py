@@ -141,6 +141,9 @@ class Player:
         await self.refresh_player_message(embed=True)
 
     async def play(self) -> None:
+        if not self.connection or not self.connection.is_connected():
+            return
+
         try:
             if not self.now_playing.get('stream'):
                 info = await self.ytdl.process_entry(self.now_playing)
