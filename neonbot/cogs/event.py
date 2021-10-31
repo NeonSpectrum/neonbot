@@ -1,6 +1,6 @@
 import logging
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Tuple, Union, cast
 
 import discord
@@ -211,7 +211,7 @@ class Event(commands.Cog):
                     embed.add_field(
                         name="Time Elapsed",
                         value=format_seconds(
-                            datetime.utcnow().timestamp() - last.start.timestamp()
+                            datetime.now(tz=timezone.utc).timestamp() - last.start.timestamp()
                         ),
                     )
             else:
