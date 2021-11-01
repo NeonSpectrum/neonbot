@@ -82,18 +82,20 @@ class PaginationEmbed:
     async def send(self) -> None:
         embed = self.embed.copy()
         embed.description = self.embeds[self.index].description
+        buttons = None
 
         if len(self.embeds) > 1:
             embed.description += f"\n\n**Page {self.index + 1}/{len(self.embeds)}**"
+            buttons = self.get_buttons()
 
         if self.msg:
             await self.msg.edit(embed=embed)
             return
 
-        buttons = self.get_buttons()
-
         self.msg = await self.ctx.send(embed=embed, view=buttons)
-        buttons.set_message(self.msg)
+
+        if buttons:
+            buttons.set_message(self.msg)
 
     def get_buttons(self) -> View:
         async def callback(button: discord.ui.Button, interaction: discord.Interaction):
