@@ -301,43 +301,47 @@ class Player:
             await ctx.send(embed=Embed("Invalid spotify url."), delete_after=5)
             return
 
-        if url['type'] == "playlist":
-            error = 0
+        processing_msg = None
+        is_playlist = url['type'] == "playlist"
+        playlist = []
+        ytdl_list = []
+        info = []
+        error = 0
 
-            processing_msg = await ctx.send(embed=Embed("Converting to youtube playlist. Please wait..."))
+        if is_playlist:
+            processing_msg = await ctx.send(embed=Embed("Converting to YouTube playlist. Please wait..."))
             playlist = await self.spotify.get_playlist(url['id'])
-            ytdl_list = []
-
-            for item in playlist:
-                info = await ytdl.extract_info(f"{item['track']['name']} {item['track']['artists'][0]['name']}")
-
-                if len(info) == 0:
-                    error += 1
-                    continue
-
-                ytdl_list.append(info[0])
-
-            self.add_to_queue(ytdl_list, requested=ctx.author)
-            await self.bot.delete_message(processing_msg)
-
-            if error > 0:
-                await ctx.send(
-                    embed=Embed(
-                        f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue. {error} failed to load."),
-                    delete_after=10
-                )
-            else:
-                await ctx.send(embed=Embed(f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue."), delete_after=10)
-
         else:
-            track = await self.spotify.get_track(url['id'])
-            info = await ytdl.extract_info(f"{track['artists'][0]['name']} {track['name']}")
+            processing_msg = await ctx.send(embed=Embed("Converting to YouTube track. Please wait..."))
+            playlist.append(await self.spotify.get_track(url['id']))
+
+        for item in playlist:
+            track = item['track'] if is_playlist else item
+            info = await ytdl.extract_info(f"{track['name']} {' '.join(artist['name'] for artist in track['artists'])}")
+
+            if info is None:
+                error += 1
+                continue
+
+            ytdl_list.append(info)
+
+        await self.bot.delete_message(processing_msg)
+
+        if len(ytdl_list) == 0:
+            await ctx.send(embed=Embed("Failed to find similar song to YouTube."), delete_after=10)
+            return
+
+        if is_playlist:
+            await ctx.send(embed=Embed(
+                f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue." + (" {error} failed to load." if error > 0 else "")
+            ), delete_after=10)
+        else:
             await ctx.send(embed=Embed(
                 title=f"Added song to queue #{len(self.queue) + 1}",
-                description=info[0]['title'],
+                description=ytdl_list[0]['title'],
             ), delete_after=5)
 
-            self.add_to_queue(info, requested=ctx.author)
+        self.add_to_queue(ytdl_list, requested=ctx.author)
 
     async def process_search(self, ctx: commands.Context, keyword: str) -> None:
         msg = await ctx.send(embed=Embed("Searching..."))

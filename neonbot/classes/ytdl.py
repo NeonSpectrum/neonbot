@@ -31,6 +31,7 @@ class Ytdl:
                 **extra_params,
             }
         )
+        self.is_single_search = self.ytdl.params.get('default_search') == 'ytsearch1'
 
     async def extract_info(self, *args: Any, **kwargs: Any) -> Union[list, dict]:
         result = await self.loop.run_in_executor(
@@ -46,8 +47,12 @@ class Ytdl:
             )
 
         result = await self.process_entry(result, download=not result.get("is_live"))
+        result = result.get("entries", result)
 
-        return result.get("entries", result)
+        if self.is_single_search:
+            return result[0] if len(result) > 0 else None
+
+        return result
 
     async def process_entry(self, info: dict, download: bool = True) -> dict:
         result = await self.loop.run_in_executor(
