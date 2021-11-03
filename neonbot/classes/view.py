@@ -42,5 +42,11 @@ class View(discord.ui.View):
             except discord.NotFound:
                 pass
 
+    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
+        if isinstance(error, discord.NotFound):
+            return
+
+        return await super().on_error(error, item, interaction)
+
     def set_message(self, msg: discord.Message):
         self.msg = msg

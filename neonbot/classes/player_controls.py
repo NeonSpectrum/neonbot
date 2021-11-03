@@ -35,17 +35,15 @@ class PlayerControls:
 
     async def callback(self, button: discord.ui.Button, interaction: discord.Interaction):
         if button.emoji.name == "▶️":  # play
-            button.emoji = "⏸️"
-            await self.player.refresh_player_message()
             if self.player.connection.is_paused():
                 await self.player.resume()
             else:
                 self.player.current_queue = 0
                 await self.player.play()
-        elif button.emoji.name == "⏸️":  # pause
-            button.emoji = "▶️"
             await self.player.refresh_player_message()
+        elif button.emoji.name == "⏸️":  # pause
             await self.player.pause()
+            await self.player.refresh_player_message()
         elif button.emoji.name == "⏮️":  # prev
             self.player.current_queue -= 2
             await self.player.next()

@@ -141,14 +141,14 @@ class Player:
         await self.refresh_player_message(embed=True)
 
     async def play(self) -> None:
-        if not self.connection or not self.connection.is_connected():
-            return
-
         try:
             if not self.now_playing.get('stream'):
                 info = await self.ytdl.process_entry(self.now_playing)
                 info = self.ytdl.parse_info(info)
                 self.now_playing = {**self.now_playing, **info}
+
+            if not self.connection or not self.connection.is_connected() or self.connection.is_playing():
+                return
 
             song = discord.FFmpegPCMAudio(
                 self.now_playing['stream'],
@@ -166,11 +166,11 @@ class Player:
             self.connection.play(source, after=after)
 
         except Exception as e:
-            msg = "Error while playing the song."
+            msg = str(e) if isinstance(e, discord.ClientException) else "Error while playing the song."
             log.exception(msg, e)
             await self.ctx.send(embed=Embed(msg))
-
-        await self.playing_message()
+        else:
+            await self.playing_message()
 
     async def next(self, *, index: Optional[int] = None, stop: bool = False) -> None:
         self.after = None
@@ -305,7 +305,6 @@ class Player:
         is_playlist = url['type'] == "playlist"
         playlist = []
         ytdl_list = []
-        info = []
         error = 0
 
         if is_playlist:
@@ -464,8 +463,11 @@ class Player:
 
         return embed
 
-    async def refresh_player_message(self, *, embed = False):
+    async def refresh_player_message(self, *, embed = False, refresh = True):
         self.player_controls.refresh()
+
+        if not refresh:
+            return
 
         if self.messages['last_playing']:
             await self.messages['last_playing'].edit(
