@@ -34,6 +34,8 @@ class PlayerControls:
         return views
 
     async def callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.channel.send(embed=Embed(f"{interaction.user} clicked {button.emoji.name}"), delete_after=3)
+
         if button.emoji.name == "▶️":  # play
             if self.player.connection.is_paused():
                 await self.player.resume()
@@ -57,8 +59,6 @@ class PlayerControls:
         elif button.emoji.name == "🔀":  # shuffle
             await self.player.shuffle()
             await self.player.refresh_player_message()
-
-        await interaction.channel.send(embed=Embed(f"{interaction.user} clicked {button.emoji.name}"), delete_after=3)
 
     def initialize(self) -> None:
         buttons = [DictToObject(row) for row in [
