@@ -69,7 +69,7 @@ class Event(commands.Cog):
             return await chatbot(message)
         elif str(ctx.channel.type) == "private":
             if message.content.lower() == "invite":
-                return await bot.send_invite_link(message.channel)
+                return await bot.send_invite_link(message)
 
             log.info(f"DM from {ctx.author}: {message.content}")
             await bot.send_to_owner(

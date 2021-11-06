@@ -174,15 +174,15 @@ class Bot(commands.Bot):
                 await self.delete_message(message)
             await channel.send(embed=Embed("Bot Restarted."), delete_after=10)
 
-    async def send_invite_link(self, channel: nextcord.DMChannel) -> None:
-        with channel.typing():
+    async def send_invite_link(self, message: nextcord.Message) -> None:
+        with message.channel.typing():
             url = oauth_url(
                 self.app_info.id,
                 permissions=nextcord.Permissions(permissions=PERMISSIONS),
                 scopes=('bot', 'applications.commands')
             )
-            await channel.send(f"Bot invite link: {url}")
-            log.info(f"Sent an invite link to: {channel.recipient}")
+            await message.channel.send(f"Bot invite link: {url}")
+            log.info(f"Sent an invite link to: {message.author}")
 
     async def send_to_all_owners(
         self, *args: Any, excluded: list = [], **kwargs: Any
