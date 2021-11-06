@@ -1,7 +1,7 @@
 import logging
 from typing import cast
 
-from discord.ext import commands
+from nextcord.ext import commands
 
 from ..classes.connect4 import Connect4
 from ..classes.embed import Embed

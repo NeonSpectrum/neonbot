@@ -24,12 +24,12 @@ emoji = "*"
 aioschedule = "*"
 yt-dlp = "*"
 addict = "*"
+motor = "*"
+tornado = "*"
 
 [pipenv]
 allow_prereleases = true
 
 [packages.discord]
-git = "https://github.com/Rapptz/discord.py"
-
-[packages.pymongo]
-extras = [ "srv",]
+git = "https://github.com/nextcord/nextcord"
+extras = [ "speed", "music",]

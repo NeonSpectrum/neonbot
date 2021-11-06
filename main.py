@@ -2,7 +2,7 @@
 
 import os
 
-from discord import opus
+from nextcord import opus
 
 from neonbot import bot
 

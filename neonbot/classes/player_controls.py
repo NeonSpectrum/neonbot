@@ -1,4 +1,4 @@
-import discord
+import nextcord
 from addict import Dict as DictToObject
 
 from .embed import Embed
@@ -11,7 +11,7 @@ class PlayerControls:
 
     def update_buttons(self, views):
         for view in views:
-            view.style = discord.ButtonStyle.primary
+            view.style = nextcord.ButtonStyle.primary
 
         # ["🔀","⏮️","⏸️","⏭️","🔁"]
         if self.player.connection.is_playing():
@@ -21,19 +21,20 @@ class PlayerControls:
 
         if self.player.config['repeat'] == 'off':
             views[4].emoji = "🔁"
-            views[4].style = discord.ButtonStyle.secondary
+            views[4].style = nextcord.ButtonStyle.secondary
         elif self.player.config['repeat'] == 'single':
             views[4].emoji = "🔂"
-            views[4].style = discord.ButtonStyle.primary
+            views[4].style = nextcord.ButtonStyle.primary
         elif self.player.config['repeat'] == 'all':
             views[4].emoji = "🔁"
-            views[4].style = discord.ButtonStyle.primary
+            views[4].style = nextcord.ButtonStyle.primary
 
-        views[0].style = discord.ButtonStyle.primary if self.player.config['shuffle'] else discord.ButtonStyle.secondary
+        views[0].style = nextcord.ButtonStyle.primary if self.player.config[
+            'shuffle'] else nextcord.ButtonStyle.secondary
 
         return views
 
-    async def callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def callback(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
         await interaction.channel.send(embed=Embed(f"{interaction.user} clicked {button.emoji.name}"), delete_after=3)
 
         if button.emoji.name == "▶️":  # play
@@ -42,10 +43,9 @@ class PlayerControls:
             else:
                 self.player.current_queue = 0
                 await self.player.play()
-            await self.player.refresh_player_message()
+                await self.player.refresh_player_message()
         elif button.emoji.name == "⏸️":  # pause
             await self.player.pause()
-            await self.player.refresh_player_message()
         elif button.emoji.name == "⏮️":  # prev
             self.player.current_queue -= 2
             await self.player.next()
@@ -55,10 +55,8 @@ class PlayerControls:
             modes = ["off", "single", "all"]
             index = (modes.index(self.player.config['repeat']) + 1) % 3
             await self.player.repeat(modes[index])
-            await self.player.refresh_player_message()
         elif button.emoji.name == "🔀":  # shuffle
             await self.player.shuffle()
-            await self.player.refresh_player_message()
 
     def initialize(self) -> None:
         buttons = [DictToObject(row) for row in [

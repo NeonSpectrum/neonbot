@@ -130,4 +130,4 @@ dmypy.json
 
 tmp/
 Pipfile.lock
-.idea/
+.idea/pip

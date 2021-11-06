@@ -1,6 +1,6 @@
 from typing import Union
 
-from discord.ext import commands
+from nextcord.ext import commands
 
 from .embed import Embed
 

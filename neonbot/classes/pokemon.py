@@ -5,12 +5,14 @@ from copy import deepcopy
 from io import BytesIO
 from typing import Tuple
 
-import discord
+import nextcord
 from PIL import Image, ImageEnhance
-from discord.ext import commands
+from nextcord.ext import commands
+# noinspection PyUnresolvedReferences
 from pokemon.master import catch_em_all, get_pokemon
 
 from .embed import Embed
+from ..helpers.constants import ICONS
 
 pokemons = catch_em_all()
 
@@ -32,7 +34,7 @@ class Pokemon:
 
         embed = Embed()
         embed.set_author(
-            name="Who's that pokemon?", icon_url="https://i.imgur.com/3sQh8aN.png"
+            name="Who's that pokemon?", icon_url=ICONS['pokemon']
         )
         embed.set_image(url="attachment://image.png")
 
@@ -40,13 +42,13 @@ class Pokemon:
         guess_embed.set_footer(text=self.guess_string(name))
 
         guess_msg = await self.channel.send(
-            embed=guess_embed, file=discord.File(black_img, "image.png")
+            embed=guess_embed, file=nextcord.File(black_img, "image.png")
         )
 
         winner_embed = embed.copy()
         someone_answered = False
 
-        def check(m: discord.Message) -> bool:
+        def check(m: nextcord.Message) -> bool:
             nonlocal someone_answered
 
             if m.content:
@@ -76,7 +78,7 @@ class Pokemon:
 
         await self.bot.delete_message(guess_msg)
         await channel.send(
-            embed=winner_embed, file=discord.File(original_img, "image.png")
+            embed=winner_embed, file=nextcord.File(original_img, "image.png")
         )
 
         if not someone_answered:
@@ -110,7 +112,7 @@ class Pokemon:
 
         embed = Embed(title="Scoreboard", description="\n".join(scores))
         embed.set_author(
-            name="Who's that pokemon?", icon_url="https://i.imgur.com/3sQh8aN.png"
+            name="Who's that pokemon?", icon_url=ICONS['pokemon']
         )
 
         await self.channel.send(embed=embed)

@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands
 
 from .view import View
 from ..helpers.constants import CHOICES_EMOJI, PAGINATION_EMOJI
 
 
-class Embed(discord.Embed):
+class Embed(nextcord.Embed):
     def __init__(self, description: Any = None, **kwargs: Any) -> None:
         if description is not None:
             super().__init__(description=description and str(description), **kwargs)
@@ -24,15 +24,15 @@ class Embed(discord.Embed):
     def set_author(
         self,
         name: str,
-        url: str = discord.Embed.Empty,
+        url: str = nextcord.Embed.Empty,
         *,
-        icon_url: str = discord.Embed.Empty,
+        icon_url: str = nextcord.Embed.Empty,
     ) -> Embed:
         super().set_author(name=name, url=url, icon_url=icon_url)
         return self
 
     def set_footer(
-        self, text: str = discord.Embed.Empty, *, icon_url: str = discord.Embed.Empty
+        self, text: str = nextcord.Embed.Empty, *, icon_url: str = nextcord.Embed.Empty
     ) -> Embed:
         super().set_footer(text=text, icon_url=icon_url)
         return self
@@ -72,7 +72,7 @@ class PaginationEmbed:
         self.index = 0
         self.embed = Embed()
 
-        self.msg: Optional[discord.Message] = None
+        self.msg: Optional[nextcord.Message] = None
 
     async def build(self) -> None:
         self.authorized_users.append(self.ctx.author.id)
@@ -98,13 +98,13 @@ class PaginationEmbed:
             buttons.set_message(self.msg)
 
     def get_buttons(self) -> View:
-        async def callback(button: discord.ui.Button, interaction: discord.Interaction):
+        async def callback(button: nextcord.ui.Button, interaction: nextcord.Interaction):
             if interaction.user != self.ctx.author:
                 return
 
             index = PAGINATION_EMOJI.index(button.emoji.name)
 
-            if index == 4: # trash
+            if index == 4:  # trash
                 await self.bot.delete_message(self.msg)
                 return
 
@@ -153,8 +153,8 @@ class EmbedChoices:
 
         await buttons.wait()
 
-    def get_buttons(self) -> discord.ui.View:
-        async def callback(button: discord.ui.Button, interaction: discord.Interaction):
+    def get_buttons(self) -> nextcord.ui.View:
+        async def callback(button: nextcord.ui.Button, interaction: nextcord.Interaction):
             if interaction.user != self.ctx.author:
                 return
 
@@ -165,7 +165,6 @@ class EmbedChoices:
 
             button.view.stop()
             await self.bot.delete_message(self.msg)
-
 
         buttons = [
             {"label": 1},

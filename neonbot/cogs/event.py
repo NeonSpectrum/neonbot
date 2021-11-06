@@ -3,9 +3,9 @@ import traceback
 from datetime import datetime, timezone
 from typing import List, Optional, Tuple, Union, cast
 
-import discord
-from discord.ext import commands
-from discord.utils import escape_markdown
+import nextcord
+from nextcord.ext import commands
+from nextcord.utils import escape_markdown
 
 from .utility import chatbot
 from .. import bot
@@ -18,7 +18,7 @@ from ..helpers.log import Log
 log = cast(Log, logging.getLogger(__name__))
 
 
-async def get_ctx(message: discord.Message) -> Tuple[bool, commands.Context]:
+async def get_ctx(message: nextcord.Message) -> Tuple[bool, commands.Context]:
     aliases: List[dict] = []
     if message.guild:
         guild = bot.db.get_guild(message.guild.id)
@@ -44,9 +44,10 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_ready() -> None:
-        #bot.db.process_database(bot.guilds)
+        await bot.db.process_database(bot.guilds)
         log.info("Ready!\n")
         await bot.send_restart_message()
+        bot.set_ready()
 
     @staticmethod
     @bot.event
@@ -57,8 +58,8 @@ class Event(commands.Cog):
 
     @staticmethod
     @bot.event
-    async def on_message(message: discord.Message) -> None:
-        if message.author.id == bot.user.id:
+    async def on_message(message: nextcord.Message) -> None:
+        if not bot.is_ready() or message.author.id == bot.user.id:
             return
 
         is_alias, ctx = await get_ctx(message)
@@ -66,7 +67,7 @@ class Event(commands.Cog):
         if message.content.replace("<@!", "<@", 1).startswith(bot.user.mention):
             log.cmd(ctx, message.content)
             return await chatbot(message)
-        elif str(ctx.channel.type.name) == "private":
+        elif str(ctx.channel.type) == "private":
             if message.content.lower() == "invite":
                 return await bot.send_invite_link(message.channel)
 
@@ -89,7 +90,7 @@ class Event(commands.Cog):
 
     @staticmethod
     @bot.event
-    async def on_message_delete(message: discord.Message) -> None:
+    async def on_message_delete(message: nextcord.Message) -> None:
         if message.author.bot:
             return
 
@@ -110,7 +111,7 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_voice_state_update(
-        member: discord.Member, before: discord.VoiceState, after: discord.VoiceState
+        member: nextcord.Member, before: nextcord.VoiceState, after: nextcord.VoiceState
     ) -> None:
         if member.bot:
             return
@@ -157,7 +158,7 @@ class Event(commands.Cog):
 
     @staticmethod
     @bot.event
-    async def on_presence_update(before: discord.Member, after: discord.Member) -> None:
+    async def on_presence_update(before: nextcord.Member, after: nextcord.Member) -> None:
         if before.bot:
             return
 
@@ -176,11 +177,11 @@ class Event(commands.Cog):
             current = after.activities and after.activities[-1]
 
             def get_image(
-                activity: Union[discord.Spotify, discord.Game, discord.Activity]
+                activity: Union[nextcord.Spotify, nextcord.Game, nextcord.Activity]
             ) -> Optional[str]:
-                if isinstance(activity, discord.Spotify):
+                if isinstance(activity, nextcord.Spotify):
                     return activity.album_cover_url
-                elif isinstance(activity, discord.Activity):
+                elif isinstance(activity, nextcord.Activity):
                     return activity.large_image_url or activity.small_image_url
                 return None
 
@@ -189,14 +190,14 @@ class Event(commands.Cog):
                 name="Activity Presence Update", icon_url=bot.user.display_avatar
             )
 
-            if isinstance(current, discord.Spotify):
+            if isinstance(current, nextcord.Spotify):
                 if getattr(last, "title", None) == current.title:
                     return
 
                 embed.set_thumbnail(get_image(current))
                 embed.add_field("Title", current.title)
                 embed.add_field("Artist", current.artist)
-            elif isinstance(current, (discord.Activity, discord.Game)):
+            elif isinstance(current, (nextcord.Activity, nextcord.Game)):
                 if getattr(last, "name", None) == current.name:
                     return
 
@@ -222,7 +223,7 @@ class Event(commands.Cog):
 
     @staticmethod
     @bot.event
-    async def on_member_join(member: discord.Member) -> None:
+    async def on_member_join(member: nextcord.Member) -> None:
         guild = bot.db.get_guild(member.guild.id)
         channel = bot.get_channel(int(guild.get('channel.presence_log') or -1))
 
@@ -236,7 +237,7 @@ class Event(commands.Cog):
 
     @staticmethod
     @bot.event
-    async def on_member_remove(member: discord.Member) -> None:
+    async def on_member_remove(member: nextcord.Member) -> None:
         guild = bot.db.get_guild(member.guild.id)
         channel = bot.get_channel(int(guild.get('channel.presence_log') or -1))
 
@@ -250,7 +251,7 @@ class Event(commands.Cog):
 
     @staticmethod
     @bot.event
-    async def on_guild_join(guild: discord.Guild) -> None:
+    async def on_guild_join(guild: nextcord.Guild) -> None:
         bot.db.process_database([guild])
         log.info(f"Bot joined {guild.name}")
 
@@ -261,7 +262,7 @@ class Event(commands.Cog):
 
         log.cmd(ctx, ctx.message.content, guild=ctx.guild or "N/A")
 
-        if ctx.channel.type.name == "private":
+        if str(ctx.channel.type) == "private":
             return
 
         guild = bot.db.get_guild(ctx.guild.id)
@@ -276,7 +277,7 @@ class Event(commands.Cog):
             return
 
         error = getattr(error, "original", error)
-        ignored = discord.NotFound, commands.BadArgument, commands.CheckFailure
+        ignored = nextcord.NotFound, commands.BadArgument, commands.CheckFailure
         send_msg = commands.CommandNotFound, exceptions.YtdlError, commands.MissingPermissions
 
         tb = traceback.format_exception(
@@ -317,5 +318,6 @@ class Event(commands.Cog):
         raise error
 
 
+# noinspection PyShadowingNames
 def setup(bot: commands.Bot) -> None:
     bot.add_cog(Event())

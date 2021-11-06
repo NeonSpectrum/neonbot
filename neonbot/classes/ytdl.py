@@ -7,6 +7,7 @@ from typing import Any, List, Union
 
 import yt_dlp
 
+from ..helpers.date import format_seconds
 from ..helpers.exceptions import YtdlError
 
 
@@ -92,6 +93,7 @@ class Ytdl:
                 description=format_description(entry.get('description')),
                 uploader=entry.get('uploader'),
                 duration=entry.get('duration'),
+                formatted_duration=format_seconds(entry.get('duration')) if entry.get('duration') else "N/A",
                 thumbnail=entry.get('thumbnail'),
                 stream=entry.get('url') if entry.get('is_live') else f"./tmp/youtube_dl/{entry.get('id')}",
                 # stream=entry.get('url'),

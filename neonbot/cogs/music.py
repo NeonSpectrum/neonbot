@@ -3,12 +3,12 @@ import re
 import textwrap
 from typing import Optional, cast
 
-from discord.ext import commands
+from nextcord.ext import commands
 
 from ..classes.converters import Required
 from ..classes.embed import Embed, PaginationEmbed
 from ..classes.player import Player
-from ..helpers.constants import SPOTIFY_REGEX, YOUTUBE_REGEX
+from ..helpers.constants import SPOTIFY_REGEX, YOUTUBE_REGEX, ICONS
 from ..helpers.date import format_seconds
 from ..helpers.log import Log
 from ..helpers.utils import plural
@@ -60,13 +60,15 @@ class Music(commands.Cog):
         if keyword:
             if keyword.isdigit():
                 index = int(keyword)
-                if index > len(player.queue) or index < 0:
+                if index > len(player.queue) or index < 0 or "removed" in player.queue[index - 1]:
                     await ctx.send(embed=Embed("Invalid index."), delete_after=5)
                     return
+
                 if player.connection:
                     await player.next(index=index - 1)
                 else:
-                    player.current_queue = index - 1
+                    player.track_list.append(index - 1)
+                    player.current_queue = len(player.track_list) - 1
             elif re.search(YOUTUBE_REGEX, keyword):
                 await player.process_youtube(ctx, keyword)
             elif re.search(SPOTIFY_REGEX, keyword):
@@ -163,13 +165,13 @@ class Music(commands.Cog):
 
         embed = Embed(title=queue['title'], url=queue['url'])
         embed.set_author(
-            name=f"Removed song #{index + 1}", icon_url="https://i.imgur.com/SBMH84I.png"
+            name=f"Removed song #{index + 1}", icon_url=ICONS['music']
         )
         embed.set_footer(text=queue['requested'], icon_url=queue['requested'].display_avatar)
 
         await ctx.send(embed=embed, delete_after=5)
 
-        player.queue[index] = None
+        player.queue[index]['removed'] = True
 
         if index < player.current_queue:
             player.current_queue -= 1
@@ -255,13 +257,13 @@ class Music(commands.Cog):
         embed = Embed()
         embed.add_field("Uploader", now_playing['uploader'])
         embed.add_field("Upload Date", now_playing['upload_date'])
-        embed.add_field("Duration", format_seconds(now_playing['duration']))
+        embed.add_field("Duration", now_playing['formatted_duration'])
         embed.add_field("Views", now_playing['view_count'])
         embed.add_field("Description", now_playing['description'], inline=False)
         embed.set_author(
             name=now_playing['title'],
             url=now_playing['url'],
-            icon_url="https://i.imgur.com/mG8QKe7.png",
+            icon_url=ICONS['music'],
         )
         embed.set_thumbnail(url=now_playing['thumbnail'])
         embed.set_footer(
@@ -288,13 +290,15 @@ class Music(commands.Cog):
         for i in range(0, len(player.queue), 10):
             temp = []
             for index, song in enumerate(player.queue[i: i + 10], i):
-                description = textwrap.dedent(
-                    f"""\
-                `{'*' if player.current_queue == index else ''}{index + 1}.` [{song['title']}]({song['url']})
-                - - - `{format_seconds(song['duration']) if song['duration'] else 'N/A'}` `{song['requested']}`"""
-                )
+                is_current = player.track_list[player.current_queue] == index
+                title = f"`{'*' if is_current else ''}{index + 1}.` [{song['title']}]({song['url']})"
+                description = f"""\
+{f"~~{title}~~" if "removed" in song else title}
+- - - `{format_seconds(song.get('duration')) if song.get('duration') else "N/A"}` `{song['requested']}`"""
+
+                duration += song.get('duration', 0)
+
                 temp.append(description)
-                duration += song['duration'] or 0
             embeds.append(Embed("\n".join(temp)))
 
         footer = [
@@ -307,7 +311,7 @@ class Music(commands.Cog):
 
         pagination = PaginationEmbed(ctx, embeds=embeds)
         pagination.embed.set_author(
-            name="Player Queue", icon_url="https://i.imgur.com/SBMH84I.png"
+            name="Player Queue", icon_url=ICONS['music']
         )
         pagination.embed.set_footer(
             text=" | ".join(footer), icon_url=self.bot.user.display_avatar

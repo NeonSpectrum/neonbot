@@ -1,17 +1,23 @@
-from pymongo import MongoClient
+from __future__ import annotations
+
+from motor.motor_asyncio import AsyncIOMotorClient as MotorClient
 
 
 class Model:
-    def __init__(self, db: MongoClient) -> None:
+    def __init__(self, db: MotorClient) -> None:
         self.db = db
         self.data = {}
         self.table = None
         self.where = {}
 
-    def refresh(self) -> None:
-        self.data = self.db[self.table].find_one(self.where)
+    async def refresh(self) -> Model:
+        self.data = await self.db[self.table].find_one(self.where)
+        return self
 
-    def get(self, key: str, default: any = None) -> any:
+    def get(self, key: str = None, default: any = None) -> any:
+        if key is None:
+            return self.data
+
         keys = key.split(".")
         value = None
 
@@ -35,10 +41,10 @@ class Model:
             else:
                 current[key] = {**current[key], **value} if isinstance(value, dict) else value
 
-    def save(self):
-        self.db.servers.update_one(self.where, {"$set": self.data})
-        self.refresh()
+    async def save(self):
+        await self.db.servers.update_one(self.where, {"$set": self.data})
+        await self.refresh()
 
-    def update(self, config: any):
-        self.db.servers.update_one(self.where, {"$set": config})
-        self.refresh()
+    async def update(self, config: any):
+        await self.db.servers.update_one(self.where, {"$set": config})
+        await self.refresh()

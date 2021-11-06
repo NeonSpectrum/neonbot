@@ -3,15 +3,16 @@ import logging
 import random
 from typing import List, Optional, Union, Dict, cast
 
-import discord
-from discord.ext import commands, tasks
-from discord.utils import MISSING
+import nextcord
+from nextcord.ext import commands, tasks
+# noinspection PyProtectedMember
+from nextcord.utils import MISSING
 
 from .embed import Embed, EmbedChoices
 from .player_controls import PlayerControls
 from .spotify import Spotify
 from .ytdl import Ytdl
-from ..helpers.constants import FFMPEG_OPTIONS
+from ..helpers.constants import FFMPEG_OPTIONS, ICONS
 from ..helpers.date import format_seconds
 from ..helpers.exceptions import YtdlError
 from ..helpers.log import Log
@@ -38,12 +39,12 @@ class Player:
         self.load_default()
 
     def load_default(self) -> None:
-        self.connection: Optional[discord.VoiceClient] = None
-        self.last_voice_channel: Optional[discord.VoiceChannel] = None
+        self.connection: Optional[nextcord.VoiceClient] = None
+        self.last_voice_channel: Optional[nextcord.VoiceChannel] = None
         self.current_queue = 0
         self.queue: List[Optional[dict]] = []
         self.shuffled_list: List[int] = []
-        self.messages: Dict[str, Optional[discord.Message]] = dict(
+        self.messages: Dict[str, Optional[nextcord.Message]] = dict(
             last_playing=None,
             last_finished=None,
             paused=None,
@@ -71,7 +72,7 @@ class Player:
                 "index": self.track_list[self.current_queue] + 1,
                 **self.queue[self.track_list[self.current_queue]]
             }
-        except IndexError:
+        except Exception:
             return None
 
     @now_playing.setter
@@ -88,6 +89,7 @@ class Player:
 
     async def reset(self) -> None:
         await self.next(stop=True)
+        await self.disconnect()
         await self.bot.delete_message(*[self.messages[key] for key in self.messages])
 
         self.load_default()
@@ -97,13 +99,13 @@ class Player:
             await self.connection.disconnect()
 
     async def repeat(self, mode) -> None:
-        self.update_config("repeat", mode)
+        await self.update_config("repeat", mode)
         await self.bot.delete_message(self.messages['repeat'])
         self.messages['repeat'] = await self.ctx.send(embed=Embed(f"Repeat changed to {mode}."), delete_after=5)
         await self.refresh_player_message(embed=True)
 
     async def shuffle(self) -> None:
-        self.update_config("shuffle", not self.config['shuffle'])
+        await self.update_config("shuffle", not self.config['shuffle'])
         await self.bot.delete_message(self.messages['shuffle'])
         self.messages['shuffle'] = await self.ctx.send(
             embed=Embed(f"Shuffle is set to {'enabled' if self.config['shuffle'] else 'disabled'}."),
@@ -137,10 +139,14 @@ class Player:
 
     async def volume(self, volume: int):
         self.connection.source.volume = volume / 100
-        self.update_config("volume", volume)
+        await self.update_config("volume", volume)
         await self.refresh_player_message(embed=True)
 
     async def play(self) -> None:
+        if "removed" in self.now_playing:
+            await self.next(message=False)
+            return
+
         try:
             if not self.now_playing.get('stream'):
                 info = await self.ytdl.process_entry(self.now_playing)
@@ -150,11 +156,11 @@ class Player:
             if not self.connection or not self.connection.is_connected() or self.connection.is_playing():
                 return
 
-            song = discord.FFmpegPCMAudio(
+            song = nextcord.FFmpegPCMAudio(
                 self.now_playing['stream'],
                 before_options=None if not self.now_playing['is_live'] else FFMPEG_OPTIONS,
             )
-            source = discord.PCMVolumeTransformer(song, volume=self.config['volume'] / 100)
+            source = nextcord.PCMVolumeTransformer(song, volume=self.config['volume'] / 100)
 
             def after(error: Exception) -> None:
                 if error:
@@ -166,22 +172,22 @@ class Player:
             self.connection.play(source, after=after)
 
         except Exception as e:
-            msg = str(e) if isinstance(e, discord.ClientException) else "Error while playing the song."
+            msg = str(e) if isinstance(e, nextcord.ClientException) else "Error while playing the song."
             log.exception(msg, e)
             await self.ctx.send(embed=Embed(msg))
         else:
             await self.playing_message()
 
-    async def next(self, *, index: Optional[int] = None, stop: bool = False) -> None:
+    async def next(self, *, index: Optional[int] = None, stop: bool = False, message: bool = True) -> None:
         self.after = None
 
         if self.connection.is_playing():
             self.connection.stop()
 
-        await self.finished_message()
+        if message:
+            await self.finished_message(stop=stop)
 
         if stop:
-            await self.connection.disconnect()
             return
 
         if index is not None:
@@ -211,7 +217,7 @@ class Player:
         )
         self.previous_track = self.now_playing
 
-    async def finished_message(self, *, delete_after: Optional[int] = None) -> None:
+    async def finished_message(self, *, delete_after: Optional[int] = None, stop: bool = False) -> None:
         if not self.previous_track:
             return
 
@@ -226,7 +232,7 @@ class Player:
 
         self.messages['last_finished'] = await self.ctx.send(
             embed=self.get_finished_embed(),
-            view=self.player_controls.get() if delete_after is None else None,
+            view=self.player_controls.get() if stop else None,
             delete_after=delete_after
         )
 
@@ -281,7 +287,7 @@ class Player:
                     info.append(entry)
 
             await ctx.send(embed=Embed(f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue."),
-                                delete_after=5)
+                           delete_after=5)
         elif ytdl_list:
             info = self.ytdl.parse_info(ytdl_list)
             await ctx.send(embed=Embed(
@@ -301,7 +307,6 @@ class Player:
             await ctx.send(embed=Embed("Invalid spotify url."), delete_after=5)
             return
 
-        processing_msg = None
         is_playlist = url['type'] == "playlist"
         playlist = []
         ytdl_list = []
@@ -332,7 +337,8 @@ class Player:
 
         if is_playlist:
             await ctx.send(embed=Embed(
-                f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue." + (" {error} failed to load." if error > 0 else "")
+                f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue." + (
+                    " {error} failed to load." if error > 0 else "")
             ), delete_after=10)
         else:
             await ctx.send(embed=Embed(
@@ -405,7 +411,7 @@ class Player:
             self.connection.resume()
         self.reset_timeout.cancel()
 
-    def add_to_queue(self, data: Union[List, dict], *, requested: discord.User = None) -> None:
+    def add_to_queue(self, data: Union[List, dict], *, requested: nextcord.User = None) -> None:
         if not data:
             return
 
@@ -416,54 +422,46 @@ class Player:
             info['requested'] = requested or self.ctx.author
             self.queue.append(info)
 
-    def update_config(self, key: str, value: Union[str, int]) -> None:
+    async def update_config(self, key: str, value: Union[str, int]) -> None:
         self.db.set('music.' + key, value)
-        self.db.save()
+        await self.db.save()
 
     def get_footer(self, now_playing):
         return [
             str(now_playing['requested']),
-            format_seconds(now_playing['duration']) if now_playing['duration'] else "N/A",
+            now_playing['formatted_duration'],
             f"Volume: {self.config['volume']}%",
             f"Shuffle: {'on' if self.config['shuffle'] else 'off'}",
             f"Repeat: {self.config['repeat']}",
         ]
 
     def get_playing_embed(self):
-        footer = [
-            str(self.now_playing['requested']),
-            format_seconds(self.now_playing['duration']) if self.now_playing['duration'] else "N/A",
-            f"Volume: {self.config['volume']}%",
-            f"Shuffle: {'on' if self.config['shuffle'] else 'off'}",
-            f"Repeat: {self.config['repeat']}",
-        ]
-
-        embed = Embed(title=self.now_playing['title'], url=self.now_playing['url'])
+        embed = self.get_track_embed(self.now_playing)
         embed.set_author(
             name=f"Now Playing #{self.now_playing['index']}",
-            icon_url="https://i.imgur.com/SBMH84I.png",
-        )
-        embed.set_footer(
-            text=" | ".join(footer), icon_url=self.now_playing['requested'].display_avatar
+            icon_url=ICONS['music'],
         )
 
         return embed
 
     def get_finished_embed(self):
-        footer = self.get_footer(self.previous_track)
-
-        embed = Embed(title=self.previous_track['title'], url=self.previous_track['url'])
+        embed = self.get_track_embed(self.previous_track)
         embed.set_author(
             name=f"Finished Playing #{self.previous_track['index']}",
-            icon_url="https://i.imgur.com/SBMH84I.png",
-        )
-        embed.set_footer(
-            text=" | ".join(footer), icon_url=self.previous_track['requested'].display_avatar
+            icon_url=ICONS['music'],
         )
 
         return embed
 
-    async def refresh_player_message(self, *, embed = False, refresh = True):
+    def get_track_embed(self, track):
+        embed = Embed(title=track['title'], url=track['url'])
+        embed.set_footer(
+            text=" | ".join(self.get_footer(track)), icon_url=track['requested'].display_avatar
+        )
+
+        return embed
+
+    async def refresh_player_message(self, *, embed=False, refresh=True):
         self.player_controls.refresh()
 
         if not refresh:

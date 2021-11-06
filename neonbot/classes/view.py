@@ -1,8 +1,9 @@
 import inspect
 
-import discord
+import nextcord
 
-class Button(discord.ui.Button):
+
+class Button(nextcord.ui.Button):
     def __init__(self, **kwargs):
         self._callback = kwargs['callback']
         del kwargs['callback']
@@ -12,11 +13,12 @@ class Button(discord.ui.Button):
     def set_callback(self, callback):
         self._callback = callback
 
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: nextcord.Interaction):
         if inspect.iscoroutinefunction(self._callback):
             await self._callback(self, interaction)
 
-class View(discord.ui.View):
+
+class View(nextcord.ui.View):
     def __init__(self, **kwargs):
         self.msg = None
         super().__init__(**kwargs)
@@ -39,14 +41,14 @@ class View(discord.ui.View):
         if self.msg:
             try:
                 await self.msg.edit(view=self)
-            except discord.NotFound:
+            except nextcord.NotFound:
                 pass
 
-    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
-        if isinstance(error, discord.NotFound):
+    async def on_error(self, error: Exception, item: nextcord.ui.Item, interaction: nextcord.Interaction) -> None:
+        if isinstance(error, nextcord.NotFound):
             return
 
         return await super().on_error(error, item, interaction)
 
-    def set_message(self, msg: discord.Message):
+    def set_message(self, msg: nextcord.Message):
         self.msg = msg

@@ -11,11 +11,11 @@ from time import time
 from typing import Any, Callable, List, Tuple, Union, cast, Optional
 
 import aioschedule as schedule
-import discord
+import nextcord
 import psutil
 from aiohttp import ClientSession, ClientTimeout
-from discord.ext import commands
-from discord.utils import oauth_url
+from nextcord.ext import commands
+from nextcord.utils import oauth_url
 
 from neonbot.helpers.utils import shell_exec
 from . import __title__, __version__
@@ -31,7 +31,7 @@ log = cast(Log, logging.getLogger(__name__))
 class Bot(commands.Bot):
     def __init__(self) -> None:
         super().__init__(
-            command_prefix=self.get_command_prefix(), intents=discord.Intents.all()
+            command_prefix=self.get_command_prefix(), intents=nextcord.Intents.all()
         )
 
         self.start_message()
@@ -40,20 +40,26 @@ class Bot(commands.Bot):
         self.db = Database()
         self.default_prefix = env.str("DEFAULT_PREFIX", ".")
         self.owner_ids = set(env.list("OWNER_IDS", [], subcast=int))
-
-        self.status, self.activity = self.get_presence()
-        self.session = ClientSession(loop=self.loop, timeout=ClientTimeout(total=30))
         self.user_agent = f"NeonBot v{__version__}"
 
-        self.app_info: Optional[discord.AppInfo] = None
-        self.set_storage()
-        self.load_music()
+    async def initialize(self):
+        self.session = ClientSession(loop=self.loop, timeout=ClientTimeout(total=10))
 
+        self.db.load()
+        self.settings = await self.db.process_settings()
+
+        self.load_cogs()
+
+        self.status, self.activity = self.get_presence()
+        self.app_info: Optional[nextcord.AppInfo] = None
+
+        self.set_cache()
+        # self.load_music()
         schedule.every().day.at("06:00").do(self.auto_update_ytdl)
         self.loop.create_task(self.run_scheduler())
         # self.clear_youtube_dl_cache()
 
-    def set_storage(self) -> None:
+    def set_cache(self) -> None:
         self.commands_executed: List[str] = []
         self.game = {}
         self.music = {}
@@ -85,16 +91,15 @@ class Bot(commands.Bot):
         cprint(LOGO, "blue")
         log.info(f"Starting {__title__} v{__version__}")
 
-    def get_presence(self) -> Tuple[discord.Status, discord.Activity]:
-        settings = self.db.get_settings()
-        activity_type = settings.get('game.type').lower()
-        activity_name = settings.get('game.name')
-        status = settings.get('status')
+    def get_presence(self) -> Tuple[nextcord.Status, nextcord.Activity]:
+        activity_type = self.settings.get('game.type').lower()
+        activity_name = self.settings.get('game.name')
+        status = self.settings.get('status')
 
         return (
-            discord.Status[status],
-            discord.Activity(
-                name=activity_name, type=discord.ActivityType[activity_type]
+            nextcord.Status[status],
+            nextcord.Activity(
+                name=activity_name, type=nextcord.ActivityType[activity_type]
             ),
         )
 
@@ -163,17 +168,17 @@ class Bot(commands.Bot):
             channel = self.get_channel(data.channel_id)
             try:
                 message = await channel.fetch_message(data.message_id)
-            except discord.NotFound:
+            except nextcord.NotFound:
                 pass
             else:
                 await self.delete_message(message)
             await channel.send(embed=Embed("Bot Restarted."), delete_after=10)
 
-    async def send_invite_link(self, channel: discord.DMChannel) -> None:
+    async def send_invite_link(self, channel: nextcord.DMChannel) -> None:
         with channel.typing():
             url = oauth_url(
                 self.app_info.id,
-                permissions=discord.Permissions(permissions=PERMISSIONS),
+                permissions=nextcord.Permissions(permissions=PERMISSIONS),
                 scopes=('bot', 'applications.commands')
             )
             await channel.send(f"Bot invite link: {url}")
@@ -191,16 +196,16 @@ class Bot(commands.Bot):
         if sender != self.app_info.owner.id:
             await self.get_user(self.app_info.owner.id).send(*args, **kwargs)
 
-    async def edit_message(self, message: Union[discord.Message, None], **kwargs) -> None:
+    async def edit_message(self, message: Union[nextcord.Message, None], **kwargs) -> None:
         if message is None:
             return
 
         try:
             await message.edit(**kwargs)
-        except discord.NotFound:
+        except nextcord.NotFound:
             pass
 
-    async def delete_message(self, *messages: Union[discord.Message, None]) -> None:
+    async def delete_message(self, *messages: Union[nextcord.Message, None]) -> None:
         await asyncio.gather(
             *[message.delete() for message in messages if message is not None],
             return_exceptions=True
@@ -228,6 +233,15 @@ class Bot(commands.Bot):
         except:
             pass
 
-    def run(self) -> None:
-        self.load_cogs()
+    async def start(self, *args, **kwargs) -> None:
+        await self.initialize()
+        await super().start(*args, **kwargs)
+
+    def run(self):
         super().run(env.str("TOKEN"))
+
+    def _handle_ready(self) -> None:
+        pass
+
+    def set_ready(self):
+        self._ready.set()

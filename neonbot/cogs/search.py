@@ -6,13 +6,14 @@ from io import BytesIO
 from typing import List, cast
 
 import aiohttp
-import discord
+import nextcord
 from bs4 import BeautifulSoup
-from discord.ext import commands
 from jikanpy import AioJikan
+from nextcord.ext import commands
 
 from neonbot.helpers.utils import shell_exec
 from ..classes.embed import Embed, PaginationEmbed, EmbedChoices
+from ..helpers.constants import ICONS
 from ..helpers.exceptions import ApiError
 from ..helpers.log import Log
 
@@ -64,7 +65,7 @@ class Search(commands.Cog):
         embed = Embed()
         embed.set_author(
             name=f"Google Images for {keyword}",
-            icon_url="https://i.imgur.com/G46fm8J.png",
+            icon_url=ICONS['google'],
         )
         embed.set_footer(
             text=f"Searched by {ctx.author}", icon_url=ctx.author.display_avatar.url
@@ -115,7 +116,7 @@ class Search(commands.Cog):
         )
         embed.set_author(
             name="Merriam-Webster Dictionary",
-            icon_url="https://dictionaryapi.com/images/MWLogo.png",
+            icon_url=ICONS['merriam'],
         )
         embed.set_footer(
             text=f"Searched by {ctx.author}", icon_url=ctx.author.display_avatar.url
@@ -125,7 +126,7 @@ class Search(commands.Cog):
         await ctx.send(embed=embed)
         if audio:
             content = await res.read()
-            await ctx.send(file=discord.File(BytesIO(content), word + ".wav"))
+            await ctx.send(file=nextcord.File(BytesIO(content), word + ".wav"))
 
     @commands.command()
     async def weather(self, ctx: commands.Context, *, location: str) -> None:
@@ -159,7 +160,7 @@ class Search(commands.Cog):
         )
         embed.set_footer(
             text="Powered by OpenWeatherMap",
-            icon_url="https://media.dragstone.com/content/icon-openweathermap-1.png",
+            icon_url=ICONS['openweather'],
         )
         embed.set_thumbnail(
             url=f"https://openweathermap.org/img/w/{data['weather'][0]['icon']}.png"
@@ -307,7 +308,7 @@ class Search(commands.Cog):
         embed.set_thumbnail(url=info['icon'])
         embed.set_footer(
             text="Powered by LeagueSpy",
-            icon_url="https://www.leaguespy.net/images/favicon/favicon-32x32.png",
+            icon_url=ICONS['leaguespy'],
         )
         embed.add_field("Role", info['role'], inline=False)
         embed.add_field("Win Rate", info['win_rate'] if info['win_rate'] else 'N/A')
@@ -390,11 +391,11 @@ class Search(commands.Cog):
 
             pagination = PaginationEmbed(ctx, embeds=embeds)
             pagination.embed.set_author(
-                name=title, icon_url="https://i.imgur.com/SBMH84I.png"
+                name=title, icon_url=ICONS['music']
             )
             pagination.embed.set_footer(
                 text="Powered by AZLyrics",
-                icon_url="https://www.azlyrics.com/az_logo_tr.png",
+                icon_url=ICONS['azlyrics'],
             )
             await pagination.build()
 
@@ -432,7 +433,7 @@ class Search(commands.Cog):
         embed.set_thumbnail(url=anime['image_url'])
         embed.set_footer(
             text="Powered by MyAnimeList",
-            icon_url="https://i.imgur.com/XMQsLF5.png",
+            icon_url=ICONS['myanimelist'],
         )
         embed.add_field(
             name="Synopsis",
@@ -469,7 +470,7 @@ class Search(commands.Cog):
         pagination.embed.title = ":trophy: Top 50 Anime"
         pagination.embed.set_footer(
             text="Powered by MyAnimeList",
-            icon_url="https://i.imgur.com/XMQsLF5.png",
+            icon_url=ICONS['myanimelist'],
         )
         await pagination.build()
 
@@ -492,7 +493,7 @@ class Search(commands.Cog):
         pagination.embed.title = ":clock3: Upcoming Anime"
         pagination.embed.set_footer(
             text="Powered by MyAnimeList",
-            icon_url="https://i.imgur.com/XMQsLF5.png",
+            icon_url=ICONS['myanimelist'],
         )
         await pagination.build()
 
@@ -534,7 +535,7 @@ class Search(commands.Cog):
         translated_text = data['data']['translations'][0]['translatedText']
 
         embed = Embed()
-        embed.set_author(name="Google Translate", icon_url="https://ssl.gstatic.com/translate/favicon.ico")
+        embed.set_author(name="Google Translate", icon_url=ICONS['googletranslate'])
         embed.add_field(f"**{self.lang_list[source_lang]}**", sentence)
         embed.add_field(f"**{self.lang_list[target_lang]}**", translated_text)
 

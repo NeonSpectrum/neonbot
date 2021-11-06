@@ -2,8 +2,8 @@ import asyncio
 import random
 from typing import List, Optional
 
-import discord
-from discord.ext import commands, tasks
+import nextcord
+from nextcord.ext import commands, tasks
 
 from .embed import Embed
 from ..helpers.constants import CHOICES_EMOJI
@@ -23,20 +23,20 @@ class Connect4:
 
     def reset(self) -> None:
         self.board: list = []
-        self.players: List[discord.User] = []
+        self.players: List[nextcord.User] = []
         self.turn = random.randint(0, 1)
-        self.last_board_message: Optional[discord.Message] = None
-        self.waiting_message: Optional[discord.Message] = None
+        self.last_board_message: Optional[nextcord.Message] = None
+        self.waiting_message: Optional[nextcord.Message] = None
         self.winner: int = 0
 
         self.reset_board()
 
-    async def join(self, user: discord.User) -> None:
+    async def join(self, user: nextcord.User) -> None:
         """Join the game and determine if the game will start or not
 
         Parameters
         ----------
-        user : discord.User
+        user : nextcord.User
         """
         if len(self.players) == 2:
             await self.channel.send(
@@ -61,7 +61,7 @@ class Connect4:
     async def start(self) -> None:
         """Starts the game and will loop until winner is detected"""
 
-        def check(m: discord.Message) -> bool:
+        def check(m: nextcord.Message) -> bool:
             return (
                 m.content.isdigit()
                 and any(

@@ -2,9 +2,9 @@ import logging
 import sys
 from typing import Any, Callable, Optional, Union
 
-import discord
+import nextcord
 import termcolor
-from discord.ext import commands
+from nextcord.ext import commands
 
 from .constants import LOG_FORMAT
 from ..env import env
@@ -53,9 +53,9 @@ class Log(logging.Logger):
         ctx: commands.Context,
         msg: str,
         *,
-        guild: Optional[discord.Guild] = None,
-        channel: Optional[Union[discord.TextChannel, discord.VoiceChannel]] = None,
-        user: Optional[Union[str, discord.User]] = None,
+        guild: Optional[nextcord.Guild] = None,
+        channel: Optional[Union[nextcord.TextChannel, nextcord.VoiceChannel]] = None,
+        user: Optional[Union[str, nextcord.User]] = None,
     ) -> None:
         guild = guild or ctx.guild
         channel = channel or ctx.channel

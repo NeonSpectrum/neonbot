@@ -6,11 +6,12 @@ import sys
 from io import StringIO
 from typing import Generator, Optional, cast
 
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands
 
 from ..classes.converters import Required
 from ..classes.embed import Embed, PaginationEmbed
+from ..helpers.constants import ICONS
 from ..helpers.log import Log
 from ..helpers.utils import convert_to_seconds, shell_exec
 
@@ -43,7 +44,7 @@ class Administration(commands.Cog):
 
         variables = {
             "bot": self.bot,
-            "discord": discord,
+            "nextcord": nextcord,
             "commands": commands,
             "ctx": ctx,
             "players": self.bot.music,
@@ -79,7 +80,7 @@ class Administration(commands.Cog):
 
             pagination = PaginationEmbed(ctx, embeds=embeds)
             pagination.embed.set_author(
-                name="Python Interpreter", icon_url="https://i.imgur.com/vzcWouB.png"
+                name="Python Interpreter", icon_url=ICONS['python']
             )
             pagination.embed.set_footer(
                 text=f"Executed by {ctx.author}", icon_url=ctx.author.display_avatar
@@ -119,7 +120,7 @@ class Administration(commands.Cog):
     async def prune(
         self,
         ctx: commands.Context,
-        member: Optional[discord.Member] = None,
+        member: Optional[nextcord.Member] = None,
         count: int = 1,
     ) -> None:
         """Deletes a number of messages of a specific member (if specified). *MANAGE_MESSAGES"""
@@ -144,7 +145,7 @@ class Administration(commands.Cog):
         """Sets the prefix of the current server. *ADMINISTRATOR"""
 
         guild = self.db.get_guild(ctx.guild.id)
-        guild.update({'prefix': prefix})
+        await guild.update({'prefix': prefix})
 
         await ctx.send(embed=Embed(f"Prefix is now set to `{guild.get('prefix')}`."))
 
@@ -160,11 +161,10 @@ class Administration(commands.Cog):
         if status is False:
             return
 
-        settings = self.db.get_settings()
-        settings.update({'status': status})
+        await self.bot.settings.update({'status': status})
 
-        await self.bot.change_presence(status=discord.Status[settings.get('status')])
-        await ctx.send(embed=Embed(f"Status is now set to {settings.get('status')}."))
+        await self.bot.change_presence(status=nextcord.Status[self.bot.settings.get('status')])
+        await ctx.send(embed=Embed(f"Status is now set to {self.bot.settings.get('status')}."))
 
     @commands.command()
     @commands.is_owner()
@@ -180,21 +180,20 @@ class Administration(commands.Cog):
         if presence_type is False:
             return
 
-        settings = self.db.get_settings()
-        settings.set('game', {
+        self.bot.settings.set('game', {
             'type': presence_type,
             'name': name
         })
-        settings.save()
+        await self.bot.settings.save()
 
         await self.bot.change_presence(
-            activity=discord.Activity(
-                name=name, type=discord.ActivityType[settings.get('game.type')]
+            activity=nextcord.Activity(
+                name=name, type=nextcord.ActivityType[self.bot.settings.get('game.type')]
             )
         )
         await ctx.send(
             embed=Embed(
-                f"Presence is now set to {settings.get('game.type')} {settings.get('game.name')}."
+                f"Presence is now set to {self.bot.settings.get('game.type')} {self.bot.settings.get('game.name')}."
             )
         )
 
@@ -225,7 +224,7 @@ class Administration(commands.Cog):
                 {"name": name, "cmd": command, "owner": ctx.author.id}
             )
 
-        guild.update({'aliases': aliases})
+        await guild.update({'aliases': aliases})
         await ctx.send(
             embed=Embed(f"Message with exactly `{name}` will now execute `{command}`"),
             delete_after=10,
@@ -256,7 +255,7 @@ class Administration(commands.Cog):
 
         del aliases[ids[0]]
 
-        guild.update({'aliases': aliases})
+        await guild.update({'aliases': aliases})
         await ctx.send(embed=Embed(f"Alias`{name}` has been deleted."), delete_after=5)
 
     @commands.command()
@@ -268,7 +267,7 @@ class Administration(commands.Cog):
         """
 
         guild = self.db.get_guild(ctx.guild.id)
-        guild.update({'deleteoncmd': not guild.get('deleteoncmd')})
+        await guild.update({'deleteoncmd': not guild.get('deleteoncmd')})
 
         await ctx.send(
             embed=Embed(
@@ -284,7 +283,7 @@ class Administration(commands.Cog):
 
         guild = self.db.get_guild(ctx.guild.id)
         guild.set('channel.voicetts', ctx.channel.id if guild.get('channel.voicetts') != ctx.channel.id else None)
-        guild.save()
+        await guild.save()
 
         if guild.get('channel.voicetts'):
             await ctx.send(embed=Embed("Voice TTS is now set to this channel."))
@@ -304,8 +303,9 @@ class Administration(commands.Cog):
         """Logs presence when someone joins/leaves the guild or voice channel and status updates."""
 
         guild = self.db.get_guild(ctx.guild.id)
-        guild.set('channel.presence_log', ctx.channel.id if guild.get('channel.presence_log') != ctx.channel.id else None)
-        guild.save()
+        guild.set('channel.presence_log',
+                  ctx.channel.id if guild.get('channel.presence_log') != ctx.channel.id else None)
+        await guild.save()
 
         if guild.get('channel.presence_log'):
             await ctx.send(embed=Embed("Logger Presence is now set to this channel."))
@@ -318,7 +318,7 @@ class Administration(commands.Cog):
 
         guild = self.db.get_guild(ctx.guild.id)
         guild.set('channel.voice_log', ctx.channel.id if guild.get('channel.voice_log') != ctx.channel.id else None)
-        guild.save()
+        await guild.save()
 
         if guild.get('channel.voice_log'):
             await ctx.send(embed=Embed("Logger Voice is now set to this channel."))
@@ -333,7 +333,7 @@ class Administration(commands.Cog):
 
         guild = self.db.get_guild(ctx.guild.id)
         guild.set('channel.msgdelete', ctx.channel.id if guild.get('channel.msgdelete') != ctx.channel.id else None)
-        guild.save()
+        await guild.save()
 
         if guild.get('channel.msgdelete'):
             await ctx.send(embed=Embed("Logger Message is now set to this channel."))
@@ -350,7 +350,7 @@ class Administration(commands.Cog):
         embed = Embed()
         embed.set_author(
             name="Github Update",
-            icon_url="https://cdn1.iconfinder.com/data/icons/social-media-vol-1-1/24/_github-512.png",
+            icon_url=ICONS["github"]
         )
 
         embed.description = result
@@ -365,9 +365,9 @@ class Administration(commands.Cog):
         msg = await ctx.send(embed=Embed("Bot packages updating..."))
 
         embed = Embed()
-        embed.set_author(name="Pipenv Update", icon_url="https://i.imgur.com/vzcWouB.png")
+        embed.set_author(name="Pipenv Update", icon_url=ICONS['pip'])
 
-        embed.description = await self.bot.update_package('discord.py', 'yt-dlp')
+        embed.description = await self.bot.update_package('nextcord', 'yt-dlp')
 
         await msg.edit(embed=embed)
 
@@ -401,7 +401,7 @@ class Administration(commands.Cog):
 
     @commands.command()
     @commands.has_guild_permissions(mute_members=True)
-    async def servermute(self, ctx: commands.Context, member: discord.Member, time: str, *, reason: str = "") -> None:
+    async def servermute(self, ctx: commands.Context, member: nextcord.Member, time: str, *, reason: str = "") -> None:
         """Server mute with timer."""
 
         if member.voice is None:
@@ -427,7 +427,7 @@ class Administration(commands.Cog):
 
     @commands.command()
     @commands.has_guild_permissions(mute_members=True)
-    async def serverunmute(self, ctx: commands.Context, member: discord.Member, *, reason: str = "") -> None:
+    async def serverunmute(self, ctx: commands.Context, member: nextcord.Member, *, reason: str = "") -> None:
         """Server unmute."""
 
         if member.voice is None:

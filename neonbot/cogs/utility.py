@@ -5,21 +5,22 @@ from time import time
 from typing import cast
 
 import aiohttp
-import discord
 import emoji
+import nextcord
 import psutil
+from nextcord.ext import commands
 from yt_dlp import version as ytdl_version
-from discord.ext import commands
 
 from .. import __author__, __title__, __version__, bot
 from ..classes.embed import Embed
+from ..helpers.constants import ICONS
 from ..helpers.date import date_format, format_seconds
 from ..helpers.log import Log
 
 log = cast(Log, logging.getLogger(__name__))
 
 
-async def chatbot(message: discord.Message, dm: bool = False) -> None:
+async def chatbot(message: nextcord.Message, dm: bool = False) -> None:
     if message.author.id not in bot.owner_ids:
         return
 
@@ -100,7 +101,7 @@ class Utility(commands.Cog):
         embed.add_field(
             "Packages",
             f"""
-            discord.py `{discord.__version__}`
+            nextcord `{nextcord.__version__}`
             youtube-dl `{ytdl_version.__version__}`
             """
         )
@@ -117,7 +118,7 @@ class Utility(commands.Cog):
             embed.set_author(name="✉ SMS")
             embed.set_footer(
                 text="Powered by Twilio",
-                icon_url="https://assets.twilio.com/public_assets/console-js/2.9.0/images/favicons/Twilio_72.png"
+                icon_url=ICONS['twilio']
             )
             embed.add_field("To:", number, inline=True)
             embed.add_field("Body:", message, inline=True)
@@ -152,6 +153,6 @@ class Utility(commands.Cog):
             )
 
 
-
+# noinspection PyShadowingNames
 def setup(bot: commands.Bot) -> None:
     bot.add_cog(Utility())
