@@ -301,8 +301,9 @@ class Player:
 
             await ctx.send(embed=Embed(f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue."),
                            delete_after=5)
-        elif ytdl_list:
-            info = self.ytdl.parse_info(ytdl_list)
+        elif isinstance(ytdl_list, dict):
+            info = ytdl_list
+
             await ctx.send(embed=Embed(
                 title=f"Added song to queue #{len(self.queue) + 1}",
                 description=info['title'],
