@@ -1,6 +1,5 @@
 import logging
 import re
-import textwrap
 from typing import Optional, cast
 
 from nextcord.ext import commands
@@ -79,13 +78,8 @@ class Music(commands.Cog):
         elif player.current_queue >= len(player.queue):
             player.current_queue = 0
 
-        if any(player.queue) and not ctx.voice_client:
-            player.connection = await ctx.author.voice.channel.connect()
-            player.last_voice_channel = ctx.author.voice.channel
-            log.cmd(ctx, f"Connected to {ctx.author.voice.channel}.")
-
-        if player.connection and not player.connection.is_playing():
-            await player.play()
+        await player.connect()
+        await player.play()
 
     @commands.command()
     @commands.guild_only()
@@ -183,7 +177,6 @@ class Music(commands.Cog):
 
     @commands.command(aliases=["vol"], usage="<1 - 100>")
     @commands.guild_only()
-    @commands.check(has_player)
     @commands.check(in_voice)
     async def volume(self, ctx: commands.Context, volume: Optional[int] = None) -> None:
         """Sets or gets player's volume."""
@@ -192,7 +185,7 @@ class Music(commands.Cog):
 
         if volume is None:
             await ctx.send(
-                embed=Embed(f"Volume is set to {player.config['volume']}%."),
+                embed=Embed(f"Volume is set to {player.get_config('volume')}%."),
                 delete_after=5,
             )
             return
@@ -207,7 +200,6 @@ class Music(commands.Cog):
 
     @commands.command(usage="<off | single | all>")
     @commands.guild_only()
-    @commands.check(has_player)
     @commands.check(in_voice)
     async def repeat(
         self,
@@ -220,7 +212,7 @@ class Music(commands.Cog):
 
         if mode is None:
             await ctx.send(
-                embed=Embed(f"Repeat is set to {player.config['repeat']}."), delete_after=5
+                embed=Embed(f"Repeat is set to {player.get_config('repeat')}."), delete_after=5
             )
             return
 
@@ -228,7 +220,6 @@ class Music(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.check(has_player)
     @commands.check(in_voice)
     async def shuffle(self, ctx: commands.Context) -> None:
         """Enables/disables player's shuffle mode."""
@@ -278,7 +269,6 @@ class Music(commands.Cog):
         """List down all songs in the player's queue."""
 
         player = get_player(ctx)
-        config = player.config
         queue = player.queue
         embeds = []
         duration = 0
@@ -304,9 +294,9 @@ class Music(commands.Cog):
         footer = [
             f"{plural(len(queue), 'song', 'songs')}",
             format_seconds(duration),
-            f"Volume: {config['volume']}%",
-            f"Shuffle: {'on' if config['shuffle'] else 'off'}",
-            f"Repeat: {config['repeat']}",
+            f"Volume: {player.get_config('volume')}%",
+            f"Shuffle: {'on' if player.get_config('shuffle') else 'off'}",
+            f"Repeat: {player.get_config('repeat')}",
         ]
 
         pagination = PaginationEmbed(ctx, embeds=embeds)
@@ -317,6 +307,75 @@ class Music(commands.Cog):
             text=" | ".join(footer), icon_url=self.bot.user.display_avatar
         )
         await pagination.build()
+
+    @commands.command(aliases=["pp"])
+    @commands.guild_only()
+    @commands.check(in_voice)
+    async def playplaylist(self, ctx: commands.Context, *, name: str):
+        """Play playlist on saved playlist."""
+
+        player = get_player(ctx)
+        player.ctx = ctx
+
+        playlist = player.get_config('playlist.' + name)
+
+        if not playlist:
+            await ctx.send(embed=Embed('Playlist not found.'), delete_after=5)
+            return
+
+        if len(playlist.get('tracks') or []) == 0:
+            await ctx.send(embed=Embed('Empty playlist.'), delete_after=5)
+            return
+
+        await player.process_playlist(ctx, playlist['tracks'])
+        await player.connect()
+        await player.play()
+
+    @commands.command(aliases=["sp"])
+    @commands.guild_only()
+    @commands.check(in_voice)
+    async def saveplaylist(self, ctx: commands.Context, *, name: str):
+        """Save current playlist to saved playlist."""
+
+        player = get_player(ctx)
+
+        playlist = player.get_config('playlist.' + name)
+
+        if playlist and playlist.get('owner') != ctx.author.id:
+            await ctx.send(embed=Embed(f"You are not the owner of the playlist. You can't modify it."))
+            return
+
+        await player.update_config('playlist', {
+            name: {
+                "tracks": [queue['id'] for queue in player.queue],
+                "owner": ctx.author.id
+            }
+        })
+
+        await ctx.send(embed=Embed(f"Playlist added! Type `{ctx.prefix}pp {name}` to play it."), delete_after=5)
+
+    @commands.command(aliases=["dp"])
+    @commands.guild_only()
+    @commands.check(in_voice)
+    async def deleteplaylist(self, ctx: commands.Context, *, name: str):
+        """Delete playlist on saved playlist."""
+
+        player = get_player(ctx)
+
+        playlist = player.get_config('playlist.' + name)
+
+        if not playlist:
+            await ctx.send(embed=Embed('Playlist not found.'), delete_after=5)
+            return
+
+        if playlist.get('owner') != ctx.author.id:
+            await ctx.send(embed=Embed(f"You are not the owner of the playlist. You can't delete it."))
+            return
+
+        player.get_config('playlist').pop(name)
+        await player.db.save()
+
+        await ctx.send(embed=Embed(f"Playlist deleted!"), delete_after=5)
 
 
 def setup(bot: commands.Bot) -> None:

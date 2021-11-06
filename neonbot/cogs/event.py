@@ -137,7 +137,8 @@ class Event(commands.Cog):
             log_channel = bot.get_channel(int(guild.get('channel.voice_log') or -1))
 
             role = voice_channel.guild.default_role
-            readable = voice_channel.overwrites_for(role).read_messages is not False
+            permission = voice_channel.permissions_for(role)
+            readable = all([permission.view_channel, permission.connect])
 
             if after.channel:
                 msg = f"**{member.name}** has connected to **{voice_channel.name}**"

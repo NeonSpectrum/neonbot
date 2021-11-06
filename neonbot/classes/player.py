@@ -13,7 +13,6 @@ from .player_controls import PlayerControls
 from .spotify import Spotify
 from .ytdl import Ytdl
 from ..helpers.constants import FFMPEG_OPTIONS, ICONS
-from ..helpers.date import format_seconds
 from ..helpers.exceptions import YtdlError
 from ..helpers.log import Log
 from ..helpers.utils import plural
@@ -30,11 +29,12 @@ class Player:
     def __init__(self, ctx: commands.Context):
         self.ctx = ctx
         self.bot = ctx.bot
-        self.db = self.bot.db.get_guild(ctx.guild.id)
         self.spotify = Spotify(self.bot)
         self.ytdl = Ytdl(self.bot)
         self.player_controls = PlayerControls(self)
         self.after = None
+
+        self.db = self.bot.db.get_guild(ctx.guild.id)
 
         self.load_default()
 
@@ -57,9 +57,12 @@ class Player:
         self.previous_track = None
         self.track_list: List[int] = [0]
 
-    @property
-    def config(self):
-        return self.db.get('music')
+    def get_config(self, key: str) -> any:
+        return self.db.get('music.' + key)
+
+    async def update_config(self, key: str, value: Union[str, int, dict]) -> None:
+        self.db.set('music.' + key, value)
+        await self.db.save()
 
     @property
     def is_latest_track(self):
@@ -94,6 +97,14 @@ class Player:
 
         self.load_default()
 
+    async def connect(self):
+        if self.ctx.voice_client:
+            return
+
+        self.connection = await self.ctx.author.voice.channel.connect()
+        self.last_voice_channel = self.ctx.author.voice.channel
+        log.cmd(self.ctx, f"Connected to {self.ctx.author.voice.channel}.")
+
     async def disconnect(self) -> None:
         if self.connection and self.connection.is_connected():
             await self.connection.disconnect()
@@ -105,10 +116,10 @@ class Player:
         await self.refresh_player_message(embed=True)
 
     async def shuffle(self) -> None:
-        await self.update_config("shuffle", not self.config['shuffle'])
+        await self.update_config("shuffle", not self.get_config("shuffle"))
         await self.bot.delete_message(self.messages['shuffle'])
         self.messages['shuffle'] = await self.ctx.send(
-            embed=Embed(f"Shuffle is set to {'enabled' if self.config['shuffle'] else 'disabled'}."),
+            embed=Embed(f"Shuffle is set to {'enabled' if self.get_config('shuffle') else 'disabled'}."),
             delete_after=5,
         )
         await self.refresh_player_message(embed=True)
@@ -138,11 +149,16 @@ class Player:
         await self.refresh_player_message()
 
     async def volume(self, volume: int):
-        self.connection.source.volume = volume / 100
+        if self.connection and self.connection.source:
+            self.connection.source.volume = volume / 100
+
         await self.update_config("volume", volume)
         await self.refresh_player_message(embed=True)
 
     async def play(self) -> None:
+        if not self.connection or not self.connection.is_connected() or self.connection.is_playing():
+            return
+
         if "removed" in self.now_playing:
             await self.next(message=False)
             return
@@ -153,14 +169,11 @@ class Player:
                 info = self.ytdl.parse_info(info)
                 self.now_playing = {**self.now_playing, **info}
 
-            if not self.connection or not self.connection.is_connected() or self.connection.is_playing():
-                return
-
             song = nextcord.FFmpegPCMAudio(
                 self.now_playing['stream'],
                 before_options=None if not self.now_playing['is_live'] else FFMPEG_OPTIONS,
             )
-            source = nextcord.PCMVolumeTransformer(song, volume=self.config['volume'] / 100)
+            source = nextcord.PCMVolumeTransformer(song, volume=self.get_config("volume") / 100)
 
             def after(error: Exception) -> None:
                 if error:
@@ -239,12 +252,12 @@ class Player:
     def process_repeat(self) -> bool:
         is_last = self.track_list[self.current_queue] == len(self.queue) - 1
 
-        if is_last and self.config['repeat'] == "off":
+        if is_last and self.get_config("repeat") == "off":
             return False
 
-        if is_last and self.config['repeat'] == "all":
+        if is_last and self.get_config("repeat") == "all":
             self.track_list.append(0)
-        elif self.config['repeat'] != "single":
+        elif self.get_config("repeat") != "single":
             self.track_list.append(self.track_list[self.current_queue] + 1)
 
         self.current_queue += 1
@@ -252,7 +265,7 @@ class Player:
         return True
 
     def process_shuffle(self) -> bool:
-        if not self.config['shuffle']:
+        if not self.get_config("shuffle"):
             return False
 
         choices = lambda: [x for x in range(0, len(self.queue)) if x not in self.shuffled_list]
@@ -270,10 +283,11 @@ class Player:
 
         return True
 
-    async def process_youtube(self, ctx: commands.Context, keyword: str):
+    async def process_youtube(self, ctx: commands.Context, keyword: str = "",
+                              *, ytdl_list: Optional[tuple] = None):
         loading_msg = await ctx.send(embed=Embed("Loading..."))
 
-        ytdl_list = await self.ytdl.extract_info(keyword)
+        ytdl_list = ytdl_list or await self.ytdl.extract_info(keyword)
 
         info = {}
 
@@ -283,7 +297,6 @@ class Player:
             info = []
             for entry in ytdl_list:
                 if entry['title'] != "[Deleted video]":
-                    entry['url'] = f"https://www.youtube.com/watch?v={entry['id']}"
                     info.append(entry)
 
             await ctx.send(embed=Embed(f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue."),
@@ -321,7 +334,8 @@ class Player:
 
         for item in playlist:
             track = item['track'] if is_playlist else item
-            info = await ytdl.extract_info(f"{track['name']} {' '.join(artist['name'] for artist in track['artists'])}")
+            info = await ytdl.extract_info(f"{track['name']} {' '.join(artist['name'] for artist in track['artists'])}",
+                                           process=True)
 
             if info is None:
                 error += 1
@@ -352,7 +366,7 @@ class Player:
         msg = await ctx.send(embed=Embed("Searching..."))
 
         try:
-            extracted = await self.ytdl.extract_info(keyword)
+            extracted = await self.ytdl.extract_info(keyword, process=True)
             ytdl_choices = self.ytdl.parse_choices(extracted)
         except YtdlError:
             await ctx.send(embed=Embed("No songs available."), delete_after=10)
@@ -367,8 +381,7 @@ class Player:
 
         msg = await ctx.send(embed=Embed("Loading..."))
 
-        info = await self.ytdl.process_entry(extracted[choice])
-        info = self.ytdl.parse_info(info)
+        info = extracted[choice]
 
         await self.bot.delete_message(msg)
 
@@ -378,6 +391,11 @@ class Player:
         ), delete_after=5)
 
         self.add_to_queue(info, requested=ctx.author)
+
+    async def process_playlist(self, ctx, youtube_ids) -> None:
+        ytdl_list = await asyncio.gather(*[self.ytdl.extract_info(ids) for ids in youtube_ids])
+
+        await self.process_youtube(ctx, ytdl_list=ytdl_list)
 
     @tasks.loop(count=1)
     async def reset_timeout(self) -> None:
@@ -422,17 +440,13 @@ class Player:
             info['requested'] = requested or self.ctx.author
             self.queue.append(info)
 
-    async def update_config(self, key: str, value: Union[str, int]) -> None:
-        self.db.set('music.' + key, value)
-        await self.db.save()
-
     def get_footer(self, now_playing):
         return [
             str(now_playing['requested']),
             now_playing['formatted_duration'],
-            f"Volume: {self.config['volume']}%",
-            f"Shuffle: {'on' if self.config['shuffle'] else 'off'}",
-            f"Repeat: {self.config['repeat']}",
+            f"Volume: {self.get_config('volume')}%",
+            f"Shuffle: {'on' if self.get_config('shuffle') else 'off'}",
+            f"Repeat: {self.get_config('repeat')}",
         ]
 
     def get_playing_embed(self):

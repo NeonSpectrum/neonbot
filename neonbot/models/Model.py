@@ -39,7 +39,8 @@ class Model:
             elif i < len(keys) - 1:
                 current = current[key]
             else:
-                current[key] = {**current[key], **value} if isinstance(value, dict) else value
+                existing = current[key] if key in current else {}
+                current[key] = {**existing, **value} if isinstance(value, dict) else value
 
     async def save(self):
         await self.db.servers.update_one(self.where, {"$set": self.data})

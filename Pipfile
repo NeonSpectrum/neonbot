@@ -30,6 +30,5 @@ tornado = "*"
 [pipenv]
 allow_prereleases = true
 
-[packages.discord]
-git = "https://github.com/nextcord/nextcord"
+[packages.nextcord]
 extras = [ "speed", "music",]

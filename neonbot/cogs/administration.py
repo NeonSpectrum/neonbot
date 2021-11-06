@@ -327,9 +327,7 @@ class Administration(commands.Cog):
 
     @logger.command(name="message")
     async def logger_message(self, ctx: commands.Context) -> None:
-        """
-        Logs messages when someone delete his message.
-        """
+        """Logs messages when someone delete his message."""
 
         guild = self.db.get_guild(ctx.guild.id)
         guild.set('channel.msgdelete', ctx.channel.id if guild.get('channel.msgdelete') != ctx.channel.id else None)

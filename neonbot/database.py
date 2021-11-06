@@ -44,10 +44,10 @@ class Database:
 
         return settings
 
-
     async def process_database(self, guilds: list) -> None:
         guild_ids = [str(guild.id) for guild in guilds]
-        existing_guild_ids = [guild['server_id'] async for guild in self.db.servers.find({"server_id": {"$in": guild_ids}})]
+        existing_guild_ids = [guild['server_id'] async for guild in
+                              self.db.servers.find({"server_id": {"$in": guild_ids}})]
         new_guild = [guild for guild in guilds if str(guild.id) not in existing_guild_ids]
 
         for guild in new_guild:
@@ -66,7 +66,6 @@ class Database:
                 "status": "online"
             }
         )
-
 
     async def create_guild_collection(self, guild_id: int) -> None:
         await self.db.servers.insert_one(

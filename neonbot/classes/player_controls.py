@@ -8,6 +8,7 @@ from .view import View
 class PlayerControls:
     def __init__(self, player):
         self.player = player
+        self.view = None
 
     def update_buttons(self, views):
         for view in views:
@@ -19,18 +20,20 @@ class PlayerControls:
         else:
             views[2].emoji = "▶️"
 
-        if self.player.config['repeat'] == 'off':
+        if self.player.get_config("repeat") == 'off':
             views[4].emoji = "🔁"
             views[4].style = nextcord.ButtonStyle.secondary
-        elif self.player.config['repeat'] == 'single':
+        elif self.player.get_config("repeat") == 'single':
             views[4].emoji = "🔂"
             views[4].style = nextcord.ButtonStyle.primary
-        elif self.player.config['repeat'] == 'all':
+        elif self.player.get_config("repeat") == 'all':
             views[4].emoji = "🔁"
             views[4].style = nextcord.ButtonStyle.primary
 
-        views[0].style = nextcord.ButtonStyle.primary if self.player.config[
-            'shuffle'] else nextcord.ButtonStyle.secondary
+        if self.player.get_config("shuffle"):
+            views[0].style = nextcord.ButtonStyle.primary
+        else:
+            views[0].style = nextcord.ButtonStyle.secondary
 
         return views
 
@@ -43,7 +46,6 @@ class PlayerControls:
             else:
                 self.player.current_queue = 0
                 await self.player.play()
-                await self.player.refresh_player_message()
         elif button.emoji.name == "⏸️":  # pause
             await self.player.pause()
         elif button.emoji.name == "⏮️":  # prev
@@ -53,7 +55,7 @@ class PlayerControls:
             await self.player.next()
         elif button.emoji.name in ("🔁", "🔂"):  # repeat
             modes = ["off", "single", "all"]
-            index = (modes.index(self.player.config['repeat']) + 1) % 3
+            index = (modes.index(self.player.get_config("repeat")) + 1) % 3
             await self.player.repeat(modes[index])
         elif button.emoji.name == "🔀":  # shuffle
             await self.player.shuffle()
@@ -62,7 +64,7 @@ class PlayerControls:
         buttons = [DictToObject(row) for row in [
             {"emoji": "🔀"},
             {"emoji": "⏮️", "disabled": self.player.current_queue == 0},
-            {"emoji": "⏸️" if self.player.connection.is_playing() else "▶️"},
+            {"emoji": "⏸️"},
             {"emoji": "⏭️"},
             {"emoji": "🔁"},
         ]]
@@ -74,4 +76,5 @@ class PlayerControls:
         return self.view
 
     def refresh(self) -> None:
-        self.view.children = self.update_buttons(self.view.children)
+        if self.view:
+            self.view.children = self.update_buttons(self.view.children)
