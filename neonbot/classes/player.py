@@ -193,12 +193,10 @@ class Player:
 
     async def next(self, *, index: Optional[int] = None, stop: bool = False, message: bool = True) -> None:
         self.after = None
+        last_track = False
 
         if self.connection.is_playing():
             self.connection.stop()
-
-        if message:
-            await self.finished_message(stop=stop)
 
         if stop:
             return
@@ -212,9 +210,13 @@ class Player:
         if not self.is_latest_track:
             self.current_queue += 1
         elif not (self.process_shuffle() or self.process_repeat()):
-            return
+            last_track = True
 
-        await self.play()
+        if message:
+            await self.finished_message(stop=stop or last_track)
+
+        if not last_track:
+            await self.play()
 
     async def playing_message(self, *, delete_after: Optional[int] = None) -> None:
         if not self.now_playing:
