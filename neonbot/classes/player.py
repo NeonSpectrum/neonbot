@@ -204,10 +204,7 @@ class Player:
         if index is not None:
             self.track_list.append(index)
             self.current_queue = len(self.track_list) - 1
-            await self.play()
-            return
-
-        if not self.is_latest_track:
+        elif not self.is_latest_track:
             self.current_queue += 1
         elif not (self.process_shuffle() or self.process_repeat()):
             last_track = True
