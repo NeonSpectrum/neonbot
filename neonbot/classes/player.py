@@ -156,7 +156,7 @@ class Player:
         await self.refresh_player_message(embed=True)
 
     async def play(self) -> None:
-        if not self.connection or not self.connection.is_connected() or self.connection.is_playing():
+        if not self.connection or not self.connection.is_connected() or self.connection.is_playing() or not self.now_playing:
             return
 
         if "removed" in self.now_playing:
