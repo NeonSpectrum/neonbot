@@ -406,9 +406,12 @@ class Player:
 
         msg = "Player has been reset due to timeout."
         log.cmd(self.ctx, msg)
-        await self.ctx.send(embed=Embed(msg))
+        await self.ctx.send(embed=Embed(msg), delete_after=10)
 
     async def on_member_leave(self):
+        if self.connection and not self.connection.is_playing():
+            return await self.reset()
+
         msg = "Player paused and will reset after 10 minutes if no one will listen :("
         log.cmd(self.ctx, msg, channel=self.last_voice_channel, user="N/A")
         self.messages['auto_paused'] = await self.ctx.send(embed=Embed(msg))
