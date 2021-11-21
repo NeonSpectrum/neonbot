@@ -286,7 +286,7 @@ class Music(commands.Cog):
 {f"~~{title}~~" if "removed" in song else title}
 - - - `{format_seconds(song.get('duration')) if song.get('duration') else "N/A"}` `{song['requested']}`"""
 
-                duration += song.get('duration', 0)
+                duration += song.get('duration') or 0
 
                 temp.append(description)
             embeds.append(Embed("\n".join(temp)))
