@@ -75,6 +75,10 @@ class Spotify:
                 params={"offset": offset, "limit": limit}
             )
             data = await res.json()
+
+            if 'items' not in data:
+                break
+
             playlist += data['items']
 
             if data['next'] is None:
