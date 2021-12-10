@@ -332,6 +332,11 @@ class Player:
             processing_msg = await ctx.send(embed=Embed("Converting to YouTube track. Please wait..."))
             playlist.append(await self.spotify.get_track(url['id']))
 
+        if len(playlist) == 0:
+            await self.bot.delete_message(processing_msg)
+            await ctx.send(embed=Embed('There\'s no song in the url. Please make sure it is public.'))
+            return
+
         for item in playlist:
             track = item['track'] if is_playlist else item
             info = await ytdl.extract_info(f"{track['name']} {' '.join(artist['name'] for artist in track['artists'])}",
