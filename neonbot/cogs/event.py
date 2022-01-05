@@ -98,12 +98,15 @@ class Event(commands.Cog):
         log_channel = bot.get_channel(int(guild.get('channel.msgdelete') or -1))
 
         if log_channel:
-            content = message.content
+            content = []
+
+            if message.content:
+                content.append(message.content)
 
             if len(message.attachments) > 0:
-                content = '\n'.join([content] + [attachment.proxy_url for attachment in message.attachments])
+                content += [attachment.proxy_url for attachment in message.attachments]
 
-            embed = Embed(f"**{message.author}**\n{content}")
+            embed = Embed(f"**{message.author}**\n" + '\n'.join(content))
             embed.set_author(name="Message Deletion", icon_url=bot.user.display_avatar)
             embed.set_footer(text=date_format())
             await log_channel.send(embed=embed)
