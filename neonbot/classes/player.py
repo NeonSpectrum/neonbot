@@ -259,7 +259,8 @@ class Player:
         elif self.get_config("repeat") != "single":
             self.track_list.append(self.track_list[self.current_queue] + 1)
 
-        self.current_queue += 1
+        if self.get_config("repeat") != 'single':
+            self.current_queue += 1
 
         return True
 

@@ -26,6 +26,7 @@ yt-dlp = "*"
 addict = "*"
 motor = "*"
 tornado = "*"
+dnspython = "*"
 
 [pipenv]
 allow_prereleases = true
