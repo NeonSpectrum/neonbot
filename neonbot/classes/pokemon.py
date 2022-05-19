@@ -89,7 +89,7 @@ class Pokemon:
     async def get(self) -> Tuple[str, BytesIO, BytesIO]:
         pokemon = list(get_pokemon(pokemons=pokemons).values())[0]
         res = await self.bot.session.get(
-            f"https://gearoid.me/pokemon/images/artwork/{pokemon.id}.png"
+            f"https://gearoid.me/pokemon/images/artwork/{pokemon['id']}.png"
         )
 
         original_img = BytesIO(await res.read())
@@ -103,7 +103,6 @@ class Pokemon:
         return pokemon['name'], original_img, black_img
 
     async def show_scoreboard(self) -> None:
-
         scores = sorted(self.scoreboard.items(), key=lambda kv: kv[1], reverse=True)
         scores = list(map(lambda x: f"**{self.bot.get_user(x[0])}: {x[1]}**", scores))
 
