@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import ssl
 from time import time
 from typing import cast, List
 
@@ -29,7 +28,7 @@ class Database:
         start_time = time()
 
         log.info(f"Connecting to Database...")
-        client = MotorClient(mongo_url, ssl=True, ssl_cert_reqs=ssl.CERT_NONE)
+        client = MotorClient(mongo_url, ssl=True)
         self.db = client.get_database(db_name)
         log.info(f"MongoDB connection established in {(time() - start_time):.2f}s")
 
