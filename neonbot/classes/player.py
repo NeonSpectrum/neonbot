@@ -340,8 +340,10 @@ class Player:
 
         for item in playlist:
             track = item['track'] if is_playlist else item
-            info = await ytdl.extract_info(f"{track['name']} {' '.join(artist['name'] for artist in track['artists'])}",
-                                           process=True)
+            info = await ytdl.extract_info(
+                f"{' '.join(artist['name'] for artist in track['artists'])} {track['name']}",
+                process=True
+            )
 
             if info is None:
                 error += 1
