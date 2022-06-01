@@ -321,12 +321,13 @@ class Player:
             await ctx.send(embed=Embed("Invalid spotify url."), delete_after=5)
             return
 
-        is_playlist = url['type'] == "playlist" or url['type'] == "album"
+        is_playlist = url['type'] == "playlist"
+        is_album = url['type'] == "album"
         playlist = []
         ytdl_list = []
         error = 0
 
-        if is_playlist:
+        if is_playlist or is_album:
             processing_msg = await ctx.send(embed=Embed("Converting to YouTube playlist. Please wait..."))
             playlist = await self.spotify.get_playlist(url['id'], url["type"])
         else:
