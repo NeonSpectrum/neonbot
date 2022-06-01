@@ -67,11 +67,12 @@ class Spotify:
         playlist = []
 
         if url_type == "album":
+            limit = 50
             url_prefix = "/albums"
         else:
+            limit = 100
             url_prefix = "/playlists"
 
-        limit = 100
         offset = 0
 
         while True:
