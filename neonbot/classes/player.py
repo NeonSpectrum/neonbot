@@ -358,7 +358,7 @@ class Player:
             await ctx.send(embed=Embed("Failed to find similar song to YouTube."), delete_after=10)
             return
 
-        if is_playlist:
+        if is_playlist or is_album:
             await ctx.send(embed=Embed(
                 f"Added {plural(len(ytdl_list), 'song', 'songs')} to queue." + (
                     " {error} failed to load." if error > 0 else "")
