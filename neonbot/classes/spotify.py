@@ -63,7 +63,37 @@ class Spotify:
         res = await self.request("/tracks/" + track_id)
         return await res.json()
 
-    async def get_playlist(self, playlist_id: str) -> list:
+    async def get_playlist(self, playlist_id: str, url_type: str) -> list:
+        playlist = []
+
+        if url_type == "album":
+            url_prefix = "/albums"
+        else:
+            url_prefix = "/playlists"
+
+        limit = 100
+        offset = 0
+
+        while True:
+            res = await self.request(
+                url_prefix + "/" + playlist_id + '/tracks',
+                params={"offset": offset, "limit": limit}
+            )
+            data = await res.json()
+
+            if 'items' not in data:
+                break
+
+            playlist += data['items']
+
+            if data['next'] is None:
+                break
+
+            offset += limit
+
+        return playlist
+
+    async def get_album(self, playlist_id: str) -> list:
         playlist = []
 
         limit = 100
@@ -71,7 +101,7 @@ class Spotify:
 
         while True:
             res = await self.request(
-                "/playlists/" + playlist_id + '/tracks',
+                "/albums/" + playlist_id + '/tracks',
                 params={"offset": offset, "limit": limit}
             )
             data = await res.json()

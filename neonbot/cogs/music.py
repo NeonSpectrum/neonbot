@@ -78,8 +78,9 @@ class Music(commands.Cog):
         elif player.current_queue >= len(player.queue):
             player.current_queue = 0
 
-        await player.connect()
-        await player.play()
+        if len(player.queue) > 0:
+            await player.connect()
+            await player.play()
 
     @commands.command()
     @commands.guild_only()
