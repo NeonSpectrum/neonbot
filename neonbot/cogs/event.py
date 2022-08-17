@@ -117,6 +117,9 @@ class Event(commands.Cog):
         member: nextcord.Member, before: nextcord.VoiceState, after: nextcord.VoiceState
     ) -> None:
         if member.bot:
+            # If someone moves the bot to other voice channel
+            if member == bot.user and after.channel and before.channel != after.channel:
+                player.last_voice_channel = after.channel
             return
 
         guild = bot.db.get_guild(member.guild.id)
