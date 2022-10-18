@@ -78,12 +78,10 @@ class PlayerHandler:
         error = 0
 
         if is_playlist or is_album:
-            processing_msg = await self.send_message(embed=Embed(t('music.converting_to_youtube_playlist')),
-                                                     ephemeral=True)
+            await self.send_message(embed=Embed(t('music.converting_to_youtube_playlist')), ephemeral=True)
             playlist = await spotify.get_playlist(url['id'], url["type"])
         else:
-            processing_msg = await self.send_message(embed=Embed(t('music.converting_to_youtube_track')),
-                                                     ephemeral=True)
+            await self.send_message(embed=Embed(t('music.converting_to_youtube_track')), ephemeral=True)
             playlist.append(await spotify.get_track(url['id']))
 
         if len(playlist) == 0:

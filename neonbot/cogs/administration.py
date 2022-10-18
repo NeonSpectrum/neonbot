@@ -36,8 +36,6 @@ class Administration(commands.Cog):
     async def eval(self, ctx: commands.Context, *, code: str) -> None:
         """Evaluates a line/s of python code. *BOT_OWNER"""
 
-        guild_id = ctx.guild.id if ctx.guild else None
-
         variables = {
             "bot": bot,
             "ctx": ctx,
@@ -69,14 +67,12 @@ class Administration(commands.Cog):
     @app_commands.command(name='prune')
     @app_commands.default_permissions(manage_messages=True)
     async def prune(
-            self,
-            interaction: discord.Interaction,
-            count: app_commands.Range[int, 1, 1000],
-            member: Optional[discord.Member] = None,
+        self,
+        interaction: discord.Interaction,
+        count: app_commands.Range[int, 1, 1000],
+        member: Optional[discord.Member] = None,
     ) -> None:
         """Deletes a number of messages of a specific member (if specified). *MANAGE_MESSAGES"""
-
-        guild = Guild.get_instance(interaction.guild_id)
 
         await interaction.response.defer()
 
@@ -126,10 +122,10 @@ class Administration(commands.Cog):
 
     @settings.command(name='setpresence')
     async def setpresence(
-            self,
-            interaction: discord.Interaction,
-            presence_type: discord.ActivityType,
-            name: str,
+        self,
+        interaction: discord.Interaction,
+        presence_type: discord.ActivityType,
+        name: str,
     ) -> None:
         """Sets the presence of the bot. *BOT_OWNER"""
 
