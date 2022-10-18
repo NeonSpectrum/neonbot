@@ -1,244 +1,75 @@
-import logging
-import re
-from typing import Optional, cast
+import discord
+from discord import app_commands
+from discord.app_commands.models import Choice
+from discord.ext import commands
+from i18n import t
 
-from nextcord.ext import commands
-
-from ..classes.converters import Required
-from ..classes.embed import Embed, PaginationEmbed
-from ..classes.player import Player
-from ..helpers.constants import SPOTIFY_REGEX, YOUTUBE_REGEX, ICONS
-from ..helpers.date import format_seconds
-from ..helpers.log import Log
-from ..helpers.utils import plural
-
-log = cast(Log, logging.getLogger(__name__))
+from neonbot import bot
+from neonbot.classes.embed import Embed, PaginationEmbed
+from neonbot.classes.player_handler import PlayerHandler
+from neonbot.enums import PlayType, Repeat
+from neonbot.utils.constants import ICONS
+from neonbot.utils.date import format_seconds
 
 
-def get_player(ctx: commands.Context) -> Player:
-    players = ctx.bot.music
-    if ctx.guild.id not in players.keys():
-        players[ctx.guild.id] = Player(ctx)
-
-    return players[ctx.guild.id]
-
-
-async def in_voice(ctx: commands.Context) -> bool:
-    if await ctx.bot.is_owner(ctx.author) and ctx.command.name == "reset":
+async def in_voice(interaction: discord.Interaction) -> bool:
+    if await bot.is_owner(interaction.user) and interaction.command.name == "reset":
         return True
 
-    if not ctx.author.voice and ctx.invoked_with != "help":
-        await ctx.send(embed=Embed("You need to be in the channel."), delete_after=5)
-        return False
-    return True
-
-
-async def has_player(ctx: commands.Context) -> bool:
-    player = get_player(ctx)
-
-    if not player.connection and ctx.invoked_with != "help":
-        await ctx.send(embed=Embed("No active player."), delete_after=5)
+    if not interaction.user.voice:
+        await interaction.response.send_message(embed=Embed("You need to be in the channel."), ephemeral=True)
         return False
     return True
 
 
 class Music(commands.Cog):
-    def __init__(self, bot) -> None:
-        self.bot = bot
-        self.bot.load_music()
-
-    @commands.command(aliases=["p"], usage="<url | keyword>")
-    @commands.guild_only()
-    @commands.check(in_voice)
-    async def play(self, ctx: commands.Context, *, keyword: str = None) -> None:
+    @app_commands.command(name='play')
+    @app_commands.rename(play_type='type')
+    @app_commands.describe(
+        play_type='Select type...',
+        value='Enter keyword or url...'
+    )
+    @app_commands.choices(play_type=[
+        Choice(name='search', value=1),
+        Choice(name='youtube', value=2),
+        Choice(name='spotify', value=3),
+    ])
+    @app_commands.check(in_voice)
+    @app_commands.guild_only()
+    async def play(
+            self,
+            interaction: discord.Interaction,
+            play_type: PlayType,
+            value: str
+    ):
         """Searches the url or the keyword and add it to queue."""
 
-        player = get_player(ctx)
-        player.ctx = ctx
+        player_handler = PlayerHandler(interaction)
+        player = await player_handler.get_player()
 
-        if keyword:
-            if keyword.isdigit():
-                index = int(keyword)
-                if index > len(player.queue) or index < 0 or "removed" in player.queue[index - 1]:
-                    await ctx.send(embed=Embed("Invalid index."), delete_after=5)
-                    return
+        await interaction.response.defer()
 
-                if player.connection:
-                    await player.next(index=index - 1)
-                else:
-                    player.track_list.append(index - 1)
-                    player.current_queue = len(player.track_list) - 1
-            elif re.search(YOUTUBE_REGEX, keyword):
-                await player.process_youtube(ctx, keyword)
-            elif re.search(SPOTIFY_REGEX, keyword):
-                await player.process_spotify(ctx, keyword)
-            elif keyword:
-                await player.process_search(ctx, keyword)
-
-        elif player.current_queue >= len(player.queue):
-            player.current_queue = 0
+        if play_type == PlayType.SEARCH:
+            await player_handler.search_keyword(value)
+        elif play_type == PlayType.YOUTUBE:
+            await player_handler.search_youtube(value)
+        elif play_type == PlayType.SPOTIFY:
+            await player_handler.search_spotify(value)
 
         if len(player.queue) > 0:
             await player.connect()
             await player.play()
 
-    @commands.command()
-    @commands.guild_only()
-    @commands.check(has_player)
-    @commands.check(in_voice)
-    async def pause(self, ctx: commands.Context) -> None:
-        """Pauses the current player."""
-
-        player = get_player(ctx)
-        await player.pause()
-
-    @commands.command()
-    @commands.guild_only()
-    @commands.check(has_player)
-    @commands.check(in_voice)
-    async def resume(self, ctx: commands.Context) -> None:
-        """Resumes the current player."""
-
-        player = get_player(ctx)
-        await player.resume()
-
-    @commands.command(aliases=["next"])
-    @commands.guild_only()
-    @commands.check(has_player)
-    @commands.check(in_voice)
-    async def skip(self, ctx: commands.Context) -> None:
-        """Skips the current song."""
-
-        player = get_player(ctx)
-        player.connection.stop()
-
-    @commands.command()
-    @commands.guild_only()
-    @commands.check(has_player)
-    @commands.check(in_voice)
-    async def stop(self, ctx: commands.Context) -> None:
-        """Stops the current player and resets the track number to 1."""
-
-        player = get_player(ctx)
-        await player.stop()
-
-        msg = "Player stopped."
-        log.cmd(ctx, msg)
-        await ctx.send(embed=Embed(msg), delete_after=5)
-
-    @commands.command()
-    @commands.guild_only()
-    @commands.check(has_player)
-    @commands.check(in_voice)
-    async def reset(self, ctx: commands.Context) -> None:
-        """Resets the current player and disconnect to voice channel."""
-
-        player = get_player(ctx)
-        await player.reset()
-
-        msg = "Player reset."
-        log.cmd(ctx, msg)
-        await ctx.send(embed=Embed(msg), delete_after=5)
-
-    @commands.command()
-    @commands.guild_only()
-    @commands.check(has_player)
-    @commands.check(in_voice)
-    async def removesong(self, ctx: commands.Context, index: int) -> None:
-        """Remove the song with the index specified."""
-
-        index -= 1
-        player = get_player(ctx)
-
-        try:
-            queue = player.queue[index]
-        except IndexError:
-            await ctx.send(
-                embed=Embed("There is no song in that index."), delete_after=5
-            )
-            return
-
-        embed = Embed(title=queue['title'], url=queue['url'])
-        embed.set_author(
-            name=f"Removed song #{index + 1}", icon_url=ICONS['music']
-        )
-        embed.set_footer(text=queue['requested'], icon_url=queue['requested'].display_avatar)
-
-        await ctx.send(embed=embed, delete_after=5)
-
-        player.queue[index]['removed'] = True
-
-        if index < player.current_queue:
-            player.current_queue -= 1
-        elif index == player.current_queue:
-            if not player.queue:
-                await player.next(stop=True)
-            else:
-                await player.next()
-
-    @commands.command(aliases=["vol"], usage="<1 - 100>")
-    @commands.guild_only()
-    @commands.check(in_voice)
-    async def volume(self, ctx: commands.Context, volume: Optional[int] = None) -> None:
-        """Sets or gets player's volume."""
-
-        player = get_player(ctx)
-
-        if volume is None:
-            await ctx.send(
-                embed=Embed(f"Volume is set to {player.get_config('volume')}%."),
-                delete_after=5,
-            )
-            return
-        elif volume < 1 or volume > 100:
-            await ctx.send(
-                embed=Embed("Volume must be 1 - 100."), delete_after=5
-            )
-            return
-
-        await player.volume(volume)
-        await ctx.send(embed=Embed(f"Volume changed to {volume}%"), delete_after=5)
-
-    @commands.command(usage="<off | single | all>")
-    @commands.guild_only()
-    @commands.check(in_voice)
-    async def repeat(
-        self,
-        ctx: commands.Context,
-        mode: Required("off", "single", "all") = None,  # type:ignore
-    ) -> None:
-        """Sets or gets player's repeat mode."""
-
-        player = get_player(ctx)
-
-        if mode is None:
-            await ctx.send(
-                embed=Embed(f"Repeat is set to {player.get_config('repeat')}."), delete_after=5
-            )
-            return
-
-        await player.repeat(mode)
-
-    @commands.command()
-    @commands.guild_only()
-    @commands.check(in_voice)
-    async def shuffle(self, ctx: commands.Context) -> None:
-        """Enables/disables player's shuffle mode."""
-
-        player = get_player(ctx)
-        await player.shuffle()
-
-    @commands.command(aliases=["np"])
-    @commands.guild_only()
-    @commands.check(has_player)
-    @commands.check(in_voice)
-    async def nowplaying(self, ctx: commands.Context) -> None:
+    @app_commands.command(name='nowplaying')
+    @app_commands.check(in_voice)
+    @app_commands.guild_only()
+    async def nowplaying(self, interaction: discord.Interaction) -> None:
         """Displays in brief description of the current playing."""
 
-        player = get_player(ctx)
+        player = await PlayerHandler(interaction).get_player()
 
-        if not player.connection.is_playing():
-            await ctx.send(embed=Embed("No song playing."), delete_after=5)
+        if not player.connection or not player.connection.is_playing():
+            await interaction.response.send_message(embed=Embed(t('music.no_song_playing')), ephemeral=True)
             return
 
         now_playing = player.now_playing
@@ -247,11 +78,11 @@ class Music(commands.Cog):
         footer.pop(1)
 
         embed = Embed()
-        embed.add_field("Uploader", now_playing['uploader'])
-        embed.add_field("Upload Date", now_playing['upload_date'])
-        embed.add_field("Duration", now_playing['formatted_duration'])
-        embed.add_field("Views", now_playing['view_count'])
-        embed.add_field("Description", now_playing['description'], inline=False)
+        embed.add_field(t('music.nowplaying.uploader'), now_playing['uploader'])
+        embed.add_field(t('music.nowplaying.upload_date'), now_playing['upload_date'])
+        embed.add_field(t('music.nowplaying.duration'), now_playing['formatted_duration'])
+        embed.add_field(t('music.nowplaying.views'), now_playing['view_count'])
+        embed.add_field(t('music.nowplaying.description'), now_playing['description'], inline=False)
         embed.set_author(
             name=now_playing['title'],
             url=now_playing['url'],
@@ -261,21 +92,21 @@ class Music(commands.Cog):
         embed.set_footer(
             text=" | ".join(footer), icon_url=now_playing['requested'].display_avatar
         )
-        await ctx.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
-    @commands.command(aliases=["list"])
-    @commands.guild_only()
-    @commands.check(in_voice)
-    async def playlist(self, ctx: commands.Context) -> None:
+    @app_commands.command(name='playlist')
+    @app_commands.check(in_voice)
+    @app_commands.guild_only()
+    async def playlist(self, interaction: discord.Interaction) -> None:
         """List down all songs in the player's queue."""
 
-        player = get_player(ctx)
+        player = await PlayerHandler(interaction).get_player()
         queue = player.queue
         embeds = []
         duration = 0
 
         if not queue:
-            await ctx.send(embed=Embed("Empty playlist."), delete_after=5)
+            await interaction.response.send_message(embed=Embed(t('music.empty_playlist')), ephemeral=True)
             return
 
         for i in range(0, len(player.queue), 10):
@@ -293,91 +124,38 @@ class Music(commands.Cog):
             embeds.append(Embed("\n".join(temp)))
 
         footer = [
-            f"{plural(len(queue), 'song', 'songs')}",
+            t('music.songs', count=len(player.queue)),
             format_seconds(duration),
-            f"Volume: {player.get_config('volume')}%",
-            f"Shuffle: {'on' if player.get_config('shuffle') else 'off'}",
-            f"Repeat: {player.get_config('repeat')}",
+            t('music.volume_footer', volume=player.volume),
+            t('music.shuffle_footer', shuffle='on' if player.is_shuffle else 'off'),
+            t('music.repeat_footer', repeat=Repeat(player.repeat).name.lower()),
         ]
 
-        pagination = PaginationEmbed(ctx, embeds=embeds)
+        pagination = PaginationEmbed(interaction, embeds=embeds)
         pagination.embed.set_author(
-            name="Player Queue", icon_url=ICONS['music']
+            name=t('music.player_queue'), icon_url=ICONS['music']
         )
         pagination.embed.set_footer(
-            text=" | ".join(footer), icon_url=self.bot.user.display_avatar
+            text=" | ".join(footer), icon_url=bot.user.display_avatar
         )
         await pagination.build()
 
-    @commands.command(aliases=["pp"])
-    @commands.guild_only()
-    @commands.check(in_voice)
-    async def playplaylist(self, ctx: commands.Context, *, name: str):
-        """Play playlist on saved playlist."""
+    @app_commands.command(name='volume')
+    @app_commands.check(in_voice)
+    @app_commands.guild_only()
+    async def volume(self, interaction: discord.Interaction, volume: app_commands.Range[int, 1, 100]) -> None:
+        """Sets or gets player's volume."""
 
-        player = get_player(ctx)
-        player.ctx = ctx
+        player = await PlayerHandler(interaction).get_player()
 
-        playlist = player.get_config('playlist.' + name)
-
-        if not playlist:
-            await ctx.send(embed=Embed('Playlist not found.'), delete_after=5)
+        if volume < 1 or volume > 100:
+            await interaction.response.send_message(embed=Embed(t('music.volume_rules')), ephemeral=True)
             return
 
-        if len(playlist.get('tracks') or []) == 0:
-            await ctx.send(embed=Embed('Empty playlist.'), delete_after=5)
-            return
-
-        await player.process_playlist(ctx, playlist['tracks'])
-        await player.connect()
-        await player.play()
-
-    @commands.command(aliases=["sp"])
-    @commands.guild_only()
-    @commands.check(in_voice)
-    async def saveplaylist(self, ctx: commands.Context, *, name: str):
-        """Save current playlist to saved playlist."""
-
-        player = get_player(ctx)
-
-        playlist = player.get_config('playlist.' + name)
-
-        if playlist and playlist.get('owner') != ctx.author.id:
-            await ctx.send(embed=Embed(f"You are not the owner of the playlist. You can't modify it."))
-            return
-
-        await player.update_config('playlist', {
-            name: {
-                "tracks": [queue['id'] for queue in player.queue],
-                "owner": ctx.author.id
-            }
-        })
-
-        await ctx.send(embed=Embed(f"Playlist added! Type `{ctx.prefix}pp {name}` to play it."), delete_after=5)
-
-    @commands.command(aliases=["dp"])
-    @commands.guild_only()
-    @commands.check(in_voice)
-    async def deleteplaylist(self, ctx: commands.Context, *, name: str):
-        """Delete playlist on saved playlist."""
-
-        player = get_player(ctx)
-
-        playlist = player.get_config('playlist.' + name)
-
-        if not playlist:
-            await ctx.send(embed=Embed('Playlist not found.'), delete_after=5)
-            return
-
-        if playlist.get('owner') != ctx.author.id:
-            await ctx.send(embed=Embed(f"You are not the owner of the playlist. You can't delete it."))
-            return
-
-        player.get_config('playlist').pop(name)
-        await player.db.save()
-
-        await ctx.send(embed=Embed(f"Playlist deleted!"), delete_after=5)
+        await player.set_volume(volume)
+        await interaction.response.send_message(embed=Embed(t('music.volume_changed', volume=volume)))
 
 
-def setup(bot: commands.Bot) -> None:
-    bot.add_cog(Music(bot))
+# noinspection PyShadowingNames
+async def setup(bot: commands.Bot) -> None:
+    await bot.add_cog(Music())

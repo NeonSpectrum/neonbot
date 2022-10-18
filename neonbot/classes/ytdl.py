@@ -7,15 +7,17 @@ from typing import List, Union
 
 import yt_dlp
 
-from ..helpers.date import format_seconds
-from ..helpers.exceptions import YtdlError
+from .. import bot
+from ..utils.date import format_seconds
+from ..utils.exceptions import YtdlError
 
 
 class Ytdl:
-    def __init__(self, bot, extra_params: dict = {}) -> None:
+    def __init__(self, extra_params=None) -> None:
+        if extra_params is None:
+            extra_params = {}
         self.thread_pool = ThreadPoolExecutor()
         self.loop = bot.loop
-        self.session = bot.session
         self.ytdl = yt_dlp.YoutubeDL(
             {
                 "default_search": "ytsearch5",
@@ -117,5 +119,8 @@ class Ytdl:
         )
 
     @classmethod
-    def create(cls, bot, extra_params) -> Ytdl:
-        return cls(bot, extra_params)
+    def create(cls, extra_params) -> Ytdl:
+        return cls(extra_params)
+
+
+ytdl = Ytdl()

@@ -1,20 +1,14 @@
-#!/usr/bin/env python3
+import i18n
+from envparse import env
 
-import os
-
-from nextcord import opus
-
-from neonbot import bot
+env.read_envfile()
+i18n.load_path.append('./neonbot/lang')
+i18n.set('file_format', 'json')
+i18n.set('skip_locale_root_data', True)
 
 
 def main() -> None:
-    if not opus.is_loaded():
-        opus.load_opus("./lib/libopus.so.0")
-
-    if os.name == "nt":
-        os.system("color")
-
-    os.makedirs("./tmp/youtube_dl", exist_ok=True)
+    from neonbot import bot
 
     bot.run()
 
