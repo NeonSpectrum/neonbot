@@ -1,4 +1,5 @@
 import asyncio
+import os
 import re
 import sys
 from glob import glob
@@ -62,7 +63,7 @@ class NeonBot(commands.Bot):
             log.info(f"Command synced to: {guild}")
 
     async def add_cogs(self):
-        files = sorted(glob("neonbot\\cogs\\[!_]*.py"))
+        files = sorted(glob(os.path.join('neonbot', 'cogs', '') + "[!_]*.py"))
         extensions = list(map(lambda x: re.split(r"[\\.]", x)[-2], files))
         start_time = time()
 
