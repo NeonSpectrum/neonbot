@@ -1,8 +1,8 @@
 import asyncio
-import os
 import re
 import sys
 from glob import glob
+from os import sep
 from time import time
 from typing import Optional, Tuple, Union, Any
 
@@ -15,8 +15,6 @@ from . import __version__
 from .classes.database import Database
 from .utils import log
 from .utils.constants import PERMISSIONS
-
-guilds = [334663273385295874]
 
 
 class NeonBot(commands.Bot):
@@ -63,8 +61,8 @@ class NeonBot(commands.Bot):
             log.info(f"Command synced to: {guild}")
 
     async def add_cogs(self):
-        files = sorted(glob(os.path.join('neonbot', 'cogs', '') + "[!_]*.py"))
-        extensions = list(map(lambda x: re.split(r"[\\.]", x)[-2], files))
+        files = sorted(glob(f"neonbot{sep}cogs{sep}[!_]*.py"))
+        extensions = list(map(lambda x: re.split(r"[{0}.]".format(re.escape(sep)), x)[-2], files))
         start_time = time()
 
         print(file=sys.stderr)
