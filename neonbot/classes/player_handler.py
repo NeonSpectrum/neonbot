@@ -25,7 +25,7 @@ class PlayerHandler:
         return self._player
 
     async def send_message(self, *args, **kwargs):
-        bot.send_response(self.interaction, *args, view=None, **kwargs)
+        await bot.send_response(self.interaction, *args, view=None, **kwargs)
 
     async def search_keyword(self, keyword: str):
         try:
