@@ -1,35 +1,24 @@
 [[source]]
-name = "pypi"
-url = "https://pypi.org/simple"
+url = "https://pypi.python.org/simple"
 verify_ssl = true
-
-[dev-packages]
-flake8 = "*"
-mypy = "*"
+name = "pypi"
 
 [packages]
 environs = "*"
-psutil = "*"
-pyasn1 = "*"
-pytz = "*"
-termcolor = "*"
-PyNaCl = "*"
-aiohttp = ">=3.7.4"
-aiodns = "*"
-beautifulsoup4 = "*"
-pokemon = "*"
-Pillow = "*"
-jikanpy = "*"
-emoji = "*"
-aioschedule = "*"
+motor = "*"
+discord = "*"
+python-i18n = "*"
+dnspython = "*"
+pynacl = "*"
 yt-dlp = "*"
-addict = "*"
+pytz = "*"
+envparse = "*"
+bs4 = "*"
+discord-py = {git = "https://github.com/Rapptz/discord.py"}
+jikanpy = "*"
+fuzzywuzzy = "*"
+python-levenshtein = "*"
+psutil = "*"
 
-[pipenv]
-allow_prereleases = true
-
-[packages.discord]
-git = "https://github.com/Rapptz/discord.py"
-
-[packages.pymongo]
-extras = [ "srv",]
+[dev-packages]
+pylint = "*"

@@ -1,12 +1,18 @@
-from pymongo import MongoClient
-
-from .Model import Model
+from .model import Model
 
 
 class Settings(Model):
-    def __init__(self, db: MongoClient) -> None:
-        super().__init__(db)
+    def __init__(self) -> None:
+        super().__init__()
 
-        self.table = 'settings'
+        self.table = "settings"
 
-        self.refresh()
+    async def create_default_collection(self):
+        await self.refresh()
+
+        if self.get() is None:
+            await self.insert({
+                "status": "online",
+                "activity_type": "listening",
+                "activity_name": "to my heartbeat"
+            })

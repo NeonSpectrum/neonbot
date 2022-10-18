@@ -1,8 +1,7 @@
 __title__ = "NeonBot"
-__author__ = "NeonSpectrum"
-__version__ = "2.0.0"
+__author__ = "NeonSpectrum#0001"
+__version__ = "2.1.0"
 
-from .bot import Bot
+from neonbot.bot import NeonBot
 
-bot = Bot()
-env = bot.env
+bot = NeonBot()

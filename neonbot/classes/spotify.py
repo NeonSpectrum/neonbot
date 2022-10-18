@@ -2,7 +2,10 @@ from time import time
 from typing import Optional
 from urllib.parse import urlparse
 
-from ..helpers.exceptions import ApiError
+from aiohttp import ClientSession, ClientTimeout
+from envparse import env
+
+from ..utils.exceptions import ApiError
 
 
 class Spotify:
@@ -12,10 +15,10 @@ class Spotify:
     }
     BASE_URL = "https://api.spotify.com/v1"
 
-    def __init__(self, bot) -> None:
-        self.session = bot.session
-        self.client_id = bot.env.str("SPOTIFY_CLIENT_ID")
-        self.client_secret = bot.env.str("SPOTIFY_CLIENT_SECRET")
+    def __init__(self) -> None:
+        self.session = ClientSession(timeout=ClientTimeout(total=10))
+        self.client_id = env.str("SPOTIFY_CLIENT_ID")
+        self.client_secret = env.str("SPOTIFY_CLIENT_SECRET")
 
     async def get_token(self) -> Optional[str]:
         if Spotify.CREDENTIALS['expiration'] and time() < Spotify.CREDENTIALS['expiration']:
@@ -63,7 +66,38 @@ class Spotify:
         res = await self.request("/tracks/" + track_id)
         return await res.json()
 
-    async def get_playlist(self, playlist_id: str) -> list:
+    async def get_playlist(self, playlist_id: str, url_type: str) -> list:
+        playlist = []
+
+        if url_type == "album":
+            limit = 50
+            url_prefix = "/albums"
+        else:
+            limit = 100
+            url_prefix = "/playlists"
+
+        offset = 0
+
+        while True:
+            res = await self.request(
+                url_prefix + "/" + playlist_id + '/tracks',
+                params={"offset": offset, "limit": limit}
+            )
+            data = await res.json()
+
+            if 'items' not in data:
+                break
+
+            playlist += data['items']
+
+            if data['next'] is None:
+                break
+
+            offset += limit
+
+        return playlist
+
+    async def get_album(self, playlist_id: str) -> list:
         playlist = []
 
         limit = 100
@@ -71,10 +105,14 @@ class Spotify:
 
         while True:
             res = await self.request(
-                "/playlists/" + playlist_id + '/tracks',
+                "/albums/" + playlist_id + '/tracks',
                 params={"offset": offset, "limit": limit}
             )
             data = await res.json()
+
+            if 'items' not in data:
+                break
+
             playlist += data['items']
 
             if data['next'] is None:
@@ -92,3 +130,6 @@ class Spotify:
             headers={"Authorization": f"Bearer {token}"},
             params=params
         )
+
+
+spotify = Spotify()
