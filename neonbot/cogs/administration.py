@@ -132,15 +132,14 @@ class Administration(commands.Cog):
         if presence_type is False:
             return
 
-        bot.settings.set('game', {
-            'type': presence_type,
-            'name': name
+        await bot.settings.update({
+            'activity_type': presence_type,
+            'activity_name': name
         })
-        await bot.settings.save()
 
         await bot.change_presence(
             activity=discord.Activity(
-                name=name, type=discord.ActivityType[bot.settings.get('game.type')]
+                name=name, type=presence_type
             )
         )
         await interaction.response.send_message(

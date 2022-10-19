@@ -6,6 +6,8 @@ from discord.ext import commands
 
 from neonbot import bot
 from neonbot.classes.embed import Embed
+from neonbot.classes.player import Player
+from neonbot.models.guild import Guild
 from neonbot.utils import log, exceptions
 from neonbot.utils.functions import get_command_string
 
@@ -95,6 +97,22 @@ class Event(commands.Cog):
         await bot.send_to_owner(embed=embed)
 
         raise error
+
+    @staticmethod
+    @bot.event
+    async def on_guild_join(guild):
+        log.info(f"Creating database for {guild}...")
+        await Guild.get_instance(guild.id).create_default_collection()
+
+    @staticmethod
+    @bot.event
+    async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+        if member.bot:
+            if member.id != bot.user.id:
+                return
+
+            player = Player.get_instance_from_guild(member.guild)
+            player.reset()
 
 
 # noinspection PyShadowingNames

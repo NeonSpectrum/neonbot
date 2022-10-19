@@ -36,11 +36,6 @@ class NeonBot(commands.Bot):
     def settings(self):
         return self._settings.get()
 
-    async def initialize(self):
-        self.db.initialize()
-        self._settings = await self.db.get_settings()
-        self.status, self.activity = self.get_presence()
-
     def get_presence(self) -> Tuple[discord.Status, discord.Activity]:
         activity_type = self.settings.get('activity_type').lower()
         activity_name = self.settings.get('activity_name')
@@ -54,6 +49,9 @@ class NeonBot(commands.Bot):
         )
 
     async def setup_hook(self):
+        self.db.initialize()
+        self._settings = await self.db.get_settings()
+        self.status, self.activity = self.get_presence()
         self.session = ClientSession(timeout=ClientTimeout(total=30))
 
         await self.add_cogs()
@@ -120,7 +118,6 @@ class NeonBot(commands.Bot):
         await self.get_user(self.app_info.owner.id).send(*args, **kwargs)
 
     async def start(self, *args, **kwargs) -> None:
-        await self.initialize()
         await super().start(*args, **kwargs)
 
     def run(self, *args, **kwargs):
