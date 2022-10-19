@@ -14,5 +14,5 @@ class Settings(Model):
             await self.insert({
                 "status": "online",
                 "activity_type": "listening",
-                "activity_name": "to my heartbeat"
+                "activity_name": "my heartbeat"
             })
