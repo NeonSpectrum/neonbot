@@ -2,20 +2,27 @@ from time import time
 from typing import Optional
 from urllib.parse import urlparse
 
+import discord
 from aiohttp import ClientSession, ClientTimeout
 from envparse import env
+from i18n import t
 
+from .embed import Embed
+from .player import Player
+from .with_interaction import WithInteraction
+from .ytdl import ytdl
 from ..utils.exceptions import ApiError
 
 
-class Spotify:
+class Spotify(WithInteraction):
     CREDENTIALS = {
         'token': None,
         'expiration': 0
     }
     BASE_URL = "https://api.spotify.com/v1"
 
-    def __init__(self) -> None:
+    def __init__(self, interaction: discord.Interaction) -> None:
+        super().__init__(interaction)
         self.session = ClientSession(timeout=ClientTimeout(total=10))
         self.client_id = env.str("SPOTIFY_CLIENT_ID")
         self.client_secret = env.str("SPOTIFY_CLIENT_SECRET")
@@ -131,5 +138,57 @@ class Spotify:
             params=params
         )
 
+    async def search_url(self, url: str) -> None:
+        url = self.parse_url(url)
+        ytdl_one = ytdl.create({"default_search": "ytsearch1"})
 
-spotify = Spotify()
+        if not url:
+            await self.send_message(embed=Embed(t('music.invalid_spotify_url')), ephemeral=True)
+            return
+
+        player = await Player.get_instance(self.interaction)
+
+        is_playlist = url['type'] == "playlist"
+        is_album = url['type'] == "album"
+        playlist = []
+        data = []
+        error = 0
+
+        if is_playlist or is_album:
+            await self.send_message(embed=Embed(t('music.converting_to_youtube_playlist')))
+            playlist = await self.get_playlist(url['id'], url["type"])
+        else:
+            await self.send_message(embed=Embed(t('music.converting_to_youtube_track')))
+            playlist.append(await self.get_track(url['id']))
+
+        if len(playlist) == 0:
+            await self.send_message(embed=Embed(t('music.youtube_no_song')))
+            return
+
+        for item in playlist:
+            track = item['track'] if is_playlist else item
+            info = await ytdl_one.extract_info(
+                f"{' '.join(artist['name'] for artist in track['artists'])} {track['name']}",
+                process=True
+            )
+
+            if info is None:
+                error += 1
+                continue
+
+            data.append(info)
+
+        if len(data) == 0:
+            await self.send_message(embed=Embed(t('music.youtube_failed_to_find_similar')))
+            return
+
+        if is_playlist or is_album:
+            await self.send_message(embed=Embed(
+                t('music.added_multiple_to_queue', count=len(data)) + t('music.added_failed', count=error)
+            ))
+        else:
+            await self.send_message(embed=Embed(
+                t('music.added_to_queue', queue=len(player.queue) + 1, title=data[0]['title'], url=data[0]['url'])
+            ))
+
+        player.add_to_queue(data, requested=self.interaction.user)

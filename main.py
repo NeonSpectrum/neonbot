@@ -1,3 +1,5 @@
+import logging
+
 import i18n
 from envparse import env
 
@@ -10,7 +12,7 @@ i18n.set('skip_locale_root_data', True)
 def main() -> None:
     from neonbot import bot
 
-    bot.run()
+    bot.run(log_level=logging.ERROR)
 
 
 if __name__ == "__main__":

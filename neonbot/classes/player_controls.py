@@ -1,12 +1,19 @@
-import discord
+from typing import TYPE_CHECKING
 
+import discord
+from i18n import t
+
+from .embed import Embed
 from .view import View, Button
 from ..enums import Repeat
+
+if TYPE_CHECKING:
+    from .player import Player
 
 
 class PlayerControls:
     def __init__(self, player):
-        self.player = player
+        self.player: Player = player
         self.view = None
 
     def update_buttons(self, views):
@@ -42,28 +49,38 @@ class PlayerControls:
 
         if button.emoji.name == "▶️":  # play
             if self.player.connection.is_paused():
-                await self.player.resume()
+                await self.player.resume(requester=interaction.user)
             else:
                 self.player.current_queue = 0
                 await self.player.play()
         elif button.emoji.name == "⏸️":  # pause
-            await self.player.pause()
+            await self.player.pause(requester=interaction.user)
         elif button.emoji.name == "⏮️":  # prev
-            self.player.current_queue -= 2
+            if self.player.current_queue == 0:
+                self.player.current_queue = len(self.player.queue) - 2
+            else:
+                self.player.current_queue -= 2
+
             self.player.next()
+            await interaction.channel.send(
+                embed=Embed(t('music.player_controls_pressed', action='back', user=interaction.user))
+            )
         elif button.emoji.name == "⏭️":  # next
             self.player.next()
+            await interaction.channel.send(
+                embed=Embed(t('music.player_controls_pressed', action='next', user=interaction.user))
+            )
         elif button.emoji.name in ("🔁", "🔂"):  # repeat
             modes = [Repeat.OFF, Repeat.SINGLE, Repeat.ALL]
             index = (modes.index(Repeat(self.player.repeat)) + 1) % 3
-            await self.player.set_repeat(modes[index])
+            await self.player.set_repeat(modes[index], requester=interaction.user)
         elif button.emoji.name == "🔀":  # shuffle
-            await self.player.set_shuffle()
+            await self.player.set_shuffle(requester=interaction.user)
 
     def initialize(self) -> None:
         buttons = [
             Button(emoji="🔀"),
-            Button(emoji="⏮️", disabled=self.player.current_queue == 0),
+            Button(emoji="⏮️"),
             Button(emoji="⏸️"),
             Button(emoji="⏭️"),
             Button(emoji="🔁"),
@@ -76,6 +93,9 @@ class PlayerControls:
         return self.view
 
     def refresh(self) -> None:
+        if not self.view:
+            return
+
         views = self.view.children
         self.view.clear_items()
 

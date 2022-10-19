@@ -9,6 +9,7 @@ from discord.ext import commands
 from discord.utils import MISSING
 from i18n import t
 
+from neonbot import bot
 from neonbot.classes.embed import Embed
 from neonbot.classes.player_controls import PlayerControls
 from neonbot.classes.ytdl import ytdl
@@ -37,23 +38,24 @@ class Player:
         self.messages: Dict[str, Optional[discord.Message]] = dict(
             playing=None,
             finished=None,
-            paused=None,
-            resumed=None,
-            auto_paused=None,
-            repeat=None,
-            shuffle=None
         )
         self.last_track = None
         self.state = PlayerState.STOPPED
 
     @staticmethod
-    def get_instance(ctx: commands.Context) -> Player:
+    async def get_instance(interaction: discord.Interaction) -> Player:
+        ctx = await bot.get_context(interaction)
         guild_id = ctx.guild.id
 
         if guild_id not in Player.servers.keys():
             Player.servers[guild_id] = Player(ctx)
 
         return Player.servers[guild_id]
+
+    def remove_instance(self) -> None:
+        guild_id = self.ctx.guild.id
+
+        del Player.servers[guild_id]
 
     @property
     def volume(self) -> int:
@@ -88,6 +90,9 @@ class Player:
         except IndexError:
             pass
 
+    def get_track(self, index: int) -> dict:
+        return self.queue[index]
+
     async def connect(self):
         if self.ctx.guild.voice_client:
             return
@@ -95,21 +100,21 @@ class Player:
         self.connection = await self.ctx.author.voice.channel.connect()
         log.cmd(self.ctx, t('music.player_connected', channel=self.ctx.author.voice.channel))
 
-    async def set_repeat(self, mode: Repeat):
-        await delete_message(self.messages['repeat'])
+    async def disconnect(self) -> None:
+        if self.connection and self.connection.is_connected():
+            await self.connection.disconnect()
+
+    async def set_repeat(self, mode: Repeat, requester: discord.User):
         await self.settings.update({'music.repeat': mode.value})
-        self.messages['repeat'] = await self.channel.send(
-            embed=Embed(t('music.repeat_changed', mode=mode.name.lower())),
-            delete_after=5
+        await self.channel.send(
+            embed=Embed(t('music.repeat_changed', mode=mode.name.lower(), user=requester))
         )
         await self.refresh_player_message(embed=True)
 
-    async def set_shuffle(self):
-        await delete_message(self.messages['shuffle'])
+    async def set_shuffle(self, requester: discord.User):
         await self.settings.update({'music.shuffle': not self.is_shuffle})
-        self.messages['shuffle'] = await self.channel.send(
-            embed=Embed(t('music.shuffle_changed', mode='on' if self.is_shuffle else 'off')),
-            delete_after=5
+        await self.channel.send(
+            embed=Embed(t('music.shuffle_changed', mode='on' if self.is_shuffle else 'off', user=requester))
         )
         await self.refresh_player_message(embed=True)
 
@@ -117,18 +122,27 @@ class Player:
         if self.connection and self.connection.source:
             self.connection.source.volume = volume / 100
 
-        await self.settings.update({'music.volume': not self.volume})
+        await self.settings.update({'music.volume': volume})
         await self.refresh_player_message(embed=True)
 
-    async def pause(self):
+    async def pause(self, requester: discord.User):
         if self.connection.is_paused():
             return
 
         self.connection.pause()
         log.cmd(self.ctx, t('music.player_paused'))
 
-        await delete_message(self.messages['paused'], self.messages['resumed'])
-        self.messages['paused'] = await self.ctx.send(embed=Embed(t('music.player_paused')))
+        await self.channel.send(embed=Embed(t('music.player_paused', user=requester)))
+        await self.refresh_player_message()
+
+    async def resume(self, requester: discord.User):
+        if not self.connection.is_paused():
+            return
+
+        self.connection.resume()
+        log.cmd(self.ctx, t('music.player_resumed'))
+
+        await self.channel.send(embed=Embed(t('music.player_resumed', user=requester)))
         await self.refresh_player_message()
 
     async def play(self) -> None:
@@ -172,34 +186,46 @@ class Player:
         if self.state == PlayerState.STOPPED:
             return
 
-        # If shuffle
-        if self.is_shuffle:
-            self.process_shuffle()
+        if self.state != PlayerState.JUMPED:
+            # If shuffle
+            if self.is_shuffle:
+                self.process_shuffle()
 
-        # If repeat is on SINGLE
-        elif self.repeat == Repeat.SINGLE:
-            await self.play()
-            return
+            # If repeat is on SINGLE
+            elif self.repeat == Repeat.SINGLE:
+                await self.play()
+                return
 
-        # If last track and repeat is OFF
-        elif self.is_last_track and self.repeat == Repeat.OFF.value:
-            await self.send_finished_message()
-            return
+            # If last track and repeat is OFF
+            elif self.is_last_track and self.repeat == Repeat.OFF.value:
+                await self.send_finished_message(detailed=True)
+                return
 
-        # If last track and repeat is ALL
-        elif self.is_last_track and self.repeat == Repeat.ALL.value:
-            self.track_list.append(0)
+            # If last track and repeat is ALL
+            elif self.is_last_track and self.repeat == Repeat.ALL.value:
+                self.track_list.append(0)
 
-        else:
-            self.track_list.append(self.track_list[self.current_queue] + 1)
+            else:
+                self.track_list.append(self.track_list[self.current_queue] + 1)
 
         self.current_queue += 1
+
         await self.send_finished_message()
         await self.play()
 
     def next(self):
         if self.connection.is_playing():
             self.connection.stop()
+
+    def jump(self, index):
+        self.track_list.append(index - 1)
+        self.state = PlayerState.JUMPED
+        self.connection.stop()
+
+    async def reset(self):
+        self.state = PlayerState.STOPPED
+        await self.disconnect()
+        await self.clear_messages()
 
     def process_shuffle(self) -> bool:
         def choices():
@@ -222,35 +248,38 @@ class Player:
         log.cmd(self.ctx, t('music.now_playing.title', title=self.now_playing['title']),
                 user=self.now_playing['requested'])
 
-        await self.clear_playing_messages()
+        await self.clear_messages()
         self.player_controls.initialize()
 
         self.messages['playing'] = await self.channel.send(
             embed=self.get_playing_embed(), view=self.player_controls.get()
         )
 
-    async def send_finished_message(self) -> None:
+    async def send_finished_message(self, detailed=False) -> None:
         log.cmd(
             self.ctx,
             t('music.finished_playing.title', title=self.last_track['title']),
             user=self.last_track['requested'],
         )
 
-        await self.clear_playing_messages()
+        await self.clear_messages()
         self.player_controls.initialize()
 
-        self.messages['finished'] = await self.channel.send(
-            embed=self.get_finished_embed(),
-            view=self.player_controls.get()
+        message = await self.channel.send(
+            embed=self.get_finished_embed() if detailed else self.get_simplified_finished_message(),
+            view=self.player_controls.get() if detailed else None
         )
 
-    async def clear_playing_messages(self):
-        await delete_message(
-            self.messages['playing'],
-            self.messages['finished'],
-            self.messages['paused'],
-            self.messages['resumed']
-        )
+        # Will replace by simplified after
+        if detailed:
+            self.messages['finished'] = message
+
+    async def clear_messages(self):
+        if self.messages['finished']:
+            await self.messages['finished'].delete()
+            await self.channel.send(embed=self.get_simplified_finished_message())
+
+        await delete_message(self.messages['playing'])
         self.messages['playing'] = None
         self.messages['finished'] = None
 
@@ -288,7 +317,7 @@ class Player:
 
     def get_finished_embed(self):
         return self.get_track_embed(self.last_track).set_author(
-            name=t('music.now_playing.index', index=self.last_track['index']),
+            name=t('music.finished_playing.index', index=self.last_track['index']),
             icon_url=ICONS['music'],
         )
 
@@ -307,6 +336,12 @@ class Player:
         )
 
         return embed
+
+    def get_simplified_finished_message(self):
+        title = self.last_track['title']
+        url = self.last_track['url']
+
+        return Embed(f"{t('music.finished_playing.index', index=self.last_track['index'])}: [{title}]({url})")
 
     def add_to_queue(self, data: Union[List, dict], *, requested: discord.User = None) -> None:
         if not data:

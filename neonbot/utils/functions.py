@@ -29,3 +29,12 @@ async def shell_exec(command: str) -> str:
     stdout, stderr = await process.communicate()
 
     return stdout.decode().strip()
+
+
+def get_command_string(interaction: discord.Interaction):
+    params = ' '.join([
+        f'{key}="{value}"'
+        for key, value in interaction.namespace.__dict__.items()
+    ])
+
+    return f"/{interaction.command.name} {params}"

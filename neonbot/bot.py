@@ -91,10 +91,11 @@ class NeonBot(commands.Bot):
     async def send_response(self, interaction: discord.Interaction, *args, **kwargs):
         if not interaction.response.is_done():
             await interaction.response.send_message(*args, **kwargs)
-        elif interaction.response.type == discord.InteractionResponseType.deferred_message_update:
+        elif interaction.response.type in (discord.InteractionResponseType.deferred_message_update,
+                                           discord.InteractionResponseType.deferred_channel_message):
             await interaction.followup.send(*args, **kwargs)
         else:
-            await interaction.edit_original_response(*args, **kwargs)
+            await interaction.edit_original_response(*args, view=None, **kwargs)
 
     async def edit_message(self, message: Union[discord.Message, None], **kwargs) -> None:
         if message is None:

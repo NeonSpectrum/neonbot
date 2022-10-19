@@ -94,7 +94,6 @@ class Utility(commands.Cog):
 
         if response.status >= 400:
             data = await response.json()
-            print(data)
 
             await interaction.edit_original_response(
                 embed=generate_embed().add_field("Status:", "Sending failed.", inline=False)

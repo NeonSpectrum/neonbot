@@ -35,13 +35,13 @@ class Log(logging.Logger):
         self.addHandler(console)
 
     def cmd(
-            self,
-            ctx: Union[commands.Context, discord.Interaction],
-            msg: str,
-            *,
-            guild: Optional[discord.Guild] = None,
-            channel: Optional[Union[discord.TextChannel, discord.VoiceChannel]] = None,
-            user: Optional[Union[str, discord.User]] = None,
+        self,
+        ctx: Union[commands.Context, discord.Interaction],
+        msg: str,
+        *,
+        guild: Optional[discord.Guild] = None,
+        channel: Optional[Union[discord.TextChannel, discord.VoiceChannel]] = None,
+        user: Optional[Union[str, discord.User]] = None,
     ) -> None:
         guild = guild or ctx.guild
         channel = channel or ctx.channel

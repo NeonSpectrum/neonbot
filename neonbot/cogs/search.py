@@ -36,20 +36,16 @@ class Search(commands.Cog):
     async def joke(self, interaction: discord.Interaction) -> None:
         """Tells a random dad joke."""
 
-        await interaction.response.defer()
-
         res = await self.session.get(
             "https://icanhazdadjoke.com", headers={"Accept": "application/json"}
         )
         data = await res.json()
 
-        await interaction.followup.send(embed=Embed(data['joke']))
+        await interaction.response.send_message(embed=Embed(data['joke']))
 
     @app_commands.command(name='image')
     async def image(self, interaction: discord.Interaction, keyword: str) -> None:
         """Searches for an image in Google Image."""
-
-        await interaction.response.defer()
 
         res = await self.session.get(
             "https://www.googleapis.com/customsearch/v1",
@@ -76,13 +72,11 @@ class Search(commands.Cog):
         )
         embed.set_image(url=image["items"][0]['link'])
 
-        await interaction.followup.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name='dictionary')
     async def dictionary(self, interaction: discord.Interaction, word: str) -> None:
         """Searches for a word in Merriam Webster."""
-
-        await interaction.response.defer()
 
         res = await self.session.get(
             f"https://www.dictionaryapi.com/api/v3/references/sd4/json/{word}",
@@ -96,7 +90,7 @@ class Search(commands.Cog):
             raise ApiError(error)
 
         if not data or not isinstance(data[0], dict):
-            await interaction.followup.send(embed=Embed("Word not found."), ephemeral=True)
+            await interaction.response.send_message(embed=Embed("Word not found."), ephemeral=True)
             return
 
         dictionary = data[0]
@@ -127,15 +121,13 @@ class Search(commands.Cog):
 
         if audio:
             content = await res.read()
-            await interaction.followup.send(embed=embed, file=discord.File(BytesIO(content), word + ".wav"))
+            await interaction.response.send_message(embed=embed, file=discord.File(BytesIO(content), word + ".wav"))
         else:
-            await interaction.followup.send(embed=embed)
+            await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name='weather')
     async def weather(self, interaction: discord.Interaction, location: str) -> None:
         """Searches for a weather forecast in Open Weather Map."""
-
-        await interaction.response.defer()
 
         res = await self.session.get(
             "https://api.openweathermap.org/data/2.5/weather",
@@ -151,7 +143,7 @@ class Search(commands.Cog):
             raise ApiError(data.message)
 
         if int(data['cod']) == 404:
-            await interaction.followup.send(embed=Embed("City not found."), ephemeral=True)
+            await interaction.response.send_message(embed=Embed("City not found."), ephemeral=True)
             return
 
         embed = Embed()
@@ -206,7 +198,7 @@ class Search(commands.Cog):
         embed.add_field("🎛 Pressure", f"{data['main']['pressure']} hpa", inline=False)
         embed.add_field("💧 Humidity", f"{data['main']['humidity']}%", inline=False)
 
-        await interaction.followup.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
     @weather.autocomplete(name='location')
     async def location_autocomplete(self, interaction: discord.Interaction, current: str):
@@ -219,8 +211,6 @@ class Search(commands.Cog):
     @app_commands.command(name='lyrics')
     async def lyrics(self, interaction: discord.Interaction, song: str) -> None:
         """Searches for a lyrics in AZLyrics."""
-
-        await interaction.response.defer()
 
         res = await self.session.get(
             "https://search.azlyrics.com/search.php",
@@ -251,7 +241,7 @@ class Search(commands.Cog):
             lyrics = div.select("div:nth-of-type(5)")[0].get_text().splitlines()
         except:
             log.exception("There was an error parsing the url.")
-            await interaction.followup.send(
+            await interaction.response.send_message(
                 embed=Embed("There was error fetching the lyrics."), ephemeral=True
             )
         else:
@@ -281,13 +271,11 @@ class Search(commands.Cog):
     async def anime_search(self, interaction: discord.Interaction, keyword: str) -> None:
         """Searches for anime information."""
 
-        await interaction.response.defer()
-
         jikan = AioJikan()
         results = (await jikan.search(search_type="anime", query=keyword))['results']
 
         if not results:
-            await interaction.followup.send(embed=Embed("Anime not found."), ephemeral=True)
+            await interaction.response.send_message(embed=Embed("Anime not found."), ephemeral=True)
             return
 
         anime = await jikan.anime(results[0]['mal_id'])
@@ -320,13 +308,11 @@ class Search(commands.Cog):
         embed.add_field("Aired", anime['aired']['string'])
         embed.add_field("Genres", ", ".join([genre['name'] for genre in anime['genres']]))
 
-        await interaction.followup.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
     @anime.command(name='top')
     async def anime_top(self, interaction: discord.Interaction) -> None:
         """Lists top anime."""
-
-        await interaction.response.defer()
 
         jikan = AioJikan()
         result = (await jikan.top(type="anime"))['top']
@@ -351,8 +337,6 @@ class Search(commands.Cog):
     async def anime_upcoming(self, interaction: discord.Interaction) -> None:
         """Lists upcoming anime."""
 
-        await interaction.response.defer()
-
         jikan = AioJikan()
         result = (await jikan.season_later())['anime']
         await jikan.close()
@@ -374,11 +358,9 @@ class Search(commands.Cog):
 
     @app_commands.command(name='translate')
     async def translate(
-            self, interaction: discord.Interaction, lang: str, sentence: str
+        self, interaction: discord.Interaction, lang: str, sentence: str
     ) -> None:
         """Translates sentence based on language code given."""
-
-        await interaction.response.defer()
 
         google_token = await shell_exec("gcloud auth application-default print-access-token")
 
@@ -394,7 +376,7 @@ class Search(commands.Cog):
 
         if "error" in data:
             if data['error']['code'] == 400 and data['error']['message'] == "Invalid Value":
-                await interaction.followup.send(embed=Embed("Invalid language."), ephemeral=True)
+                await interaction.response.send_message(embed=Embed("Invalid language."), ephemeral=True)
                 return
 
             raise ApiError(data['error']['message'])
@@ -408,7 +390,7 @@ class Search(commands.Cog):
         embed.add_field(f"**{self.lang_list[source_lang]}**", sentence)
         embed.add_field(f"**{self.lang_list[target_lang]}**", translated_text)
 
-        await interaction.followup.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
     @translate.autocomplete(name='lang')
     async def lang_autocomplete(self, interaction: discord.Interaction, current: str) -> list[Choice]:

@@ -7,6 +7,7 @@ from discord.ext import commands
 from neonbot import bot
 from neonbot.classes.embed import Embed
 from neonbot.utils import log, exceptions
+from neonbot.utils.functions import get_command_string
 
 
 class Event(commands.Cog):
@@ -54,6 +55,14 @@ class Event(commands.Cog):
 
     @staticmethod
     @bot.event
+    async def on_interaction(interaction: discord.Interaction):
+        if interaction.type != discord.InteractionType.application_command:
+            return
+
+        log.cmd(interaction, get_command_string(interaction), guild=interaction.guild or "N/A")
+
+    @staticmethod
+    @bot.event
     async def on_app_command_error(interaction: discord.Interaction, error: AppCommandError) -> None:
         error = getattr(error, "original", error)
         ignored = discord.NotFound, commands.BadArgument, commands.CheckFailure
@@ -78,14 +87,9 @@ class Event(commands.Cog):
 
         await bot.send_response(interaction, embed=embed)
 
-        params = ' '.join([
-            f'{key}="{value}"'
-            for key, value in interaction.namespace.__dict__.items()
-        ])
-
         embed = Embed(
             title="Traceback Exception",
-            description=f"Command: ```{interaction.command.name} {params}``````py\n{tb_msg}```",
+            description=f"Command: ```{get_command_string(interaction)}``````py\n{tb_msg}```",
         )
 
         await bot.send_to_owner(embed=embed)
