@@ -1,12 +1,12 @@
 {
     "player_connected": "Connected to %{channel}",
-    "repeat_changed": "**%{user}** changed repeat to **%{mode}**.",
-    "shuffle_changed": "**%{user}** changed shuffle to **%{mode}**.",
-    "player_next": "**%{user}** changed shuffle to **%{mode}**.",
+    "repeat_changed": "%{user} changed repeat to **%{mode}**.",
+    "shuffle_changed": "%{user} changed shuffle to **%{mode}**.",
+    "player_next": "%{user} changed shuffle to **%{mode}**.",
     "volume_changed": "Volume changed to %{volume}%.",
-    "player_paused": "**%{user}** changed player state to **paused**.",
-    "player_resumed": "**%{user}** changed player state to **playing**.",
-    "player_controls_pressed": "**%{user}** pressed **%{action}**.",
+    "player_paused": "%{user} changed player state to **paused**.",
+    "player_resumed": "%{user} changed player state to **playing**.",
+    "player_controls_pressed": "%{user} pressed **%{action}**.",
     "player_error": "Error while playing the song.",
     "now_playing": {
         "title": "Now Playing %{title}",

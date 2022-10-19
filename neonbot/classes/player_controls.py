@@ -63,12 +63,12 @@ class PlayerControls:
 
             self.player.next()
             await interaction.channel.send(
-                embed=Embed(t('music.player_controls_pressed', action='back', user=interaction.user))
+                embed=Embed(t('music.player_controls_pressed', action='back', user=interaction.user.mention))
             )
         elif button.emoji.name == "⏭️":  # next
             self.player.next()
             await interaction.channel.send(
-                embed=Embed(t('music.player_controls_pressed', action='next', user=interaction.user))
+                embed=Embed(t('music.player_controls_pressed', action='next', user=interaction.user.mention))
             )
         elif button.emoji.name in ("🔁", "🔂"):  # repeat
             modes = [Repeat.OFF, Repeat.SINGLE, Repeat.ALL]

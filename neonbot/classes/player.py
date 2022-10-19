@@ -107,14 +107,14 @@ class Player:
     async def set_repeat(self, mode: Repeat, requester: discord.User):
         await self.settings.update({'music.repeat': mode.value})
         await self.channel.send(
-            embed=Embed(t('music.repeat_changed', mode=mode.name.lower(), user=requester))
+            embed=Embed(t('music.repeat_changed', mode=mode.name.lower(), user=requester.mention))
         )
         await self.refresh_player_message(embed=True)
 
     async def set_shuffle(self, requester: discord.User):
         await self.settings.update({'music.shuffle': not self.is_shuffle})
         await self.channel.send(
-            embed=Embed(t('music.shuffle_changed', mode='on' if self.is_shuffle else 'off', user=requester))
+            embed=Embed(t('music.shuffle_changed', mode='on' if self.is_shuffle else 'off', user=requester.mention))
         )
         await self.refresh_player_message(embed=True)
 
@@ -132,7 +132,7 @@ class Player:
         self.connection.pause()
         log.cmd(self.ctx, t('music.player_paused'))
 
-        await self.channel.send(embed=Embed(t('music.player_paused', user=requester)))
+        await self.channel.send(embed=Embed(t('music.player_paused', user=requester.mention)))
         await self.refresh_player_message()
 
     async def resume(self, requester: discord.User):
@@ -142,7 +142,7 @@ class Player:
         self.connection.resume()
         log.cmd(self.ctx, t('music.player_resumed'))
 
-        await self.channel.send(embed=Embed(t('music.player_resumed', user=requester)))
+        await self.channel.send(embed=Embed(t('music.player_resumed', user=requester.mention)))
         await self.refresh_player_message()
 
     async def play(self) -> None:
@@ -214,8 +214,7 @@ class Player:
         await self.play()
 
     def next(self):
-        if self.connection.is_playing():
-            self.connection.stop()
+        self.connection.stop()
 
     def jump(self, index):
         self.track_list.append(index - 1)
