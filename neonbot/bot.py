@@ -7,6 +7,7 @@ from time import time
 from typing import Optional, Tuple, Union, Any
 
 import discord
+from aiohttp import ClientSession, ClientTimeout
 from discord.ext import commands
 from discord.utils import oauth_url
 from envparse import env
@@ -29,6 +30,7 @@ class NeonBot(commands.Bot):
         self._settings = None
         self.app_info: Optional[discord.AppInfo] = None
         self.base_guild_id = env.int('BOT_GUILD_ID')
+        self.session: Optional[ClientSession] = None
 
     @property
     def settings(self):
@@ -52,6 +54,8 @@ class NeonBot(commands.Bot):
         )
 
     async def setup_hook(self):
+        self.session = ClientSession(timeout=ClientTimeout(total=30))
+
         await self.add_cogs()
 
         # This copies the global commands over to your guild.

@@ -4,7 +4,6 @@ from time import time
 
 import discord
 import psutil
-from aiohttp import ClientSession, ClientTimeout
 from discord import app_commands
 from discord.ext import commands
 from envparse import env
@@ -17,9 +16,6 @@ from ..utils.date import format_seconds, date_format
 
 
 class Utility(commands.Cog):
-    def __init__(self) -> None:
-        self.session = ClientSession(timeout=ClientTimeout(total=10))
-
     @commands.command()
     async def random(self, ctx: commands.Context, *args: str) -> None:
         """Picks a text in the given list."""
@@ -82,7 +78,7 @@ class Utility(commands.Cog):
 
         body = f"{message}\n\nSent by {interaction.user}"
 
-        response = await self.session.post(
+        response = await bot.session.post(
             f"https://api.semaphore.co/api/v4/messages",
             data={
                 "apikey": api_key,

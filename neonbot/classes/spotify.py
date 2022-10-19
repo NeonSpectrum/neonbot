@@ -3,7 +3,6 @@ from typing import Optional
 from urllib.parse import urlparse
 
 import discord
-from aiohttp import ClientSession, ClientTimeout
 from envparse import env
 from i18n import t
 
@@ -11,6 +10,7 @@ from .embed import Embed
 from .player import Player
 from .with_interaction import WithInteraction
 from .ytdl import ytdl
+from .. import bot
 from ..utils.exceptions import ApiError
 
 
@@ -23,7 +23,6 @@ class Spotify(WithInteraction):
 
     def __init__(self, interaction: discord.Interaction) -> None:
         super().__init__(interaction)
-        self.session = ClientSession(timeout=ClientTimeout(total=10))
         self.client_id = env.str("SPOTIFY_CLIENT_ID")
         self.client_secret = env.str("SPOTIFY_CLIENT_SECRET")
 
@@ -31,7 +30,7 @@ class Spotify(WithInteraction):
         if Spotify.CREDENTIALS['expiration'] and time() < Spotify.CREDENTIALS['expiration']:
             return Spotify.CREDENTIALS['token']
 
-        res = await self.session.post(
+        res = await bot.session.post(
             f"https://{self.client_id}:{self.client_secret}@accounts.spotify.com/api/token",
             params={"grant_type": "client_credentials"},
             headers={
@@ -132,7 +131,7 @@ class Spotify(WithInteraction):
     async def request(self, url: str, params: dict = None):
         token = await self.get_token()
 
-        return await self.session.get(
+        return await bot.session.get(
             Spotify.BASE_URL + url,
             headers={"Authorization": f"Bearer {token}"},
             params=params

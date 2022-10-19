@@ -5,7 +5,6 @@ from io import BytesIO
 
 import aiohttp
 import discord
-from aiohttp import ClientSession, ClientTimeout
 from bs4 import BeautifulSoup
 from discord import app_commands
 from discord.app_commands.models import Choice
@@ -13,6 +12,7 @@ from discord.ext import commands
 from envparse import env
 from jikanpy import AioJikan
 
+from neonbot import bot
 from neonbot.classes.embed import Embed, EmbedChoices, PaginationEmbed
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
@@ -24,8 +24,6 @@ class Search(commands.Cog):
     anime = app_commands.Group(name='anime', description="Searches for top, upcoming, or specific anime.")
 
     def __init__(self) -> None:
-        self.session = ClientSession(timeout=ClientTimeout(total=10))
-
         with open("./neonbot/assets/lang.json", "r") as f:
             self.lang_list = json.load(f)
 
@@ -36,7 +34,7 @@ class Search(commands.Cog):
     async def joke(self, interaction: discord.Interaction) -> None:
         """Tells a random dad joke."""
 
-        res = await self.session.get(
+        res = await bot.session.get(
             "https://icanhazdadjoke.com", headers={"Accept": "application/json"}
         )
         data = await res.json()
@@ -47,7 +45,7 @@ class Search(commands.Cog):
     async def image(self, interaction: discord.Interaction, keyword: str) -> None:
         """Searches for an image in Google Image."""
 
-        res = await self.session.get(
+        res = await bot.session.get(
             "https://www.googleapis.com/customsearch/v1",
             params={
                 "q": keyword,
@@ -78,7 +76,7 @@ class Search(commands.Cog):
     async def dictionary(self, interaction: discord.Interaction, word: str) -> None:
         """Searches for a word in Merriam Webster."""
 
-        res = await self.session.get(
+        res = await bot.session.get(
             f"https://www.dictionaryapi.com/api/v3/references/sd4/json/{word}",
             params={"key": env.str("DICTIONARY_API")},
         )
@@ -99,7 +97,7 @@ class Search(commands.Cog):
 
         if audio:
             url = f"https://media.merriam-webster.com/soundc11/{audio[0]}/{audio}.wav"
-            res = await self.session.get(url)
+            res = await bot.session.get(url)
 
         term = dictionary['meta']['id']
 
@@ -129,7 +127,7 @@ class Search(commands.Cog):
     async def weather(self, interaction: discord.Interaction, location: str) -> None:
         """Searches for a weather forecast in Open Weather Map."""
 
-        res = await self.session.get(
+        res = await bot.session.get(
             "https://api.openweathermap.org/data/2.5/weather",
             params={
                 "q": location,
@@ -212,7 +210,7 @@ class Search(commands.Cog):
     async def lyrics(self, interaction: discord.Interaction, song: str) -> None:
         """Searches for a lyrics in AZLyrics."""
 
-        res = await self.session.get(
+        res = await bot.session.get(
             "https://search.azlyrics.com/search.php",
             params={"q": song, "x": "309dddb3dd4a2067f6332f8abc9c8dbe611be904305dc2c4d3cd0db59c783abd"}
         )
@@ -231,7 +229,7 @@ class Search(commands.Cog):
             return
 
         try:
-            res = await self.session.get(
+            res = await bot.session.get(
                 links[choice]['url'], proxy=env.str("PROXY", default=None)
             )
             html = await res.text()
@@ -366,7 +364,7 @@ class Search(commands.Cog):
 
         query = {"q": sentence, "format": "text", "target": lang}
 
-        res = await self.session.post(
+        res = await bot.session.post(
             "https://translation.googleapis.com/language/translate/v2",
             data=query,
             headers={"Authorization": f"Bearer {google_token}"}
