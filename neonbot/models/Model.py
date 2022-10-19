@@ -56,11 +56,11 @@ class Model:
                 current[key] = {**existing, **value} if isinstance(value, dict) else value
 
     async def save(self):
-        await self.db.servers.update_one(self.where, {"$set": self.data})
+        await self.db[self.table].update_one(self.where, {"$set": self.data})
         await self.refresh()
 
     async def update(self, config: any):
-        await self.db.servers.update_one(self.where, {"$set": config})
+        await self.db[self.table].update_one(self.where, {"$set": config})
         await self.refresh()
 
     @staticmethod
