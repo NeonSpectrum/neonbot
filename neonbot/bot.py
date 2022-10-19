@@ -90,6 +90,15 @@ class NeonBot(commands.Bot):
         await message.channel.send(f"Bot invite link: {url}")
         log.info(f"Sent an invite link to: {message.author}")
 
+    async def update_presence(self):
+        await self.change_presence(
+            activity=discord.Activity(
+                name=self.settings.get('activity_name'),
+                type=discord.ActivityType[self.settings.get('activity_type')]
+            ),
+            status=discord.Status[self.settings.get('status')]
+        )
+
     async def send_response(self, interaction: discord.Interaction, *args, **kwargs):
         if not interaction.response.is_done():
             await interaction.response.send_message(*args, **kwargs)

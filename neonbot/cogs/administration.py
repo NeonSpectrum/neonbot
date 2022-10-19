@@ -115,9 +115,10 @@ class Administration(commands.Cog):
         if status is False:
             return
 
-        await bot.settings.update({'status': status})
+        await bot.db.settings.update({'status': status.value})
 
-        await bot.change_presence(status=discord.Status[bot.settings.get('status')])
+        await bot.update_presence()
+
         await interaction.response.send_message(embed=Embed(f"Status is now set to {bot.settings.get('status')}."))
 
     @settings.command(name='setpresence')
@@ -129,22 +130,16 @@ class Administration(commands.Cog):
     ) -> None:
         """Sets the presence of the bot. *BOT_OWNER"""
 
-        if presence_type is False:
-            return
-
-        await bot.settings.update({
-            'activity_type': presence_type,
+        await bot.db.settings.update({
+            'activity_type': presence_type.name,
             'activity_name': name
         })
 
-        await bot.change_presence(
-            activity=discord.Activity(
-                name=name, type=presence_type
-            )
-        )
+        await bot.update_presence()
+
         await interaction.response.send_message(
             embed=Embed(
-                f"Presence is now set to {bot.settings.get('game.type')} {bot.settings.get('game.name')}."
+                f"Presence is now set to **{presence_type.name} {name}**."
             )
         )
 
