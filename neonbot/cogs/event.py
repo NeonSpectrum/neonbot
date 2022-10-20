@@ -111,7 +111,7 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
-        if member.bot and member.id == bot.user.id and not after.channel:
+        if member.id == bot.user.id and not after.channel:
             player = Player.get_instance_from_guild(member.guild)
             player.reset()
 
@@ -135,7 +135,7 @@ class Event(commands.Cog):
                 msg = f"**{member.mention}** has disconnected from **{before.channel.mention}**"
 
             if log_channel and msg:
-                embed = Embed(f":bust_in_silhouette:{msg}", timestamp=datetime.utcnow())
+                embed = Embed(f":bust_in_silhouette:{msg}", timestamp=datetime.now())
                 embed.set_author(name=str(member), icon_url=member.display_avatar.url)
                 await log_channel.send(embed=embed)
 
@@ -148,7 +148,7 @@ class Event(commands.Cog):
         guild = Guild.get_instance(after.guild.id)
         log_channel = bot.get_channel(int(guild.get('channel.presence_log') or -1))
 
-        embed = Embed(timestamp=datetime.utcnow())
+        embed = Embed(timestamp=datetime.now())
         embed.set_author(name=str(after), icon_url=after.display_avatar.url)
 
         if before.status != after.status:
