@@ -187,7 +187,7 @@ class Event(commands.Cog):
             if isinstance(before_activity, discord.CustomActivity) and \
                 isinstance(after_activity, discord.CustomActivity):
                 embed.description += f" changed custom status from **{before_activity.name}** to **{after_activity.name}**."
-            elif not after_activity or isinstance(after_activity, discord.CustomActivity):
+            elif before_activity and (not after_activity or isinstance(after_activity, discord.CustomActivity)):
                 embed.set_thumbnail(get_image(before_activity))
                 embed.description += f" done {before_activity.type.name} **{before_activity.name}**."
                 if hasattr(before_activity, 'start') and before_activity.start:
