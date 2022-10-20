@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from typing import Union
+
+import discord
 from envparse import env
 
 from .model import Model
@@ -17,7 +20,9 @@ class Guild(Model):
         self.where = {"server_id": str(guild_id)}
 
     @staticmethod
-    def get_instance(guild_id):
+    def get_instance(guild_id: Union[discord.Guild, int]):
+        guild_id = int(guild_id)
+
         if guild_id not in Guild.servers.keys():
             Guild.servers[guild_id] = Guild(guild_id)
 

@@ -1,14 +1,18 @@
 import traceback
+from datetime import datetime, timezone
+from typing import Union, Optional
 
 import discord
 from discord.app_commands import AppCommandError
 from discord.ext import commands
+from discord.utils import escape_markdown
 
 from neonbot import bot
 from neonbot.classes.embed import Embed
 from neonbot.classes.player import Player
 from neonbot.models.guild import Guild
 from neonbot.utils import log, exceptions
+from neonbot.utils.date import format_seconds
 from neonbot.utils.functions import get_command_string
 
 
@@ -107,12 +111,98 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
-        if member.bot:
-            if member.id != bot.user.id:
-                return
-
+        if member.bot and member.id == bot.user.id and not after.channel:
             player = Player.get_instance_from_guild(member.guild)
             player.reset()
+
+        guild = Guild.get_instance(member.guild.id)
+
+        if before.channel != after.channel:
+            log_channel = bot.get_channel(int(guild.get('channel.voice_log') or -1))
+
+            # Check if the voice channel is not private
+            role = member.guild.default_role
+            before_readable = before.channel.permissions_for(role).view_channel if before.channel else False
+            after_readable = after.channel.permissions_for(role).view_channel if after.channel else False
+
+            msg = None
+
+            if after.channel and before.channel and before_readable and after_readable:
+                msg = f"**{member.mention}** has moved from **{before.channel.mention} to {after.channel.mention}**"
+            elif after.channel and after_readable:
+                msg = f"**{member.mention}** has connected to **{after.channel.mention}**"
+            elif before_readable:
+                msg = f"**{member.mention}** has disconnected from **{before.channel.mention}**"
+
+            if log_channel and msg:
+                embed = Embed(f":bust_in_silhouette:{msg}", timestamp=datetime.utcnow())
+                embed.set_author(name=str(member), icon_url=member.display_avatar.url)
+                await log_channel.send(embed=embed)
+
+    @staticmethod
+    @bot.event
+    async def on_presence_update(before: discord.Member, after: discord.Member) -> None:
+        if after.bot:
+            return
+
+        guild = Guild.get_instance(after.guild.id)
+        log_channel = bot.get_channel(int(guild.get('channel.presence_log') or -1))
+
+        embed = Embed(timestamp=datetime.utcnow())
+        embed.set_author(name=str(after), icon_url=after.display_avatar.url)
+
+        if before.status != after.status:
+            msg = f"**{before.mention}** is now **{after.status}**."
+            embed.description = msg
+        elif before.activities != after.activities:
+            before_activity = before.activities and before.activities[-1]
+            after_activity = after.activities and after.activities[-1]
+
+            def get_image(
+                activity: Union[discord.Spotify, discord.Game, discord.Activity]
+            ) -> Optional[str]:
+                if isinstance(activity, discord.Spotify):
+                    return activity.album_cover_url
+                elif isinstance(activity, discord.Activity):
+                    return activity.large_image_url or activity.small_image_url
+                return None
+
+            embed.description = f"**{before.mention}** is"
+
+            if isinstance(after_activity, discord.Spotify):
+                if getattr(before_activity, "title", None) == after_activity.title:
+                    return
+
+                embed.set_thumbnail(get_image(after_activity))
+                embed.add_field("Title", after_activity.title)
+                embed.add_field("Artist", after_activity.artist)
+            elif isinstance(after_activity, (discord.Activity, discord.Game)):
+                if getattr(before_activity, "name", None) == after_activity.name:
+                    return
+
+                embed.set_thumbnail(get_image(after_activity))
+                if getattr(after_activity, "details", None):
+                    embed.add_field("Details", escape_markdown(after_activity.details))
+
+            if isinstance(before_activity, discord.CustomActivity) and \
+                isinstance(after_activity, discord.CustomActivity):
+                embed.description += f" changed custom status from **{before_activity.name}** to **{after_activity.name}**."
+            elif not after_activity or isinstance(after_activity, discord.CustomActivity):
+                embed.set_thumbnail(get_image(before_activity))
+                embed.description += f" done {before_activity.type.name} **{before_activity.name}**."
+                if hasattr(before_activity, 'start') and before_activity.start:
+                    embed.add_field(
+                        name="Time Elapsed",
+                        value=format_seconds(
+                            datetime.now(tz=timezone.utc).timestamp() - before_activity.start.timestamp()
+                        ),
+                    )
+            else:
+                embed.description += f" now {after_activity.type.name} **{after_activity.name}**."
+
+        if log_channel and embed.description:
+            embed.description = ":bust_in_silhouette:" + embed.description
+            await log_channel.send(embed=embed)
 
 
 # noinspection PyShadowingNames

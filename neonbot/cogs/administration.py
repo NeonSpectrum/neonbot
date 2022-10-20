@@ -24,7 +24,7 @@ def stdout_io() -> Generator[StringIO, None, None]:
 class Administration(commands.Cog):
     """Administration commands that handles the management of the bot"""
 
-    server = app_commands.Group(name='settings', description="Configure the settings of the bot for this server.",
+    server = app_commands.Group(name='server', description="Configure the settings of the bot for this server.",
                                 default_permissions=discord.Permissions.elevated())
 
     settings = app_commands.Group(name='bot', description="Configure the settings of the bot globally.",
@@ -142,6 +142,28 @@ class Administration(commands.Cog):
                 f"Presence is now set to **{presence_type.name} {name}**."
             )
         )
+
+    @server.command(name='voicelogs')
+    async def setvoicelogs(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
+        guild = Guild.get_instance(interaction.guild_id)
+        guild.set('channel.voice_log', interaction.channel.id if enable else None)
+        await guild.save()
+
+        if guild.get('channel.voice_log'):
+            await interaction.response.send_message(embed=Embed(f"Voice Logs is now set to {channel.mention}."))
+        else:
+            await interaction.response.send_message(embed=Embed("Voice Logs is now disabled."))
+
+    @server.command(name='presencelogs')
+    async def setpresencelogs(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
+        guild = Guild.get_instance(interaction.guild_id)
+        guild.set('channel.presence_log', interaction.channel.id if enable else None)
+        await guild.save()
+
+        if guild.get('channel.presence_log'):
+            await interaction.response.send_message(embed=Embed(f"Presence Logs is now set to {channel.mention}."))
+        else:
+            await interaction.response.send_message(embed=Embed("Presence Logs is now disabled."))
 
 
 # noinspection PyShadowingNames
