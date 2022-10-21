@@ -55,7 +55,7 @@ class Utility(commands.Cog):
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name='sms')
-    @app_commands.guilds(bot.base_guild_id)
+    @app_commands.guilds(*bot.owner_guilds)
     async def sms(self, interaction: discord.Interaction, number: str, message: str) -> None:
         """Send SMS using NeonBot. *BOT_OWNER"""
 

@@ -29,7 +29,7 @@ class NeonBot(commands.Bot):
         self.db = Database(self)
         self._settings = None
         self.app_info: Optional[discord.AppInfo] = None
-        self.base_guild_id = env.int('BOT_GUILD_ID')
+        self.owner_guilds = env.list('OWNER_GUILD_IDS', default=[], subcast=int)
         self.session: Optional[ClientSession] = None
 
     @property

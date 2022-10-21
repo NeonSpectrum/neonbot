@@ -31,7 +31,7 @@ class Administration(commands.Cog):
 
     settings = app_commands.Group(name='bot', description="Configure the settings of the bot globally.",
                                   default_permissions=discord.Permissions(ADMINISTRATOR_PERMISSION),
-                                  guild_ids=[bot.base_guild_id], guild_only=True)
+                                  guild_ids=bot.owner_guilds, guild_only=True)
 
     @commands.command()
     @commands.is_owner()
