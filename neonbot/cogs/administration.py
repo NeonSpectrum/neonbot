@@ -97,19 +97,6 @@ class Administration(commands.Cog):
 
         await interaction.response.send_message(embed=Embed(f"Prefix is now set to `{guild.get('prefix')}`."))
 
-    @server.command(name='deleteoncmd')
-    async def deleteoncmd(self, interaction: discord.Interaction) -> None:
-        """Enables/Disables the deletion of message after execution. *BOT_OWNER"""
-
-        guild = Guild.get_instance(interaction.guild_id)
-        await guild.update({'deleteoncmd': not guild.get('deleteoncmd')})
-
-        await interaction.response.send_message(
-            embed=Embed(
-                f"Delete on command is now set to {'enabled' if guild.get('deleteoncmd') else 'disabled'}."
-            )
-        )
-
     @settings.command(name='setstatus')
     async def setstatus(self, interaction: discord.Interaction, status: discord.Status) -> None:
         """Sets the status of the bot. *BOT_OWNER"""
