@@ -26,7 +26,6 @@ class Player:
 
     def __init__(self, ctx: commands.Context):
         self.ctx = ctx
-        self.channel = ctx.channel
         self.loop = asyncio.get_event_loop()
         self.settings = Guild.get_instance(ctx.guild.id)
         self.player_controls = PlayerControls(self)
@@ -42,6 +41,10 @@ class Player:
         self.last_track = None
         self.state = PlayerState.STOPPED
 
+    @property
+    def channel(self):
+        return self.ctx.channel
+
     @staticmethod
     async def get_instance(interaction: discord.Interaction) -> Player:
         ctx = await bot.get_context(interaction)
@@ -49,6 +52,8 @@ class Player:
 
         if guild_id not in Player.servers.keys():
             Player.servers[guild_id] = Player(ctx)
+        else:
+            Player.servers[guild_id].set_ctx(ctx)
 
         return Player.servers[guild_id]
 
@@ -60,6 +65,9 @@ class Player:
         guild_id = self.ctx.guild.id
 
         del Player.servers[guild_id]
+
+    def set_ctx(self, ctx: commands.Context):
+        self.ctx = ctx
 
     @property
     def volume(self) -> int:
