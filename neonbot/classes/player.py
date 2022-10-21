@@ -52,8 +52,6 @@ class Player:
 
         if guild_id not in Player.servers.keys():
             Player.servers[guild_id] = Player(ctx)
-        else:
-            Player.servers[guild_id].set_ctx(ctx)
 
         return Player.servers[guild_id]
 
@@ -65,9 +63,6 @@ class Player:
         guild_id = self.ctx.guild.id
 
         del Player.servers[guild_id]
-
-    def set_ctx(self, ctx: commands.Context):
-        self.ctx = ctx
 
     @property
     def volume(self) -> int:
