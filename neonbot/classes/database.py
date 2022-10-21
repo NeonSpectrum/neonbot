@@ -59,7 +59,7 @@ class Database:
 
     async def cache_guilds(self, guilds: List[discord.Guild]):
         async def cache(guild):
-            log.info(f"Caching guild settings: {guild}")
+            log.info(f"Caching guild settings: {guild} ({guild.id})")
             await Guild.get_instance(guild.id).refresh()
 
         await asyncio.gather(*[cache(guild) for guild in guilds])

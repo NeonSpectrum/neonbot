@@ -105,8 +105,9 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_guild_join(guild):
-        log.info(f"Creating database for {guild}...")
+        log.info(f"Executing init for {guild}...")
         await Guild.get_instance(guild.id).create_default_collection()
+        await bot.sync_command(guild)
 
     @staticmethod
     @bot.event
