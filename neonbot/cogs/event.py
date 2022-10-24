@@ -114,7 +114,8 @@ class Event(commands.Cog):
     async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
         if member.id == bot.user.id and not after.channel:
             player = Player.get_instance_from_guild(member.guild)
-            player.reset()
+            await player.reset()
+            player.remove_instance()
 
         guild = Guild.get_instance(member.guild.id)
 
