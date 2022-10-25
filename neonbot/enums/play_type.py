@@ -2,9 +2,9 @@ from enum import Enum
 
 
 class PlayType(Enum):
-    SEARCH = 1
-    YOUTUBE = 2
-    SPOTIFY = 3
+    SEARCH = 'YOUTUBE_SEARCH'
+    YOUTUBE = 'YOUTUBE_URL'
+    SPOTIFY = 'SPOTIFY_URL'
 
     def __eq__(self, other):
         return self.value == other
