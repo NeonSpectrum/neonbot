@@ -18,7 +18,6 @@ from neonbot.enums.player_state import PlayerState
 from neonbot.models.guild import Guild
 from neonbot.utils import log
 from neonbot.utils.constants import FFMPEG_OPTIONS, ICONS
-from neonbot.utils.functions import delete_message
 
 
 class Player:
@@ -283,10 +282,10 @@ class Player:
 
     async def clear_messages(self):
         if self.messages['finished']:
-            await self.messages['finished'].delete()
+            await bot.delete_message(self.messages['finished'])
             await self.channel.send(embed=self.get_simplified_finished_message())
 
-        await delete_message(self.messages['playing'])
+        await bot.delete_message(self.messages['playing'])
         self.messages['playing'] = None
         self.messages['finished'] = None
 
