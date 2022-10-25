@@ -62,7 +62,8 @@ class Player:
     def remove_instance(self) -> None:
         guild_id = self.ctx.guild.id
 
-        del Player.servers[guild_id]
+        if guild_id in Player.servers.keys():
+            del Player.servers[guild_id]
 
     @property
     def volume(self) -> int:
