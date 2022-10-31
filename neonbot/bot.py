@@ -6,11 +6,11 @@ from os import sep
 from time import time
 from typing import Optional, Tuple, Union, Any
 
-import discord
 from aiohttp import ClientSession, ClientTimeout
 from discord.ext import commands
 from discord.utils import oauth_url
 from envparse import env
+from neonbot.utils.context_menu import *
 
 from . import __version__
 from .classes.database import Database

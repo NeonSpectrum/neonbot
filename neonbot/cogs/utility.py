@@ -16,11 +16,12 @@ from ..utils.date import format_seconds, date_format
 
 
 class Utility(commands.Cog):
-    @commands.command()
-    async def random(self, ctx: commands.Context, *args: str) -> None:
+    @app_commands.command(name='random')
+    @app_commands.describe(word_list='Word List')
+    async def random(self, interaction: discord.Interaction, word_list: str) -> None:
         """Picks a text in the given list."""
 
-        await ctx.send(embed=Embed(random.choice(args)))
+        await interaction.response.send_message(embed=Embed(random.choice(word_list.split(',')).strip()))
 
     @app_commands.command(name='stats')
     async def status(self, interaction: discord.Interaction) -> None:
