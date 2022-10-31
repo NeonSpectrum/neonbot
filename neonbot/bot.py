@@ -50,14 +50,13 @@ class NeonBot(commands.Bot):
         )
 
     async def setup_hook(self):
-
         self.db.initialize()
         self._settings = await self.db.get_settings()
         self.status, self.activity = self.get_presence()
         self.session = ClientSession(timeout=ClientTimeout(total=30))
 
         await self.add_cogs()
-        await load_context_menu(self)
+        load_context_menu(self)
 
         # This copies the global commands over to your guild.
         async for guild in self.fetch_guilds():
@@ -66,6 +65,7 @@ class NeonBot(commands.Bot):
     async def sync_command(self, guild: discord.Guild):
         self.tree.copy_global_to(guild=guild)
         await self.tree.sync(guild=guild)
+
         log.info(f"Command synced to: {guild}")
 
     async def add_cogs(self):

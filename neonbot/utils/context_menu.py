@@ -1,11 +1,10 @@
 import discord
 from discord import app_commands
 
-from neonbot import NeonBot
 from neonbot.classes.embed import Embed
 
 
-def load_context_menu(bot: NeonBot):
+def load_context_menu(bot):
     @bot.tree.context_menu(name='Add to Member')
     @app_commands.guilds(discord.Object(id=1008661677446807713))
     @app_commands.default_permissions(administrator=True)
