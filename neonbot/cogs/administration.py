@@ -10,7 +10,6 @@ from discord.ext import commands
 from .. import bot
 from ..classes.embed import Embed
 from ..models.guild import Guild
-from ..utils.constants import ADMINISTRATOR_PERMISSION
 
 
 @contextlib.contextmanager
@@ -26,11 +25,11 @@ class Administration(commands.Cog):
     """Administration commands that handles the management of the bot"""
 
     server = app_commands.Group(name='server', description="Configure the settings of the bot for this server.",
-                                default_permissions=discord.Permissions(ADMINISTRATOR_PERMISSION),
+                                default_permissions=discord.Permissions(administrator=True),
                                 guild_only=True)
 
     settings = app_commands.Group(name='bot', description="Configure the settings of the bot globally.",
-                                  default_permissions=discord.Permissions(ADMINISTRATOR_PERMISSION),
+                                  default_permissions=discord.Permissions(administrator=True),
                                   guild_ids=bot.owner_guilds, guild_only=True)
 
     @commands.command()

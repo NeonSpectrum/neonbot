@@ -1,18 +1,20 @@
 import os
 import random
+from datetime import datetime
 from time import time
 
 import discord
 import psutil
 from discord import app_commands
 from discord.ext import commands
+from discord.utils import format_dt
 from envparse import env
 from yt_dlp import version as ytdl_version
 
 from .. import __author__, __title__, __version__, bot
 from ..classes.embed import Embed
 from ..utils.constants import ICONS
-from ..utils.date import format_seconds, date_format
+from ..utils.functions import format_seconds
 
 
 class Utility(commands.Cog):
@@ -95,12 +97,12 @@ class Utility(commands.Cog):
             await interaction.edit_original_response(
                 embed=generate_embed().add_field("Status:", "Sending failed.", inline=False)
                     .add_field("Reason:", data['status'], inline=False)
-                    .add_field("Date sent:", date_format(), inline=False)
+                    .add_field("Date sent:", format_dt(datetime.now()), inline=False)
             )
         else:
             await interaction.edit_original_response(
                 embed=generate_embed().add_field("Status:", "Sent", inline=False)
-                    .add_field("Date sent:", date_format(), inline=False)
+                    .add_field("Date sent:", format_dt(datetime.now()), inline=False)
             )
 
 

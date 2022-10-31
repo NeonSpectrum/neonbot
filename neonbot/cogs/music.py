@@ -14,7 +14,7 @@ from neonbot.classes.youtube import Youtube
 from neonbot.enums import PlayType, Repeat
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
-from neonbot.utils.date import format_seconds
+from neonbot.utils.functions import format_seconds
 
 
 async def in_voice(interaction: discord.Interaction) -> bool:

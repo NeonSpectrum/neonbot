@@ -70,7 +70,7 @@ class NeonBot(commands.Bot):
 
     async def add_cogs(self):
         files = sorted(glob(f"neonbot{sep}cogs{sep}[!_]*.py"))
-        extensions = list(map(lambda x: re.split(r"[{0}.]".format(re.escape(sep)), x)[-2], files))
+        extensions = [re.split(r"[{0}.]".format(re.escape(sep)), file)[-2] for file in files]
         start_time = time()
 
         print(file=sys.stderr)
@@ -81,7 +81,7 @@ class NeonBot(commands.Bot):
 
         print(file=sys.stderr)
 
-        log.info(f"Loaded {len(extensions)} cogs after {(time() - start_time):.2f}s")
+        log.info(f"Loaded {len(extensions)} cogs after {(time() - start_time):.2f}s\n")
 
     async def fetch_app_info(self) -> None:
         if not self.app_info:
@@ -131,6 +131,10 @@ class NeonBot(commands.Bot):
 
     async def send_to_owner(self, *args: Any, **kwargs: Any) -> None:
         await self.get_user(self.app_info.owner.id).send(*args, **kwargs)
+
+    async def close(self) -> None:
+        await self.session.close()
+        await super().close()
 
     async def start(self, *args, **kwargs) -> None:
         await super().start(*args, **kwargs)

@@ -8,8 +8,8 @@ from typing import List, Union
 import yt_dlp
 
 from .. import bot
-from ..utils.date import format_seconds
 from ..utils.exceptions import YtdlError
+from ..utils.functions import format_seconds
 
 
 class Ytdl:

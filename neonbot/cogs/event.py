@@ -12,7 +12,7 @@ from neonbot.classes.embed import Embed
 from neonbot.classes.player import Player
 from neonbot.models.guild import Guild
 from neonbot.utils import log, exceptions
-from neonbot.utils.date import format_seconds
+from neonbot.utils.functions import format_seconds
 from neonbot.utils.functions import get_command_string
 
 
@@ -21,7 +21,8 @@ class Event(commands.Cog):
     @bot.event
     async def on_connect() -> None:
         await bot.fetch_app_info()
-        log.info(f"Logged in as {bot.user}")
+        await bot.db.get_guilds(bot.guilds)
+        log.info(f"Logged in as {bot.user}\n")
 
     @staticmethod
     @bot.event
@@ -32,7 +33,6 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_ready() -> None:
-        await bot.db.get_guilds(bot.guilds)
         log.info("Ready!\n")
         bot.set_ready()
 

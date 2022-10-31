@@ -1,4 +1,6 @@
 import asyncio
+from datetime import timedelta
+from typing import Union
 
 import discord
 
@@ -19,4 +21,11 @@ def get_command_string(interaction: discord.Interaction):
         for key, value in interaction.namespace.__dict__.items()
     ])
 
-    return f"/{interaction.command.name} {params}"
+    return f"{interaction.command.name} {params}"
+
+
+def format_seconds(secs: Union[int, float]) -> str:
+    formatted = str(timedelta(seconds=secs)).split(".")[0]
+    if formatted.startswith("0:"):
+        return formatted[2:]
+    return formatted

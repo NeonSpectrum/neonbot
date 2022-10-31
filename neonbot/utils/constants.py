@@ -3,8 +3,9 @@ LOG_FORMAT = (
     "%(asctime)s [%(levelname)s] [%(module)s.%(funcName)s:%(lineno)d]: %(message)s"
 )
 
+YOUTUBE_TMP_DIR = "./tmp/youtube_dl"
+
 PERMISSIONS = 8
-ADMINISTRATOR_PERMISSION = 8
 
 PAGINATION_EMOJI = ["⏮", "◀", "▶", "⏭", "🗑"]
 CHOICES_EMOJI = [
