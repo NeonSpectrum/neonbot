@@ -6,16 +6,17 @@ from os import sep
 from time import time
 from typing import Optional, Tuple, Union, Any
 
+import discord
 from aiohttp import ClientSession, ClientTimeout
 from discord.ext import commands
 from discord.utils import oauth_url
 from envparse import env
-from neonbot.utils.context_menu import *
 
 from . import __version__
 from .classes.database import Database
 from .utils import log
 from .utils.constants import PERMISSIONS
+from .utils.context_menu import load_context_menu
 
 
 class NeonBot(commands.Bot):
@@ -49,12 +50,14 @@ class NeonBot(commands.Bot):
         )
 
     async def setup_hook(self):
+
         self.db.initialize()
         self._settings = await self.db.get_settings()
         self.status, self.activity = self.get_presence()
         self.session = ClientSession(timeout=ClientTimeout(total=30))
 
         await self.add_cogs()
+        await load_context_menu(self)
 
         # This copies the global commands over to your guild.
         async for guild in self.fetch_guilds():
