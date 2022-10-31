@@ -41,4 +41,4 @@ def load_context_menu(bot):
         if user.banner:
             embed.set_image(user.banner.url)
 
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
