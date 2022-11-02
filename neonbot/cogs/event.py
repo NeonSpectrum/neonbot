@@ -112,10 +112,13 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
-        if member.id == bot.user.id and not after.channel:
+        if member.id == bot.user.id:
             player = Player.get_instance_from_guild(member.guild)
-            await player.reset()
-            player.remove_instance()
+
+            if not after.channel:
+                player.reset_timeout.start()
+            elif player.reset_timeout.is_running():
+                player.reset_timeout.cancel()
 
         guild = Guild.get_instance(member.guild.id)
 

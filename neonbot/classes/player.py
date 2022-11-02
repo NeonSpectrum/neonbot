@@ -5,7 +5,7 @@ import random
 from typing import Union, List, Optional, Dict
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.utils import MISSING
 from i18n import t
 
@@ -99,6 +99,13 @@ class Player:
 
     def get_track(self, index: int) -> dict:
         return self.queue[index]
+
+    @tasks.loop(count=1)
+    async def reset_timeout(self) -> None:
+        await asyncio.sleep(60)
+
+        await self.reset()
+        self.remove_instance()
 
     async def connect(self):
         if self.ctx.guild.voice_client:
