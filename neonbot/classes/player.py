@@ -60,10 +60,7 @@ class Player:
 
     @staticmethod
     def get_instance_from_guild(guild: discord.Guild):
-        if guild.id in Player.servers:
-            return None
-
-        return Player.servers[guild.id]
+        return Player.servers.get(guild.id)
 
     def remove_instance(self) -> None:
         guild_id = self.ctx.guild.id
