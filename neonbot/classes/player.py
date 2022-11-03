@@ -18,6 +18,7 @@ from neonbot.enums.player_state import PlayerState
 from neonbot.models.guild import Guild
 from neonbot.utils import log
 from neonbot.utils.constants import FFMPEG_OPTIONS, ICONS
+from neonbot.utils.exceptions import YtdlError
 
 
 class Player:
@@ -59,6 +60,9 @@ class Player:
 
     @staticmethod
     def get_instance_from_guild(guild: discord.Guild):
+        if guild.id in Player.servers:
+            return None
+
         return Player.servers[guild.id]
 
     def remove_instance(self) -> None:
@@ -168,8 +172,8 @@ class Player:
 
         try:
             if not self.now_playing.get('stream'):
-                info = await ytdl.process_entry(self.now_playing)
-                info = ytdl.parse_info(info)
+                ytdl_info = await ytdl.process_entry(self.now_playing)
+                info = ytdl_info.get_track(detailed=True)
                 self.now_playing = {**self.now_playing, **info}
 
             song = discord.FFmpegPCMAudio(
@@ -187,7 +191,7 @@ class Player:
             if isinstance(error, discord.ClientException):
                 if str(error) == 'Already playing audio.':
                     return
-            else:
+            elif not isinstance(error, YtdlError):
                 msg = t('music.player_error')
 
             log.exception(msg, error)

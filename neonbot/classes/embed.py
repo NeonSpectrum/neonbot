@@ -11,7 +11,7 @@ from ..utils.constants import CHOICES_EMOJI, PAGINATION_EMOJI
 class Embed(discord.Embed):
     def __init__(self, description: Any = None, **kwargs: Any) -> None:
         if description is not None:
-            super().__init__(description=description and str(description), **kwargs)
+            super().__init__(description=description and str(description).strip(), **kwargs)
         else:
             super().__init__(**kwargs)
         self.color = 0xE91E63
@@ -21,17 +21,17 @@ class Embed(discord.Embed):
         return self
 
     def set_author(
-            self,
-            name: str,
-            url: str = None,
-            *,
-            icon_url: str = None,
+        self,
+        name: str,
+        url: str = None,
+        *,
+        icon_url: str = None,
     ) -> Embed:
         super().set_author(name=name, url=url, icon_url=icon_url)
         return self
 
     def set_footer(
-            self, text: str = None, *, icon_url: str = None
+        self, text: str = None, *, icon_url: str = None
     ) -> Embed:
         super().set_footer(text=text, icon_url=icon_url)
         return self
@@ -56,11 +56,11 @@ class PaginationEmbed:
     """
 
     def __init__(
-            self,
-            interaction: discord.Interaction,
-            embeds=None,
-            authorized_users: Optional[list] = None,
-            timeout: Optional[int] = 60,
+        self,
+        interaction: discord.Interaction,
+        embeds=None,
+        authorized_users: Optional[list] = None,
+        timeout: Optional[int] = 60,
     ) -> None:
         if embeds is None:
             embeds = []

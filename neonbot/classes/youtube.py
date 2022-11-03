@@ -19,12 +19,13 @@ class Youtube(WithInteraction):
         player = await Player.get_instance(self.interaction)
 
         try:
-            data = await ytdl.extract_info(keyword, process=True)
+            ytdl_info = await ytdl.extract_info(keyword, process=True)
         except YtdlError:
             await self.send_message(embed=Embed(t('music.no_songs_available')), ephemeral=True)
             return
 
-        choice = (await EmbedChoices(self.interaction, ytdl.parse_choices(data)).build()).value
+        data = ytdl_info.get_list()
+        choice = (await EmbedChoices(self.interaction, data).build()).value
 
         if choice < 0:
             await self.interaction.delete_original_response()
@@ -47,15 +48,32 @@ class Youtube(WithInteraction):
 
         await self.send_message(embed=Embed(t('music.fetching_youtube_url')))
 
-        data = await ytdl.extract_info(url, process=False)
+        ytdl_info = await ytdl.extract_info(url, process=False)
 
-        if isinstance(data, list):
-            await self.send_message(embed=Embed(t('music.added_multiple_to_queue', count=len(data))))
-        elif isinstance(data, dict):
-            await self.send_message(embed=Embed(
-                t('music.added_to_queue', queue=len(player.queue) + 1, title=data['title'], url=data['url'])
-            ))
+        if ytdl_info.is_playlist:
+            data, error = self.remove_invalid_videos(ytdl_info.get_list())
+            playlist_info = ytdl_info.get_playlist_info()
+            embed = Embed(
+                t('music.added_multiple_to_queue', count=len(data)) + ' ' + t('music.added_failed', count=error)
+            )
+            embed.set_image(playlist_info.get('thumbnail'))
+            embed.set_author(playlist_info.get('title'), playlist_info.get('url'))
+            embed.set_footer('Uploaded by: ' + playlist_info.get('uploader'))
         else:
-            await self.send_message(embed=Embed(t('music.song_failed_to_load')))
+            data = ytdl_info.get_track()
+            embed = Embed(t('music.added_to_queue', queue=len(player.queue) + 1, title=data['title'], url=data['url']))
 
+        await self.send_message(embed=embed)
         player.add_to_queue(data, requested=self.interaction.user)
+
+    def remove_invalid_videos(self, data):
+        error = 0
+        new_data = []
+
+        for entry in data:
+            if entry['title'] in ('[Private video]', '[Deleted video]'):
+                error += 1
+            else:
+                new_data.append(entry)
+
+        return new_data, error

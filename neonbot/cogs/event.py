@@ -115,6 +115,9 @@ class Event(commands.Cog):
         if member.id == bot.user.id:
             player = Player.get_instance_from_guild(member.guild)
 
+            if not player:
+                return
+
             if not after.channel:
                 player.reset_timeout.start()
             elif player.reset_timeout.is_running():

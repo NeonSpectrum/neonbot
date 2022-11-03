@@ -1,5 +1,5 @@
 from time import time
-from typing import Optional
+from typing import Optional, Tuple
 from urllib.parse import urlparse
 
 import discord
@@ -72,8 +72,9 @@ class Spotify(WithInteraction):
         res = await self.request("/tracks/" + track_id)
         return await res.json()
 
-    async def get_playlist(self, playlist_id: str, url_type: str) -> list:
+    async def get_playlist(self, playlist_id: str, url_type: str) -> Tuple[list, dict]:
         playlist = []
+        playlist_info = None
 
         if url_type == "album":
             limit = 50
@@ -86,47 +87,24 @@ class Spotify(WithInteraction):
 
         while True:
             res = await self.request(
-                url_prefix + "/" + playlist_id + '/tracks',
+                url_prefix + "/" + playlist_id,
                 params={"offset": offset, "limit": limit}
             )
             data = await res.json()
 
-            if 'items' not in data:
+            if 'items' not in data['tracks']:
                 break
 
-            playlist += data['items']
+            playlist_info = self.get_playlist_info(data)
 
-            if data['next'] is None:
-                break
+            playlist += data['tracks']['items']
 
-            offset += limit
-
-        return playlist
-
-    async def get_album(self, playlist_id: str) -> list:
-        playlist = []
-
-        limit = 100
-        offset = 0
-
-        while True:
-            res = await self.request(
-                "/albums/" + playlist_id + '/tracks',
-                params={"offset": offset, "limit": limit}
-            )
-            data = await res.json()
-
-            if 'items' not in data:
-                break
-
-            playlist += data['items']
-
-            if data['next'] is None:
+            if data['tracks']['next'] is None:
                 break
 
             offset += limit
 
-        return playlist
+        return playlist, playlist_info
 
     async def request(self, url: str, params: dict = None):
         token = await self.get_token()
@@ -150,12 +128,13 @@ class Spotify(WithInteraction):
         is_playlist = url['type'] == "playlist"
         is_album = url['type'] == "album"
         playlist = []
+        playlist_info = None
         data = []
         error = 0
 
         if is_playlist or is_album:
             await self.send_message(embed=Embed(t('music.converting_to_youtube_playlist')))
-            playlist = await self.get_playlist(url['id'], url["type"])
+            playlist, playlist_info = await self.get_playlist(url['id'], url["type"])
         else:
             await self.send_message(embed=Embed(t('music.converting_to_youtube_track')))
             playlist.append(await self.get_track(url['id']))
@@ -166,28 +145,43 @@ class Spotify(WithInteraction):
 
         for item in playlist:
             track = item['track'] if is_playlist else item
-            info = await ytdl_one.extract_info(
+
+            ytdl_info = await ytdl_one.extract_info(
                 f"{' '.join(artist['name'] for artist in track['artists'])} {track['name']}",
                 process=True
             )
 
-            if info is None:
+            playlist = ytdl_info.get_list()
+
+            if len(playlist) == 0:
                 error += 1
                 continue
 
-            data.append(info)
+            data.append(playlist[0])
 
         if len(data) == 0:
             await self.send_message(embed=Embed(t('music.youtube_failed_to_find_similar')))
             return
 
         if is_playlist or is_album:
-            await self.send_message(embed=Embed(
-                t('music.added_multiple_to_queue', count=len(data)) + t('music.added_failed', count=error)
-            ))
+            embed = Embed(
+                t('music.added_multiple_to_queue', count=len(data)) + ' ' + t('music.added_failed', count=error)
+            )
+            embed.set_author(playlist_info.get('title'), playlist_info.get('url'))
+            embed.set_image(playlist_info.get('thumbnail'))
+            embed.set_footer('Uploaded by: ' + playlist_info.get('uploader'))
         else:
-            await self.send_message(embed=Embed(
+            embed = Embed(
                 t('music.added_to_queue', queue=len(player.queue) + 1, title=data[0]['title'], url=data[0]['url'])
-            ))
+            )
 
+        await self.send_message(embed=embed)
         player.add_to_queue(data, requested=self.interaction.user)
+
+    def get_playlist_info(self, data):
+        return dict(
+            title=data.get('name'),
+            url=data.get('external_urls')['spotify'],
+            thumbnail=data.get('images')[0]['url'] if len(data.get('images')) > 0 else None,
+            uploader=data.get('owner')['display_name'],
+        )
