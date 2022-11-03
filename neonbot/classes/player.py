@@ -44,7 +44,7 @@ class Player:
         return self.ctx.channel
 
     @property
-    def connection(self):
+    def connection(self) -> Optional[discord.VoiceClient]:
         return self.ctx.voice_client
 
     @staticmethod
@@ -111,7 +111,7 @@ class Player:
         self.remove_instance()
 
     async def connect(self):
-        if self.ctx.guild.voice_client:
+        if self.connection:
             return
 
         await self.ctx.author.voice.channel.connect()
