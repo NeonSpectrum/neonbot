@@ -29,7 +29,6 @@ class Player:
         self.settings = Guild.get_instance(ctx.guild.id)
         self.player_controls = PlayerControls(self)
         self.queue = []
-        self.connection = None
         self.current_queue = 0
         self.track_list = [0]
         self.shuffled_list = []
@@ -43,6 +42,10 @@ class Player:
     @property
     def channel(self):
         return self.ctx.channel
+
+    @property
+    def connection(self):
+        return self.ctx.voice_client
 
     @staticmethod
     async def get_instance(interaction: discord.Interaction) -> Player:
@@ -111,7 +114,7 @@ class Player:
         if self.ctx.guild.voice_client:
             return
 
-        self.connection = await self.ctx.author.voice.channel.connect()
+        await self.ctx.author.voice.channel.connect()
         log.cmd(self.ctx, t('music.player_connected', channel=self.ctx.author.voice.channel))
 
     async def disconnect(self) -> None:

@@ -69,7 +69,7 @@ class Music(commands.Cog):
         elif play_type == PlayType.SPOTIFY:
             await Spotify(interaction).search_url(value)
 
-        if play_now and player.connection.is_playing():
+        if play_now and player.connection and player.connection.is_playing():
             player.jump(last_index + 1)
         elif len(player.queue) > 0:
             await player.connect()
