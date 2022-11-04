@@ -9,6 +9,7 @@ from discord.ext import commands
 
 from .. import bot
 from ..classes.embed import Embed
+from ..classes.player import Player
 from ..models.guild import Guild
 
 
@@ -40,6 +41,7 @@ class Administration(commands.Cog):
         variables = {
             "bot": bot,
             "ctx": ctx,
+            "player": Player.get_instance_from_guild(ctx.guild)
         }
 
         if code.startswith("```") and code.endswith("```"):

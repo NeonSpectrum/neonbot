@@ -19,7 +19,7 @@ def main() -> None:
     shutil.rmtree(YOUTUBE_TMP_DIR, ignore_errors=True)
     os.makedirs(YOUTUBE_TMP_DIR, exist_ok=True)
 
-    bot.run(log_level=logging.ERROR)
+    bot.run(log_level=logging.getLevelName(env.str('LOG_LEVEL', 'INFO')))
 
 
 if __name__ == "__main__":
