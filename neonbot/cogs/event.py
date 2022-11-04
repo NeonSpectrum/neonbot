@@ -116,11 +116,6 @@ class Event(commands.Cog):
         player = Player.get_instance_from_guild(member.guild)
 
         if player and player.connection:
-            if member.id == bot.user.id and not after.channel:
-                # Check if the bot was disconnected
-                if not player.connection.is_connected():
-                    await player.reset()
-
             voice_members = [
                 member
                 for member in player.connection.channel.members
