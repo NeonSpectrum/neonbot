@@ -124,9 +124,9 @@ class Player:
         await self.ctx.author.voice.channel.connect()
         log.cmd(self.ctx, t('music.player_connected', channel=self.ctx.author.voice.channel))
 
-    async def disconnect(self) -> None:
+    async def disconnect(self, force=True) -> None:
         if self.connection and self.connection.is_connected():
-            await self.connection.disconnect()
+            await self.connection.disconnect(force=force)
 
     async def set_repeat(self, mode: Repeat, requester: discord.User):
         await self.settings.update({'music.repeat': mode.value})
@@ -251,7 +251,7 @@ class Player:
 
     async def reset(self):
         self.state = PlayerState.STOPPED
-        await self.disconnect()
+        await self.disconnect(force=True)
         await self.clear_messages()
 
     def process_shuffle(self) -> bool:

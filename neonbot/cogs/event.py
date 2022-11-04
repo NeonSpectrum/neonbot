@@ -121,7 +121,6 @@ class Event(commands.Cog):
                 await player.reset()
 
         if player and player.connection:
-
             voice_members = [
                 member
                 for member in player.connection.channel.members
