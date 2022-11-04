@@ -59,7 +59,7 @@ class Player:
         return Player.servers[guild_id]
 
     @staticmethod
-    def get_instance_from_guild(guild: discord.Guild):
+    def get_instance_from_guild(guild: discord.Guild) -> Optional[Player]:
         return Player.servers.get(guild.id)
 
     def remove_instance(self) -> None:
@@ -105,6 +105,12 @@ class Player:
         return self.queue[index]
 
     @tasks.loop(count=1)
+    async def pause_timeout(self) -> None:
+        await asyncio.sleep(5)
+
+        await self.pause(requester=bot.user)
+
+    @tasks.loop(count=1)
     async def reset_timeout(self) -> None:
         await asyncio.sleep(60)
 
@@ -143,12 +149,14 @@ class Player:
         await self.settings.update({'music.volume': volume})
         await self.refresh_player_message(embed=True)
 
-    async def pause(self, requester: discord.User):
+    async def pause(self, requester: discord.User, auto=False):
         if self.connection.is_paused():
             return
 
         self.connection.pause()
         log.cmd(self.ctx, t('music.player_paused'))
+
+        self.state = PlayerState.AUTO_PAUSED if auto else PlayerState.PAUSED
 
         await self.channel.send(embed=Embed(t('music.player_paused', user=requester.mention)))
         await self.refresh_player_message()
@@ -159,6 +167,8 @@ class Player:
 
         self.connection.resume()
         log.cmd(self.ctx, t('music.player_resumed'))
+
+        self.state = PlayerState.PLAYING
 
         await self.channel.send(embed=Embed(t('music.player_resumed', user=requester.mention)))
         await self.refresh_player_message()
@@ -307,12 +317,14 @@ class Player:
             return
 
         if self.messages['playing']:
-            await self.messages['playing'].edit(
+            await bot.edit_message(
+                self.messages['playing'],
                 embed=self.get_playing_embed() if embed else MISSING,
                 view=self.player_controls.get()
             )
         elif self.messages['finished']:
-            await self.messages['finished'].edit(
+            await bot.edit_message(
+                self.messages['finished'],
                 embed=self.get_finished_embed() if embed else MISSING,
                 view=self.player_controls.get()
             )

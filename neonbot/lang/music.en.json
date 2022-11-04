@@ -54,5 +54,6 @@
     "converting_to_youtube_track": "Converting to YouTube track. Please wait...",
     "youtube_no_song": "There's no song in the url. Please make sure it is public.",
     "youtube_failed_to_find_similar": "Failed to find similar song to YouTube.",
-    "jumped_to": "Jumped to #%{index}: [%{title}](%{url})"
+    "jumped_to": "Jumped to #%{index}: [%{title}](%{url})",
+    "cannot_interact": "Cannot interact. You're not in the current voice channel."
 }

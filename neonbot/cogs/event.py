@@ -10,6 +10,7 @@ from discord.utils import escape_markdown
 from neonbot import bot
 from neonbot.classes.embed import Embed
 from neonbot.classes.player import Player
+from neonbot.enums.player_state import PlayerState
 from neonbot.models.guild import Guild
 from neonbot.utils import log, exceptions
 from neonbot.utils.functions import format_seconds
@@ -71,7 +72,7 @@ class Event(commands.Cog):
     @bot.event
     async def on_app_command_error(interaction: discord.Interaction, error: AppCommandError) -> None:
         error = getattr(error, "original", error)
-        ignored = discord.NotFound, commands.BadArgument, commands.CheckFailure
+        ignored = discord.NotFound, commands.BadArgument, commands.CheckFailure, discord.app_commands.CheckFailure
         send_msg = exceptions.YtdlError, discord.app_commands.AppCommandError, discord.app_commands.CommandInvokeError
 
         tb = traceback.format_exception(
@@ -85,7 +86,7 @@ class Event(commands.Cog):
 
         log.cmd(interaction, f"Command error: {error}")
 
-        if isinstance(error, send_msg):
+        if isinstance(error, send_msg) and not interaction.response.is_done():
             await interaction.response.send_message(embed=Embed(error))
             return
 
@@ -112,16 +113,20 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
-        if member.id == bot.user.id:
-            player = Player.get_instance_from_guild(member.guild)
+        player = Player.get_instance_from_guild(member.guild)
 
-            if not player:
-                return
+        if player and player.connection:
+            voice_members = [
+                member
+                for member in player.connection.channel.members
+                if not member.bot
+            ]
 
-            if not after.channel:
-                player.reset_timeout.start()
-            elif player.reset_timeout.is_running():
-                player.reset_timeout.cancel()
+            if any(voice_members):
+                if player.state == PlayerState.AUTO_PAUSED:
+                    await player.resume(requester=bot.user)
+            else:
+                await player.pause(requester=bot.user, auto=True)
 
         guild = Guild.get_instance(member.guild.id)
 

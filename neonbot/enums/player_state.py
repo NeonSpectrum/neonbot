@@ -5,3 +5,5 @@ class PlayerState(Enum):
     STOPPED = 0
     PLAYING = 1
     JUMPED = 2
+    PAUSED = 3
+    AUTO_PAUSED = 4

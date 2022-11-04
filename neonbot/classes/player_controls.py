@@ -5,6 +5,7 @@ from i18n import t
 
 from .embed import Embed
 from .view import View, Button
+from .. import bot
 from ..enums import Repeat
 
 if TYPE_CHECKING:
@@ -21,7 +22,7 @@ class PlayerControls:
             view.style = discord.ButtonStyle.primary
 
         # ["🔀","⏮️","⏸️","⏭️","🔁"]
-        if self.player.connection.is_playing():
+        if self.player.connection and self.player.connection.is_playing():
             views[2].emoji = "⏸️"
         else:
             views[2].emoji = "▶️"
@@ -44,8 +45,11 @@ class PlayerControls:
         return views
 
     async def callback(self, button: discord.ui.Button, interaction: discord.Interaction):
-        # await interaction.response.send_message(embed=Embed(f"{interaction.user} clicked {button.emoji.name}"),
-        #                                         ephemeral=True)
+        if not interaction.user.voice or (
+            interaction.user.voice and interaction.user.voice.channel != self.player.connection.channel
+        ):
+            await bot.send_response(interaction, embed=Embed(t('music.cannot_interact')), ephemeral=True)
+            return
 
         if button.emoji.name == "▶️":  # play
             if self.player.connection.is_paused():
