@@ -12,7 +12,7 @@ from i18n import t
 from neonbot import bot
 from neonbot.classes.embed import Embed
 from neonbot.classes.player_controls import PlayerControls
-from neonbot.classes.ytdl import ytdl
+from neonbot.classes.ytdl import Ytdl
 from neonbot.enums import Repeat
 from neonbot.enums.player_state import PlayerState
 from neonbot.models.guild import Guild
@@ -179,7 +179,7 @@ class Player:
 
         try:
             if not self.now_playing.get('stream'):
-                ytdl_info = await ytdl.process_entry(self.now_playing)
+                ytdl_info = await Ytdl().process_entry(self.now_playing)
                 info = ytdl_info.get_track(detailed=True)
                 self.now_playing = {**self.now_playing, **info}
 

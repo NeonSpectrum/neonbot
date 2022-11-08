@@ -22,7 +22,6 @@ class Event(commands.Cog):
     @bot.event
     async def on_connect() -> None:
         await bot.fetch_app_info()
-        await bot.db.get_guilds(bot.guilds)
         log.info(f"Logged in as {bot.user}\n")
 
     @staticmethod

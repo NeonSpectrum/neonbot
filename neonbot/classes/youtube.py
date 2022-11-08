@@ -6,7 +6,7 @@ from neonbot import bot
 from neonbot.classes.embed import Embed, EmbedChoices
 from neonbot.classes.player import Player
 from neonbot.classes.with_interaction import WithInteraction
-from neonbot.classes.ytdl import ytdl
+from neonbot.classes.ytdl import Ytdl
 from neonbot.utils.constants import YOUTUBE_REGEX
 from neonbot.utils.exceptions import YtdlError
 
@@ -19,7 +19,7 @@ class Youtube(WithInteraction):
         player = await Player.get_instance(self.interaction)
 
         try:
-            ytdl_info = await ytdl.extract_info(keyword, process=True)
+            ytdl_info = await Ytdl().extract_info(keyword, process=True)
         except YtdlError:
             await self.send_message(embed=Embed(t('music.no_songs_available')), ephemeral=True)
             return
@@ -48,7 +48,7 @@ class Youtube(WithInteraction):
 
         await self.send_message(embed=Embed(t('music.fetching_youtube_url')))
 
-        ytdl_info = await ytdl.extract_info(url, process=False)
+        ytdl_info = await Ytdl().extract_info(url, process=False)
 
         if ytdl_info.is_playlist:
             data, error = self.remove_invalid_videos(ytdl_info.get_list())

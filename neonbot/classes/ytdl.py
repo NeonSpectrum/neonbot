@@ -7,6 +7,7 @@ import yt_dlp
 
 from .ytdl_info import YtdlInfo
 from .. import bot
+from ..utils import log
 from ..utils.exceptions import YtdlError
 
 
@@ -22,7 +23,7 @@ class Ytdl:
                 "format": "95/bestaudio/best/worst",
                 "quiet": True,
                 "nocheckcertificate": True,
-                "ignoreerrors": True,
+                "ignoreerrors": False,
                 "extract_flat": "in_playlist",
                 "geo_bypass": True,
                 "geo_bypass_country": "PH",
@@ -32,38 +33,37 @@ class Ytdl:
                 **extra_params,
             }
         )
-        self.is_single_search = self.ytdl.params.get('default_search') == 'ytsearch1'
 
     async def extract_info(self, keyword: str, process: bool = False) -> YtdlInfo:
-        result = await self.loop.run_in_executor(
-            self.thread_pool,
-            functools.partial(
-                self.ytdl.extract_info, keyword, download=False, process=process
-            ),
-        )
+        try:
+            result = await self.loop.run_in_executor(
+                self.thread_pool,
+                functools.partial(
+                    self.ytdl.extract_info, keyword, download=False, process=process
+                ),
+            )
 
-        if not result:
+            return YtdlInfo(result)
+        except yt_dlp.utils.YoutubeDLError as error:
+            log.exception(error)
             raise YtdlError(
                 "Video not available or rate limited due to many song requests. Try again later."
             )
-
-        return YtdlInfo(result)
 
     async def process_entry(self, info: dict) -> YtdlInfo:
-        result = await self.loop.run_in_executor(
-            self.thread_pool,
-            functools.partial(self.ytdl.process_ie_result, info, download=True),
-        )
-        if not result:
+        try:
+            result = await self.loop.run_in_executor(
+                self.thread_pool,
+                functools.partial(self.ytdl.process_ie_result, info, download=True),
+            )
+
+            return YtdlInfo(result)
+        except yt_dlp.utils.YoutubeDLError as error:
+            log.exception(error)
             raise YtdlError(
                 "Video not available or rate limited due to many song requests. Try again later."
             )
-
-        return YtdlInfo(result)
 
     @classmethod
     def create(cls, extra_params) -> Ytdl:
         return cls(extra_params)
-
-
-ytdl = Ytdl()
