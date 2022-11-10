@@ -90,7 +90,7 @@ class Spotify(WithInteraction):
         return dict(id=url_id, type=url_type)
 
     async def get_track(self) -> dict:
-        return await self.request(self.url_prefix + self.id)
+        return await self.request(self.url_prefix + '/' + self.id)
 
     async def get_playlist(self) -> Tuple[list, dict]:
         playlist = []
