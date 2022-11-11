@@ -38,6 +38,7 @@ class Player:
             finished=None,
         )
         self.last_track = None
+        self.last_voice_channel: Optional[discord.VoiceChannel] = None
         self.state = PlayerState.STOPPED
 
     @property
@@ -121,7 +122,11 @@ class Player:
         if self.connection:
             return
 
-        await self.ctx.author.voice.channel.connect()
+        if not self.ctx.author.voice.channel and self.last_voice_channel:
+            await self.last_voice_channel.connect()
+        else:
+            self.last_voice_channel = await self.ctx.author.voice.channel.connect()
+
         log.cmd(self.ctx, t('music.player_connected', channel=self.ctx.author.voice.channel))
 
     async def disconnect(self, force=True) -> None:
