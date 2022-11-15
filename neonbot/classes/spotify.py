@@ -181,6 +181,8 @@ class Spotify(WithInteraction):
         player.add_to_queue(data, requested=self.interaction.user)
 
     async def get_playlist_info(self):
+        uploader = None
+
         data = await self.request(
             self.url_prefix + '/' + self.id,
             params={
@@ -188,11 +190,16 @@ class Spotify(WithInteraction):
             }
         )
 
+        if self.is_playlist:
+            uploader = data.get('owner')['display_name']
+        elif self.is_album:
+            uploader = ', '.join(map(lambda artist: artist['name'], data.get('artists', [])))
+
         return dict(
             title=data.get('name'),
             url=data.get('external_urls')['spotify'],
             thumbnail=data.get('images')[0]['url'] if len(data.get('images')) > 0 else None,
-            uploader=data.get('owner')['display_name'],
+            uploader=uploader,
         )
 
     async def process_playlist(self, playlist):

@@ -58,7 +58,9 @@ class Youtube(WithInteraction):
             )
             embed.set_image(playlist_info.get('thumbnail'))
             embed.set_author(playlist_info.get('title'), playlist_info.get('url'))
-            embed.set_footer('Uploaded by: ' + playlist_info.get('uploader'))
+
+            if playlist_info.get('uploader'):
+                embed.set_footer('Uploaded by: ' + playlist_info.get('uploader'))
         else:
             data = ytdl_info.get_track()
             embed = Embed(t('music.added_to_queue', queue=len(player.queue) + 1, title=data['title'], url=data['url']))
