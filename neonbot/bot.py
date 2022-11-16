@@ -60,16 +60,15 @@ class NeonBot(commands.Bot):
 
         guilds = [guild async for guild in self.fetch_guilds()]
 
+        await self.sync_command()
+
         # This copies the global commands over to your guild.
-        for guild in guilds:
-            await self.sync_command(guild)
+        await asyncio.gather(*[self.sync_command(guild) for guild in guilds])
 
         await self.db.get_guilds(guilds)
 
-    async def sync_command(self, guild: discord.Guild):
-        self.tree.copy_global_to(guild=guild)
+    async def sync_command(self, guild: Optional[discord.Guild] = None):
         await self.tree.sync(guild=guild)
-
         log.info(f"Command synced to: {guild}")
 
     async def add_cogs(self):

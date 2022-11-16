@@ -69,6 +69,7 @@ class Administration(commands.Cog):
 
     @app_commands.command(name='prune')
     @app_commands.default_permissions(manage_messages=True)
+    @app_commands.guild_only()
     async def prune(
         self,
         interaction: discord.Interaction,
