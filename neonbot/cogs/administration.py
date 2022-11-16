@@ -136,6 +136,8 @@ class Administration(commands.Cog):
 
     @server.command(name='voicelogs')
     async def setvoicelogs(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
+        """Sets the voice log channel. *ADMINISTRATOR"""
+
         guild = Guild.get_instance(interaction.guild_id)
         guild.set('channel.voice_log', channel.id if enable else None)
         await guild.save()
@@ -147,6 +149,8 @@ class Administration(commands.Cog):
 
     @server.command(name='presencelogs')
     async def setpresencelogs(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
+        """Sets the voice log channel. *ADMINISTRATOR"""
+
         guild = Guild.get_instance(interaction.guild_id)
         guild.set('channel.presence_log', channel.id if enable else None)
         await guild.save()
