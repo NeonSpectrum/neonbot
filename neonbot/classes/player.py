@@ -155,7 +155,7 @@ class Player:
         await self.refresh_player_message(embed=True)
 
     async def pause(self, requester: discord.User, auto=False):
-        if self.connection.is_paused():
+        if self.connection.is_paused() or not self.connection.is_playing():
             return
 
         self.connection.pause()
