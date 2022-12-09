@@ -182,6 +182,8 @@ class Player:
         if not self.connection or not self.connection.is_connected() or self.connection.is_playing():
             return
 
+        self.pre_play()
+
         try:
             if not self.now_playing.get('stream'):
                 ytdl_info = await Ytdl().process_entry(self.now_playing)
@@ -209,6 +211,17 @@ class Player:
             log.exception(msg, error)
             await self.channel.send(embed=Embed(msg))
 
+    def pre_play(self):
+        # Play recently added song if added while player is finished playing
+        if (
+            self.repeat == Repeat.OFF
+            and not self.connection.is_playing()
+            and not self.connection.is_paused()
+            and self.track_list[self.current_queue] == len(self.queue) - 2
+        ):
+            self.track_list.append(self.track_list[self.current_queue] + 1)
+            self.current_queue += 1
+
     async def after(self, error=None):
         if error:
             log.error(error)
@@ -230,12 +243,12 @@ class Player:
                 return
 
             # If last track and repeat is OFF
-            elif self.is_last_track and self.repeat == Repeat.OFF.value:
+            elif self.is_last_track and self.repeat == Repeat.OFF:
                 await self.send_finished_message(detailed=True)
                 return
 
             # If last track and repeat is ALL
-            elif self.is_last_track and self.repeat == Repeat.ALL.value:
+            elif self.is_last_track and self.repeat == Repeat.ALL:
                 self.track_list.append(0)
 
             else:

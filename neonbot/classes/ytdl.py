@@ -7,7 +7,6 @@ import yt_dlp
 
 from .ytdl_info import YtdlInfo
 from .. import bot
-from ..utils import log
 from ..utils.exceptions import YtdlError
 
 
@@ -30,6 +29,10 @@ class Ytdl:
                 "source_address": "0.0.0.0",
                 "extractor_args": {'youtube': {'skip': ['dash', 'hls']}},
                 "outtmpl": "./tmp/youtube_dl/%(id)s",
+                "download_archive": "./tmp/youtube_dl/archive.txt",
+                "compat_opts": {
+                    "no-youtube-unavailable-videos": True
+                },
                 **extra_params,
             }
         )
@@ -45,10 +48,7 @@ class Ytdl:
 
             return YtdlInfo(result)
         except yt_dlp.utils.YoutubeDLError as error:
-            log.exception(error)
-            raise YtdlError(
-                "Video not available or rate limited due to many song requests. Try again later."
-            )
+            raise YtdlError(error)
 
     async def process_entry(self, info: dict) -> YtdlInfo:
         try:
@@ -59,10 +59,7 @@ class Ytdl:
 
             return YtdlInfo(result)
         except yt_dlp.utils.YoutubeDLError as error:
-            log.exception(error)
-            raise YtdlError(
-                "Video not available or rate limited due to many song requests. Try again later."
-            )
+            raise YtdlError(error)
 
     @classmethod
     def create(cls, extra_params) -> Ytdl:

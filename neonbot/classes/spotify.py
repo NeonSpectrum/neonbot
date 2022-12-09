@@ -12,6 +12,7 @@ from .player import Player
 from .with_interaction import WithInteraction
 from .ytdl import Ytdl
 from .. import bot
+from ..utils import log
 from ..utils.exceptions import ApiError, YtdlError
 
 
@@ -190,17 +191,22 @@ class Spotify(WithInteraction):
             }
         )
 
-        if self.is_playlist:
-            uploader = data.get('owner')['display_name']
-        elif self.is_album:
-            uploader = ', '.join(map(lambda artist: artist['name'], data.get('artists', [])))
+        try:
+            if self.is_playlist:
+                uploader = data.get('owner')['display_name']
+            elif self.is_album:
+                uploader = ', '.join(map(lambda artist: artist['name'], data.get('artists', [])))
 
-        return dict(
-            title=data.get('name'),
-            url=data.get('external_urls')['spotify'],
-            thumbnail=data.get('images')[0]['url'] if len(data.get('images')) > 0 else None,
-            uploader=uploader,
-        )
+            return dict(
+                title=data.get('name'),
+                url=data.get('external_urls')['spotify'],
+                thumbnail=data.get('images')[0]['url'] if len(data.get('images')) > 0 else None,
+                uploader=uploader,
+            )
+        except TypeError:
+            log.error('Cannot parse playlist info: ' + str(data))
+
+            return None
 
     async def process_playlist(self, playlist):
         async def search(item):

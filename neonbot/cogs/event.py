@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from typing import Union, Optional
 
 import discord
+import yt_dlp.utils
 from discord.app_commands import AppCommandError
 from discord.ext import commands
 from discord.utils import escape_markdown
@@ -72,7 +73,12 @@ class Event(commands.Cog):
     async def on_app_command_error(interaction: discord.Interaction, error: AppCommandError) -> None:
         error = getattr(error, "original", error)
         ignored = discord.NotFound, commands.BadArgument, commands.CheckFailure, discord.app_commands.CheckFailure
-        send_msg = exceptions.YtdlError, discord.app_commands.AppCommandError, discord.app_commands.CommandInvokeError
+        send_msg = (
+            exceptions.YtdlError,
+            discord.app_commands.AppCommandError,
+            discord.app_commands.CommandInvokeError,
+            yt_dlp.utils.YoutubeDLError
+        )
 
         tb = traceback.format_exception(
             error, value=error, tb=error.__traceback__
@@ -85,11 +91,10 @@ class Event(commands.Cog):
 
         log.cmd(interaction, f"Command error: {error}")
 
-        if isinstance(error, send_msg) and not interaction.response.is_done():
-            await interaction.response.send_message(embed=Embed(error))
-            return
-
-        embed = Embed("There was an error executing the command. Please contact the administrator.")
+        if isinstance(error, send_msg):
+            embed = Embed(error)
+        else:
+            embed = Embed("There was an error executing the command. Please contact the administrator.")
 
         await bot.send_response(interaction, embed=embed)
 
