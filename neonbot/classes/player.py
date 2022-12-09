@@ -22,7 +22,7 @@ from neonbot.utils.exceptions import YtdlError
 
 
 class Player:
-    servers = {}
+    servers: dict[int, Player] = {}
 
     def __init__(self, ctx: commands.Context):
         self.ctx = ctx

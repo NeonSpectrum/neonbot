@@ -136,6 +136,9 @@ class NeonBot(commands.Bot):
         await self.get_user(self.app_info.owner.id).send(*args, **kwargs)
 
     async def close(self) -> None:
+        from .classes.player import Player
+
+        await asyncio.gather(*[player.clear_messages() for player in Player.servers.values()])
         await self.session.close()
         await super().close()
 
