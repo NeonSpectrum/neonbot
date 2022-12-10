@@ -19,7 +19,7 @@ class Ytdl:
         self.ytdl = yt_dlp.YoutubeDL(
             {
                 "default_search": "ytsearch5",
-                "format": "95/bestaudio/best/worst",
+                "format": "bestaudio/best/worst",
                 "quiet": True,
                 "nocheckcertificate": True,
                 "ignoreerrors": False,
@@ -27,7 +27,6 @@ class Ytdl:
                 "geo_bypass": True,
                 "geo_bypass_country": "PH",
                 "source_address": "0.0.0.0",
-                "extractor_args": {'youtube': {'skip': ['dash', 'hls']}},
                 "outtmpl": "./tmp/youtube_dl/%(id)s",
                 "download_archive": "./tmp/youtube_dl/archive.txt",
                 "compat_opts": {
