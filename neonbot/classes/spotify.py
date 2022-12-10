@@ -217,7 +217,6 @@ class Spotify(WithInteraction):
             try:
                 ytdl_info = await ytdl_one.extract_info(
                     f"{' '.join(artist['name'] for artist in track['artists'])} {track['name']}",
-                    process=True
                 )
             except YtdlError:
                 return None

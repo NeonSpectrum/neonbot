@@ -36,12 +36,12 @@ class Ytdl:
             }
         )
 
-    async def extract_info(self, keyword: str, process: bool = False) -> YtdlInfo:
+    async def extract_info(self, keyword: str) -> YtdlInfo:
         try:
             result = await self.loop.run_in_executor(
                 self.thread_pool,
                 functools.partial(
-                    self.ytdl.extract_info, keyword, download=False, process=process
+                    self.ytdl.extract_info, keyword, download=False, process=True
                 ),
             )
 

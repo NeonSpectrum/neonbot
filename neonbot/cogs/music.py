@@ -58,7 +58,6 @@ class Music(commands.Cog):
         play_now: Optional[bool] = False
     ):
         """Searches the url or the keyword and add it to queue."""
-
         player = await Player.get_instance(interaction)
         last_index = len(player.queue)
 

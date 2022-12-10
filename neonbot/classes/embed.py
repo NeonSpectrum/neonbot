@@ -171,14 +171,12 @@ class EmbedChoices:
 
             button.view.stop()
 
-        buttons = [
-            Button(label=1),
-            Button(label=2),
-            Button(label=3),
-            Button(label=4),
-            Button(label=5),
-            Button(emoji=CHOICES_EMOJI[-1]),
-        ]
+        buttons = []
+
+        for index in range(1, len(self.entries) + 1):
+            buttons.append(Button(label=index))
+
+        buttons.append(Button(emoji=CHOICES_EMOJI[-1]))
 
         return View.create_button(buttons, callback, interaction=self.interaction, timeout=self.timeout,
                                   delete_on_timeout=True)

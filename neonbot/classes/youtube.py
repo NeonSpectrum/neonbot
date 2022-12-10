@@ -19,9 +19,9 @@ class Youtube(WithInteraction):
         player = await Player.get_instance(self.interaction)
 
         try:
-            ytdl_info = await Ytdl().extract_info(keyword, process=True)
+            ytdl_info = await Ytdl().extract_info(keyword)
         except YtdlError:
-            await self.send_message(embed=Embed(t('music.no_songs_available')), ephemeral=True)
+            await self.send_message(embed=Embed(t('music.no_songs_available')))
             return
 
         data = ytdl_info.get_list()
@@ -48,7 +48,7 @@ class Youtube(WithInteraction):
 
         await self.send_message(embed=Embed(t('music.fetching_youtube_url')))
 
-        ytdl_info = await Ytdl().extract_info(url, process=False)
+        ytdl_info = await Ytdl().extract_info(url)
 
         if ytdl_info.is_playlist:
             data, error = self.remove_invalid_videos(ytdl_info.get_list())
