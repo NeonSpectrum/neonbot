@@ -53,7 +53,7 @@ class Ytdl:
         try:
             result = await self.loop.run_in_executor(
                 self.thread_pool,
-                functools.partial(self.ytdl.process_ie_result, info, download=True),
+                functools.partial(self.ytdl.process_ie_result, info, download=not info.get('is_live')),
             )
 
             return YtdlInfo(result)
