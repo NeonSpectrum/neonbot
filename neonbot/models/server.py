@@ -45,4 +45,5 @@ class Server(Document):
             prefix='.',
             channel=Channel(voice_log=None, presence_log=None, msgdelete_log=None),
             music=Music(volume=100, repeat=Repeat.OFF.value, shuffle=False),
+            exchange_gift=ExchangeGift(members=[])
         ).create()
