@@ -69,7 +69,7 @@ class NeonBot(commands.Bot):
 
     async def sync_command(self, guild: Optional[discord.Guild] = None):
         await self.tree.sync(guild=guild)
-        log.info(f"Command synced to: {guild}")
+        log.info(f"Command synced to: {guild or 'Global'}")
 
     async def add_cogs(self):
         files = sorted(glob(f"neonbot{sep}cogs{sep}[!_]*.py"))

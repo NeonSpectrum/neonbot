@@ -1,29 +1,27 @@
 from __future__ import annotations
 
-import asyncio
+from motor.core import AgnosticCollection, AgnosticDatabase
 
 
 class Model:
-    client = None
+    client: AgnosticDatabase = None
 
     def __init__(self) -> None:
-        self.db = Model.client
+        self.db: AgnosticDatabase = Model.client
         self.data = {}
         self.table = None
         self.where = {}
 
-        asyncio.create_task(self.watch_collection())
-
-    async def watch_collection(self):
-        async with self.db[self.table].watch([{'$match': self.where}]):
-            await self.refresh()
+    @property
+    def collection(self) -> AgnosticCollection:
+        return self.db.get_collection(self.table)
 
     async def refresh(self) -> Model:
-        self.data = await self.db[self.table].find_one(self.where)
+        self.data = await self.collection.find_one(self.where)
         return self
 
     async def insert(self, value: any) -> Model:
-        await self.db[self.table].insert_one(value)
+        await self.collection.insert_one(value)
         await self.refresh()
         return self
 
@@ -36,6 +34,9 @@ class Model:
 
         for key in keys:
             value = value.get(key, default) if value else self.data.get(key)
+
+        if value is None:
+            value = default
 
         return value
 
@@ -56,13 +57,16 @@ class Model:
                 current[key] = {**existing, **value} if isinstance(value, dict) else value
 
     async def save(self):
-        await self.db[self.table].update_one(self.where, {"$set": self.data})
+        await self.collection.update_one(self.where, {"$set": self.data})
         await self.refresh()
 
-    async def update(self, config: any):
-        await self.db[self.table].update_one(self.where, {"$set": config})
+    async def update(self, value: any, *, where: dict = None):
+        where = self.where if not where else {**self.where, **where}
+
+        await self.collection.update_one(where, {"$set": value})
+
         await self.refresh()
 
     @staticmethod
-    def set_client(client):
+    def set_client(client: AgnosticDatabase):
         Model.client = client

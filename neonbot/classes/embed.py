@@ -20,6 +20,10 @@ class Embed(discord.Embed):
         super().add_field(name=name, value=value, inline=inline)
         return self
 
+    def set_description(self, description: str) -> Embed:
+        self.description = description
+        return self
+
     def set_author(
         self,
         name: str,

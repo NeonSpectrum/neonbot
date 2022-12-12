@@ -10,7 +10,7 @@ from ..enums import Repeat
 
 
 class Guild(Model):
-    servers = {}
+    servers: dict[int, Guild] = {}
 
     def __init__(self, guild_id: int) -> None:
         super().__init__()
@@ -20,8 +20,8 @@ class Guild(Model):
         self.where = {"server_id": str(guild_id)}
 
     @staticmethod
-    def get_instance(guild_id: Union[discord.Guild, int]):
-        guild_id = int(guild_id)
+    def get_instance(guild: Union[discord.Guild, int]):
+        guild_id = guild.id if isinstance(guild, discord.Guild) else guild
 
         if guild_id not in Guild.servers.keys():
             Guild.servers[guild_id] = Guild(guild_id)
