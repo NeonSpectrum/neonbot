@@ -44,7 +44,7 @@ def format_seconds(secs: Union[int, float]) -> str:
     return formatted
 
 
-def is_owner(interaction: discord.Interaction):
+async def is_owner(interaction: discord.Interaction):
     if interaction.user.id not in bot.owner_ids:
         await interaction.response.send_message(embed=Embed(f'You don\'t have permission to access this command.'),
                                                 ephemeral=True)

@@ -139,7 +139,7 @@ class Utility(commands.Cog):
 
     @exchangegift.command(name='shuffle')
     async def exchangegift_shuffle(self, interaction: discord.Interaction):
-        if not is_owner(interaction):
+        if not await is_owner(interaction):
             return
 
         await ExchangeGift(interaction).shuffle()
@@ -148,7 +148,7 @@ class Utility(commands.Cog):
     @exchangegift.command(name='send')
     @app_commands.default_permissions(administrator=True)
     async def exchangegift_send(self, interaction: discord.Interaction, specific_user: Optional[discord.Member] = None):
-        if not is_owner(interaction):
+        if not await is_owner(interaction):
             return
 
         exchange_gift = ExchangeGift(interaction)
@@ -203,7 +203,7 @@ class Utility(commands.Cog):
 
     @exchangegift.command(name='setbudget')
     async def exchangegift_setbudget(self, interaction: discord.Interaction, budget: int):
-        if not is_owner(interaction):
+        if not await is_owner(interaction):
             return
 
         await ExchangeGift(interaction).set_budget(budget)
