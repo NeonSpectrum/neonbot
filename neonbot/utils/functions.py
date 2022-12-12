@@ -4,6 +4,9 @@ from typing import Union
 
 import discord
 
+from neonbot import bot
+from neonbot.classes.embed import Embed
+
 
 async def shell_exec(command: str) -> str:
     process = await asyncio.create_subprocess_shell(
@@ -39,3 +42,12 @@ def format_seconds(secs: Union[int, float]) -> str:
     if formatted.startswith("0:"):
         return formatted[2:]
     return formatted
+
+
+def is_owner(interaction: discord.Interaction):
+    if interaction.user.id not in bot.owner_ids:
+        await interaction.response.send_message(embed=Embed(f'You don\'t have permission to access this command.'),
+                                                ephemeral=True)
+        return False
+
+    return True

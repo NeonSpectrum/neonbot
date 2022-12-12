@@ -17,7 +17,7 @@ from ..classes.embed import Embed
 from ..classes.exchange_gift import ExchangeGift
 from ..utils.constants import ICONS
 from ..utils.exceptions import ExchangeGiftNotRegistered
-from ..utils.functions import format_seconds
+from ..utils.functions import format_seconds, is_owner
 
 
 class Utility(commands.Cog):
@@ -115,7 +115,7 @@ class Utility(commands.Cog):
     async def exchangegift_register(self, interaction: discord.Interaction):
         exchange_gift = ExchangeGift(interaction)
 
-        if exchange_gift.get():
+        if exchange_gift.member:
             await interaction.response.send_message(
                 embed=Embed('You are already registered in the exchange gift event.'),
                 ephemeral=True
@@ -138,14 +138,19 @@ class Utility(commands.Cog):
             await interaction.response.send_message(embed=Embed(error))
 
     @exchangegift.command(name='shuffle')
-    @app_commands.default_permissions(administrator=True)
     async def exchangegift_shuffle(self, interaction: discord.Interaction):
+        if not is_owner(interaction):
+            return
+
         await ExchangeGift(interaction).shuffle()
         await interaction.response.send_message(embed=Embed(f'Exchange gift has been shuffled.'))
 
     @exchangegift.command(name='send')
     @app_commands.default_permissions(administrator=True)
     async def exchangegift_send(self, interaction: discord.Interaction, specific_user: Optional[discord.Member] = None):
+        if not is_owner(interaction):
+            return
+
         exchange_gift = ExchangeGift(interaction)
         success = []
         failed = []
@@ -197,8 +202,10 @@ class Utility(commands.Cog):
         await interaction.response.send_message(embed=Embed(f'The current budget is `{budget}`.'))
 
     @exchangegift.command(name='setbudget')
-    @app_commands.default_permissions(administrator=True)
     async def exchangegift_setbudget(self, interaction: discord.Interaction, budget: int):
+        if not is_owner(interaction):
+            return
+
         await ExchangeGift(interaction).set_budget(budget)
         await interaction.response.send_message(embed=Embed(f'Budget has been set to `{budget}`.'))
 
