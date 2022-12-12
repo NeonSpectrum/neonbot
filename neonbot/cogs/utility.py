@@ -138,11 +138,13 @@ class Utility(commands.Cog):
             await interaction.response.send_message(embed=Embed(error))
 
     @exchangegift.command(name='shuffle')
+    @app_commands.default_permissions(administrator=True)
     async def exchangegift_shuffle(self, interaction: discord.Interaction):
         await ExchangeGift(interaction).shuffle()
         await interaction.response.send_message(embed=Embed(f'Exchange gift has been shuffled.'))
 
     @exchangegift.command(name='send')
+    @app_commands.default_permissions(administrator=True)
     async def exchangegift_send(self, interaction: discord.Interaction, specific_user: Optional[discord.Member] = None):
         exchange_gift = ExchangeGift(interaction)
         success = []
@@ -195,6 +197,7 @@ class Utility(commands.Cog):
         await interaction.response.send_message(embed=Embed(f'The current budget is `{budget}`.'))
 
     @exchangegift.command(name='setbudget')
+    @app_commands.default_permissions(administrator=True)
     async def exchangegift_setbudget(self, interaction: discord.Interaction, budget: int):
         await ExchangeGift(interaction).set_budget(budget)
         await interaction.response.send_message(embed=Embed(f'Budget has been set to `{budget}`.'))
