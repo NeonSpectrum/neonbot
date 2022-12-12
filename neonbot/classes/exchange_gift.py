@@ -1,99 +1,86 @@
 import random
 from datetime import datetime
-from typing import Optional
 
 import discord
 from discord.utils import find
 
 from neonbot.classes.embed import Embed
-from neonbot.models.guild import Guild
+from neonbot.models.exchange_gift import ExchangeGiftMember
+from neonbot.models.server import Server
 from neonbot.utils.exceptions import ExchangeGiftNotRegistered
 
 
 class ExchangeGift:
     def __init__(self, interaction: discord.Interaction):
-        self.db = Guild.get_instance(interaction.guild)
+        self.server = Server.get_instance(interaction.guild.id)
+        self.guild = interaction.guild
         self.user = interaction.user
 
-    def get(self, user_id: Optional[int] = None):
-        user_id = user_id or self.user.id
-        return find(lambda member: member['user_id'] == user_id, self.get_all())
+    def get(self, user_id):
+        return find(lambda member: member.user_id == user_id, self.get_all())
+
+    @property
+    def member(self):
+        return find(lambda member: member.user_id == self.user.id, self.get_all())
 
     @property
     def budget(self):
-        return self.db.get('exchange_gift.budget')
+        return self.server.exchange_gift.budget
 
     def get_all(self):
-        return self.db.get('exchange_gift.members', [])
+        return self.server.exchange_gift.members
 
     def get_no_wishlist_users(self):
         no_wishlist_users = []
 
         for member in self.get_all():
-            if member['wishlist'] is None:
-                no_wishlist_users.append(member['user_id'])
+            if member.wishlist is None:
+                no_wishlist_users.append(member.user_id)
 
         return no_wishlist_users
 
     async def set_budget(self, budget):
-        await self.db.update({'exchange_gift.budget': budget})
+        self.server.exchange_gift.budget = budget
+        await self.server.save_changes()
 
     async def set_wishlist(self, wishlist: str):
-        if not self.get():
+        if not self.member:
             raise ExchangeGiftNotRegistered()
 
-        await self.db.update({
-            'exchange_gift.members.$.wishlist': wishlist
-        }, where={
-            'exchange_gift.members.user_id': self.user.id
-        })
+        self.member.wishlist = wishlist
+
+        await self.server.save_changes()
 
     def get_wishlist(self):
-        if not self.get():
+        if not self.member:
             raise ExchangeGiftNotRegistered()
 
-        return self.get()['wishlist']
+        return self.member.wishlist
 
     async def register(self):
-        await self.db.collection.update_one(self.db.where, {
-            '$push': {
-                'exchange_gift.members': {
-                    'user_id': self.user.id,
-                    'wishlist': None,
-                    'chosen': None
-                }
-            }
-        })
-        await self.db.refresh()
+        self.server.exchange_gift.members.append(ExchangeGiftMember(user_id=self.user.id))
+        await self.server.save_changes()
 
     async def unregister(self):
-        if not self.get():
+        if not self.member:
             raise ExchangeGiftNotRegistered()
 
-        await self.db.collection.update_one(self.db.where, {
-            '$pull': {
-                'exchange_gift.members': {
-                    'user_id': self.user.id,
-                }
-            }
-        })
-        await self.db.refresh()
+        self.server.exchange_gift.members.remove(ExchangeGiftMember(user_id=self.user.id))
+        await self.server.save_changes()
 
     async def shuffle(self):
-        members = list(map(lambda m: m['user_id'], self.get_all()))
+        members = list(map(lambda m: m.user_id, self.get_all()))
 
         if len(members) <= 1:
             return
 
         for member in self.get_all():
-            chosen_member = random.choice([m for m in members if m != member['user_id']])
+            chosen_member = random.choice([m for m in members if m != member.user_id])
             members.remove(chosen_member)
 
-            await self.db.update({
-                'exchange_gift.members.$.chosen': chosen_member
-            }, where={
-                'exchange_gift.members.user_id': member['user_id']
-            })
+            self.member.chosen = chosen_member
+
+            await self.server.save_changes()
 
     def create_embed_template(self):
         year = datetime.now().strftime('%Y')

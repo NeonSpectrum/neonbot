@@ -19,6 +19,7 @@ jikanpy = "*"
 fuzzywuzzy = "*"
 python-levenshtein = "*"
 psutil = "*"
+beanie = "*"
 
 [dev-packages]
 pylint = "*"

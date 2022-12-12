@@ -12,7 +12,7 @@ from neonbot import bot
 from neonbot.classes.embed import Embed
 from neonbot.classes.player import Player
 from neonbot.enums.player_state import PlayerState
-from neonbot.models.guild import Guild
+from neonbot.models.server import Server
 from neonbot.utils import log, exceptions
 from neonbot.utils.functions import format_seconds
 from neonbot.utils.functions import get_command_string
@@ -111,7 +111,7 @@ class Event(commands.Cog):
     @bot.event
     async def on_guild_join(guild):
         log.info(f"Executing init for {guild}...")
-        await Guild.get_instance(guild.id).create_default_collection()
+        await Server.create_default_collection(guild.id)
         await bot.sync_command(guild)
 
     @staticmethod
@@ -137,10 +137,10 @@ class Event(commands.Cog):
             else:
                 await player.pause(requester=bot.user, auto=True)
 
-        guild = Guild.get_instance(member.guild.id)
+        server = Server.get_instance(member.guild.id)
 
         if before.channel != after.channel:
-            log_channel = bot.get_channel(int(guild.get('channel.voice_log') or -1))
+            log_channel = bot.get_channel(int(server.channel.voice_log or -1))
 
             # Check if the voice channel is not private
             role = member.guild.default_role
@@ -167,8 +167,8 @@ class Event(commands.Cog):
         if after.bot:
             return
 
-        guild = Guild.get_instance(after.guild.id)
-        log_channel = bot.get_channel(int(guild.get('channel.presence_log') or -1))
+        server = Server.get_instance(after.guild.id)
+        log_channel = bot.get_channel(int(server.channel.presence_log or -1))
 
         embed = Embed(timestamp=datetime.now())
         embed.set_author(name=str(after), icon_url=after.display_avatar.url)

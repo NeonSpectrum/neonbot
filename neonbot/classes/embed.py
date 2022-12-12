@@ -146,10 +146,8 @@ class EmbedChoices:
         return self
 
     async def send_message(self, *args, **kwargs):
-        if self.interaction.response.is_done():
-            await self.interaction.followup.send(*args, **kwargs)
-        else:
-            await self.interaction.response.send_message(*args, **kwargs)
+        from neonbot import bot
+        await bot.send_response(self.interaction, *args, **kwargs)
 
     async def send_choices(self) -> None:
         embed = Embed(title=f"Choose 1-{len(self.entries)} below.")

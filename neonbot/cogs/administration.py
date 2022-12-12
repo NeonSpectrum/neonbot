@@ -10,7 +10,7 @@ from discord.ext import commands
 from .. import bot
 from ..classes.embed import Embed
 from ..classes.player import Player
-from ..models.guild import Guild
+from ..models.server import Server
 
 
 @contextlib.contextmanager
@@ -94,10 +94,12 @@ class Administration(commands.Cog):
     async def prefix(self, interaction: discord.Interaction, prefix: str) -> None:
         """Sets the prefix of the current server. *ADMINISTRATOR"""
 
-        guild = Guild.get_instance(interaction.guild_id)
-        await guild.update({'prefix': prefix})
+        server = Server.get_instance(interaction.guild.id)
+        server.prefix = prefix
 
-        await interaction.response.send_message(embed=Embed(f"Prefix is now set to `{guild.get('prefix')}`."))
+        await server.save_changes()
+
+        await interaction.response.send_message(embed=Embed(f"Prefix is now set to `{server.prefix}`."))
 
     @settings.command(name='setstatus')
     async def setstatus(self, interaction: discord.Interaction, status: discord.Status) -> None:
@@ -106,7 +108,8 @@ class Administration(commands.Cog):
         if status is False:
             return
 
-        await bot.db.settings.update({'status': status.value})
+        bot.setting.status = status.value
+        await bot.setting.save_changes()
 
         await bot.update_presence()
 
@@ -121,10 +124,10 @@ class Administration(commands.Cog):
     ) -> None:
         """Sets the presence of the bot. *BOT_OWNER"""
 
-        await bot.db.settings.update({
-            'activity_type': presence_type.name,
-            'activity_name': name
-        })
+        bot.setting.activity_type = presence_type.name
+        bot.setting.activity_name = name
+
+        await bot.setting.save_changes()
 
         await bot.update_presence()
 
@@ -138,11 +141,11 @@ class Administration(commands.Cog):
     async def setvoicelogs(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
         """Sets the voice log channel. *ADMINISTRATOR"""
 
-        guild = Guild.get_instance(interaction.guild_id)
-        guild.set('channel.voice_log', channel.id if enable else None)
-        await guild.save()
+        guild = Server.get_instance(interaction.guild_id)
+        guild.channel.voice_log = channel.id if enable else None
+        await guild.save_changes()
 
-        if guild.get('channel.voice_log'):
+        if guild.channel.voice_log:
             await interaction.response.send_message(embed=Embed(f"Voice Logs is now set to {channel.mention}."))
         else:
             await interaction.response.send_message(embed=Embed("Voice Logs is now disabled."))
@@ -151,11 +154,11 @@ class Administration(commands.Cog):
     async def setpresencelogs(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
         """Sets the presence log channel. *ADMINISTRATOR"""
 
-        guild = Guild.get_instance(interaction.guild_id)
-        guild.set('channel.presence_log', channel.id if enable else None)
-        await guild.save()
+        guild = Server.get_instance(interaction.guild_id)
+        guild.channel.presence_log = channel.id if enable else None
+        await guild.save_changes()
 
-        if guild.get('channel.presence_log'):
+        if guild.channel.presence_log:
             await interaction.response.send_message(embed=Embed(f"Presence Logs is now set to {channel.mention}."))
         else:
             await interaction.response.send_message(embed=Embed("Presence Logs is now disabled."))

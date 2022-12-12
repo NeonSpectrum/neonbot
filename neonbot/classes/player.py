@@ -15,7 +15,7 @@ from neonbot.classes.player_controls import PlayerControls
 from neonbot.classes.ytdl import Ytdl
 from neonbot.enums import Repeat
 from neonbot.enums.player_state import PlayerState
-from neonbot.models.guild import Guild
+from neonbot.models.server import Server
 from neonbot.utils import log
 from neonbot.utils.constants import FFMPEG_OPTIONS, ICONS
 from neonbot.utils.exceptions import YtdlError
@@ -27,7 +27,7 @@ class Player:
     def __init__(self, ctx: commands.Context):
         self.ctx = ctx
         self.loop = asyncio.get_event_loop()
-        self.settings = Guild.get_instance(ctx.guild.id)
+        self.settings = Server.get_instance(ctx.guild.id)
         self.player_controls = PlayerControls(self)
         self.queue = []
         self.current_queue = 0
@@ -71,15 +71,15 @@ class Player:
 
     @property
     def volume(self) -> int:
-        return self.settings.get('music.volume')
+        return self.settings.music.volume
 
     @property
-    def repeat(self) -> Repeat:
-        return self.settings.get('music.repeat')
+    def repeat(self) -> int:
+        return self.settings.music.repeat
 
     @property
     def is_shuffle(self) -> bool:
-        return self.settings.get('music.shuffle')
+        return self.settings.music.shuffle
 
     @property
     def is_last_track(self):
@@ -134,14 +134,18 @@ class Player:
             await self.connection.disconnect(force=force)
 
     async def set_repeat(self, mode: Repeat, requester: discord.User):
-        await self.settings.update({'music.repeat': mode.value})
+        self.settings.music.repeat = mode.value
+        await self.settings.save_changes()
+
         await self.channel.send(
             embed=Embed(t('music.repeat_changed', mode=mode.name.lower(), user=requester.mention))
         )
         await self.refresh_player_message(embed=True)
 
     async def set_shuffle(self, requester: discord.User):
-        await self.settings.update({'music.shuffle': not self.is_shuffle})
+        self.settings.music.shuffle = not self.is_shuffle
+        await self.settings.save_changes()
+
         await self.channel.send(
             embed=Embed(t('music.shuffle_changed', mode='on' if self.is_shuffle else 'off', user=requester.mention))
         )
@@ -151,7 +155,9 @@ class Player:
         if self.connection and self.connection.source:
             self.connection.source.volume = volume / 100
 
-        await self.settings.update({'music.volume': volume})
+        self.settings.music.volume = volume
+        await self.settings.save_changes()
+
         await self.refresh_player_message(embed=True)
 
     async def pause(self, requester: discord.User, auto=False):

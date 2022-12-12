@@ -14,6 +14,7 @@ from envparse import env
 
 from . import __version__
 from .classes.database import Database
+from .models.setting import Setting
 from .utils import log
 from .utils.constants import PERMISSIONS
 from .utils.context_menu import load_context_menu
@@ -28,19 +29,15 @@ class NeonBot(commands.Bot):
         super().__init__(intents=discord.Intents.all(), command_prefix=self.default_prefix)
 
         self.db = Database(self)
-        self._settings = None
         self.app_info: Optional[discord.AppInfo] = None
         self.owner_guilds = env.list('OWNER_GUILD_IDS', default=[], subcast=int)
         self.session: Optional[ClientSession] = None
-
-    @property
-    def settings(self):
-        return self._settings.get()
+        self.setting: Optional[Setting] = None
 
     def get_presence(self) -> Tuple[discord.Status, discord.Activity]:
-        activity_type = self.settings.get('activity_type').lower()
-        activity_name = self.settings.get('activity_name')
-        status = self.settings.get('status')
+        activity_type = self.setting.activity_type
+        activity_name = self.setting.activity_name
+        status = self.setting.status
 
         return (
             discord.Status[status],
@@ -50,8 +47,8 @@ class NeonBot(commands.Bot):
         )
 
     async def setup_hook(self):
-        self.db.initialize()
-        self._settings = await self.db.get_settings()
+        await self.db.initialize()
+        self.setting = await Setting.get_instance()
         self.status, self.activity = self.get_presence()
         self.session = ClientSession(timeout=ClientTimeout(total=30))
 
@@ -60,10 +57,10 @@ class NeonBot(commands.Bot):
 
         guilds = [guild async for guild in self.fetch_guilds()]
 
-        await self.sync_command()
+        # await self.sync_command()
 
         # This copies the global commands over to your guild.
-        await asyncio.gather(*[self.sync_command(guild) for guild in guilds])
+        # await asyncio.gather(*[self.sync_command(guild) for guild in guilds])
 
         await self.db.get_guilds(guilds)
 
@@ -100,22 +97,25 @@ class NeonBot(commands.Bot):
         log.info(f"Sent an invite link to: {message.author}")
 
     async def update_presence(self):
+        setting = await Setting.get_instance()
+
         await self.change_presence(
             activity=discord.Activity(
-                name=self.settings.get('activity_name'),
-                type=discord.ActivityType[self.settings.get('activity_type')]
+                name=setting.activity_name,
+                type=discord.ActivityType[setting.activity_type]
             ),
-            status=discord.Status[self.settings.get('status')]
+            status=discord.Status[setting.status]
         )
 
     async def send_response(self, interaction: discord.Interaction, *args, **kwargs):
         if not interaction.response.is_done():
             await interaction.response.send_message(*args, **kwargs)
-        elif interaction.response.type in (discord.InteractionResponseType.deferred_message_update,
-                                           discord.InteractionResponseType.deferred_channel_message):
+        elif interaction.response.type == discord.InteractionResponseType.deferred_message_update:
             await interaction.followup.send(*args, **kwargs)
         else:
-            await interaction.edit_original_response(*args, view=None, **kwargs)
+            if 'view' not in kwargs:
+                kwargs['view'] = None
+            await interaction.edit_original_response(*args, **kwargs)
 
     async def edit_message(self, message: Union[discord.Message, None], **kwargs) -> None:
         if message is None:

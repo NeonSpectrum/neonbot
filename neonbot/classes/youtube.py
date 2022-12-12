@@ -18,6 +18,8 @@ class Youtube(WithInteraction):
     async def search_keyword(self, keyword: str):
         player = await Player.get_instance(self.interaction)
 
+        await self.send_message(embed=Embed(t('music.searching')))
+
         try:
             ytdl_info = await Ytdl().extract_info(keyword)
         except YtdlError:
@@ -28,7 +30,6 @@ class Youtube(WithInteraction):
         choice = (await EmbedChoices(self.interaction, data).build()).value
 
         if choice < 0:
-            await self.interaction.delete_original_response()
             return
 
         info = data[choice]
