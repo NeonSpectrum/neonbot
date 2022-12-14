@@ -190,11 +190,6 @@ class Utility(commands.Cog):
 
         await interaction.followup.send(embed=embed)
 
-    @exchangegift.command(name='budget')
-    async def exchangegift_budget(self, interaction: discord.Interaction):
-        budget = ExchangeGift(interaction).budget
-        await interaction.response.send_message(embed=Embed(f'The current budget is `{budget}`.'))
-
     @exchangegift.command(name='setbudget')
     async def exchangegift_setbudget(self, interaction: discord.Interaction, budget: int):
         if not await is_owner(interaction):
