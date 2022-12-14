@@ -16,7 +16,7 @@ from .. import __author__, __title__, __version__, bot
 from ..classes.embed import Embed
 from ..classes.exchange_gift import ExchangeGift
 from ..utils.constants import ICONS
-from ..utils.functions import format_seconds, is_owner
+from ..utils.functions import format_seconds
 from ..views.ExchangeGiftView import ExchangeGiftView
 
 
@@ -133,18 +133,12 @@ class Utility(commands.Cog):
 
     @exchangegift.command(name='shuffle')
     async def exchangegift_shuffle(self, interaction: discord.Interaction):
-        if not await is_owner(interaction):
-            return
-
         await ExchangeGift(interaction).shuffle()
         await interaction.response.send_message(embed=Embed(f'Exchange gift has been shuffled.'))
 
     @exchangegift.command(name='send')
     @app_commands.default_permissions(administrator=True)
     async def exchangegift_send(self, interaction: discord.Interaction, specific_user: Optional[discord.Member] = None):
-        if not await is_owner(interaction):
-            return
-
         exchange_gift = ExchangeGift(interaction)
         success = []
         failed = []
@@ -193,9 +187,6 @@ class Utility(commands.Cog):
 
     @exchangegift.command(name='setbudget')
     async def exchangegift_setbudget(self, interaction: discord.Interaction, budget: int):
-        if not await is_owner(interaction):
-            return
-
         await ExchangeGift(interaction).set_budget(budget)
         await interaction.response.send_message(embed=Embed(f'Budget has been set to `{budget}`.'))
 
