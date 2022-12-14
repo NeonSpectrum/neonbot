@@ -66,7 +66,7 @@ class ExchangeGiftView(discord.ui.View):
                 template.append(f'{user.mention}\n```{member.wishlist}```')
 
             embed = Embed().set_author('🎁 Wishlist')
-            embed.set_description(''.join(template))
+            embed.set_description('\n'.join(template))
 
             message = await interaction.response.send_message(embed=embed, ephemeral=True)
 
