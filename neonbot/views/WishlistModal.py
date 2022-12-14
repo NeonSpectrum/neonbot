@@ -9,9 +9,7 @@ from neonbot.classes.exchange_gift import ExchangeGift
 class WishlistModal(discord.ui.Modal, title='Set your wishlist'):
     def __init__(self, parent: Optional[discord.Interaction] = None):
         super().__init__()
-
-        if parent:
-            self.parent = parent
+        self.parent = parent
 
     wishlist = discord.ui.TextInput(
         label='Wishlist',
