@@ -113,7 +113,7 @@ class Utility(commands.Cog):
             )
 
     @exchangegift.command(name='start')
-    async def exchangegift_start(self, interaction: discord.Interaction, discussion_id: int):
+    async def exchangegift_start(self, interaction: discord.Interaction, discussion_id: str):
         exchange_gift = ExchangeGift(interaction)
 
         embed = exchange_gift.create_embed_template()
@@ -125,7 +125,7 @@ class Utility(commands.Cog):
         )
 
         message = await interaction.channel.send('@everyone', embed=embed,
-                                                 view=ExchangeGiftView(bot.get_channel(discussion_id)))
+                                                 view=ExchangeGiftView(bot.get_channel(int(discussion_id))))
 
         await exchange_gift.set_message_id(message.id)
 
