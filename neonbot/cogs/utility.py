@@ -2,7 +2,7 @@ import os
 import random
 from datetime import datetime
 from time import time
-from typing import Optional
+from typing import Optional, Union
 
 import discord
 import psutil
@@ -113,7 +113,8 @@ class Utility(commands.Cog):
             )
 
     @exchangegift.command(name='start')
-    async def exchangegift_start(self, interaction: discord.Interaction, discussion: discord.TextChannel):
+    async def exchangegift_start(self, interaction: discord.Interaction,
+                                 discussion: Union[discord.ForumChannel, discord.TextChannel]):
         exchange_gift = ExchangeGift(interaction)
 
         embed = exchange_gift.create_embed_template()
