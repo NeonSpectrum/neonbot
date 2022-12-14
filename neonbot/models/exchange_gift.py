@@ -10,5 +10,6 @@ class ExchangeGiftMember(BaseModel):
 
 
 class ExchangeGift(BaseModel):
+    message_id: Optional[int]
     members: List[ExchangeGiftMember]
     budget: Optional[int]

@@ -16,13 +16,14 @@ from .. import __author__, __title__, __version__, bot
 from ..classes.embed import Embed
 from ..classes.exchange_gift import ExchangeGift
 from ..utils.constants import ICONS
-from ..utils.exceptions import ExchangeGiftNotRegistered
 from ..utils.functions import format_seconds, is_owner
+from ..views.ExchangeGiftView import ExchangeGiftView
 
 
 class Utility(commands.Cog):
     exchangegift = app_commands.Group(name='exchangegift', description="Exchange gift commands",
-                                      guild_ids=bot.owner_guilds)
+                                      guild_ids=bot.owner_guilds,
+                                      default_permissions=discord.Permissions(administrator=True))
 
     @app_commands.command(name='random')
     @app_commands.describe(word_list='Word List')
@@ -111,31 +112,23 @@ class Utility(commands.Cog):
                     .add_field("Date sent:", format_dt(datetime.now()), inline=False)
             )
 
-    @exchangegift.command(name='register')
-    async def exchangegift_register(self, interaction: discord.Interaction):
+    @exchangegift.command(name='start')
+    async def exchangegift_start(self, interaction: discord.Interaction, discussion: discord.TextChannel):
         exchange_gift = ExchangeGift(interaction)
 
-        if exchange_gift.member:
-            await interaction.response.send_message(
-                embed=Embed('You are already registered in the exchange gift event.'),
-                ephemeral=True
-            )
-            return
+        embed = exchange_gift.create_embed_template()
+        embed.set_description(
+            'Christmas season is here! It’s also the season for gift giving, so wouldn’t it be wonderful to have a exchange gift event?\n\n'
+            'For more info about this event, interact with the buttons below.\n\n'
+            '**Note: If you misclick or have a reason to withdraw, '
+            'please DM or tag ' + bot.app_info.owner.mention + '.**'
+        )
 
-        await exchange_gift.register()
-        await interaction.response.send_message(embed=Embed('You have been registered in the exchange gift event.'))
+        message = await interaction.channel.send('@everyone', embed=embed, view=ExchangeGiftView(discussion.jump_url))
 
-    @exchangegift.command(name='unregister')
-    async def exchangegift_unregister(self, interaction: discord.Interaction):
-        exchange_gift = ExchangeGift(interaction)
+        await exchange_gift.set_message_id(message.id)
 
-        try:
-            await exchange_gift.unregister()
-            await interaction.response.send_message(
-                embed=Embed('You have been unregistered in the exchange gift event.')
-            )
-        except ExchangeGiftNotRegistered as error:
-            await interaction.response.send_message(embed=Embed(error))
+        await interaction.response.send_message(embed=Embed('Done!'), ephemeral=True)
 
     @exchangegift.command(name='shuffle')
     async def exchangegift_shuffle(self, interaction: discord.Interaction):
@@ -176,7 +169,8 @@ class Utility(commands.Cog):
         for member in members:
             user = interaction.guild.get_member(member['user_id'])
             embed = exchange_gift.create_embed_template()
-            embed.set_description('You will have to gift this person for Christmas.')
+            embed.set_description('You have picked this person as your gift recipient for the event! '
+                                  'Please refer to the following details for more information, and remember to refrain from sharing this to others!')
             embed.add_field('Username', str(user))
             embed.add_field('Nickname', user.nick)
             embed.add_field('Budget', exchange_gift.budget, inline=False)
@@ -208,24 +202,6 @@ class Utility(commands.Cog):
 
         await ExchangeGift(interaction).set_budget(budget)
         await interaction.response.send_message(embed=Embed(f'Budget has been set to `{budget}`.'))
-
-    @exchangegift.command(name='wishlist')
-    async def exchangegift_getwishlist(self, interaction: discord.Interaction):
-        try:
-            wishlist = ExchangeGift(interaction).get_wishlist()
-
-            await interaction.response.send_message(embed=Embed(f'Your current wishlist is `{wishlist}`.'),
-                                                    ephemeral=True)
-        except ExchangeGiftNotRegistered as error:
-            await interaction.response.send_message(embed=Embed(error))
-
-    @exchangegift.command(name='setwishlist')
-    async def exchangegift_setwishlist(self, interaction: discord.Interaction, wishlist: str):
-        try:
-            await ExchangeGift(interaction).set_wishlist(wishlist)
-            await interaction.response.send_message(embed=Embed('Your wishlist has been updated.'), ephemeral=True)
-        except ExchangeGiftNotRegistered as error:
-            await interaction.response.send_message(embed=Embed(error))
 
 
 # noinspection PyShadowingNames

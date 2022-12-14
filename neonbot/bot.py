@@ -14,19 +14,21 @@ from envparse import env
 
 from . import __version__
 from .classes.database import Database
+from .models.server import Server
 from .models.setting import Setting
 from .utils import log
 from .utils.constants import PERMISSIONS
 from .utils.context_menu import load_context_menu
+from .views.ExchangeGiftView import ExchangeGiftView
 
 
 class NeonBot(commands.Bot):
     def __init__(self):
         self.default_prefix = env.str("DEFAULT_PREFIX", default=".")
-        self.owner_ids = set(env.list("OWNER_IDS", default=[], subcast=int))
         self.user_agent = f"NeonBot v{__version__}"
         self.loop = asyncio.get_event_loop()
-        super().__init__(intents=discord.Intents.all(), command_prefix=self.default_prefix)
+        super().__init__(intents=discord.Intents.all(), command_prefix=self.default_prefix,
+                         owner_ids=set(env.list("OWNER_IDS", default=[], subcast=int)))
 
         self.db = Database(self)
         self.app_info: Optional[discord.AppInfo] = None
@@ -64,9 +66,17 @@ class NeonBot(commands.Bot):
 
         await self.db.get_guilds(guilds)
 
+        await self.listen_views(guilds)
+
     async def sync_command(self, guild: Optional[discord.Guild] = None):
         await self.tree.sync(guild=guild)
         log.info(f"Command synced to: {guild or 'Global'}")
+
+    async def listen_views(self, guilds):
+        for guild in guilds:
+            server = Server.get_instance(guild.id)
+            if server.exchange_gift.message_id:
+                self.add_view(ExchangeGiftView(), message_id=server.exchange_gift.message_id)
 
     async def add_cogs(self):
         files = sorted(glob(f"neonbot{sep}cogs{sep}[!_]*.py"))

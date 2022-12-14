@@ -27,8 +27,16 @@ class ExchangeGift:
     def budget(self):
         return self.server.exchange_gift.budget
 
+    @property
+    def message_id(self):
+        return self.server.exchange_gift.message_id
+
     def get_all(self):
         return self.server.exchange_gift.members
+
+    async def set_message_id(self, message_id: int):
+        self.server.exchange_gift.message_id = message_id
+        await self.server.save_changes()
 
     def get_no_wishlist_users(self):
         no_wishlist_users = []
@@ -84,4 +92,13 @@ class ExchangeGift:
 
     def create_embed_template(self):
         year = datetime.now().strftime('%Y')
-        return Embed().set_author('🎁 Exchange Gift for ' + year)
+        return Embed().set_author('🎁 Exchange Gift ' + year)
+
+    def get_current_info(self):
+        members = [self.guild.get_member(member.user_id).mention for member in self.get_all()]
+
+        embed = self.create_embed_template()
+        embed.add_field('Budget:', self.budget)
+        embed.add_field('Participants:', ' '.join(members), inline=False)
+
+        return embed
