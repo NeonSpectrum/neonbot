@@ -116,18 +116,19 @@ class Utility(commands.Cog):
     async def exchangegift_start(self, interaction: discord.Interaction, discussion_id: str):
         exchange_gift = ExchangeGift(interaction)
 
-        embed = exchange_gift.create_embed_template()
-        embed.set_description(
-            'Christmas season is here! It’s also the season for gift giving, so wouldn’t it be wonderful to have a exchange gift event?\n\n'
-            'For more info about this event, interact with the buttons below.\n\n'
-            '**Note: If you misclick or have a reason to withdraw, '
-            'please DM or tag ' + bot.app_info.owner.mention + '.**'
-        )
+        embed = exchange_gift.create_start_template()
 
-        message = await interaction.channel.send('@everyone', embed=embed,
-                                                 view=ExchangeGiftView(bot.get_channel(int(discussion_id)).jump_url))
+        exchange_gift_message = await interaction.channel.fetch_message(exchange_gift.message_id)
 
-        await exchange_gift.set_message_id(message.id)
+        if not exchange_gift_message:
+            message = await interaction.channel.send('@everyone', embed=embed,
+                                                     view=ExchangeGiftView(
+                                                         bot.get_channel(int(discussion_id)).jump_url))
+            await exchange_gift.set_message_id(message.id)
+        else:
+            message = await exchange_gift_message.edit(content='@everyone', embed=embed,
+                                                       view=ExchangeGiftView(
+                                                           bot.get_channel(int(discussion_id)).jump_url))
 
         await interaction.response.send_message(embed=Embed('Done!'), ephemeral=True)
 

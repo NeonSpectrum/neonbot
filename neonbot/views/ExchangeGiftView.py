@@ -36,8 +36,8 @@ class ExchangeGiftView(discord.ui.View):
         await interaction.response.send_message(embed=Embed('You have been registered in the exchange gift event.'),
                                                 ephemeral=True)
 
-    @discord.ui.button(label='Wishlist', custom_id='exchange_gift:wishlist', emoji='🎁')
-    async def wishlist(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(label='My Wishlist', custom_id='exchange_gift:my_wishlist', emoji='🎁')
+    async def my_wishlist(self, interaction: discord.Interaction, button: discord.ui.Button):
         try:
             exchange_gift = ExchangeGift(interaction)
             wishlist = exchange_gift.get_wishlist()
@@ -49,6 +49,28 @@ class ExchangeGiftView(discord.ui.View):
                 message = await interaction.response.send_message(embed=Embed(f'Your wishlist: ```{wishlist}```'),
                                                                   view=view,
                                                                   ephemeral=True)
+
+        except ExchangeGiftNotRegistered as error:
+            await interaction.response.send_message(embed=Embed(error), ephemeral=True)
+
+    @discord.ui.button(label='All Wishlist', custom_id='exchange_gift:all_wishlist', emoji='🎁')
+    async def all_wishlist(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            exchange_gift = ExchangeGift(interaction)
+            wishlist = exchange_gift.get_wishlist()
+
+            template = []
+
+            for member in exchange_gift.get_all():
+                user = interaction.guild.get_member(member.user_id)
+                template.append(f'{user.mention}\n```{member.wishlist}```')
+                template.append(f'{user.mention}\n```{member.wishlist}```')
+                template.append(f'{user.mention}\n```{member.wishlist}```')
+
+            embed = Embed().set_author('🎁 Wishlist')
+            embed.set_description(''.join(template))
+
+            message = await interaction.response.send_message(embed=embed, ephemeral=True)
 
         except ExchangeGiftNotRegistered as error:
             await interaction.response.send_message(embed=Embed(error), ephemeral=True)

@@ -94,6 +94,19 @@ class ExchangeGift:
         year = datetime.now().strftime('%Y')
         return Embed().set_author('🎁 Exchange Gift ' + year)
 
+    def create_start_template(self):
+        from neonbot import bot
+
+        embed = self.create_embed_template()
+        embed.set_description(
+            'Christmas season is here! It’s also the season for gift giving, so wouldn’t it be wonderful to have a exchange gift event?\n\n'
+            'For more info about this event, interact with the buttons below.\n\n'
+            '**Note: If you misclick or have a reason to withdraw, '
+            'please DM or tag ' + bot.app_info.owner.mention + '.**'
+        )
+
+        return embed
+
     def get_current_info(self):
         members = [self.guild.get_member(member.user_id).mention for member in self.get_all()]
 
