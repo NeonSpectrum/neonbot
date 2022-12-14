@@ -24,7 +24,9 @@ class WishlistModal(discord.ui.Modal, title='Set your wishlist'):
 
         exchange_gift = ExchangeGift(interaction)
         await exchange_gift.set_wishlist(wishlist)
-        await interaction.response.defer()
 
         if self.parent:
+            await interaction.response.defer()
             await self.parent.edit_original_response(embed=Embed(f'Your wishlist: ```{wishlist}```'))
+        else:
+            await interaction.response.send_message(embed=Embed('Your wishlist has been updated.'), ephemeral=True)
