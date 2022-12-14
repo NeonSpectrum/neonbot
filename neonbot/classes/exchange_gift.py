@@ -94,6 +94,10 @@ class ExchangeGift:
         year = datetime.now().strftime('%Y')
         return Embed().set_author('🎁 Exchange Gift ' + year)
 
+    def create_wishlist_template(self):
+        year = datetime.now().strftime('%Y')
+        return Embed().set_author('🎁 Wishlist ' + year)
+
     def create_start_template(self):
         from neonbot import bot
 
