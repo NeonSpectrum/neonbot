@@ -125,7 +125,7 @@ class Utility(commands.Cog):
         )
 
         message = await interaction.channel.send('@everyone', embed=embed,
-                                                 view=ExchangeGiftView(bot.get_channel(int(discussion_id))))
+                                                 view=ExchangeGiftView(bot.get_channel(int(discussion_id)).jump_url))
 
         await exchange_gift.set_message_id(message.id)
 
