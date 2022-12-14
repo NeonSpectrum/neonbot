@@ -2,7 +2,7 @@ import os
 import random
 from datetime import datetime
 from time import time
-from typing import Optional, Union
+from typing import Optional
 
 import discord
 import psutil
@@ -113,8 +113,7 @@ class Utility(commands.Cog):
             )
 
     @exchangegift.command(name='start')
-    async def exchangegift_start(self, interaction: discord.Interaction,
-                                 discussion: Union[discord.ForumChannel, discord.TextChannel]):
+    async def exchangegift_start(self, interaction: discord.Interaction, discussion_id: int):
         exchange_gift = ExchangeGift(interaction)
 
         embed = exchange_gift.create_embed_template()
@@ -125,7 +124,8 @@ class Utility(commands.Cog):
             'please DM or tag ' + bot.app_info.owner.mention + '.**'
         )
 
-        message = await interaction.channel.send('@everyone', embed=embed, view=ExchangeGiftView(discussion.jump_url))
+        message = await interaction.channel.send('@everyone', embed=embed,
+                                                 view=ExchangeGiftView(bot.get_channel(discussion_id)))
 
         await exchange_gift.set_message_id(message.id)
 
