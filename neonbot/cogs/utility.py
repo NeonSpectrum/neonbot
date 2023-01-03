@@ -163,7 +163,7 @@ class Utility(commands.Cog):
         members = [exchange_gift.get(specific_user.id)] if specific_user else exchange_gift.get_all()
 
         for member in members:
-            user = interaction.guild.get_member(member.user_id)
+            user = interaction.guild.get_member(member.chosen)
             embed = exchange_gift.create_embed_template()
             embed.set_description('You have picked this person as your gift recipient for the event! '
                                   'Please refer to the following details for more information, and remember to refrain from sharing this to others!')
