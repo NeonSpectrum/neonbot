@@ -170,7 +170,7 @@ class Utility(commands.Cog):
             embed.add_field('Username', str(user))
             embed.add_field('Nickname', user.nick)
             embed.add_field('Budget', exchange_gift.budget, inline=False)
-            embed.add_field('Wishlist', member.get('wishlist', 'N/A'), inline=False)
+            embed.add_field('Wishlist', member.wishlist or 'N/A', inline=False)
 
             try:
                 await user.send(embed=embed)
