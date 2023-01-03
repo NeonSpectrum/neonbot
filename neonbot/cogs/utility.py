@@ -165,7 +165,7 @@ class Utility(commands.Cog):
         for member in members:
             user = interaction.guild.get_member(member.user_id)
             chosen_user = interaction.guild.get_member(member.chosen)
-            chosen_member = exchange_gift.get(member.user_id)
+            chosen_member = exchange_gift.get(member.chosen)
 
             embed = exchange_gift.create_embed_template()
             embed.set_description('You have picked this person as your gift recipient for the event! '
