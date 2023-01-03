@@ -86,7 +86,7 @@ class ExchangeGift:
             chosen_member = random.choice([m for m in members if m != member.user_id])
             members.remove(chosen_member)
 
-            self.member.chosen = chosen_member
+            self.get(member).chosen = chosen_member
 
             await self.server.save_changes()
 
