@@ -71,7 +71,7 @@ class Music(commands.Cog):
         if play_now and player.connection and player.connection.is_playing():
             player.jump(last_index + 1)
         elif len(player.queue) > 0:
-            await player.connect()
+            await player.connect(interaction.user.voice.channel)
             await player.play()
 
     @app_commands.command(name='nowplaying')

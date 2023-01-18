@@ -118,16 +118,16 @@ class Player:
         await self.reset()
         self.remove_instance()
 
-    async def connect(self):
+    async def connect(self, channel: discord.VoiceChannel):
         if self.connection:
             return
 
-        if not self.ctx.author.voice.channel and self.last_voice_channel:
+        if not channel and self.last_voice_channel:
             await self.last_voice_channel.connect()
         else:
-            self.last_voice_channel = await self.ctx.author.voice.channel.connect()
+            self.last_voice_channel = await channel.connect()
 
-        log.cmd(self.ctx, t('music.player_connected', channel=self.ctx.author.voice.channel))
+        log.cmd(self.ctx, t('music.player_connected', channel=channel))
 
     async def disconnect(self, force=True) -> None:
         if self.connection and self.connection.is_connected():
