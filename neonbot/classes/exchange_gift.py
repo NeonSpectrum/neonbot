@@ -90,6 +90,10 @@ class ExchangeGift:
 
             await self.server.save_changes()
 
+    async def set_finish(self):
+        self.server.exchange_gift.finish = True
+        await self.server.save_changes()
+
     def create_embed_template(self):
         year = datetime.now().strftime('%Y')
         return Embed().set_author('🎁 Exchange Gift ' + year)

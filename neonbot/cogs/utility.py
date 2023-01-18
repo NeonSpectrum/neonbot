@@ -126,9 +126,9 @@ class Utility(commands.Cog):
                                                          bot.get_channel(int(discussion_id)).jump_url))
             await exchange_gift.set_message_id(message.id)
         else:
-            message = await exchange_gift_message.edit(content='@everyone', embed=embed,
-                                                       view=ExchangeGiftView(
-                                                           bot.get_channel(int(discussion_id)).jump_url))
+            await exchange_gift_message.edit(content='@everyone', embed=embed,
+                                             view=ExchangeGiftView(
+                                                 bot.get_channel(int(discussion_id)).jump_url))
 
         await interaction.response.send_message(embed=Embed('Done!'), ephemeral=True)
 
@@ -141,7 +141,9 @@ class Utility(commands.Cog):
         exchange_gift_message = await interaction.channel.fetch_message(exchange_gift.message_id)
 
         if exchange_gift_message:
-            message = await exchange_gift_message.edit(content='@everyone DONE!', embed=embed, view=None)
+            await exchange_gift_message.edit(content='@everyone DONE!', embed=embed, view=None)
+
+        await exchange_gift.set_finish()
 
         await interaction.response.send_message(embed=Embed('Done!'), ephemeral=True)
 
