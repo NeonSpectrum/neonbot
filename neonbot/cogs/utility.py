@@ -132,6 +132,19 @@ class Utility(commands.Cog):
 
         await interaction.response.send_message(embed=Embed('Done!'), ephemeral=True)
 
+    @exchangegift.command(name='finish')
+    async def exchangegift_finish(self, interaction: discord.Interaction):
+        exchange_gift = ExchangeGift(interaction)
+
+        embed = exchange_gift.create_start_template()
+
+        exchange_gift_message = await interaction.channel.fetch_message(exchange_gift.message_id)
+
+        if exchange_gift_message:
+            message = await exchange_gift_message.edit(content='@everyone DONE!', embed=embed, view=None)
+
+        await interaction.response.send_message(embed=Embed('Done!'), ephemeral=True)
+
     @exchangegift.command(name='shuffle')
     async def exchangegift_shuffle(self, interaction: discord.Interaction):
         await ExchangeGift(interaction).shuffle()
