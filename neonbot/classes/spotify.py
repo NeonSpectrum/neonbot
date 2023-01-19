@@ -32,21 +32,27 @@ class Spotify(WithInteraction):
         self.type = None
 
     @property
-    def url_prefix(self) -> str:
+    def url_prefix(self) -> Optional[str]:
         if self.is_album:
             return '/albums'
         elif self.is_playlist:
             return '/playlists'
-        else:
+        elif self.is_track:
             return '/tracks'
 
+        return None
+
     @property
-    def is_playlist(self) -> str:
+    def is_playlist(self) -> bool:
         return self.type == "playlist"
 
     @property
-    def is_album(self) -> str:
+    def is_album(self) -> bool:
         return self.type == "album"
+
+    @property
+    def is_track(self) -> bool:
+        return self.type == "track"
 
     async def get_token(self) -> Optional[str]:
         if Spotify.CREDENTIALS['expiration'] and time() < Spotify.CREDENTIALS['expiration']:
@@ -96,7 +102,7 @@ class Spotify(WithInteraction):
     async def get_playlist(self) -> Tuple[list, dict]:
         playlist = []
 
-        if self.type == "album":
+        if self.is_album:
             limit = 50
         else:
             limit = 100
@@ -151,9 +157,12 @@ class Spotify(WithInteraction):
         if self.is_playlist or self.is_album:
             await self.send_message(embed=Embed(t('music.converting_to_youtube_playlist')))
             playlist, playlist_info = await self.get_playlist()
-        else:
+        elif self.is_track:
             await self.send_message(embed=Embed(t('music.converting_to_youtube_track')))
             playlist.append(await self.get_track())
+        else:
+            await self.send_message(embed=Embed(t('music.invalid_spotify_type')))
+            return
 
         if len(playlist) == 0:
             await self.send_message(embed=Embed(t('music.youtube_no_song')))
