@@ -123,6 +123,7 @@ class Event(commands.Cog):
             # Check if the bot was disconnected
             if player and player.connection and not player.connection.is_connected():
                 await player.reset()
+                return
 
         if player and player.connection:
             voice_members = [
@@ -134,8 +135,10 @@ class Event(commands.Cog):
             if any(voice_members):
                 if player.state == PlayerState.AUTO_PAUSED:
                     await player.resume(requester=bot.user)
-            else:
+            elif player.connection.is_playing():
                 await player.pause(requester=bot.user, auto=True)
+            else:
+                await player.reset()
 
         server = Server.get_instance(member.guild.id)
 
