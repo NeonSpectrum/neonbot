@@ -7,6 +7,7 @@ import yt_dlp
 
 from .ytdl_info import YtdlInfo
 from .. import bot
+from ..utils.constants import YOUTUBE_TMP_DIR
 from ..utils.exceptions import YtdlError
 
 
@@ -27,7 +28,8 @@ class Ytdl:
                 "geo_bypass": True,
                 "geo_bypass_country": "PH",
                 "source_address": "0.0.0.0",
-                "outtmpl": "./tmp/youtube_dl/%(id)s",
+                "outtmpl": YOUTUBE_TMP_DIR + "/%(id)s",
+                "download_archive": YOUTUBE_TMP_DIR + "/archive.txt",
                 "compat_opts": {
                     "no-youtube-unavailable-videos": True
                 },

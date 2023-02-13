@@ -18,6 +18,7 @@ def main() -> None:
 
     shutil.rmtree(YOUTUBE_TMP_DIR, ignore_errors=True)
     os.makedirs(YOUTUBE_TMP_DIR, exist_ok=True)
+    os.remove('./debug.log')
 
     bot.run(log_level=logging.getLevelName(env.str('LOG_LEVEL', default='ERROR')))
 
