@@ -29,7 +29,6 @@ class Ytdl:
                 "geo_bypass_country": "PH",
                 "source_address": "0.0.0.0",
                 "outtmpl": YOUTUBE_TMP_DIR + "/%(id)s",
-                "download_archive": YOUTUBE_TMP_DIR + "/archive.txt",
                 "compat_opts": {
                     "no-youtube-unavailable-videos": True
                 },
