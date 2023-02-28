@@ -49,6 +49,7 @@
     "song_failed_to_load": "Song failed to load.",
     "invalid_spotify_url": "Invalid spotify url.",
     "invalid_spotify_type": "Invalid spotify type. Only albums, playlists, and tracks are allowed.",
+    "invalid_youtube_url": "Invalid youtube url.",
     "fetching_youtube_url": "Fetching YouTube URL. Please wait...",
     "searching": "Searching...",
     "converting_to_youtube_playlist": "Converting to YouTube playlist. Please wait...",
