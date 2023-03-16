@@ -11,7 +11,7 @@ from discord.utils import escape_markdown
 from neonbot import bot
 from neonbot.classes.embed import Embed
 from neonbot.classes.player import Player
-from neonbot.enums.player_state import PlayerState
+from neonbot.enums import PlayerState
 from neonbot.models.server import Server
 from neonbot.utils import log, exceptions
 from neonbot.utils.functions import format_seconds

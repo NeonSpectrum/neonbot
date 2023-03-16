@@ -13,8 +13,7 @@ from neonbot import bot
 from neonbot.classes.embed import Embed
 from neonbot.classes.player_controls import PlayerControls
 from neonbot.classes.ytdl import Ytdl
-from neonbot.enums import Repeat
-from neonbot.enums.player_state import PlayerState
+from neonbot.enums import Repeat, PlayerState
 from neonbot.models.server import Server
 from neonbot.utils import log
 from neonbot.utils.constants import FFMPEG_OPTIONS, ICONS
@@ -89,8 +88,8 @@ class Player:
     def now_playing(self) -> Union[dict, None]:
         try:
             return {
-                'index': self.track_list[self.current_queue] + 1,
-                **self.queue[self.track_list[self.current_queue]]
+                **self.queue[self.track_list[self.current_queue]],
+                'index': self.track_list[self.current_queue] + 1
             }
         except IndexError:
             return None
@@ -194,7 +193,7 @@ class Player:
             if not self.now_playing.get('stream'):
                 ytdl_info = await Ytdl().process_entry(self.now_playing)
                 info = ytdl_info.get_track(detailed=True)
-                self.now_playing = {**self.now_playing, **info}
+                self.now_playing = {'index': self.track_list[self.current_queue] + 1, **self.now_playing, **info}
 
             song = discord.FFmpegPCMAudio(
                 self.now_playing['stream'],
@@ -262,7 +261,9 @@ class Player:
 
         self.current_queue += 1
 
-        await self.send_finished_message()
+        if self.state != PlayerState.REMOVED:
+            await self.send_finished_message()
+
         await self.play()
 
     def next(self):
@@ -277,6 +278,24 @@ class Player:
         self.state = PlayerState.STOPPED
         await self.disconnect(force=True)
         await self.clear_messages()
+
+    async def remove_song(self, index: int):
+        self.queue.pop(index)
+
+        if len(self.track_list) > 0:
+            for i, track in enumerate(self.track_list):
+                if track > index:
+                    self.track_list[i] -= 1
+
+        # if current track is playing now
+        if self.track_list[self.current_queue] == index:
+            self.current_queue -= 1
+            self.state = PlayerState.REMOVED
+            self.next()
+
+        if self.track_list[self.current_queue] > index:
+            self.current_queue -= 1
+            await self.refresh_player_message(embed=True)
 
     def process_shuffle(self) -> bool:
         def choices():

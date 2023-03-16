@@ -1,8 +1,8 @@
+import re
 from typing import Optional
 
 import discord
 from discord import app_commands
-from discord.app_commands.models import Choice
 from discord.ext import commands
 from i18n import t
 
@@ -11,9 +11,9 @@ from neonbot.classes.embed import Embed, PaginationEmbed
 from neonbot.classes.player import Player
 from neonbot.classes.spotify import Spotify
 from neonbot.classes.youtube import Youtube
-from neonbot.enums import PlayType, Repeat
+from neonbot.enums import Repeat
 from neonbot.utils import log
-from neonbot.utils.constants import ICONS
+from neonbot.utils.constants import ICONS, YOUTUBE_REGEX, SPOTIFY_REGEX
 from neonbot.utils.functions import format_seconds
 
 
@@ -38,35 +38,26 @@ async def has_player(interaction: discord.Interaction) -> bool:
 
 class Music(commands.Cog):
     @app_commands.command(name='play')
-    @app_commands.rename(play_type='type')
-    @app_commands.describe(
-        play_type='Select type...',
-        value='Enter keyword or url...'
-    )
-    @app_commands.choices(play_type=[
-        Choice(name='YouTube Search', value=PlayType.SEARCH.value),
-        Choice(name='YouTube URL', value=PlayType.YOUTUBE.value),
-        Choice(name='Spotify URL', value=PlayType.SPOTIFY.value),
-    ])
+    @app_commands.describe(value='Enter keyword or url...')
     @app_commands.check(in_voice)
     @app_commands.guild_only()
     async def play(
         self,
         interaction: discord.Interaction,
-        play_type: PlayType,
         value: str,
         play_now: Optional[bool] = False
     ):
         """Searches the url or the keyword and add it to queue."""
+
         player = await Player.get_instance(interaction)
         last_index = len(player.queue)
 
-        if play_type == PlayType.SEARCH:
-            await Youtube(interaction).search_keyword(value)
-        elif play_type == PlayType.YOUTUBE:
+        if re.search(YOUTUBE_REGEX, value):
             await Youtube(interaction).search_url(value)
-        elif play_type == PlayType.SPOTIFY:
+        elif re.search(SPOTIFY_REGEX, value):
             await Spotify(interaction).search_url(value)
+        else:
+            await Youtube(interaction).search_keyword(value)
 
         if play_now and player.connection and player.connection.is_playing():
             player.jump(last_index + 1)
@@ -187,6 +178,26 @@ class Music(commands.Cog):
 
         await interaction.response.send_message(
             embed=Embed(t('music.jumped_to', index=index, title=track['title'], url=track['url']))
+        )
+
+    @app_commands.command(name='removesong')
+    @app_commands.check(in_voice)
+    @app_commands.check(has_player)
+    @app_commands.guild_only()
+    async def removesong(self, interaction: discord.Interaction, index: int) -> None:
+        """Removes a specific song."""
+
+        player = await Player.get_instance(interaction)
+
+        if index > len(player.queue) or index < 0:
+            await interaction.response.send_message(embed=Embed("Invalid index."), ephemeral=True)
+            return
+
+        track = player.get_track(index - 1)
+        await player.remove_song(index - 1)
+
+        await interaction.response.send_message(
+            embed=Embed(t('music.removed_song', index=index, title=track['title'], url=track['url']))
         )
 
     @app_commands.command(name='reset')

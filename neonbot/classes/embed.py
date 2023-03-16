@@ -85,7 +85,7 @@ class PaginationEmbed:
     async def send(self) -> None:
         embed = self.embed.copy()
         embed.description = self.embeds[self.index].description
-        buttons = None
+        buttons = discord.utils.MISSING
 
         if len(self.embeds) > 1:
             embed.description += f"\n\n**Page {self.index + 1}/{len(self.embeds)}**"

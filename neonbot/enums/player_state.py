@@ -7,3 +7,4 @@ class PlayerState(Enum):
     JUMPED = 2
     PAUSED = 3
     AUTO_PAUSED = 4
+    REMOVED = 5
