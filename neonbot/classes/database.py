@@ -50,6 +50,7 @@ class Database:
     async def cache_guilds(self, guilds: List[discord.Guild]):
         async def cache(guild):
             log.info(f"Caching guild settings: {guild} ({guild.id})")
+            await Server.start_migration(guild.id)
             await Server.create_instance(guild.id)
 
         await asyncio.gather(*[cache(guild) for guild in guilds])

@@ -9,6 +9,7 @@ from discord.ext import commands
 from discord.utils import escape_markdown
 
 from neonbot import bot
+from neonbot.classes.chatgpt import ChatGPT
 from neonbot.classes.embed import Embed
 from neonbot.classes.player import Player
 from neonbot.enums import PlayerState
@@ -45,7 +46,7 @@ class Event(commands.Cog):
 
         ctx = await bot.get_context(message)
 
-        if str(ctx.channel.type) == "private":
+        if ctx.channel.type == discord.ChannelType.private:
             if message.content.lower() == "invite":
                 return await bot.send_invite_link(message)
 
@@ -54,6 +55,9 @@ class Event(commands.Cog):
                 embed=Embed(title=f"DM from {ctx.author}", description=message.content),
                 sender=ctx.author.id,
             )
+            return
+
+        if await ChatGPT.process_message(ctx):
             return
 
         if ctx.command is not None:

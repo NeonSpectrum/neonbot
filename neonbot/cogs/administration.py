@@ -163,6 +163,19 @@ class Administration(commands.Cog):
         else:
             await interaction.response.send_message(embed=Embed("Presence Logs is now disabled."))
 
+    @server.command(name='chatgpt')
+    async def setchatgpt(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
+        """Sets the chatgpt channel. *ADMINISTRATOR"""
+
+        guild = Server.get_instance(interaction.guild_id)
+        guild.channel.chatgpt = channel.id if enable else None
+        await guild.save_changes()
+
+        if guild.channel.chatgpt:
+            await interaction.response.send_message(embed=Embed(f"ChatGPT is now set to {channel.mention}."))
+        else:
+            await interaction.response.send_message(embed=Embed("ChatGPT is now disabled."))
+
 
 # noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:

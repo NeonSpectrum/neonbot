@@ -6,6 +6,7 @@ from beanie import Document
 
 from neonbot.enums import Repeat
 from neonbot.models.channel import Channel
+from neonbot.models.chatgpt import ChatGPT
 from neonbot.models.exchange_gift import ExchangeGift
 from neonbot.models.music import Music
 
@@ -18,6 +19,7 @@ class Server(Document):
     channel: Channel
     music: Music
     exchange_gift: Optional[ExchangeGift]
+    chatgpt: Optional[ChatGPT]
 
     class Settings:
         name = 'servers'
@@ -45,5 +47,16 @@ class Server(Document):
             prefix='.',
             channel=Channel(voice_log=None, presence_log=None, msgdelete_log=None),
             music=Music(volume=100, repeat=Repeat.OFF.value, shuffle=False),
-            exchange_gift=ExchangeGift(members=[])
+            exchange_gift=ExchangeGift(members=[]),
+            chatgpt=ChatGPT(chats=[])
         ).create()
+
+    @staticmethod
+    async def start_migration(guild_id: int):
+        server = await Server.find_one(Server.id == guild_id)
+
+        if not hasattr(server, 'exchange_gift'):
+            await server.set({'exchange_gift': ExchangeGift(members=[])})
+
+        if not hasattr(server, 'chatgpt'):
+            await server.set({'chatgpt': ChatGPT(chats=[])})

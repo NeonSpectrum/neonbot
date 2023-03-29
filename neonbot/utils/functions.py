@@ -39,3 +39,25 @@ def format_seconds(secs: Union[int, float]) -> str:
     if formatted.startswith("0:"):
         return formatted[2:]
     return formatted
+
+
+def split_long_message(message: str):
+    if len(message) < 1900:
+        return [message]
+
+    lines = message.split('\n')
+    messages = []
+    message = []
+
+    for index, line in enumerate(lines):
+        message.append(line)
+
+        if len('\n'.join(message)) > 1900:
+            message.pop()
+            messages.append('\n'.join(message))
+            message = [line]
+
+        if index == len(lines) - 1:
+            messages.append('\n'.join(message))
+
+    return messages

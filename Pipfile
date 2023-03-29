@@ -20,6 +20,7 @@ python-levenshtein = "*"
 psutil = "*"
 beanie = "*"
 "discord.py" = {extras = ["voice"], version = "*"}
+openai = "*"
 
 [dev-packages]
 pylint = "*"
