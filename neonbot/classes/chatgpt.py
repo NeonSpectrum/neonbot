@@ -2,6 +2,7 @@ import discord
 import openai
 from discord.ext import commands
 from discord.utils import find
+from envparse import env
 
 from neonbot.models.chatgpt import Message, Chat
 from neonbot.models.server import Server
@@ -27,7 +28,7 @@ class ChatGPT:
 
     async def get_response(self) -> str:
         chat_completion = await openai.ChatCompletion.acreate(
-            model="gpt-3.5-turbo",
+            model=env.str('OPENAI_MODEL', default='ada'),
             messages=[{'role': message.role, 'content': message.content} for message in self.chat.messages]
         )
         answer = chat_completion.choices[0].message.content
