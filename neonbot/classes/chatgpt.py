@@ -1,3 +1,5 @@
+import asyncio
+
 import discord
 import openai
 from discord.ext import commands
@@ -43,13 +45,16 @@ class ChatGPT:
         channel = ctx.channel
         content = ctx.message.content
 
-        if isinstance(channel, discord.TextChannel) and channel.id != server.channel.chatgpt:
+        is_channel = isinstance(channel, discord.TextChannel)
+        is_thread = isinstance(channel, discord.Thread)
+
+        if is_channel and channel.id != server.channel.chatgpt:
             return False
 
-        if isinstance(channel, discord.Thread) and channel.parent_id != server.channel.chatgpt:
+        if is_thread and channel.parent_id != server.channel.chatgpt:
             return False
 
-        if isinstance(ctx.channel, discord.TextChannel):
+        if is_channel:
             await ctx.message.delete()
             channel = await ctx.channel.create_thread(name=content)
             await channel.add_user(ctx.author)
@@ -61,5 +66,12 @@ class ChatGPT:
 
             for message in split_long_message(response):
                 await channel.send(message)
+
+        if content.lower().strip() == 'bye':
+            async def remove():
+                await asyncio.sleep(5)
+                await channel.edit(archived=True, locked=True)
+
+            ctx.bot.loop.create_task(remove())
 
         return True
