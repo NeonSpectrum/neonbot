@@ -28,7 +28,7 @@ class ChatGPT:
 
     async def get_response(self) -> str:
         chat_completion = await openai.ChatCompletion.acreate(
-            model=env.str('OPENAI_MODEL', default='ada'),
+            model=env.str('OPENAI_MODEL', default='gpt-3.5-turbo'),
             messages=[{'role': message.role, 'content': message.content} for message in self.chat.messages]
         )
         answer = chat_completion.choices[0].message.content
