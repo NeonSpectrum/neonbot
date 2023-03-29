@@ -11,6 +11,7 @@ from .. import bot
 from ..classes.embed import Embed
 from ..classes.player import Player
 from ..models.server import Server
+from ..utils.constants import ICONS
 
 
 @contextlib.contextmanager
@@ -173,6 +174,12 @@ class Administration(commands.Cog):
 
         if guild.channel.chatgpt:
             await interaction.response.send_message(embed=Embed(f"ChatGPT is now set to {channel.mention}."))
+
+            embed = Embed()
+            embed.set_author('OpenAI - ChatGPT', url='https://chat.openai.com', icon_url=ICONS['openai'])
+            embed.set_description('Start a conversation with ChatGPT by asking a question in this space.')
+
+            await channel.send(embed=embed)
         else:
             await interaction.response.send_message(embed=Embed("ChatGPT is now disabled."))
 

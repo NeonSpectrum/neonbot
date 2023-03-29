@@ -41,6 +41,7 @@ class ChatGPT:
     async def process_message(ctx: commands.Context):
         server = Server.get_instance(ctx.guild.id)
         channel = ctx.channel
+        content = ctx.message.content
 
         if isinstance(channel, discord.TextChannel) and channel.id != server.channel.chatgpt:
             return False
@@ -49,12 +50,13 @@ class ChatGPT:
             return False
 
         if isinstance(ctx.channel, discord.TextChannel):
-            channel = await ctx.message.create_thread(name=ctx.message.content)
+            await ctx.message.delete()
+            channel = await ctx.channel.create_thread(name=content)
             await channel.add_user(ctx.author)
 
         async with channel.typing():
             chatgpt = ChatGPT(channel)
-            chatgpt.add_message(ctx.message.content)
+            chatgpt.add_message(content)
             response = await chatgpt.get_response()
 
             for message in split_long_message(response):

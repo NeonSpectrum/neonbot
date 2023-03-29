@@ -35,7 +35,8 @@ ICONS = {
     "azlyrics": "https://images.azlyrics.com/az_logo_tr.png",
     "semaphone": "https://semaphore.co/images/pages/index/semaphore-icon.png",
     "myanimelist": "https://i.imgur.com/XMQsLF5.png",
-    "googletranslate": "https://upload.wikimedia.org/wikipedia/commons/d/db/Google_Translate_Icon.png"
+    "googletranslate": "https://upload.wikimedia.org/wikipedia/commons/d/db/Google_Translate_Icon.png",
+    "openai": "https://i.imgur.com/TAeEnLT.png"
 }
 
 FFMPEG_OPTIONS = (
