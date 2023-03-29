@@ -55,8 +55,8 @@ class Server(Document):
     async def start_migration(guild_id: int):
         server = await Server.find_one(Server.id == guild_id)
 
-        if not hasattr(server, 'exchange_gift'):
+        if not server.exchange_gift:
             await server.set({'exchange_gift': ExchangeGift(members=[])})
 
-        if not hasattr(server, 'chatgpt'):
+        if not server.chatgpt:
             await server.set({'chatgpt': ChatGPT(chats=[])})
