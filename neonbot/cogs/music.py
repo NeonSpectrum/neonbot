@@ -215,6 +215,20 @@ class Music(commands.Cog):
         log.cmd(interaction, msg)
         await interaction.response.send_message(embed=Embed(msg))
 
+    @app_commands.command(name='stop')
+    @app_commands.check(in_voice)
+    @app_commands.check(has_player)
+    @app_commands.guild_only()
+    async def stop(self, interaction: discord.Interaction) -> None:
+        """Stops the current player and reset the queue from the start."""
+
+        player = await Player.get_instance(interaction)
+        await player.stop()
+
+        msg = "Player stopped."
+        log.cmd(interaction, msg)
+        await interaction.response.send_message(embed=Embed(msg))
+
 
 # noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:

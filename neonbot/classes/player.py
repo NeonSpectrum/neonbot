@@ -38,7 +38,7 @@ class Player:
         )
         self.last_track = None
         self.last_voice_channel: Optional[discord.VoiceChannel] = None
-        self.state = PlayerState.STOPPED
+        self.state = PlayerState.NONE
 
     @property
     def channel(self):
@@ -234,7 +234,11 @@ class Player:
 
         self.last_track = self.now_playing
 
+        if self.state == PlayerState.NONE:
+            return
+
         if self.state == PlayerState.STOPPED:
+            await self.send_playing_message()
             return
 
         if self.state != PlayerState.JUMPED:
@@ -275,9 +279,15 @@ class Player:
         self.connection.stop()
 
     async def reset(self):
-        self.state = PlayerState.STOPPED
+        self.state = PlayerState.NONE
         await self.disconnect(force=True)
         await self.clear_messages()
+
+    async def stop(self):
+        await self.clear_messages()
+        self.state = PlayerState.STOPPED
+        self.current_queue = 0
+        self.next()
 
     async def remove_song(self, index: int):
         self.queue.pop(index)
