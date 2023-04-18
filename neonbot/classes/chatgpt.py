@@ -48,6 +48,9 @@ class ChatGPT:
         is_channel = isinstance(channel, discord.TextChannel)
         is_thread = isinstance(channel, discord.Thread)
 
+        if not is_channel and not is_thread:
+            return False
+
         if is_channel and channel.id != server.channel.chatgpt:
             return False
 
