@@ -34,7 +34,7 @@ class ChatGPT:
             messages=[{'role': message.role, 'content': message.content} for message in self.chat.messages]
         )
         answer = chat_completion.choices[0].message.content
-        self.chat.messages.append(Message(role='assistant', content=answer))
+        # self.chat.messages.append(Message(role='assistant', content=answer))
         await self.server.save_changes()
 
         return answer
