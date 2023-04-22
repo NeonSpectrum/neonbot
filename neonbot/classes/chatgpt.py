@@ -5,7 +5,9 @@ import openai
 from discord.ext import commands
 from discord.utils import find
 from envparse import env
+from i18n import t
 
+from neonbot.classes.embed import Embed
 from neonbot.models.chatgpt import Message, Chat
 from neonbot.models.server import Server
 from neonbot.utils.functions import split_long_message
@@ -25,6 +27,9 @@ class ChatGPT:
 
         return self.get_chat(thread_id)
 
+    def add_token(self, token: int):
+        self.chat.token = self.chat.token + token if self.chat.token else token
+
     def add_message(self, message: str):
         self.chat.messages.append(Message(role='user', content=message))
 
@@ -35,6 +40,7 @@ class ChatGPT:
         )
         answer = chat_completion.choices[0].message.content
         # self.chat.messages.append(Message(role='assistant', content=answer))
+        self.add_token(chat_completion.usage.prompt_tokens)
         await self.server.save_changes()
 
         return answer
@@ -72,6 +78,10 @@ class ChatGPT:
 
             for message in split_long_message(response):
                 await channel.send(message)
+
+            if chatgpt.chat.token > 4000:
+                await channel.send(embed=Embed(t('chatgpt.max_limit_reached')))
+                await channel.edit(archived=True, locked=True)
 
         if content.lower().strip() == 'bye':
             async def remove():

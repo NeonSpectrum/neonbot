@@ -10,6 +10,7 @@ class Message(BaseModel):
 
 class Chat(BaseModel):
     thread_id: int
+    token: int
     messages: List[Message]
 
 
