@@ -57,6 +57,9 @@ class ChatGPT:
         if is_thread and channel.parent_id != server.channel.chatgpt:
             return False
 
+        if len(ctx.message.mentions) > 0:
+            return False
+
         if is_channel:
             await ctx.message.delete()
             channel = await ctx.channel.create_thread(name=content)
