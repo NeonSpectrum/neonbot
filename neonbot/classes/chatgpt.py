@@ -68,7 +68,7 @@ class ChatGPT:
 
         if is_channel:
             await ctx.message.delete()
-            channel = await ctx.channel.create_thread(name=content)
+            channel = await ctx.channel.create_thread(name=content[0:97] + '...' if len(content) > 100 else content)
             await channel.add_user(ctx.author)
 
         async with channel.typing():
