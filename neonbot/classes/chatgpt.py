@@ -33,6 +33,11 @@ class ChatGPT:
     def add_message(self, message: str):
         self.chat.messages.append(Message(role='user', content=message))
 
+    async def reset(self):
+        self.chat.message = []
+        self.chat.token = 0
+        await self.server.save_changes()
+
     async def get_response(self) -> str:
         chat_completion = await openai.ChatCompletion.acreate(
             model=env.str('OPENAI_MODEL', default='gpt-3.5-turbo'),
@@ -81,7 +86,7 @@ class ChatGPT:
 
             if chatgpt.chat.token > 4000:
                 await channel.send(embed=Embed(t('chatgpt.max_limit_reached')))
-                await channel.edit(archived=True, locked=True)
+                await chatgpt.reset()
 
         if content.lower().strip() == 'bye':
             async def remove():
