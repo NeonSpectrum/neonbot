@@ -21,6 +21,7 @@ class ChatGPT:
         self.server = Server.get_instance(thread.guild.id)
         self.thread = thread
         self.chat = self.get_chat(thread.id)
+        self.encoder = tiktoken.get_encoding('gpt2')
 
     def get_chat(self, thread_id: int):
         if chat := find(lambda chat: chat.thread_id == thread_id, self.server.chatgpt.chats):
@@ -33,18 +34,21 @@ class ChatGPT:
     def add_token(self, token: int):
         self.chat.token = self.chat.token + token if self.chat.token else token
 
-    def add_message(self, message: str):
+    async def add_message(self, message: str):
         self.chat.messages.append(Message(role='user', content=message))
+        self.add_token(len(self.encoder.encode(message)))
+
+        if self.chat.token > ChatGPT.MAX_TOKEN:
+            await self.trim_messages()
 
     async def trim_messages(self):
-        encoder = tiktoken.get_encoding('gpt2')
         saved_messages = []
         total_tokens = 0
         conversation = []
         conversation_tokens = 0
 
         for message in reversed(self.chat.messages):
-            tokens = len(encoder.encode(message.content))
+            tokens = len(self.encoder.encode(message.content))
 
             conversation.insert(0, message)
             conversation_tokens += tokens
@@ -103,7 +107,7 @@ class ChatGPT:
 
         async with channel.typing():
             chatgpt = ChatGPT(channel)
-            chatgpt.add_message(content)
+            await chatgpt.add_message(content)
             response = await chatgpt.get_response()
 
             for message in split_long_message(response):
