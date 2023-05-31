@@ -6,7 +6,7 @@ from discord.ext import commands
 from discord.utils import find
 from envparse import env
 from i18n import t
-from tiktoken import TokenCounter
+import tiktoken
 
 from neonbot.classes.embed import Embed
 from neonbot.models.chatgpt import Message, Chat
@@ -37,14 +37,14 @@ class ChatGPT:
         self.chat.messages.append(Message(role='user', content=message))
 
     async def trim_messages(self):
-        counter = TokenCounter()
+        encoder = tiktoken.get_encoding('gpt2')
         saved_messages = []
         total_tokens = 0
         conversation = []
         conversation_tokens = 0
 
         for message in reversed(self.chat.messages):
-            tokens = counter.count_tokens(message.content)
+            tokens = len(encoder.encode(message.content))
             total_tokens += tokens
 
             conversation.insert(0, message.content)
