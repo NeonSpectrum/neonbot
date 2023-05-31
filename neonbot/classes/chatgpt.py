@@ -45,7 +45,6 @@ class ChatGPT:
 
         for message in reversed(self.chat.messages):
             tokens = len(encoder.encode(message.content))
-            total_tokens += tokens
 
             conversation.insert(0, message)
             conversation_tokens += tokens
@@ -55,10 +54,12 @@ class ChatGPT:
 
             if message.role == 'user':
                 saved_messages = conversation + saved_messages
+                total_tokens += conversation_tokens
                 conversation = []
                 conversation_tokens = 0
 
-        self.chat.messages = saved_messages
+        self.chat.messages.clear()
+        self.chat.messages.extend(saved_messages)
         self.chat.token = total_tokens
         await self.server.save_changes()
 
