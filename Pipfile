@@ -21,6 +21,7 @@ psutil = "*"
 beanie = "*"
 "discord.py" = {extras = ["voice"], version = "*"}
 openai = "*"
+tiktoken = "*"
 
 [dev-packages]
 pylint = "*"
