@@ -47,7 +47,7 @@ class ChatGPT:
             tokens = len(encoder.encode(message.content))
             total_tokens += tokens
 
-            conversation.insert(0, message.content)
+            conversation.insert(0, message)
             conversation_tokens += tokens
 
             if message.role == 'user' and total_tokens + conversation_tokens <= ChatGPT.MAX_TOKEN:
@@ -56,7 +56,7 @@ class ChatGPT:
             else:
                 break
 
-        self.chat.message = saved_messages
+        self.chat.messages = saved_messages
         self.chat.token = total_tokens
         await self.server.save_changes()
 
@@ -106,8 +106,8 @@ class ChatGPT:
             for message in split_long_message(response):
                 await channel.send(message)
 
-            if chatgpt.chat.token > ChatGPT.MAX_TOKEN:
-                await chatgpt.trim_messages()
+        if chatgpt.chat.token > ChatGPT.MAX_TOKEN:
+            await chatgpt.trim_messages()
 
         if content.lower().strip() == 'bye':
             async def remove():
