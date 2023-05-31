@@ -50,11 +50,13 @@ class ChatGPT:
             conversation.insert(0, message)
             conversation_tokens += tokens
 
-            if message.role == 'user' and total_tokens + conversation_tokens <= ChatGPT.MAX_TOKEN:
-                saved_messages = conversation + saved_messages
-                conversation_tokens = 0
-            else:
+            if total_tokens + conversation_tokens > ChatGPT.MAX_TOKEN:
                 break
+
+            if message.role == 'user':
+                saved_messages = conversation + saved_messages
+                conversation = []
+                conversation_tokens = 0
 
         self.chat.messages = saved_messages
         self.chat.token = total_tokens
