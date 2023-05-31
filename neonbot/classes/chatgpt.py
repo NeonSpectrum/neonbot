@@ -6,6 +6,7 @@ from discord.ext import commands
 from discord.utils import find
 from envparse import env
 from i18n import t
+from tiktoken import TokenCounter
 
 from neonbot.classes.embed import Embed
 from neonbot.models.chatgpt import Message, Chat
@@ -14,6 +15,8 @@ from neonbot.utils.functions import split_long_message
 
 
 class ChatGPT:
+    MAX_TOKEN = 4000
+
     def __init__(self, thread: discord.Thread):
         self.server = Server.get_instance(thread.guild.id)
         self.thread = thread
@@ -33,9 +36,28 @@ class ChatGPT:
     def add_message(self, message: str):
         self.chat.messages.append(Message(role='user', content=message))
 
-    async def reset(self):
-        self.chat.message = []
-        self.chat.token = 0
+    async def trim_messages(self):
+        counter = TokenCounter()
+        saved_messages = []
+        total_tokens = 0
+        conversation = []
+        conversation_tokens = 0
+
+        for message in reversed(self.chat.messages):
+            tokens = counter.count_tokens(message.content)
+            total_tokens += tokens
+
+            conversation.insert(0, message.content)
+            conversation_tokens += tokens
+
+            if message.role == 'user' and total_tokens + conversation_tokens <= ChatGPT.MAX_TOKEN:
+                saved_messages = conversation + saved_messages
+                conversation_tokens = 0
+            else:
+                break
+
+        self.chat.message = saved_messages
+        self.chat.token = total_tokens
         await self.server.save_changes()
 
     async def get_response(self) -> str:
@@ -84,9 +106,8 @@ class ChatGPT:
             for message in split_long_message(response):
                 await channel.send(message)
 
-            if chatgpt.chat.token > 4000:
-                await channel.send(embed=Embed(t('chatgpt.max_limit_reached')))
-                await chatgpt.reset()
+            if chatgpt.chat.token > ChatGPT.MAX_TOKEN:
+                await chatgpt.trim_messages()
 
         if content.lower().strip() == 'bye':
             async def remove():
