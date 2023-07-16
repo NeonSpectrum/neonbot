@@ -97,7 +97,7 @@ class ChatGPT:
         if is_thread and channel.parent_id != server.channel.chatgpt:
             return False
 
-        if len(ctx.message.mentions) > 0:
+        if ctx.message.content.startswith('!!'):
             return False
 
         if is_channel:
@@ -105,13 +105,18 @@ class ChatGPT:
             channel = await ctx.channel.create_thread(name=content[0:97] + '...' if len(content) > 100 else content)
             await channel.add_user(ctx.author)
 
-        async with channel.typing():
-            chatgpt = ChatGPT(channel)
-            await chatgpt.add_message(content)
-            response = await chatgpt.get_response()
+        try:
+            await channel.edit(locked=True)
 
-            for message in split_long_message(response):
-                await channel.send(message)
+            async with channel.typing():
+                chatgpt = ChatGPT(channel)
+                await chatgpt.add_message(content)
+                response = await chatgpt.get_response()
+
+                for message in split_long_message(response):
+                    await channel.send(message)
+        finally:
+            await channel.edit(locked=False)
 
         if chatgpt.chat.token > ChatGPT.MAX_TOKEN:
             await chatgpt.trim_messages()
