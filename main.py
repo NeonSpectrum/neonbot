@@ -13,8 +13,6 @@ i18n.load_path.append('./neonbot/lang')
 i18n.set('file_format', 'json')
 i18n.set('skip_locale_root_data', True)
 
-openai.api_key = env.str('OPENAI_KEY')
-
 
 def main() -> None:
     from neonbot import bot
