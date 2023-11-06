@@ -332,7 +332,7 @@ class Player:
         self.player_controls.initialize()
 
         self.messages['playing'] = await self.channel.send(
-            embed=self.get_playing_embed(), view=self.player_controls.get()
+            embed=self.get_playing_embed(), view=self.player_controls.get(), silent=True
         )
 
     async def send_finished_message(self, detailed=False) -> None:
@@ -347,7 +347,8 @@ class Player:
 
         message = await self.channel.send(
             embed=self.get_finished_embed() if detailed else self.get_simplified_finished_message(),
-            view=self.player_controls.get() if detailed else None
+            view=self.player_controls.get() if detailed else None,
+            silent=True
         )
 
         # Will replace by simplified after
@@ -357,7 +358,7 @@ class Player:
     async def clear_messages(self):
         if self.messages['finished']:
             await bot.delete_message(self.messages['finished'])
-            await self.channel.send(embed=self.get_simplified_finished_message())
+            await self.channel.send(embed=self.get_simplified_finished_message(), silent=True)
 
         await bot.delete_message(self.messages['playing'])
         self.messages['playing'] = None
