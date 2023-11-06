@@ -1,7 +1,7 @@
 import asyncio
 
 import discord
-import openai
+from openai import AsyncOpenAI
 from discord.ext import commands
 from discord.utils import find
 from envparse import env
@@ -22,6 +22,7 @@ class ChatGPT:
         self.thread = thread
         self.chat = self.get_chat(thread.id)
         self.encoder = tiktoken.get_encoding('gpt2')
+        self.client = AsyncOpenAI()
 
     def get_chat(self, thread_id: int):
         if chat := find(lambda chat: chat.thread_id == thread_id, self.server.chatgpt.chats):
@@ -68,7 +69,7 @@ class ChatGPT:
         await self.server.save_changes()
 
     async def get_response(self) -> str:
-        chat_completion = await openai.ChatCompletion.acreate(
+        chat_completion = await self.client.chat.completions.create(
             model=env.str('OPENAI_MODEL', default='gpt-3.5-turbo'),
             messages=[{'role': message.role, 'content': message.content} for message in self.chat.messages]
         )
