@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 
 class Channel(BaseModel):
-    voice_log: Optional[int]
-    presence_log: Optional[int]
-    msgdelete_log: Optional[int]
-    chatgpt: Optional[int]
+    voice_log: Optional[int] = None
+    presence_log: Optional[int] = None
+    msgdelete_log: Optional[int] = None
+    chatgpt: Optional[int] = None

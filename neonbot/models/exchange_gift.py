@@ -5,12 +5,12 @@ from pydantic import BaseModel
 
 class ExchangeGiftMember(BaseModel):
     user_id: int
-    wishlist: Optional[str]
-    chosen: Optional[int]
+    wishlist: Optional[str] = None
+    chosen: Optional[int] = None
 
 
 class ExchangeGift(BaseModel):
-    message_id: Optional[int]
+    message_id: Optional[int] = None
     members: List[ExchangeGiftMember]
-    budget: Optional[int]
-    finish: Optional[bool]
+    budget: Optional[int] = None
+    finish: Optional[bool] = None

@@ -18,8 +18,8 @@ class Server(Document):
     prefix: str
     channel: Channel
     music: Music
-    exchange_gift: Optional[ExchangeGift]
-    chatgpt: Optional[ChatGPT]
+    exchange_gift: Optional[ExchangeGift] = None
+    chatgpt: Optional[ChatGPT] = None
 
     class Settings:
         name = 'servers'

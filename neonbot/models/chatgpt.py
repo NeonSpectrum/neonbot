@@ -10,7 +10,7 @@ class Message(BaseModel):
 
 class Chat(BaseModel):
     thread_id: int
-    token: Optional[int]
+    token: Optional[int] = None
     messages: List[Message]
 
 
