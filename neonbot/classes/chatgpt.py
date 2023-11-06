@@ -15,7 +15,7 @@ from neonbot.utils.functions import split_long_message
 
 
 class ChatGPT:
-    MAX_TOKEN = 4000
+    MAX_TOKEN = env.int('OPENAI_MAX_TOKEN')
 
     def __init__(self, thread: discord.Thread):
         self.server = Server.get_instance(thread.guild.id)
