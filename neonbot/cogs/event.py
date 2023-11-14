@@ -176,14 +176,18 @@ class Event(commands.Cog):
             return
 
         server = Server.get_instance(after.guild.id)
-        log_channel = bot.get_channel(int(server.channel.presence_log or -1))
+        status_log_channel = bot.get_channel(int(server.channel.status_log or -1))
+        activity_log_channel = bot.get_channel(int(server.channel.activity_log or -1))
 
         embed = Embed(timestamp=datetime.now())
         embed.set_author(name=str(after), icon_url=after.display_avatar.url)
 
         if before.status != after.status:
-            msg = f"**{before.mention}** is now **{after.status}**."
-            embed.description = msg
+            embed.description = f"**{before.mention}** is now **{after.status}**."
+
+            if status_log_channel:
+                embed.description = ":bust_in_silhouette:" + embed.description
+                await status_log_channel.send(embed=embed)
         elif before.activities != after.activities:
             before_activity = before.activities and before.activities[-1]
             after_activity = after.activities and after.activities[-1]
@@ -230,9 +234,9 @@ class Event(commands.Cog):
             else:
                 embed.description += f" now {after_activity.type.name} **{after_activity.name}**."
 
-        if log_channel and embed.description:
-            embed.description = ":bust_in_silhouette:" + embed.description
-            await log_channel.send(embed=embed)
+            if activity_log_channel:
+                embed.description = ":bust_in_silhouette:" + embed.description
+                await activity_log_channel.send(embed=embed)
 
 
 # noinspection PyShadowingNames

@@ -151,18 +151,31 @@ class Administration(commands.Cog):
         else:
             await interaction.response.send_message(embed=Embed("Voice Logs is now disabled."))
 
-    @server.command(name='presencelogs')
-    async def setpresencelogs(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
-        """Sets the presence log channel. *ADMINISTRATOR"""
+    @server.command(name='statuslogs')
+    async def setstatuslogs(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
+        """Sets the status log channel. *ADMINISTRATOR"""
 
         guild = Server.get_instance(interaction.guild_id)
-        guild.channel.presence_log = channel.id if enable else None
+        guild.channel.status_log = channel.id if enable else None
         await guild.save_changes()
 
         if guild.channel.presence_log:
-            await interaction.response.send_message(embed=Embed(f"Presence Logs is now set to {channel.mention}."))
+            await interaction.response.send_message(embed=Embed(f"Status Logs is now set to {channel.mention}."))
         else:
-            await interaction.response.send_message(embed=Embed("Presence Logs is now disabled."))
+            await interaction.response.send_message(embed=Embed("Status Logs is now disabled."))
+
+    @server.command(name='activitylogs')
+    async def setactivitylogs(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
+        """Sets the activity log channel. *ADMINISTRATOR"""
+
+        guild = Server.get_instance(interaction.guild_id)
+        guild.channel.activity_log = channel.id if enable else None
+        await guild.save_changes()
+
+        if guild.channel.presence_log:
+            await interaction.response.send_message(embed=Embed(f"Activity Logs is now set to {channel.mention}."))
+        else:
+            await interaction.response.send_message(embed=Embed("Activity Logs is now disabled."))
 
     @server.command(name='chatgpt')
     async def setchatgpt(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
