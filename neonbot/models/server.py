@@ -61,7 +61,7 @@ class Server(Document):
         if not server.chatgpt:
             await server.set({'chatgpt': ChatGPT(chats=[])})
 
-        if server.channel.presence_log:
+        if 'presence_log' in server.channel:
             server.channel.status_log = server.channel.presence_log
             del server.channel.presence_log
             await server.save_changes()
