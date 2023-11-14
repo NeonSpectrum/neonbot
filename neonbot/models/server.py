@@ -45,7 +45,7 @@ class Server(Document):
         await Server(
             id=guild_id,
             prefix='.',
-            channel=Channel(voice_log=None, presence_log=None, msgdelete_log=None),
+            channel=Channel(voice_log=None, status_log=None, activity_log=None, msgdelete_log=None),
             music=Music(volume=100, repeat=Repeat.OFF.value, shuffle=False),
             exchange_gift=ExchangeGift(members=[]),
             chatgpt=ChatGPT(chats=[])

@@ -159,7 +159,7 @@ class Administration(commands.Cog):
         guild.channel.status_log = channel.id if enable else None
         await guild.save_changes()
 
-        if guild.channel.presence_log:
+        if guild.channel.status_log:
             await interaction.response.send_message(embed=Embed(f"Status Logs is now set to {channel.mention}."))
         else:
             await interaction.response.send_message(embed=Embed("Status Logs is now disabled."))
@@ -172,7 +172,7 @@ class Administration(commands.Cog):
         guild.channel.activity_log = channel.id if enable else None
         await guild.save_changes()
 
-        if guild.channel.presence_log:
+        if guild.channel.activity_log:
             await interaction.response.send_message(embed=Embed(f"Activity Logs is now set to {channel.mention}."))
         else:
             await interaction.response.send_message(embed=Embed("Activity Logs is now disabled."))
