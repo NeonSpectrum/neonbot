@@ -156,14 +156,15 @@ class Administration(commands.Cog):
             'activity'
         ])
 
-        async def callback(cb_interaction: discord.Interaction):
+        async def callback():
             for value in select.values:
                 setattr(guild.channel_log, value, channel.id if enable else None)
 
             await guild.save_changes()
 
-            await cb_interaction.response.send_message(
-                embed=Embed(f'Log channel type `{", ".join(select.values)}` has been set to {channel.mention}')
+            await interaction.edit_original_response(
+                embed=Embed(f'Log channel type `{", ".join(select.values)}` has been set to {channel.mention}'),
+                view=None
             )
 
         select.callback = callback

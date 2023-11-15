@@ -182,7 +182,6 @@ class Event(commands.Cog):
         activity_log_channel = bot.get_channel(int(server.channel_log.activity or -1))
 
         embed = Embed(timestamp=datetime.now())
-        embed.set_author(name=str(after), icon_url=after.display_avatar.url)
 
         if before.status != after.status:
             embed.description = f"**{before.mention}** is now **{after.status}**."
@@ -203,6 +202,7 @@ class Event(commands.Cog):
                     return activity.large_image_url or activity.small_image_url
                 return None
 
+            embed.set_author(name=str(after), icon_url=after.display_avatar.url)
             embed.description = f"**{before.mention}** is"
 
             if isinstance(after_activity, discord.Spotify):
