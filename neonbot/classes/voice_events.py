@@ -74,16 +74,16 @@ class VoiceEvents:
 
     def get_server_deafen_message(self):
         if not self.before.deaf and self.after.deaf:
-            msg = f"**{self.member.mention}** has deafened themselves on **{self.after.channel.mention}**"
+            msg = f"**{self.member.mention}** has been server deafened on **{self.after.channel.mention}**"
         else:
-            msg = f"**{self.member.mention}** has un-deafened themselves on **{self.after.channel.mention}**"
+            msg = f"**{self.member.mention}** has been server un-deafened on **{self.after.channel.mention}**"
 
         return Embed(f":bust_in_silhouette:{msg}")
 
     def get_server_muted_message(self):
         if not self.before.mute and self.after.mute:
-            msg = f"**{self.member.mention}** has muted themselves on **{self.after.channel.mention}**"
+            msg = f"**{self.member.mention}** has been server muted on **{self.after.channel.mention}**"
         else:
-            msg = f"**{self.member.mention}** has un-muted themselves on **{self.after.channel.mention}**"
+            msg = f"**{self.member.mention}** has been server un-muted on **{self.after.channel.mention}**"
 
         return Embed(f":bust_in_silhouette:{msg}")
