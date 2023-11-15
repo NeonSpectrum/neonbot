@@ -147,23 +147,29 @@ class Event(commands.Cog):
                 await player.reset()
 
         server = Guild.get_instance(member.guild.id)
-        log_channel = bot.get_channel(int(server.channel.voice_log or -1))
+
+        connect_channel = bot.get_channel(int(server.channel_log.connect or -1))
+        deafen_channel = bot.get_channel(int(server.channel_log.deafen or -1))
+        mute_channel = bot.get_channel(int(server.channel_log.mute or -1))
+        server_deafen_channel = bot.get_channel(int(server.channel_log.server_deafen or -1))
+        server_mute_channel = bot.get_channel(int(server.channel_log.server_mute or -1))
+
         voice_events = VoiceEvents(member, before, after)
 
         if voice_events.is_channel_changed:
             embed = voice_events.get_channel_changed_message()
 
-            if log_channel and embed:
-                await log_channel.send(embed=embed)
+            if connect_channel and embed:
+                await connect_channel.send(embed=embed)
 
-        elif voice_events.is_self_deafen_changed:
-            await log_channel.send(embed=voice_events.get_self_deafen_message())
-        elif voice_events.is_self_muted_changed:
-            await log_channel.send(embed=voice_events.get_self_muted_message())
-        elif voice_events.is_server_deafen_changed:
-            await log_channel.send(embed=voice_events.get_server_deafen_message())
-        elif voice_events.is_server_muted_changed:
-            await log_channel.send(embed=voice_events.get_server_muted_message())
+        elif deafen_channel and voice_events.is_self_deafen_changed:
+            await deafen_channel.send(embed=voice_events.get_self_deafen_message())
+        elif mute_channel and voice_events.is_self_muted_changed:
+            await mute_channel.send(embed=voice_events.get_self_muted_message())
+        elif server_deafen_channel and voice_events.is_server_deafen_changed:
+            await server_deafen_channel.send(embed=voice_events.get_server_deafen_message())
+        elif server_mute_channel and voice_events.is_server_muted_changed:
+            await server_mute_channel.send(embed=voice_events.get_server_muted_message())
 
     @staticmethod
     @bot.event
@@ -172,8 +178,8 @@ class Event(commands.Cog):
             return
 
         server = Guild.get_instance(after.guild.id)
-        status_log_channel = bot.get_channel(int(server.channel.status_log or -1))
-        activity_log_channel = bot.get_channel(int(server.channel.activity_log or -1))
+        status_log_channel = bot.get_channel(int(server.channel_log.status or -1))
+        activity_log_channel = bot.get_channel(int(server.channel_log.activity or -1))
 
         embed = Embed(timestamp=datetime.now())
         embed.set_author(name=str(after), icon_url=after.display_avatar.url)

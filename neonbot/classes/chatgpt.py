@@ -92,10 +92,10 @@ class ChatGPT:
         if not is_channel and not is_thread:
             return False
 
-        if is_channel and channel.id != server.channel.chatgpt:
+        if is_channel and channel.id != server.chatgpt.channel_id:
             return False
 
-        if is_thread and channel.parent_id != server.channel.chatgpt:
+        if is_thread and channel.parent_id != server.chatgpt.channel_id:
             return False
 
         if ctx.message.content.startswith('!!'):

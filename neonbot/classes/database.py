@@ -59,7 +59,6 @@ class Database:
         if 'channel' in guild:
             guild['channel_log'] = {
                 'connect': guild['channel']['voice_log'],
-                'disconnect': guild['channel']['voice_log'],
                 'mute': None,
                 'deafen': None,
                 'server_deafen': None,

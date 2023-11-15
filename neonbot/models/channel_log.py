@@ -5,7 +5,6 @@ from pydantic import BaseModel
 
 class ChannelLog(BaseModel):
     connect: Optional[int] = None
-    disconnect: Optional[int] = None
     mute: Optional[int] = None
     deafen: Optional[int] = None
     server_deafen: Optional[int] = None
