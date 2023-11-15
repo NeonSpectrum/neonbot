@@ -185,7 +185,7 @@ class Administration(commands.Cog):
 
         for name, channel_id in guild.channel_log.dict().items():
             channel = bot.get_channel(channel_id or -1)
-            embed.add_field(name.title(), channel.mention if channel else 'None', inline=False)
+            embed.add_field(name.title().replace('_', ''), channel.mention if channel else 'None', inline=False)
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
