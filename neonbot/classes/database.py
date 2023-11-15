@@ -68,7 +68,7 @@ class Database:
                 'activity': getattr(guild['channel'], 'activity_log', None)
             }
 
-            guild['chatgpt']['channel_id'] = guild['channel']['chatgpt']
+            guild['chatgpt']['channel_id'] = getattr(guild['channel'], 'chatgpt', None)
 
             del guild['channel']
 
