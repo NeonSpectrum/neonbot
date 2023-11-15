@@ -104,7 +104,7 @@ class Administration(commands.Cog):
 
         await interaction.response.send_message(embed=Embed(f"Prefix is now set to `{server.prefix}`."))
 
-    @settings.command(name='setstatus')
+    @settings.command(name='set-status')
     async def setstatus(self, interaction: discord.Interaction, status: discord.Status) -> None:
         """Sets the status of the bot. *BOT_OWNER"""
 
@@ -118,7 +118,7 @@ class Administration(commands.Cog):
 
         await interaction.response.send_message(embed=Embed(f"Status is now set to {bot.settings.get('status')}."))
 
-    @settings.command(name='setpresence')
+    @settings.command(name='set-presence')
     async def setpresence(
         self,
         interaction: discord.Interaction,
@@ -140,7 +140,7 @@ class Administration(commands.Cog):
             )
         )
 
-    @server.command(name='logs')
+    @server.command(name='set-logs')
     async def setlogs(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
         """Sets the log channel. *ADMINISTRATOR"""
 
@@ -173,6 +173,20 @@ class Administration(commands.Cog):
         view.add_item(select)
 
         await interaction.response.send_message(view=view, ephemeral=True)
+
+    @server.command(name='get-logs')
+    async def getlogs(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
+        """Gets the log channels. *ADMINISTRATOR"""
+
+        guild = Guild.get_instance(interaction.guild_id)
+
+        embed = Embed()
+        embed.set_author('Log Channels', icon_url=bot.user.display_avatar)
+
+        for name, channel_id in guild.channel_log.dict().items():
+            embed.add_field(name.title(), bot.get_channel(channel_id).mention, inline=False)
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @server.command(name='chatgpt')
     async def setchatgpt(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
