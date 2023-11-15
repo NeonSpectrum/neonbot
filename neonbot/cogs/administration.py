@@ -9,7 +9,7 @@ from discord.ext import commands
 from discord.ui import View
 
 from .. import bot
-from ..classes.dropdown import SelectChoices
+from ..classes.select_choices import SelectChoices
 from ..classes.embed import Embed
 from ..classes.player import Player
 from ..models.guild import Guild
