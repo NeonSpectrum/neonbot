@@ -175,7 +175,7 @@ class Administration(commands.Cog):
         await interaction.response.send_message(view=view, ephemeral=True)
 
     @server.command(name='get-logs')
-    async def getlogs(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
+    async def getlogs(self, interaction: discord.Interaction):
         """Gets the log channels. *ADMINISTRATOR"""
 
         guild = Guild.get_instance(interaction.guild_id)
