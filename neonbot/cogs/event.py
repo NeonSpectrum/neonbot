@@ -16,7 +16,7 @@ from neonbot.classes.voice_events import VoiceEvents
 from neonbot.enums import PlayerState
 from neonbot.models.guild import Guild
 from neonbot.utils import log, exceptions
-from neonbot.utils.functions import format_seconds, get_timestamp, get_log_prefix
+from neonbot.utils.functions import format_seconds, get_log_prefix
 from neonbot.utils.functions import get_command_string
 
 
