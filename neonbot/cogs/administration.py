@@ -44,7 +44,8 @@ class Administration(commands.Cog):
         variables = {
             "bot": bot,
             "ctx": ctx,
-            "player": Player.get_instance_from_guild(ctx.guild)
+            "player": Player.get_instance_from_guild(ctx.guild),
+            "Embed": Embed
         }
 
         if code.startswith("```") and code.endswith("```"):
