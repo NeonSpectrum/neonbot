@@ -43,11 +43,11 @@ class VoiceEvents:
 
     @property
     def is_self_stream_changed(self):
-        return self.is_readable and self.before.mute != self.after.mute
+        return self.is_readable and self.before.self_stream != self.after.self_stream
 
     @property
     def is_self_video_changed(self):
-        return self.is_readable and self.before.mute != self.after.mute
+        return self.is_readable and self.before.self_video != self.after.self_video
 
     def get_channel_changed_message(self):
         msg = None
