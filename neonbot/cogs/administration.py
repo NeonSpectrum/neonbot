@@ -142,7 +142,7 @@ class Administration(commands.Cog):
 
     @server.command(name='logs')
     async def setlogs(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
-        """Sets the voice log channel. *ADMINISTRATOR"""
+        """Sets the log channel. *ADMINISTRATOR"""
 
         guild = Guild.get_instance(interaction.guild_id)
         select = SelectChoices('Select log type...', [
@@ -156,7 +156,7 @@ class Administration(commands.Cog):
             'activity'
         ])
 
-        async def callback():
+        async def callback(_):
             for value in select.values:
                 setattr(guild.channel_log, value, channel.id if enable else None)
 
