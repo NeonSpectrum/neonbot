@@ -50,7 +50,7 @@ class Database:
 
     async def cache_guild(self, guild):
         log.info(f"Caching guild settings: {guild} ({guild.id})")
-        await Guild.start_migration(guild.id)
+        await self.start_migration(guild.id)
         await Guild.create_instance(guild.id)
 
     async def start_migration(self, guild_id: int):
