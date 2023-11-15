@@ -54,7 +54,7 @@ class Database:
         await Guild.create_instance(guild.id)
 
     async def start_migration(self, guild_id: int):
-        if 'guilds' not in self.db.list_collection_names():
+        if 'guilds' not in await self.db.list_collection_names():
             guild = await self.db.servers.find_one({'_id': guild_id})
 
             if 'channel' in guild:
