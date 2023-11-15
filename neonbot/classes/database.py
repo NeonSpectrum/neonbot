@@ -54,7 +54,7 @@ class Database:
         await Guild.create_instance(guild.id)
 
     async def start_migration(self, guild_id: int):
-        guild = (await self.db.servers.find_one({}, {'_id': guild_id})).to_mongo().to_dict()
+        guild = (await self.db.servers.find_one({}, {'_id': guild_id}))
 
         if 'channel_log' in guild:
             guild['channel_log']['connect'] = guild['channel']['voice_log']
