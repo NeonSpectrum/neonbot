@@ -6,6 +6,7 @@ from typing import Generator, Optional
 import discord
 from discord import app_commands
 from discord.ext import commands
+from discord.ui import View
 
 from .. import bot
 from ..classes.dropdown import SelectChoices
@@ -167,7 +168,10 @@ class Administration(commands.Cog):
 
         select.callback = callback
 
-        await interaction.response.send_message(view=select, ephemeral=True)
+        view = View()
+        view.add_item(select)
+
+        await interaction.response.send_message(view=view, ephemeral=True)
 
     @server.command(name='chatgpt')
     async def setchatgpt(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
