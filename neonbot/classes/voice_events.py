@@ -40,6 +40,14 @@ class VoiceEvents:
     def is_server_muted_changed(self):
         return self.is_readable and self.before.mute != self.after.mute
 
+    @property
+    def is_self_stream_changed(self):
+        return self.is_readable and self.before.mute != self.after.mute
+
+    @property
+    def is_self_video_changed(self):
+        return self.is_readable and self.before.mute != self.after.mute
+
     def get_channel_changed_message(self):
         msg = None
 
@@ -85,5 +93,21 @@ class VoiceEvents:
             msg = f"**{self.member.mention}** has been server muted on **{self.after.channel.mention}**"
         else:
             msg = f"**{self.member.mention}** has been server un-muted on **{self.after.channel.mention}**"
+
+        return Embed(f":bust_in_silhouette:{msg}")
+
+    def get_self_stream_message(self):
+        if not self.before.self_stream and self.after.self_stream:
+            msg = f"**{self.member.mention}** started streaming on **{self.after.channel.mention}**"
+        else:
+            msg = f"**{self.member.mention}** finished streaming on **{self.after.channel.mention}**"
+
+        return Embed(f":bust_in_silhouette:{msg}")
+
+    def get_self_video_message(self):
+        if not self.before.self_video and self.after.self_video:
+            msg = f"**{self.member.mention}** opened their video on **{self.after.channel.mention}**"
+        else:
+            msg = f"**{self.member.mention}** closed their video on **{self.after.channel.mention}**"
 
         return Embed(f":bust_in_silhouette:{msg}")

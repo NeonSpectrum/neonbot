@@ -11,3 +11,5 @@ class ChannelLog(BaseModel):
     server_mute: Optional[int] = None
     status: Optional[int] = None
     activity: Optional[int] = None
+    stream: Optional[int] = None
+    video: Optional[int] = None

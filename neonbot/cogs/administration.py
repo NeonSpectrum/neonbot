@@ -154,7 +154,9 @@ class Administration(commands.Cog):
             'server_deafen',
             'server_mute',
             'status',
-            'activity'
+            'activity',
+            'stream',
+            'video',
         ])
 
         async def callback(_):

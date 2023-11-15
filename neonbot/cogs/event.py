@@ -153,6 +153,8 @@ class Event(commands.Cog):
         mute_channel = bot.get_channel(int(server.channel_log.mute or -1))
         server_deafen_channel = bot.get_channel(int(server.channel_log.server_deafen or -1))
         server_mute_channel = bot.get_channel(int(server.channel_log.server_mute or -1))
+        stream_channel = bot.get_channel(int(server.channel_log.stream or -1))
+        video_channel = bot.get_channel(int(server.channel_log.video or -1))
 
         voice_events = VoiceEvents(member, before, after)
 
@@ -162,14 +164,18 @@ class Event(commands.Cog):
             if connect_channel and embed:
                 await connect_channel.send(embed=embed)
 
-        elif server_deafen_channel and voice_events.is_server_deafen_changed:
-            await server_deafen_channel.send(embed=voice_events.get_server_deafen_message())
-        elif server_mute_channel and voice_events.is_server_muted_changed:
-            await server_mute_channel.send(embed=voice_events.get_server_muted_message())
         elif deafen_channel and voice_events.is_self_deafen_changed:
             await deafen_channel.send(embed=voice_events.get_self_deafen_message())
         elif mute_channel and voice_events.is_self_muted_changed:
             await mute_channel.send(embed=voice_events.get_self_muted_message())
+        elif server_deafen_channel and voice_events.is_server_deafen_changed:
+            await server_deafen_channel.send(embed=voice_events.get_server_deafen_message())
+        elif server_mute_channel and voice_events.is_server_muted_changed:
+            await server_mute_channel.send(embed=voice_events.get_server_muted_message())
+        elif stream_channel and voice_events.is_self_stream_changed:
+            await mute_channel.send(embed=voice_events.get_self_stream_message())
+        elif video_channel and voice_events.is_self_video_changed:
+            await mute_channel.send(embed=voice_events.get_self_video_message())
 
     @staticmethod
     @bot.event

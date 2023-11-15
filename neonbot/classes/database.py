@@ -73,3 +73,13 @@ class Database:
                 del guild['channel']
 
                 await self.db.guilds.insert_one(guild)
+
+        guild = await self.db.guilds.find_one({'_id': guild_id})
+
+        if 'stream' not in guild['channel_log']:
+            await self.db.guilds.update_one({'_id': guild_id}, {
+                '$set': {
+                    'channel_log.stream': None,
+                    'channel_log.video': None,
+                }
+            })
