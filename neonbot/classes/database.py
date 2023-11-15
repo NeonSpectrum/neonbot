@@ -42,9 +42,9 @@ class Database:
         existing_guild_ids = [server.id for server in await Guild.find(In(Guild.id, guild_ids)).to_list()]
         new_guild = [guild for guild in guilds if guild.id not in existing_guild_ids]
 
-        for guild in new_guild:
-            log.info(f"Creating database for {guild}...")
-            await Guild.create_default_collection(guild.id)
+        # for guild in new_guild:
+        #     log.info(f"Creating database for {guild}...")
+        #     await Guild.create_default_collection(guild.id)
 
         await asyncio.gather(*[self.cache_guild(guild) for guild in guilds])
 

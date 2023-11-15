@@ -45,7 +45,7 @@ class Guild(Document):
         await Guild(
             id=guild_id,
             prefix='.',
-            channel=ChannelLog(),
+            channel_log=ChannelLog(),
             music=Music(volume=100, repeat=Repeat.OFF.value, shuffle=False),
             exchange_gift=ExchangeGift(members=[]),
             chatgpt=ChatGPT(chats=[])
