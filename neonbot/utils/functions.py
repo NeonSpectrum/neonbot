@@ -1,8 +1,10 @@
 import asyncio
-from datetime import timedelta
+from datetime import timedelta, datetime
 from typing import Union
+import pytz
 
 import discord
+from envparse import env
 
 
 async def shell_exec(command: str) -> str:
@@ -39,6 +41,12 @@ def format_seconds(secs: Union[int, float]) -> str:
     if formatted.startswith("0:"):
         return formatted[2:]
     return formatted
+
+
+def get_log_prefix() -> str:
+    tz = pytz.timezone(env.str('TZ', default="Asia/Manila"))
+    now = datetime.now(tz)
+    return f"`[{now.strftime('%I:%M:%S %p')}]` :bust_in_silhouette:"
 
 
 def split_long_message(message: str):

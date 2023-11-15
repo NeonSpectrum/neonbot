@@ -4,6 +4,7 @@ import discord
 
 from neonbot import bot
 from neonbot.classes.embed import Embed
+from neonbot.utils.functions import get_log_prefix
 
 
 class VoiceEvents:
@@ -59,7 +60,7 @@ class VoiceEvents:
             msg = f"**{self.member.mention}** has disconnected from **{self.before.channel.mention}**"
 
         if msg:
-            embed = Embed(f":bust_in_silhouette:{msg}")
+            embed = Embed(f"{get_log_prefix()}{msg}")
             return embed
 
         return None
@@ -70,7 +71,7 @@ class VoiceEvents:
         else:
             msg = f"**{self.member.mention}** has un-deafened themselves on **{self.after.channel.mention}**"
 
-        return Embed(f":bust_in_silhouette:{msg}")
+        return Embed(f"{get_log_prefix()}{msg}")
 
     def get_self_muted_message(self):
         if not self.before.self_mute and self.after.self_mute:
@@ -78,7 +79,7 @@ class VoiceEvents:
         else:
             msg = f"**{self.member.mention}** has un-muted themselves on **{self.after.channel.mention}**"
 
-        return Embed(f":bust_in_silhouette:{msg}")
+        return Embed(f"{get_log_prefix()}{msg}")
 
     def get_server_deafen_message(self):
         if not self.before.deaf and self.after.deaf:
@@ -86,7 +87,7 @@ class VoiceEvents:
         else:
             msg = f"**{self.member.mention}** has been server un-deafened on **{self.after.channel.mention}**"
 
-        return Embed(f":bust_in_silhouette:{msg}")
+        return Embed(f"{get_log_prefix()}{msg}")
 
     def get_server_muted_message(self):
         if not self.before.mute and self.after.mute:
@@ -94,7 +95,7 @@ class VoiceEvents:
         else:
             msg = f"**{self.member.mention}** has been server un-muted on **{self.after.channel.mention}**"
 
-        return Embed(f":bust_in_silhouette:{msg}")
+        return Embed(f"{get_log_prefix()}{msg}")
 
     def get_self_stream_message(self):
         if not self.before.self_stream and self.after.self_stream:
@@ -102,7 +103,7 @@ class VoiceEvents:
         else:
             msg = f"**{self.member.mention}** finished streaming on **{self.after.channel.mention}**"
 
-        return Embed(f":bust_in_silhouette:{msg}")
+        return Embed(f"{get_log_prefix()}{msg}")
 
     def get_self_video_message(self):
         if not self.before.self_video and self.after.self_video:
@@ -110,4 +111,4 @@ class VoiceEvents:
         else:
             msg = f"**{self.member.mention}** closed their video on **{self.after.channel.mention}**"
 
-        return Embed(f":bust_in_silhouette:{msg}")
+        return Embed(f"{get_log_prefix()}{msg}")

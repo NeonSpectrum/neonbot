@@ -16,7 +16,7 @@ from neonbot.classes.voice_events import VoiceEvents
 from neonbot.enums import PlayerState
 from neonbot.models.guild import Guild
 from neonbot.utils import log, exceptions
-from neonbot.utils.functions import format_seconds
+from neonbot.utils.functions import format_seconds, get_timestamp, get_log_prefix
 from neonbot.utils.functions import get_command_string
 
 
@@ -192,7 +192,7 @@ class Event(commands.Cog):
             embed.description = f"**{before.mention}** is now **{after.status}**."
 
             if status_log_channel:
-                embed.description = ":bust_in_silhouette:" + embed.description
+                embed.description = get_log_prefix() + embed.description
                 await status_log_channel.send(embed=embed)
         elif before.activities != after.activities:
             before_activity = before.activities and before.activities[-1]
