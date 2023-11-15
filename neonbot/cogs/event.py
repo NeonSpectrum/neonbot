@@ -162,14 +162,14 @@ class Event(commands.Cog):
             if connect_channel and embed:
                 await connect_channel.send(embed=embed)
 
-        elif deafen_channel and voice_events.is_self_deafen_changed:
-            await deafen_channel.send(embed=voice_events.get_self_deafen_message())
-        elif mute_channel and voice_events.is_self_muted_changed:
-            await mute_channel.send(embed=voice_events.get_self_muted_message())
         elif server_deafen_channel and voice_events.is_server_deafen_changed:
             await server_deafen_channel.send(embed=voice_events.get_server_deafen_message())
         elif server_mute_channel and voice_events.is_server_muted_changed:
             await server_mute_channel.send(embed=voice_events.get_server_muted_message())
+        elif deafen_channel and voice_events.is_self_deafen_changed:
+            await deafen_channel.send(embed=voice_events.get_self_deafen_message())
+        elif mute_channel and voice_events.is_self_muted_changed:
+            await mute_channel.send(embed=voice_events.get_self_muted_message())
 
     @staticmethod
     @bot.event
