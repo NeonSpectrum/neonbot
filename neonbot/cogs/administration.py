@@ -94,7 +94,7 @@ class Administration(commands.Cog):
 
         await interaction.delete_original_response()
 
-    @server.command(name='prefix')
+    @server.command(name='set-prefix')
     async def prefix(self, interaction: discord.Interaction, prefix: str) -> None:
         """Sets the prefix of the current server. *ADMINISTRATOR"""
 
@@ -106,7 +106,7 @@ class Administration(commands.Cog):
         await interaction.response.send_message(embed=Embed(f"Prefix is now set to `{server.prefix}`."))
 
     @settings.command(name='set-status')
-    async def setstatus(self, interaction: discord.Interaction, status: discord.Status) -> None:
+    async def set_status(self, interaction: discord.Interaction, status: discord.Status) -> None:
         """Sets the status of the bot. *BOT_OWNER"""
 
         if status is False:
@@ -120,7 +120,7 @@ class Administration(commands.Cog):
         await interaction.response.send_message(embed=Embed(f"Status is now set to {bot.settings.get('status')}."))
 
     @settings.command(name='set-presence')
-    async def setpresence(
+    async def set_presence(
         self,
         interaction: discord.Interaction,
         presence_type: discord.ActivityType,
@@ -142,7 +142,7 @@ class Administration(commands.Cog):
         )
 
     @server.command(name='set-logs')
-    async def setlogs(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
+    async def set_logs(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
         """Sets the log channel. *ADMINISTRATOR"""
 
         guild = Guild.get_instance(interaction.guild_id)
@@ -176,7 +176,7 @@ class Administration(commands.Cog):
         await interaction.response.send_message(view=view, ephemeral=True)
 
     @server.command(name='get-logs')
-    async def getlogs(self, interaction: discord.Interaction):
+    async def get_logs(self, interaction: discord.Interaction):
         """Gets the log channels. *ADMINISTRATOR"""
 
         guild = Guild.get_instance(interaction.guild_id)
@@ -190,8 +190,8 @@ class Administration(commands.Cog):
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    @server.command(name='chatgpt')
-    async def setchatgpt(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
+    @server.command(name='set-chatgpt')
+    async def set_chatgpt(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
         """Sets the chatgpt channel. *ADMINISTRATOR"""
 
         guild = Guild.get_instance(interaction.guild_id)
