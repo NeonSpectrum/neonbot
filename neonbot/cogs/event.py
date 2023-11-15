@@ -101,7 +101,7 @@ class Event(commands.Cog):
         else:
             embed = Embed("There was an error executing the command. Please contact the administrator.")
 
-        await bot.send_response(interaction, embed=embed)
+        await bot.send_response(interaction, embed=embed, ephemeral=True)
 
         embed = Embed(
             title="Traceback Exception",
