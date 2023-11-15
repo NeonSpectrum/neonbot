@@ -46,7 +46,7 @@ def format_seconds(secs: Union[int, float]) -> str:
 def get_log_prefix() -> str:
     tz = pytz.timezone(env.str('TZ', default="Asia/Manila"))
     now = datetime.now(tz)
-    return f"[{now.strftime('%I:%M:%S %p')}] :bust_in_silhouette: "
+    return f"`[{now.strftime('%I:%M:%S %p')}]` :bust_in_silhouette:"
 
 
 def split_long_message(message: str):
