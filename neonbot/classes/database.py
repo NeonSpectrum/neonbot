@@ -55,6 +55,7 @@ class Database:
 
     async def start_migration(self, guild_id: int):
         guild = (await self.db.servers.find_one({}, {'_id': guild_id}))
+        print(guild)
 
         if 'channel_log' in guild:
             guild['channel_log']['connect'] = guild['channel']['voice_log']
