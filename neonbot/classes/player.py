@@ -14,7 +14,7 @@ from neonbot.classes.embed import Embed
 from neonbot.classes.player_controls import PlayerControls
 from neonbot.classes.ytdl import Ytdl
 from neonbot.enums import Repeat, PlayerState
-from neonbot.models.server import Server
+from neonbot.models.guild import Guild
 from neonbot.utils import log
 from neonbot.utils.constants import FFMPEG_OPTIONS, ICONS
 from neonbot.utils.exceptions import YtdlError
@@ -26,7 +26,7 @@ class Player:
     def __init__(self, ctx: commands.Context):
         self.ctx = ctx
         self.loop = asyncio.get_event_loop()
-        self.settings = Server.get_instance(ctx.guild.id)
+        self.settings = Guild.get_instance(ctx.guild.id)
         self.player_controls = PlayerControls(self)
         self.queue = []
         self.current_queue = 0

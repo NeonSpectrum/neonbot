@@ -12,8 +12,9 @@ from neonbot import bot
 from neonbot.classes.chatgpt import ChatGPT
 from neonbot.classes.embed import Embed
 from neonbot.classes.player import Player
+from neonbot.classes.voice_events import VoiceEvents
 from neonbot.enums import PlayerState
-from neonbot.models.server import Server
+from neonbot.models.guild import Guild
 from neonbot.utils import log, exceptions
 from neonbot.utils.functions import format_seconds
 from neonbot.utils.functions import get_command_string
@@ -115,8 +116,8 @@ class Event(commands.Cog):
     @bot.event
     async def on_guild_join(guild):
         log.info(f"Executing init for {guild}...")
-        await Server.create_default_collection(guild.id)
-        await Server.create_instance(guild.id)
+        await Guild.create_default_collection(guild.id)
+        await Guild.create_instance(guild.id)
         await bot.sync_command(guild)
 
     @staticmethod
@@ -145,29 +146,24 @@ class Event(commands.Cog):
             else:
                 await player.reset()
 
-        server = Server.get_instance(member.guild.id)
+        server = Guild.get_instance(member.guild.id)
+        log_channel = bot.get_channel(int(server.channel.voice_log or -1))
+        voice_events = VoiceEvents(member, before, after)
 
-        if before.channel != after.channel:
-            log_channel = bot.get_channel(int(server.channel.voice_log or -1))
+        if voice_events.is_channel_changed:
+            embed = voice_events.get_channel_changed_message()
 
-            # Check if the voice channel is not private
-            role = member.guild.default_role
-            before_readable = before.channel.permissions_for(role).view_channel if before.channel else False
-            after_readable = after.channel.permissions_for(role).view_channel if after.channel else False
-
-            msg = None
-
-            if after.channel and before.channel and before_readable and after_readable:
-                msg = f"**{member.mention}** has moved from **{before.channel.mention} to {after.channel.mention}**"
-            elif after.channel and after_readable:
-                msg = f"**{member.mention}** has connected to **{after.channel.mention}**"
-            elif before_readable:
-                msg = f"**{member.mention}** has disconnected from **{before.channel.mention}**"
-
-            if log_channel and msg:
-                embed = Embed(f":bust_in_silhouette:{msg}", timestamp=datetime.now())
-                embed.set_author(name=str(member), icon_url=member.display_avatar.url)
+            if log_channel and embed:
                 await log_channel.send(embed=embed)
+
+        elif voice_events.is_self_deafen_changed:
+            await log_channel.send(embed=voice_events.get_self_deafen_message())
+        elif voice_events.is_self_muted_changed:
+            await log_channel.send(embed=voice_events.get_self_muted_message())
+        elif voice_events.is_server_deafen_changed:
+            await log_channel.send(embed=voice_events.get_server_deafen_message())
+        elif voice_events.is_server_muted_changed:
+            await log_channel.send(embed=voice_events.get_server_muted_message())
 
     @staticmethod
     @bot.event
@@ -175,7 +171,7 @@ class Event(commands.Cog):
         if after.bot:
             return
 
-        server = Server.get_instance(after.guild.id)
+        server = Guild.get_instance(after.guild.id)
         status_log_channel = bot.get_channel(int(server.channel.status_log or -1))
         activity_log_channel = bot.get_channel(int(server.channel.activity_log or -1))
 

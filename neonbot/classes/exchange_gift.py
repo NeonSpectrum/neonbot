@@ -6,13 +6,13 @@ from discord.utils import find
 
 from neonbot.classes.embed import Embed
 from neonbot.models.exchange_gift import ExchangeGiftMember
-from neonbot.models.server import Server
+from neonbot.models.guild import Guild
 from neonbot.utils.exceptions import ExchangeGiftNotRegistered
 
 
 class ExchangeGift:
     def __init__(self, interaction: discord.Interaction):
-        self.server = Server.get_instance(interaction.guild.id)
+        self.server = Guild.get_instance(interaction.guild.id)
         self.guild = interaction.guild
         self.user = interaction.user
 

@@ -15,4 +15,5 @@ class Chat(BaseModel):
 
 
 class ChatGPT(BaseModel):
+    channel_id: int = None
     chats: List[Chat]

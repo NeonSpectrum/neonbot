@@ -10,7 +10,7 @@ import tiktoken
 
 from neonbot.classes.embed import Embed
 from neonbot.models.chatgpt import Message, Chat
-from neonbot.models.server import Server
+from neonbot.models.guild import Guild
 from neonbot.utils.functions import split_long_message
 
 
@@ -18,7 +18,7 @@ class ChatGPT:
     MAX_TOKEN = env.int('OPENAI_MAX_TOKEN')
 
     def __init__(self, thread: discord.Thread):
-        self.server = Server.get_instance(thread.guild.id)
+        self.server = Guild.get_instance(thread.guild.id)
         self.thread = thread
         self.chat = self.get_chat(thread.id)
         self.encoder = tiktoken.get_encoding('gpt2')
@@ -82,7 +82,7 @@ class ChatGPT:
 
     @staticmethod
     async def process_message(ctx: commands.Context):
-        server = Server.get_instance(ctx.guild.id)
+        server = Guild.get_instance(ctx.guild.id)
         channel = ctx.channel
         content = ctx.message.content
 

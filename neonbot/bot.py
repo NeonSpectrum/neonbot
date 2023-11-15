@@ -14,7 +14,7 @@ from envparse import env
 
 from . import __version__
 from .classes.database import Database
-from .models.server import Server
+from .models.guild import Guild
 from .models.setting import Setting
 from .utils import log
 from .utils.constants import PERMISSIONS
@@ -74,7 +74,7 @@ class NeonBot(commands.Bot):
 
     async def listen_views(self, guilds):
         for guild in guilds:
-            server = Server.get_instance(guild.id)
+            server = Guild.get_instance(guild.id)
             if not server.exchange_gift.finish and server.exchange_gift.message_id:
                 self.add_view(ExchangeGiftView(), message_id=server.exchange_gift.message_id)
 

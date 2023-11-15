@@ -8,9 +8,10 @@ from discord import app_commands
 from discord.ext import commands
 
 from .. import bot
+from ..classes.dropdown import SelectChoices
 from ..classes.embed import Embed
 from ..classes.player import Player
-from ..models.server import Server
+from ..models.guild import Guild
 from ..utils.constants import ICONS
 
 
@@ -95,7 +96,7 @@ class Administration(commands.Cog):
     async def prefix(self, interaction: discord.Interaction, prefix: str) -> None:
         """Sets the prefix of the current server. *ADMINISTRATOR"""
 
-        server = Server.get_instance(interaction.guild.id)
+        server = Guild.get_instance(interaction.guild.id)
         server.prefix = prefix
 
         await server.save_changes()
@@ -138,51 +139,42 @@ class Administration(commands.Cog):
             )
         )
 
-    @server.command(name='voicelogs')
-    async def setvoicelogs(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
+    @server.command(name='logs')
+    async def setlogs(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
         """Sets the voice log channel. *ADMINISTRATOR"""
 
-        guild = Server.get_instance(interaction.guild_id)
-        guild.channel.voice_log = channel.id if enable else None
-        await guild.save_changes()
+        guild = Guild.get_instance(interaction.guild_id)
+        select = SelectChoices('Select log type...', [
+            'connect',
+            'disconnect',
+            'mute',
+            'deafen',
+            'server_deafen',
+            'server_mute',
+            'status',
+            'activity'
+        ])
 
-        if guild.channel.voice_log:
-            await interaction.response.send_message(embed=Embed(f"Voice Logs is now set to {channel.mention}."))
-        else:
-            await interaction.response.send_message(embed=Embed("Voice Logs is now disabled."))
+        async def callback(cb_interaction: discord.Interaction):
+            for value in select.values:
+                setattr(guild.channel_log, value, channel.id if enable else None)
 
-    @server.command(name='statuslogs')
-    async def setstatuslogs(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
-        """Sets the status log channel. *ADMINISTRATOR"""
+            await guild.save_changes()
 
-        guild = Server.get_instance(interaction.guild_id)
-        guild.channel.status_log = channel.id if enable else None
-        await guild.save_changes()
+            await cb_interaction.response.send_message(
+                embed=Embed(f'Log channel type `{", ".join(select.values)}` has been set to {channel.mention}')
+            )
 
-        if guild.channel.status_log:
-            await interaction.response.send_message(embed=Embed(f"Status Logs is now set to {channel.mention}."))
-        else:
-            await interaction.response.send_message(embed=Embed("Status Logs is now disabled."))
+        select.callback = callback
 
-    @server.command(name='activitylogs')
-    async def setactivitylogs(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
-        """Sets the activity log channel. *ADMINISTRATOR"""
-
-        guild = Server.get_instance(interaction.guild_id)
-        guild.channel.activity_log = channel.id if enable else None
-        await guild.save_changes()
-
-        if guild.channel.activity_log:
-            await interaction.response.send_message(embed=Embed(f"Activity Logs is now set to {channel.mention}."))
-        else:
-            await interaction.response.send_message(embed=Embed("Activity Logs is now disabled."))
+        await interaction.response.send_message(view=select, ephemeral=True)
 
     @server.command(name='chatgpt')
     async def setchatgpt(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
         """Sets the chatgpt channel. *ADMINISTRATOR"""
 
-        guild = Server.get_instance(interaction.guild_id)
-        guild.channel.chatgpt = channel.id if enable else None
+        guild = Guild.get_instance(interaction.guild_id)
+        guild.chatgpt.channel_id = channel.id if enable else None
         await guild.save_changes()
 
         if guild.channel.chatgpt:
