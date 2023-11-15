@@ -54,21 +54,22 @@ class Database:
         await Guild.create_instance(guild.id)
 
     async def start_migration(self, guild_id: int):
-        guild = await self.db.servers.find_one({'_id': guild_id})
+        if 'servers' in self.db.list_collection_names():
+            guild = await self.db.servers.find_one({'_id': guild_id})
 
-        if 'channel' in guild:
-            guild['channel_log'] = {
-                'connect': guild['channel']['voice_log'],
-                'mute': None,
-                'deafen': None,
-                'server_deafen': None,
-                'server_mute': None,
-                'status': getattr(guild['channel'], 'status_log', None),
-                'activity': getattr(guild['channel'], 'activity_log', None)
-            }
+            if 'channel' in guild:
+                guild['channel_log'] = {
+                    'connect': guild['channel']['voice_log'],
+                    'mute': None,
+                    'deafen': None,
+                    'server_deafen': None,
+                    'server_mute': None,
+                    'status': getattr(guild['channel'], 'status_log', None),
+                    'activity': getattr(guild['channel'], 'activity_log', None)
+                }
 
-            guild['chatgpt']['channel_id'] = getattr(guild['channel'], 'chatgpt', None)
+                guild['chatgpt']['channel_id'] = getattr(guild['channel'], 'chatgpt', None)
 
-            del guild['channel']
+                del guild['channel']
 
-            await self.db.guilds.insert_one(guild)
+                await self.db.guilds.insert_one(guild)
