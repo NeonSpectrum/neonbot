@@ -64,8 +64,8 @@ class Database:
                     'deafen': None,
                     'server_deafen': None,
                     'server_mute': None,
-                    'status': getattr(guild['channel'], 'status_log', None),
-                    'activity': getattr(guild['channel'], 'activity_log', None)
+                    'status': guild['channel'].get('status_log', None),
+                    'activity': guild['channel'].get('activity_log', None)
                 }
 
                 guild['chatgpt']['channel_id'] = getattr(guild['channel'], 'chatgpt', None)
