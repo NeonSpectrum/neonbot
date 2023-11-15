@@ -57,14 +57,16 @@ class Database:
         guild = await self.db.servers.find_one({'_id': guild_id})
 
         if 'channel' in guild:
-            guild['channel_log']['connect'] = guild['channel']['voice_log']
-            guild['channel_log']['disconnect'] = guild['channel']['voice_log']
-            guild['channel_log']['mute'] = None
-            guild['channel_log']['deafen'] = None
-            guild['channel_log']['server_deafen'] = None
-            guild['channel_log']['server_mute'] = None
-            guild['channel_log']['status'] = guild['channel']['status_log']
-            guild['channel_log']['activity'] = guild['channel']['activity_log']
+            guild['channel_log'] = {
+                'connect': guild['channel']['voice_log'],
+                'disconnect': guild['channel']['voice_log'],
+                'mute': None,
+                'deafen': None,
+                'server_deafen': None,
+                'server_mute': None,
+                'status': guild['channel']['status_log'],
+                'activity': guild['channel']['activity_log']
+            }
 
             guild['chatgpt']['channel_id'] = guild['channel']['chatgpt']
 
