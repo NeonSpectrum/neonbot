@@ -1,0 +1,25 @@
+#/bin/bash
+
+CONTAINER_NAME="neonbot-app-1"
+
+cd $(dirname "$0")
+
+case "$1" in
+  "restart")
+    docker restart $CONTAINER_NAME
+    ;;
+  "logs")
+    docker logs $CONTAINER_NAME -f
+    ;;
+  "update")
+    git pull
+    docker restart $CONTAINER_NAME
+    ;;
+  "upgrade")
+    docker compose up -d --build
+    ;;
+  *)
+    echo "Invalid arguments. (restart|logs|update)"
+    exit 1
+    ;;
+esac
