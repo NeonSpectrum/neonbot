@@ -14,4 +14,4 @@ RUN apt-get -y update \
 RUN python -m pip install --upgrade pip
 RUN pip install pipenv && pipenv install
 
-CMD ["python", "main.py"]
+CMD ["pipenv", "run", "python", "main.py"]
