@@ -11,8 +11,9 @@ RUN apt-get -y update \
 
 RUN python -m pip install --upgrade pip && pip install pipenv
 
+# Install pipenv packages
 WORKDIR /app
-
+COPY Pipfile .
 RUN pipenv install
 
 CMD ["pipenv", "run", "python", "main.py"]
