@@ -15,7 +15,7 @@ case "$1" in
     git pull
     ;;
   "upgrade")
-    docker exec -it $CONTAINER_NAME "pipenv update"
+    docker exec -it $CONTAINER_NAME sh -c "pipenv update"
     ;;
   "rebuild")
     docker compose up -d --build
