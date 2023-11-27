@@ -5,6 +5,12 @@ CONTAINER_NAME="neonbot-app-1"
 cd $(dirname "$0")/../
 
 case "$1" in
+  "bash")
+    docker exec -it $CONTAINER_NAME bash
+    ;;
+  "start")
+    docker compose up -d
+    ;;
   "restart")
     docker restart $CONTAINER_NAME
     ;;
