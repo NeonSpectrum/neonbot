@@ -13,9 +13,8 @@ case "$1" in
     ;;
   "update")
     git pull
-    docker restart $CONTAINER_NAME
     ;;
-  "upgrade")
+  "rebuild")
     docker compose up -d --build
     ;;
   *)
