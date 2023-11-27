@@ -13,6 +13,6 @@ RUN python -m pip install --upgrade pip && pip install pipenv
 
 WORKDIR /app
 
-RUN PIPENV_VENV_IN_PROJECT=1 pipenv install
+RUN pipenv install
 
 CMD ["pipenv", "run", "python", "main.py"]
