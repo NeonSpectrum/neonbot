@@ -2,7 +2,7 @@
 
 CONTAINER_NAME="neonbot-app-1"
 
-cd $(dirname "$0")
+cd $(dirname "$0")/../
 
 case "$1" in
   "restart")
@@ -13,6 +13,9 @@ case "$1" in
     ;;
   "update")
     git pull
+    ;;
+  "update")
+    docker exec -it $CONTAINER_NAME "pipenv update"
     ;;
   "rebuild")
     docker compose up -d --build
