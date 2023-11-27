@@ -12,6 +12,6 @@ RUN apt-get -y update \
     && apt-get install -y --no-install-recommends ffmpeg
 
 RUN python -m pip install --upgrade pip
-RUN pip install pipenv && pipenv install --dev --system --deploy
+RUN pip install pipenv && pipenv install
 
 CMD ["python", "main.py"]
