@@ -14,7 +14,7 @@ case "$1" in
   "update")
     git pull
     ;;
-  "update")
+  "upgrade")
     docker exec -it $CONTAINER_NAME "pipenv update"
     ;;
   "rebuild")
