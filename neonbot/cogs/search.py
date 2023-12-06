@@ -410,7 +410,7 @@ class Search(commands.Cog):
 
         embed = Embed()
         embed.set_author(keyword)
-        embed.set_image(response['data'][0]['url'])
+        embed.set_image(response.data[0].url)
 
         await interaction.followup.send(embed=embed)
 
