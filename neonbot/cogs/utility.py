@@ -14,6 +14,7 @@ from envparse import env
 from yt_dlp import version as ytdl_version
 
 from .. import __author__, __title__, __version__, bot
+from ..classes.chatgpt.chatgpt import ChatGPT
 from ..classes.embed import Embed
 from ..classes.exchange_gift import ExchangeGift
 from ..utils.constants import ICONS
@@ -216,7 +217,9 @@ class Utility(commands.Cog):
     async def chatgpt_image(self, interaction: discord.Interaction, keyword: str):
         await interaction.response.defer()
 
-        response = await openai.Image.acreate(prompt=keyword, n=1, size='1024x1024')
+        chatgpt = ChatGPT()
+
+        response = await chatgpt.generate_image(keyword)
 
         embed = Embed()
         embed.set_author(keyword)

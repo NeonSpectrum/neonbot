@@ -9,7 +9,7 @@ from discord.ext import commands
 from discord.utils import escape_markdown
 
 from neonbot import bot
-from neonbot.classes.chatgpt import ChatGPT
+from neonbot.classes.chatgpt.chatgpt import ChatGPT
 from neonbot.classes.embed import Embed
 from neonbot.classes.player import Player
 from neonbot.classes.voice_events import VoiceEvents
@@ -58,7 +58,7 @@ class Event(commands.Cog):
             )
             return
 
-        if await ChatGPT.process_message(ctx):
+        if await ChatGPT().create_thread(ctx):
             return
 
         if ctx.command is not None:
