@@ -69,8 +69,8 @@ class ChatGPT:
 
         return True
 
-    def generate_image(self, keyword):
-        return self.client.images.generate(
+    async def generate_image(self, keyword):
+        return await self.client.images.generate(
             model=env.str('OPENAI_IMAGE_MODEL', default='dall-e-2'),
             prompt=keyword,
             n=1,

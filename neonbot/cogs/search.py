@@ -13,6 +13,7 @@ from envparse import env
 from jikanpy import AioJikan
 
 from neonbot import bot
+from neonbot.classes.chatgpt.chatgpt import ChatGPT
 from neonbot.classes.embed import Embed, EmbedChoices, PaginationEmbed
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
@@ -22,6 +23,8 @@ from neonbot.utils.functions import shell_exec
 
 class Search(commands.Cog):
     anime = app_commands.Group(name='anime', description="Searches for top, upcoming, or specific anime.")
+
+    chatgpt = app_commands.Group(name='chatgpt', description="ChatGPT", guild_ids=bot.owner_guilds)
 
     def __init__(self) -> None:
         with open("./neonbot/assets/lang.json", "r") as f:
@@ -398,6 +401,18 @@ class Search(commands.Cog):
                    for code, lang in self.lang_list.items()
                    if lang.lower().startswith(current.lower())
                ][:25]
+
+    @chatgpt.command(name='image')
+    async def chatgpt_image(self, interaction: discord.Interaction, keyword: str):
+        await interaction.response.defer()
+
+        response = await ChatGPT().generate_image(keyword)
+
+        embed = Embed()
+        embed.set_author(keyword)
+        embed.set_image(response['data'][0]['url'])
+
+        await interaction.followup.send(embed=embed)
 
 
 # noinspection PyShadowingNames
