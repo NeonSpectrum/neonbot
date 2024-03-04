@@ -31,7 +31,7 @@ class Search(commands.Cog):
             self.lang_list = json.load(f)
 
         with open("./neonbot/assets/city.list.json", "r", encoding="utf8") as f:
-            self.city_list = [*set([city['name'] for city in json.load(f)])]
+            self.city_list = json.load(f)
 
     @app_commands.command(name='joke')
     async def joke(self, interaction: discord.Interaction) -> None:
