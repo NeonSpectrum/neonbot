@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime
 
+import discord
 import validators
 from discord.utils import find
 from envparse import env
@@ -98,7 +99,11 @@ class Pterodactyl:
         server = Guild.get_instance(channel.guild.id)
 
         message_id = server.ptero.servers[server_id].message_id
-        message = await channel.fetch_message(message_id) if message_id else None
+
+        try:
+            message = await channel.fetch_message(message_id) if message_id else None
+        except discord.NotFound:
+            message = None
 
         if not message:
             message = await channel.send(embed=embed)
