@@ -22,6 +22,8 @@ beanie = "*"
 "discord.py" = {extras = ["voice"], version = "*"}
 openai = "*"
 tiktoken = "*"
+apscheduler = "*"
+validators = "*"
 
 [dev-packages]
 pylint = "*"

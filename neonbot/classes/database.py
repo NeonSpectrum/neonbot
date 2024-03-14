@@ -56,32 +56,11 @@ class Database:
         await ChatGPT.cleanup_threads(guild)
 
     async def start_migration(self, guild_id: int):
-        if 'guilds' not in await self.db.list_collection_names():
-            guild = await self.db.servers.find_one({'_id': guild_id})
-
-            if 'channel' in guild:
-                guild['channel_log'] = {
-                    'connect': guild['channel']['voice_log'],
-                    'mute': None,
-                    'deafen': None,
-                    'server_deafen': None,
-                    'server_mute': None,
-                    'status': guild['channel'].get('status_log', None),
-                    'activity': guild['channel'].get('activity_log', None)
-                }
-
-                guild['chatgpt']['channel_id'] = getattr(guild['channel'], 'chatgpt', None)
-
-                del guild['channel']
-
-                await self.db.guilds.insert_one(guild)
-
         guild = await self.db.guilds.find_one({'_id': guild_id})
 
-        if 'stream' not in guild['channel_log']:
+        if 'ptero' not in guild:
             await self.db.guilds.update_one({'_id': guild_id}, {
                 '$set': {
-                    'channel_log.stream': None,
-                    'channel_log.video': None,
+                    'ptero.servers': {},
                 }
             })

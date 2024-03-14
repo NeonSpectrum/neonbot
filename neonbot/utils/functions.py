@@ -43,6 +43,18 @@ def format_seconds(secs: Union[int, float]) -> str:
     return formatted
 
 
+def format_uptime(milliseconds: int) -> str:
+    td = str(timedelta(milliseconds=milliseconds)).split(':')
+    msg = []
+
+    if td[0] != '0':
+        msg.append(f'{td[0]} Hours')
+
+    msg.append(f'{int(td[1]):.0f} Minutes {round(float(td[2]))} Seconds')
+
+    return ' '.join(msg)
+
+
 def get_log_prefix() -> str:
     tz = pytz.timezone(env.str('TZ', default="Asia/Manila"))
     now = datetime.now(tz)

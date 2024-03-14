@@ -10,6 +10,7 @@ from typing import Optional, Tuple, Union, Any
 import discord
 import psutil
 from aiohttp import ClientSession, ClientTimeout
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from discord.ext import commands
 from discord.utils import oauth_url
 from envparse import env
@@ -37,6 +38,7 @@ class NeonBot(commands.Bot):
         self.owner_guilds = env.list('OWNER_GUILD_IDS', default=[], subcast=int)
         self.session: Optional[ClientSession] = None
         self.setting: Optional[Setting] = None
+        self.scheduler: Optional[AsyncIOScheduler] = None
 
     def get_presence(self) -> Tuple[discord.Status, discord.Activity]:
         activity_type = self.setting.activity_type
@@ -55,6 +57,8 @@ class NeonBot(commands.Bot):
         self.setting = await Setting.get_instance()
         self.status, self.activity = self.get_presence()
         self.session = ClientSession(timeout=ClientTimeout(total=30))
+        self.scheduler = AsyncIOScheduler()
+        self.scheduler.start()
 
         await self.add_cogs()
         load_context_menu(self)
@@ -68,17 +72,32 @@ class NeonBot(commands.Bot):
 
         await self.db.get_guilds(guilds)
 
-        await self.listen_views(guilds)
+        await self.start_listeners(guilds)
 
     async def sync_command(self, guild: Optional[discord.Guild] = None):
         await self.tree.sync(guild=guild)
         log.info(f"Command synced to: {guild or 'Global'}")
 
-    async def listen_views(self, guilds):
+    async def start_listeners(self, guilds):
+        from .classes.pterodactyl import Pterodactyl
+
         for guild in guilds:
             server = Guild.get_instance(guild.id)
+
             if server and not server.exchange_gift.finish and server.exchange_gift.message_id:
                 self.add_view(ExchangeGiftView(), message_id=server.exchange_gift.message_id)
+
+            for server_id, ptero in server.ptero.servers.items():
+                self.scheduler.add_job(
+                    id='ptero-' + server_id,
+                    func=Pterodactyl.start_monitor,
+                    trigger='interval',
+                    seconds=15,
+                    kwargs={
+                        'channel_id': ptero.channel_id,
+                        'server_id': server_id
+                    }
+                )
 
     async def add_cogs(self):
         files = sorted(glob(f"neonbot{sep}cogs{sep}[!_]*.py"))
