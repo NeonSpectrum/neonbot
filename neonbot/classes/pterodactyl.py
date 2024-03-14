@@ -9,6 +9,7 @@ from envparse import env
 from neonbot import bot
 from neonbot.classes.embed import Embed
 from neonbot.models.guild import Guild
+from neonbot.utils import log
 from neonbot.utils.constants import ICONS
 from neonbot.utils.functions import format_uptime
 
@@ -55,6 +56,10 @@ class Pterodactyl:
         name = details['attributes']['name']
         node = details['attributes']['node']
 
+        if 'attributes' not in details:
+            log.info(f'Failed to fetch {server_id} details:', details)
+            return
+
         try:
             state = resources['attributes']['current_state']
         except KeyError:
@@ -66,16 +71,19 @@ class Pterodactyl:
         embed.set_thumbnail(ICONS['green'] if state == 'running' else ICONS['red'])
         embed.set_footer(uuid)
 
+        try:
+            image_url = find(
+                lambda data: data['attributes']['name'] == 'DISCORD_IMAGE_URL',
+                details['attributes']['relationships']['variables']['data']
+            )['attributes']['server_value']
+        except KeyError:
+            image_url = None
+
+        if image_url and validators.url(image_url):
+            embed.set_image(image_url)
+
         if state != 'offline':
             state = resources['attributes']['current_state']
-
-            try:
-                image_url = find(
-                    lambda data: data['attributes']['name'] == 'DISCORD_IMAGE_URL',
-                    details['attributes']['relationships']['variables']['data']
-                )['attributes']['server_value']
-            except KeyError:
-                image_url = None
 
             current_cpu_usage = resources['attributes']['resources']['cpu_absolute']
             current_cpu_usage = f"{current_cpu_usage:.2f}"
@@ -88,9 +96,6 @@ class Pterodactyl:
             max_memory_usage = f'{max_memory_usage:,.0f}' if max_memory_usage != 0 else '∞'
 
             uptime = resources['attributes']['resources']['uptime']
-
-            if image_url and validators.url(image_url):
-                embed.set_image(image_url)
 
             embed.add_field('Status', state.title())
             embed.add_field('Uptime', format_uptime(uptime))
