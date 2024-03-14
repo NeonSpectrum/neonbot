@@ -10,6 +10,7 @@ from beanie.odm.operators.find.comparison import In
 from envparse import env
 from motor.motor_asyncio import AsyncIOMotorClient as MotorClient
 
+from neonbot.classes.chatgpt.chatgpt import ChatGPT
 from neonbot.models.guild import Guild
 from neonbot.models.setting import Setting
 from neonbot.utils import log
@@ -42,9 +43,9 @@ class Database:
         existing_guild_ids = [server.id for server in await Guild.find(In(Guild.id, guild_ids)).to_list()]
         new_guild = [guild for guild in guilds if guild.id not in existing_guild_ids]
 
-        # for guild in new_guild:
-        #     log.info(f"Creating database for {guild}...")
-        #     await Guild.create_default_collection(guild.id)
+        for guild in new_guild:
+            log.info(f"Creating database for {guild}...")
+            await Guild.create_default_collection(guild.id)
 
         await asyncio.gather(*[self.cache_guild(guild) for guild in guilds])
 
@@ -52,6 +53,7 @@ class Database:
         log.info(f"Caching guild settings: {guild} ({guild.id})")
         await self.start_migration(guild.id)
         await Guild.create_instance(guild.id)
+        await ChatGPT.cleanup_threads(guild)
 
     async def start_migration(self, guild_id: int):
         if 'guilds' not in await self.db.list_collection_names():

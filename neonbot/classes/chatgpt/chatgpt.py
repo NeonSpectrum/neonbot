@@ -77,3 +77,11 @@ class ChatGPT:
             size='1024x1024',
             quality="standard",
         )
+
+    @staticmethod
+    async def cleanup_threads(guild: discord.Guild):
+        server = Guild.get_instance(guild.id)
+        active_threads = map(lambda thread: thread.id, filter(lambda thread: not thread.archived, guild.threads))
+
+        server.chatgpt.chats = filter(lambda chat: chat.thread_id in active_threads, server.chatgpt.chats)
+        await server.save_changes()
