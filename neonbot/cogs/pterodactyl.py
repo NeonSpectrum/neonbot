@@ -32,7 +32,7 @@ class PterodactylCog(commands.Cog):
         await server.save_changes()
 
         bot.scheduler.add_job(
-            id='ptero' + server_id,
+            id='ptero-' + server_id,
             func=Pterodactyl.start_monitor,
             trigger='interval',
             seconds=15,
