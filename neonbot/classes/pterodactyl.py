@@ -51,30 +51,14 @@ class Pterodactyl:
             ptero.get_server_resources()
         )
 
-        state = resources['attributes']['current_state']
         uuid = details['attributes']['uuid']
         name = details['attributes']['name']
         node = details['attributes']['node']
 
         try:
-            image_url = find(
-                lambda data: data['attributes']['name'] == 'DISCORD_IMAGE_URL',
-                details['attributes']['relationships']['variables']['data']
-            )['attributes']['server_value']
+            state = resources['attributes']['current_state']
         except KeyError:
-            image_url = None
-
-        current_cpu_usage = resources['attributes']['resources']['cpu_absolute']
-        current_cpu_usage = f"{current_cpu_usage:.2f}"
-        max_cpu_usage = details['attributes']['limits']['cpu']
-        max_cpu_usage = f'{max_cpu_usage}' if max_cpu_usage != 0 else '∞'
-
-        current_memory_usage = resources['attributes']['resources']['memory_bytes'] / 1024 / 1024
-        current_memory_usage = f"{current_memory_usage:,.0f}"
-        max_memory_usage = details['attributes']['limits']['memory']
-        max_memory_usage = f'{max_memory_usage:,.0f}' if max_memory_usage != 0 else '∞'
-
-        uptime = resources['attributes']['resources']['uptime']
+            state = 'offline'
 
         embed = Embed(timestamp=datetime.now())
         embed.set_author(name, url=Pterodactyl.URL + '/server/' + server_id)
@@ -82,10 +66,32 @@ class Pterodactyl:
         embed.set_thumbnail(ICONS['green'] if state == 'running' else ICONS['red'])
         embed.set_footer(uuid)
 
-        if image_url and validators.url(image_url):
-            embed.set_image(image_url)
+        if state != 'offline':
+            state = resources['attributes']['current_state']
 
-        if current_memory_usage != 0:
+            try:
+                image_url = find(
+                    lambda data: data['attributes']['name'] == 'DISCORD_IMAGE_URL',
+                    details['attributes']['relationships']['variables']['data']
+                )['attributes']['server_value']
+            except KeyError:
+                image_url = None
+
+            current_cpu_usage = resources['attributes']['resources']['cpu_absolute']
+            current_cpu_usage = f"{current_cpu_usage:.2f}"
+            max_cpu_usage = details['attributes']['limits']['cpu']
+            max_cpu_usage = f'{max_cpu_usage}' if max_cpu_usage != 0 else '∞'
+
+            current_memory_usage = resources['attributes']['resources']['memory_bytes'] / 1024 / 1024
+            current_memory_usage = f"{current_memory_usage:,.0f}"
+            max_memory_usage = details['attributes']['limits']['memory']
+            max_memory_usage = f'{max_memory_usage:,.0f}' if max_memory_usage != 0 else '∞'
+
+            uptime = resources['attributes']['resources']['uptime']
+
+            if image_url and validators.url(image_url):
+                embed.set_image(image_url)
+
             embed.add_field('Status', state.title())
             embed.add_field('Uptime', format_uptime(uptime))
             embed.add_field('\u200b', '\u200b')
