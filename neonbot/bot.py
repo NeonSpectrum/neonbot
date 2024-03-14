@@ -89,7 +89,7 @@ class NeonBot(commands.Bot):
 
             for server_id, ptero in server.ptero.servers.items():
                 self.scheduler.add_job(
-                    id='ptero-' + server_id,
+                    id='ptero-' + guild.id + '-' + server_id,
                     func=Pterodactyl.start_monitor,
                     trigger='interval',
                     seconds=15,
