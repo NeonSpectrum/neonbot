@@ -1,4 +1,5 @@
 import asyncio
+import os
 import re
 import sys
 from glob import glob
@@ -7,6 +8,7 @@ from time import time
 from typing import Optional, Tuple, Union, Any
 
 import discord
+import psutil
 from aiohttp import ClientSession, ClientTimeout
 from discord.ext import commands
 from discord.utils import oauth_url
@@ -82,11 +84,12 @@ class NeonBot(commands.Bot):
         files = sorted(glob(f"neonbot{sep}cogs{sep}[!_]*.py"))
         extensions = [re.split(r"[{0}.]".format(re.escape(sep)), file)[-2] for file in files]
         start_time = time()
+        process = psutil.Process(os.getpid())
 
         print(file=sys.stderr)
 
         for extension in extensions:
-            log.info(f"Loading {extension} cog...")
+            log.info(f"Loading {extension} cog... [{(process.memory_info().rss / 1024000):.2f} MB]")
             await self.load_extension("neonbot.cogs." + extension)
 
         print(file=sys.stderr)
