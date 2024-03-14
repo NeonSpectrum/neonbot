@@ -37,8 +37,8 @@ ICONS = {
     "myanimelist": "https://i.imgur.com/XMQsLF5.png",
     "googletranslate": "https://upload.wikimedia.org/wikipedia/commons/d/db/Google_Translate_Icon.png",
     "openai": "https://i.imgur.com/TAeEnLT.png",
-    "green": "https://i.imgur.com/7AUtqQZ.png",
-    "red": "https://i.imgur.com/TOII3vt.png"
+    "green": "https://i.imgur.com/Vk1wdHH.png",
+    "red": "https://i.imgur.com/gnfYVjW.png"
 }
 
 FFMPEG_OPTIONS = (
