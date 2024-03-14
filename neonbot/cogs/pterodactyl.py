@@ -24,10 +24,11 @@ class PterodactylCog(commands.Cog):
             await interaction.response.send_message(embed=Embed("Invalid server id."), ephemeral=True)
             return
 
-        if server_id not in server.ptero.servers:
-            server.ptero.servers[server_id] = PteroServer(channel_id=interaction.channel_id)
-        else:
-            server.ptero.servers[server_id].channel_id = interaction.channel_id
+        if server_id in server.ptero.servers:
+            await interaction.response.send_message(embed=Embed("Server id already exists."), ephemeral=True)
+            return
+
+        server.ptero.servers[server_id] = PteroServer(channel_id=interaction.channel_id)
 
         await server.save_changes()
 
