@@ -89,7 +89,7 @@ class NeonBot(commands.Bot):
 
             for server_id, ptero in server.ptero.servers.items():
                 self.scheduler.add_job(
-                    id='ptero-' + guild.id + '-' + server_id,
+                    id='ptero-' + str(guild.id) + '-' + server_id,
                     func=Pterodactyl.start_monitor,
                     trigger='interval',
                     seconds=15,
@@ -98,6 +98,7 @@ class NeonBot(commands.Bot):
                         'server_id': server_id
                     }
                 )
+                log.info('Auto started job ptero-' + str(guild.id) + '-' + server_id + '.')
 
     async def add_cogs(self):
         files = sorted(glob(f"neonbot{sep}cogs{sep}[!_]*.py"))
