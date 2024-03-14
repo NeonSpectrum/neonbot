@@ -54,7 +54,7 @@ class Pterodactyl:
 
         uuid = details['attributes']['uuid']
         name = details['attributes']['name']
-        node = details['attributes']['node']
+        description = details['attributes']['description']
 
         if 'attributes' not in details:
             log.info(f'Failed to fetch {server_id} details:', details)
@@ -67,7 +67,7 @@ class Pterodactyl:
 
         embed = Embed(timestamp=datetime.now())
         embed.set_author(name, url=Pterodactyl.URL + '/server/' + server_id)
-        embed.set_description(node)
+        embed.set_description(description)
         embed.set_thumbnail(ICONS['green'] if state == 'running' else ICONS['red'])
         embed.set_footer(uuid)
 
