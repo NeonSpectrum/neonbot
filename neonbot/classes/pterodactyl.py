@@ -143,5 +143,5 @@ class Pterodactyl:
                 lambda data: data['attributes']['name'] == key,
                 details['attributes']['relationships']['variables']['data']
             )['attributes']['server_value']
-        except KeyError:
+        except (KeyError, TypeError):
             return default
