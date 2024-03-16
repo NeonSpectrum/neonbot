@@ -37,6 +37,7 @@ class Event(commands.Cog):
     @bot.event
     async def on_ready() -> None:
         log.info("Ready!\n")
+        bot.scheduler.start()
         bot.set_ready()
 
     @staticmethod

@@ -59,7 +59,6 @@ class NeonBot(commands.Bot):
         self.status, self.activity = self.get_presence()
         self.session = ClientSession(timeout=ClientTimeout(total=30))
         self.scheduler = AsyncIOScheduler()
-        self.scheduler.start()
 
         await self.add_cogs()
         load_context_menu(self)
