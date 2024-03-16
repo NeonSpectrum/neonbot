@@ -71,13 +71,7 @@ class Pterodactyl:
         embed.set_thumbnail(ICONS['green'] if state == 'running' else ICONS['red'])
         embed.set_footer(uuid)
 
-        try:
-            image_url = find(
-                lambda data: data['attributes']['name'] == 'DISCORD_IMAGE_URL',
-                details['attributes']['relationships']['variables']['data']
-            )['attributes']['server_value']
-        except KeyError:
-            image_url = None
+        image_url = Pterodactyl.get_variable(details, 'DISCORD_IMAGE_URL')
 
         if image_url and validators.url(image_url):
             embed.set_image(image_url)
@@ -103,6 +97,9 @@ class Pterodactyl:
             embed.add_field('CPU Usage', f"{current_cpu_usage} / {max_cpu_usage} %")
             embed.add_field('Memory Usage', f"{current_memory_usage} / {max_memory_usage} MB")
             embed.add_field('\u200b', '\u200b')
+
+            if 'minecraft' in name.lowercase():
+                await Pterodactyl.add_minecraft(embed, details)
         else:
             embed.add_field('Status', state.title())
 
@@ -122,3 +119,29 @@ class Pterodactyl:
             await server.save_changes()
         else:
             return await message.edit(embed=embed)
+
+    @staticmethod
+    async def add_minecraft(embed, details):
+        ip = Pterodactyl.get_variable(details, 'PROMETHEUS_URL')
+        max_players = Pterodactyl.get_variable(details, 'MAX_PLAYERS', default=20)
+
+        if not ip:
+            return
+
+        res = await bot.session.get(ip)
+        logs = res.text().split('\n')
+
+        player_list = find(lambda row: row.startswith('mc_player_list'), logs)
+        player_count = 0 if not player_list else int(player_list.split(' ')[-1])
+
+        embed.add_field('Player Count', f'{player_count}/{max_players}')
+
+    @staticmethod
+    def get_variable(details, key, default=None):
+        try:
+            return find(
+                lambda data: data['attributes']['name'] == key,
+                details['attributes']['relationships']['variables']['data']
+            )['attributes']['server_value']
+        except KeyError:
+            return default
