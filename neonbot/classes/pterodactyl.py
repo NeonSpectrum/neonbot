@@ -98,7 +98,7 @@ class Pterodactyl:
             embed.add_field('Memory Usage', f"{current_memory_usage} / {max_memory_usage} MB")
             embed.add_field('\u200b', '\u200b')
 
-            if 'minecraft' in name.lowercase():
+            if 'minecraft' in name.lower():
                 await Pterodactyl.add_minecraft(embed, details)
         else:
             embed.add_field('Status', state.title())
