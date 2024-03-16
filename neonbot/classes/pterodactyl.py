@@ -62,7 +62,7 @@ class Pterodactyl:
 
         try:
             state = resources['attributes']['current_state']
-        except KeyError:
+        except (KeyError, TypeError):
             state = 'offline'
 
         embed = Embed(timestamp=datetime.now())
