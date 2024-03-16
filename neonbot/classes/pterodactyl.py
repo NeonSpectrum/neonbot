@@ -17,6 +17,7 @@ from neonbot.utils.functions import format_uptime
 class Pterodactyl:
     URL = env.str('PTERODACTYL_URL')
     API_KEY = env.str('PTERODACTYL_API_KEY')
+    MCSTATUS_API = 'https://api.mcstatus.io/v2/status/java'
 
     def __init__(self, server_id: str):
         self.server_id = server_id
@@ -127,19 +128,20 @@ class Pterodactyl:
             return await message.edit(embed=embed)
 
     async def add_minecraft(self, embed):
-        ip = self.get_variable('PROMETHEUS_URL')
-        max_players = self.get_variable('MAX_PLAYERS', default=20)
+        server_ip = self.get_variable('SERVER_IP')
 
-        if not ip:
+        if not server_ip:
             return
 
-        res = await bot.session.get(ip)
-        logs = (await res.text()).split('\n')
+        res = await bot.session.get(self.MCSTATUS_API + '/' + server_ip)
+        data = await res.json()
 
-        player_list = find(lambda row: row.startswith('mc_player_list'), logs)
-        player_count = 0 if not player_list else float(player_list.split(' ')[-1])
+        if not data['online']:
+            return
 
-        embed.add_field('Player Count', f'{player_count:.0f} / {max_players}')
+        players = [player["name_clean"] for player in data["players"]["list"]]
+
+        embed.add_field('Players', '```' + '\n'.join(players) + '```')
 
     def get_variable(self, key, default=None):
         try:
