@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -40,7 +42,8 @@ class PterodactylCog(commands.Cog):
             kwargs={
                 'channel_id': interaction.channel_id,
                 'server_id': server_id
-            }
+            },
+            next_run_time=datetime.now()
         )
 
         await interaction.response.send_message(

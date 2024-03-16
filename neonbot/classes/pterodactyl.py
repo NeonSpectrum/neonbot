@@ -20,6 +20,8 @@ class Pterodactyl:
 
     def __init__(self, server_id: str):
         self.server_id = server_id
+        self.details = None
+        self.resources = None
 
     async def get_server_details(self):
         res = await bot.session.get(
@@ -30,7 +32,9 @@ class Pterodactyl:
                 "Authorization": f"Bearer {self.API_KEY}"
             }
         )
-        return await res.json() if res.status == 200 else False
+        self.details = await res.json() if res.status == 200 else False
+
+        return self.details
 
     async def get_server_resources(self):
         res = await bot.session.get(
@@ -41,7 +45,9 @@ class Pterodactyl:
                 "Authorization": f"Bearer {self.API_KEY}"
             }
         )
-        return await res.json() if res.status == 200 else False
+        self.resources = await res.json() if res.status == 200 else False
+
+        return self.resources
 
     @staticmethod
     async def start_monitor(channel_id, server_id):
@@ -52,7 +58,7 @@ class Pterodactyl:
             ptero.get_server_resources()
         )
 
-        uuid = details['attributes']['uuid']
+        identifier = details['attributes']['identifier']
         name = details['attributes']['name']
         description = details['attributes']['description']
 
@@ -69,9 +75,9 @@ class Pterodactyl:
         embed.set_author(name, url=Pterodactyl.URL + '/server/' + server_id)
         embed.set_description(description)
         embed.set_thumbnail(ICONS['green'] if state == 'running' else ICONS['red'])
-        embed.set_footer(uuid)
+        embed.set_footer(identifier)
 
-        image_url = Pterodactyl.get_variable(details, 'DISCORD_IMAGE_URL')
+        image_url = ptero.get_variable('DISCORD_IMAGE_URL')
 
         if image_url and validators.url(image_url):
             embed.set_image(image_url)
@@ -99,7 +105,7 @@ class Pterodactyl:
             embed.add_field('\u200b', '\u200b')
 
             if 'minecraft' in name.lower():
-                await Pterodactyl.add_minecraft(embed, details)
+                await ptero.add_minecraft(embed)
         else:
             embed.add_field('Status', state.title())
 
@@ -120,28 +126,26 @@ class Pterodactyl:
         else:
             return await message.edit(embed=embed)
 
-    @staticmethod
-    async def add_minecraft(embed, details):
-        ip = Pterodactyl.get_variable(details, 'PROMETHEUS_URL')
-        max_players = Pterodactyl.get_variable(details, 'MAX_PLAYERS', default=20)
+    async def add_minecraft(self, embed):
+        ip = self.get_variable('PROMETHEUS_URL')
+        max_players = self.get_variable('MAX_PLAYERS', default=20)
 
         if not ip:
             return
 
         res = await bot.session.get(ip)
-        logs = res.text().split('\n')
+        logs = (await res.text()).split('\n')
 
         player_list = find(lambda row: row.startswith('mc_player_list'), logs)
-        player_count = 0 if not player_list else int(player_list.split(' ')[-1])
+        player_count = 0 if not player_list else float(player_list.split(' ')[-1])
 
-        embed.add_field('Player Count', f'{player_count}/{max_players}')
+        embed.add_field('Player Count', f'{player_count:.0f} / {max_players}')
 
-    @staticmethod
-    def get_variable(details, key, default=None):
+    def get_variable(self, key, default=None):
         try:
             return find(
-                lambda data: data['attributes']['name'] == key,
-                details['attributes']['relationships']['variables']['data']
+                lambda data: data['attributes']['env_variable'] == key,
+                self.details['attributes']['relationships']['variables']['data']
             )['attributes']['server_value']
         except (KeyError, TypeError):
             return default
