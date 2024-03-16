@@ -128,7 +128,7 @@ class Pterodactyl:
             return await message.edit(embed=embed)
 
     async def add_minecraft(self, embed):
-        server_ip = self.get_variable('SERVER_IP')
+        server_ip = self.get_default_ip()
 
         if not server_ip:
             return
@@ -151,3 +151,14 @@ class Pterodactyl:
             )['attributes']['server_value']
         except (KeyError, TypeError):
             return default
+
+    def get_default_ip(self):
+        try:
+            allocation = find(
+                lambda data: data['attributes']['is_default'] is True,
+                self.details['attributes']['relationships']['allocations']['data']
+            )['attributes']
+
+            return allocation['ip'] + ':' + allocation['port']
+        except (KeyError, TypeError):
+            return None
