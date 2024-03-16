@@ -141,7 +141,12 @@ class Pterodactyl:
 
         players = [player["name_clean"] for player in data["players"]["list"]]
 
-        embed.add_field('Players', '```' + '\n'.join(players) + '```')
+        embed.add_field(
+            'Players',
+            '```' + '\n'.join(players) + '```'
+            if len(players) > 0 else
+            '*```No players online```*'
+        )
 
     def get_variable(self, key, default=None):
         try:
@@ -159,6 +164,6 @@ class Pterodactyl:
                 self.details['attributes']['relationships']['allocations']['data']
             )['attributes']
 
-            return allocation['ip'] + ':' + allocation['port']
-        except (KeyError, TypeError):
+            return allocation['ip'] + ':' + str(allocation['port'])
+        except (KeyError, TypeError) as e:
             return None
