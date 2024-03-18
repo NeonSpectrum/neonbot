@@ -3,6 +3,7 @@ from datetime import datetime
 
 import discord
 import validators
+from aiohttp import ContentTypeError
 from discord.utils import find
 from envparse import env
 
@@ -133,20 +134,23 @@ class Pterodactyl:
         if not server_ip:
             return
 
-        res = await bot.session.get(self.MCSTATUS_API + '/' + server_ip)
-        data = await res.json()
+        try:
+            res = await bot.session.get(self.MCSTATUS_API + '/' + server_ip)
+            data = await res.json()
 
-        if not data['online']:
-            return
+            if not data['online']:
+                return
 
-        players = [player["name_clean"] for player in data["players"]["list"]]
+            players = [player["name_clean"] for player in data["players"]["list"]]
 
-        embed.add_field(
-            'Players',
-            '```' + '\n'.join(players) + '```'
-            if len(players) > 0 else
-            '*```No players online```*'
-        )
+            embed.add_field(
+                'Players',
+                '```\n' + '\n'.join(players) + '\n```'
+                if len(players) > 0 else
+                '*```No players online```*'
+            )
+        except ContentTypeError as error:
+            log.error(error)
 
     def get_variable(self, key, default=None):
         try:
