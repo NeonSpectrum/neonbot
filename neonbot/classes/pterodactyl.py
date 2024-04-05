@@ -12,6 +12,7 @@ from neonbot.classes.embed import Embed
 from neonbot.models.guild import Guild
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
+from neonbot.utils.exceptions import ApiError
 from neonbot.utils.functions import format_uptime
 
 
@@ -36,7 +37,7 @@ class Pterodactyl:
         )
 
         if res.status != 200:
-            raise ApiException('Failed to fetch server details: ' + str(res))
+            raise ApiError('Failed to fetch server details: ' + str(res))
 
         self.details = await res.json()
 
@@ -53,7 +54,7 @@ class Pterodactyl:
         )
 
         if res.status != 200:
-            raise ApiException('Failed to fetch server resources: ' + str(res))
+            raise ApiError('Failed to fetch server resources: ' + str(res))
 
         self.resources = await res.json()
 
@@ -68,7 +69,7 @@ class Pterodactyl:
                 ptero.get_server_details(),
                 ptero.get_server_resources()
             )
-        except ApiException as error:
+        except ApiError as error:
             log.warn(error)
             return
 
