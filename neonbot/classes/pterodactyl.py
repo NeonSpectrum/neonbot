@@ -34,7 +34,11 @@ class Pterodactyl:
                 "Authorization": f"Bearer {self.API_KEY}"
             }
         )
-        self.details = await res.json() if res.status == 200 else False
+
+        if res.status != 200:
+            raise ApiException('Failed to fetch server details: ' + str(res))
+
+        self.details = await res.json()
 
         return self.details
 
@@ -47,7 +51,11 @@ class Pterodactyl:
                 "Authorization": f"Bearer {self.API_KEY}"
             }
         )
-        self.resources = await res.json() if res.status == 200 else False
+
+        if res.status != 200:
+            raise ApiException('Failed to fetch server resources: ' + str(res))
+
+        self.resources = await res.json()
 
         return self.resources
 
@@ -55,18 +63,18 @@ class Pterodactyl:
     async def start_monitor(channel_id, server_id):
         ptero = Pterodactyl(server_id)
 
-        details, resources = await asyncio.gather(
-            ptero.get_server_details(),
-            ptero.get_server_resources()
-        )
+        try:
+            details, resources = await asyncio.gather(
+                ptero.get_server_details(),
+                ptero.get_server_resources()
+            )
+        except ApiException as error:
+            log.warn(error)
+            return
 
         identifier = details['attributes']['identifier']
         name = details['attributes']['name']
         description = details['attributes']['description']
-
-        if 'attributes' not in details:
-            log.info(f'Failed to fetch {server_id} details:', details)
-            return
 
         try:
             state = resources['attributes']['current_state']
