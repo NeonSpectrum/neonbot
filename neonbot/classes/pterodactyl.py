@@ -166,7 +166,7 @@ class Pterodactyl:
             return find(
                 lambda data: data['attributes']['env_variable'] == key,
                 self.details['attributes']['relationships']['variables']['data']
-            )['attributes']['server_value']
+            )['attributes'].get('server_value', 'default_value')
         except (KeyError, TypeError):
             return default
 
