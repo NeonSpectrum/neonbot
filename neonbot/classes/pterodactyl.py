@@ -163,10 +163,12 @@ class Pterodactyl:
 
     def get_variable(self, key, default=None):
         try:
-            return find(
+            variable = find(
                 lambda data: data['attributes']['env_variable'] == key,
                 self.details['attributes']['relationships']['variables']['data']
-            )['attributes'].get('server_value', 'default_value')
+            )['attributes']
+
+            return variable['server_value'] or variable['default_value']
         except (KeyError, TypeError):
             return default
 
