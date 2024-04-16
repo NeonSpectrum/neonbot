@@ -2,7 +2,7 @@ import asyncio
 import os
 import re
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from glob import glob
 from os import sep
 from time import time
@@ -91,18 +91,20 @@ class NeonBot(commands.Bot):
                 self.add_view(ExchangeGiftView(), message_id=server.exchange_gift.message_id)
 
             for server_id, ptero in server.ptero.servers.items():
+                next_run_time = datetime.now() + timedelta(seconds=15 * len(self.scheduler.get_jobs()))
+
                 self.scheduler.add_job(
                     id='ptero-' + str(guild.id) + '-' + server_id,
                     func=Pterodactyl.start_monitor,
                     trigger='interval',
-                    seconds=15,
+                    seconds=30,
                     kwargs={
                         'channel_id': ptero.channel_id,
                         'server_id': server_id
                     },
-                    next_run_time=datetime.now()
+                    next_run_time=datetime.now() + timedelta(seconds=5 * len(self.scheduler.get_jobs()))
                 )
-                log.info('Auto started job ptero-' + str(guild.id) + '-' + server_id + '.')
+                log.info(f'Auto started job ptero-{guild.id}-{server_id}. Next run time: {next_run_time}.')
 
         self.is_listeners_done = True
 

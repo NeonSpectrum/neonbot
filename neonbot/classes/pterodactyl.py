@@ -135,7 +135,7 @@ class Pterodactyl:
             server.ptero.servers[server_id].message_id = message.id
             await server.save_changes()
         else:
-            return await message.edit(embed=embed)
+            await message.edit(embed=embed)
 
     async def add_minecraft(self, embed):
         server_ip = self.get_default_ip()
