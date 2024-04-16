@@ -91,7 +91,7 @@ class NeonBot(commands.Bot):
                 self.add_view(ExchangeGiftView(), message_id=server.exchange_gift.message_id)
 
             for server_id, ptero in server.ptero.servers.items():
-                next_run_time = datetime.now() + timedelta(seconds=15 * len(self.scheduler.get_jobs()))
+                next_run_time = datetime.now() + timedelta(seconds=5 * len(self.scheduler.get_jobs()))
 
                 self.scheduler.add_job(
                     id='ptero-' + str(guild.id) + '-' + server_id,
@@ -102,7 +102,7 @@ class NeonBot(commands.Bot):
                         'channel_id': ptero.channel_id,
                         'server_id': server_id
                     },
-                    next_run_time=datetime.now() + timedelta(seconds=5 * len(self.scheduler.get_jobs()))
+                    next_run_time=next_run_time
                 )
                 log.info(f'Auto started job ptero-{guild.id}-{server_id}. Next run time: {next_run_time}.')
 
