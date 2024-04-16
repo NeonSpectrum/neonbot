@@ -139,7 +139,6 @@ class Pterodactyl:
                 await message.edit(embed=embed)
         except discord.HTTPException as error:
             log.error(error)
-            return
 
     async def add_minecraft(self, embed):
         server_ip = self.get_default_ip()
