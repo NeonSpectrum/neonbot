@@ -130,12 +130,16 @@ class Pterodactyl:
         except discord.NotFound:
             message = None
 
-        if not message:
-            message = await channel.send(embed=embed)
-            server.ptero.servers[server_id].message_id = message.id
-            await server.save_changes()
-        else:
-            await message.edit(embed=embed)
+        try:
+            if not message:
+                message = await channel.send(embed=embed)
+                server.ptero.servers[server_id].message_id = message.id
+                await server.save_changes()
+            else:
+                await message.edit(embed=embed)
+        except discord.HTTPException as error:
+            log.error(error)
+            return
 
     async def add_minecraft(self, embed):
         server_ip = self.get_default_ip()
