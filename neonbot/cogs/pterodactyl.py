@@ -49,7 +49,9 @@ class PterodactylCog(commands.Cog):
             return
 
         ptero = server.ptero.servers[server_id]
-        await bot.delete_message(await bot.get_channel(ptero.channel_id).fetch_message(ptero.message_id))
+
+        if ptero.channel_id and ptero.message_id:
+            await bot.delete_message(await bot.get_channel(ptero.channel_id).fetch_message(ptero.message_id))
 
         server.ptero.servers.pop(server_id)
 
