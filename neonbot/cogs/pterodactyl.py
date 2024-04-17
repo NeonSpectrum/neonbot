@@ -62,32 +62,30 @@ class PterodactylCog(commands.Cog):
 
     @startmonitor.autocomplete('server_id')
     async def startmonitor_autocomplete(self, interaction: discord.Interaction, current: str):
-        server = Guild.get_instance(interaction.guild.id)
-        server_list = await Pterodactyl.get_server_list()
-        server_ids = [server['attributes']['identifier'] for server in server_list['data']]
-
-        # server_id should not exist on the db
-        server_ids = [server_id for server_id in server_ids if server_id not in server.ptero.servers]
+        ptero = Guild.get_instance(interaction.guild.id).ptero
+        servers = [
+            {'id': server['attributes']['identifier'], 'name': server['attributes']['name']}
+            for server in (await Pterodactyl.get_server_list())['data']
+        ]
 
         return [
-            app_commands.Choice(name=server_id, value=server_id)
-            for server_id in server_ids
-            if (current and current in server_id) or not current
+            app_commands.Choice(name=server['name'], value=server['id'])
+            for server in servers
+            if server['id'] not in ptero.servers and ((current and current in server['name']) or not current)
         ]
 
     @deletemonitor.autocomplete('server_id')
     async def deletemonitor_autocomplete(self, interaction: discord.Interaction, current: str):
-        server = Guild.get_instance(interaction.guild.id)
-        server_list = await Pterodactyl.get_server_list()
-        server_ids = [server['attributes']['identifier'] for server in server_list['data']]
-
-        # server_id should exist on the db
-        server_ids = [server_id for server_id in server_ids if server_id in server.ptero.servers]
+        ptero = Guild.get_instance(interaction.guild.id).ptero
+        servers = [
+            {'id': server['attributes']['identifier'], 'name': server['attributes']['name']}
+            for server in (await Pterodactyl.get_server_list())['data']
+        ]
 
         return [
-            app_commands.Choice(name=server_id, value=server_id)
-            for server_id in server_ids
-            if (current and current in server_id) or not current
+            app_commands.Choice(name=server['name'], value=server['id'])
+            for server in servers
+            if server['id'] in ptero.servers and ((current and current in server['name']) or not current)
         ]
 
 
