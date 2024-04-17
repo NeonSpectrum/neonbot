@@ -4,7 +4,7 @@ from pydantic import BaseModel, RootModel
 
 
 class PteroServer(BaseModel):
-    channel_id: int = None
+    channel_id: Optional[int] = None
     message_id: Optional[int] = None
 
 
