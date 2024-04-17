@@ -34,18 +34,6 @@ class PterodactylCog(commands.Cog):
 
         await server.save_changes()
 
-        bot.scheduler.add_job(
-            id='ptero-' + str(interaction.guild.id) + '-' + server_id,
-            func=Pterodactyl.start_monitor,
-            trigger='interval',
-            seconds=15,
-            kwargs={
-                'channel_id': interaction.channel_id,
-                'server_id': server_id
-            },
-            next_run_time=datetime.now()
-        )
-
         await interaction.response.send_message(
             embed=Embed(f'Started monitor for `{server_id}` on {interaction.channel.mention}'),
             ephemeral=True
@@ -65,8 +53,6 @@ class PterodactylCog(commands.Cog):
         del server.ptero.servers[server_id]
 
         await server.save_changes()
-
-        bot.scheduler.remove_job('ptero-' + str(interaction.guild.id) + '-' + server_id)
 
         await interaction.response.send_message(
             embed=Embed(f'Removed monitor for `{server_id}` on {interaction.channel.mention}'),
