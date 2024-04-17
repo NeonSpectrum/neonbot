@@ -68,7 +68,7 @@ class PterodactylCog(commands.Cog):
 
         return [
             app_commands.Choice(name=server_id, value=server_id)
-            for server_id in server_ids if current in server_ids
+            for server_id in server_ids if current in server_id
         ]
 
 
