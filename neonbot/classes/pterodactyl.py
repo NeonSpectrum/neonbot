@@ -63,7 +63,7 @@ class Pterodactyl:
         return self.resources
 
     @staticmethod
-    async def start_monitor(servers: Ptero.servers):
+    async def start_monitor(servers):
         for server_id, ptero in servers.items():
             channel_id = ptero.channel_id
             ptero = Pterodactyl(server_id)
