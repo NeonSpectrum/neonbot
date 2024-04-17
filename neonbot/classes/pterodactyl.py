@@ -83,6 +83,10 @@ class Pterodactyl:
     async def start_monitor(servers):
         for server_id, ptero in servers.items():
             channel_id = ptero.channel_id
+
+            if not channel_id:
+                continue
+
             ptero = Pterodactyl(server_id)
 
             try:
