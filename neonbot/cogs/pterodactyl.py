@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 
 import discord
 from discord import app_commands
@@ -44,7 +45,7 @@ class PterodactylCog(commands.Cog):
         server = Guild.get_instance(interaction.guild.id)
 
         if server_id not in server.ptero.servers:
-            await interaction.response.send_message(embed=Embed("Invalid server id."), ephemeral=True)
+            await interaction.response.send_message(embed=Embed("Server id not in monitor list."), ephemeral=True)
             return
 
         ptero = server.ptero.servers[server_id]
@@ -58,6 +59,17 @@ class PterodactylCog(commands.Cog):
             embed=Embed(f'Removed monitor for `{server_id}` on {interaction.channel.mention}'),
             ephemeral=True
         )
+
+    @startmonitor.autocomplete('server_id')
+    @deletemonitor.autocomplete('server_id')
+    async def ptero_autocomplete(self, interaction: discord.Interaction, current: str):
+        servers = await Pterodactyl.get_server_list()
+        server_ids = [server['attributes']['identifier'] for server in servers['data']]
+
+        return [
+            app_commands.Choice(name=server_id, value=server_id)
+            for server_id in server_ids if current in server_ids
+        ]
 
 
 # noinspection PyShadowingNames

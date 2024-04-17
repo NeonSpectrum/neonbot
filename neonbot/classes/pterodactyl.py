@@ -25,6 +25,7 @@ class Pterodactyl:
 
     def __init__(self, server_id: str):
         self.server_id = server_id
+        self.servers = None
         self.details = None
         self.resources = None
 
@@ -61,6 +62,22 @@ class Pterodactyl:
         self.resources = await res.json()
 
         return self.resources
+
+    @staticmethod
+    async def get_server_list():
+        res = await bot.session.get(
+            Pterodactyl.URL + '/api/client',
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {Pterodactyl.API_KEY}"
+            }
+        )
+
+        if res.status != 200:
+            raise ApiError(f'[Global] Failed to fetch server list: {res.status}')
+
+        return await res.json()
 
     @staticmethod
     async def start_monitor(servers):
