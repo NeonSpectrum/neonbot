@@ -61,14 +61,25 @@ class PterodactylCog(commands.Cog):
         )
 
     @startmonitor.autocomplete('server_id')
-    @deletemonitor.autocomplete('server_id')
-    async def ptero_autocomplete(self, interaction: discord.Interaction, current: str):
-        servers = await Pterodactyl.get_server_list()
-        server_ids = [server['attributes']['identifier'] for server in servers['data']]
+    async def startmonitor_autocomplete(self, interaction: discord.Interaction, current: str):
+        server = Guild.get_instance(interaction.guild.id)
+        server_list = await Pterodactyl.get_server_list()
+        server_ids = [server['attributes']['identifier'] for server in server_list['data']]
 
         return [
             app_commands.Choice(name=server_id, value=server_id)
-            for server_id in server_ids if current in server_id
+            for server_id in server_ids if server_id not in server.ptero.servers and current in server_id
+        ]
+
+    @deletemonitor.autocomplete('server_id')
+    async def deletemonitor_autocomplete(self, interaction: discord.Interaction, current: str):
+        server = Guild.get_instance(interaction.guild.id)
+        server_list = await Pterodactyl.get_server_list()
+        server_ids = [server['attributes']['identifier'] for server in server_list['data']]
+
+        return [
+            app_commands.Choice(name=server_id, value=server_id)
+            for server_id in server_ids if server_id in server.ptero.servers and current in server_id
         ]
 
 
