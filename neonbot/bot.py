@@ -103,7 +103,7 @@ class NeonBot(commands.Bot):
                     },
                     next_run_time=next_run_time
                 )
-                log.info(f'Auto started job ptero-{guild.id}. Next run time: {next_run_time}.')
+                log.info(f'Auto started job ptero-{guild.id}')
 
         self.is_listeners_done = True
 
