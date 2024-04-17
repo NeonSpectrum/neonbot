@@ -50,7 +50,7 @@ class PterodactylCog(commands.Cog):
         ptero = server.ptero.servers[server_id]
         await bot.delete_message(await bot.get_channel(ptero.channel_id).fetch_message(ptero.message_id))
 
-        del server.ptero.servers[server_id]
+        server.ptero.servers[server_id] = PteroServer()
 
         await server.save_changes()
 
