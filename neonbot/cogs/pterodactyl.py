@@ -79,7 +79,9 @@ class PterodactylCog(commands.Cog):
 
         return [
             app_commands.Choice(name=server_id, value=server_id)
-            for server_id in server_ids if server_id in server.ptero.servers and current in server_id
+            for server_id in server_ids
+            if server_id in server.ptero.servers
+               and (current != '' and current in server_id) or not current
         ]
 
 
