@@ -90,19 +90,20 @@ class NeonBot(commands.Bot):
             if server and not server.exchange_gift.finish and server.exchange_gift.message_id:
                 self.add_view(ExchangeGiftView(), message_id=server.exchange_gift.message_id)
 
-            next_run_time = datetime.now() + timedelta(seconds=5 * len(self.scheduler.get_jobs()))
+            if len(server.ptero.servers) > 0:
+                next_run_time = datetime.now() + timedelta(seconds=5 * len(self.scheduler.get_jobs()))
 
-            self.scheduler.add_job(
-                id='ptero-' + str(guild.id),
-                func=Pterodactyl.start_monitor,
-                trigger='interval',
-                minutes=1,
-                kwargs={
-                    'servers': server.ptero.servers,
-                },
-                next_run_time=next_run_time
-            )
-            log.info(f'Auto started job ptero-{guild.id}. Next run time: {next_run_time}.')
+                self.scheduler.add_job(
+                    id='ptero-' + str(guild.id),
+                    func=Pterodactyl.start_monitor,
+                    trigger='interval',
+                    minutes=1,
+                    kwargs={
+                        'servers': server.ptero.servers,
+                    },
+                    next_run_time=next_run_time
+                )
+                log.info(f'Auto started job ptero-{guild.id}. Next run time: {next_run_time}.')
 
         self.is_listeners_done = True
 
