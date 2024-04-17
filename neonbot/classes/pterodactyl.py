@@ -39,7 +39,7 @@ class Pterodactyl:
         )
 
         if res.status != 200:
-            raise ApiError('Failed to fetch server details: ' + str(res))
+            raise ApiError(f'[{self.server_id}] Failed to fetch server details: {res.status}')
 
         self.details = await res.json()
 
@@ -56,7 +56,7 @@ class Pterodactyl:
         )
 
         if res.status != 200:
-            raise ApiError('Failed to fetch server resources: ' + str(res))
+            raise ApiError(f'[{self.server_id}] Failed to fetch server resources: {res.status}')
 
         self.resources = await res.json()
 
@@ -69,10 +69,8 @@ class Pterodactyl:
             ptero = Pterodactyl(server_id)
 
             try:
-                details, resources = await asyncio.gather(
-                    ptero.get_server_details(),
-                    ptero.get_server_resources()
-                )
+                details = await ptero.get_server_details()
+                resources = await ptero.get_server_resources()
             except ApiError as error:
                 log.warn(error)
                 return
