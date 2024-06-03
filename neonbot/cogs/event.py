@@ -228,7 +228,8 @@ class Event(commands.Cog):
                     embed.add_field("Details", escape_markdown(after_activity.details))
 
             if isinstance(before_activity, discord.CustomActivity) and \
-                isinstance(after_activity, discord.CustomActivity):
+                isinstance(after_activity, discord.CustomActivity) and \
+                    before_activity.name != after_activity.name:
                 embed.description += f" changed custom status from **{before_activity.name}** to **{after_activity.name}**."
             elif before_activity and (not after_activity or isinstance(after_activity, discord.CustomActivity)):
                 embed.set_thumbnail(get_image(before_activity))
