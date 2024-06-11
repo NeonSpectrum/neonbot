@@ -40,6 +40,33 @@ class Youtube(WithInteraction):
 
         player.add_to_queue(info, requested=self.interaction.user)
 
+    async def search_keyword_first(self, keyword: str):
+        player = await Player.get_instance(self.interaction)
+
+        await self.send_message(embed=Embed(t('music.searching')))
+
+        try:
+            ytdl_info = await Ytdl({
+                "default_search": "ytsearch1"
+            }).extract_info(keyword + ' official lyric')
+
+            data = ytdl_info.get_list()
+
+            if len(data) == 0:
+                raise YtdlError()
+
+        except YtdlError:
+            await self.send_message(embed=Embed(t('music.no_songs_available')))
+            return
+
+        info = data[0]
+
+        await self.send_message(embed=Embed(
+            t('music.added_to_queue', queue=len(player.queue) + 1, title=info['title'], url=info['url'])
+        ))
+
+        player.add_to_queue(info, requested=self.interaction.user)
+
     async def search_url(self, url: str):
         if not re.search(YOUTUBE_REGEX, url):
             await self.send_message(embed=Embed(t('music.invalid_youtube_url')), ephemeral=True)

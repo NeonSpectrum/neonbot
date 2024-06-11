@@ -47,7 +47,7 @@ class Music(commands.Cog):
         value: str,
         play_now: Optional[bool] = False
     ):
-        """Searches the url or the keyword and add it to queue."""
+        """Searches the url or the keyword and add it to queue. This will queue the first search."""
 
         player = await Player.get_instance(interaction)
         last_index = len(player.queue)
@@ -57,7 +57,30 @@ class Music(commands.Cog):
         elif re.search(SPOTIFY_REGEX, value):
             await Spotify(interaction).search_url(value)
         else:
-            await Youtube(interaction).search_keyword(value)
+            await Youtube(interaction).search_keyword_first(value)
+
+        if play_now and player.connection and player.connection.is_playing():
+            player.jump(last_index + 1)
+        elif len(player.queue) > 0:
+            await player.connect(interaction.user.voice.channel)
+            await player.play()
+
+    @app_commands.command(name='playsearch')
+    @app_commands.describe(value='Enter keyword...')
+    @app_commands.check(in_voice)
+    @app_commands.guild_only()
+    async def playsearch(
+        self,
+        interaction: discord.Interaction,
+        value: str,
+        play_now: Optional[bool] = False
+    ):
+        """Searches the keyword, choose from the list, add it to queue."""
+
+        player = await Player.get_instance(interaction)
+        last_index = len(player.queue)
+
+        await Youtube(interaction).search_keyword(value)
 
         if play_now and player.connection and player.connection.is_playing():
             player.jump(last_index + 1)
@@ -226,6 +249,20 @@ class Music(commands.Cog):
         await player.stop()
 
         msg = "Player stopped."
+        log.cmd(interaction, msg)
+        await interaction.response.send_message(embed=Embed(msg))
+
+    @app_commands.command(name='reconnect')
+    @app_commands.check(has_player)
+    @app_commands.guild_only()
+    async def reconnect(self, interaction: discord.Interaction) -> None:
+        """Stops the current player and reset the queue from the start."""
+
+        player = await Player.get_instance(interaction)
+        await player.disconnect(force=True)
+        await player.play()
+
+        msg = "Player reconnected."
         log.cmd(interaction, msg)
         await interaction.response.send_message(embed=Embed(msg))
 
