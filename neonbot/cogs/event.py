@@ -140,12 +140,13 @@ class Event(commands.Cog):
             ]
 
             if any(voice_members):
+                player.reset_timeout.cancel()
                 if player.state == PlayerState.AUTO_PAUSED:
                     await player.resume(requester=bot.user)
-            elif player.connection.is_playing():
-                await player.pause(requester=bot.user, auto=True)
             else:
-                await player.reset()
+                if player.connection.is_playing():
+                    await player.pause(requester=bot.user, auto=True)
+                await player.reset_timeout.start()
 
         server = Guild.get_instance(member.guild.id)
 

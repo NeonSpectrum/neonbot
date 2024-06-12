@@ -105,12 +105,6 @@ class Player:
         return self.queue[index]
 
     @tasks.loop(count=1)
-    async def pause_timeout(self) -> None:
-        await asyncio.sleep(5)
-
-        await self.pause(requester=bot.user)
-
-    @tasks.loop(count=1)
     async def reset_timeout(self) -> None:
         await asyncio.sleep(60)
 
