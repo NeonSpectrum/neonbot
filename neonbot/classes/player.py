@@ -105,8 +105,8 @@ class Player:
         return self.queue[index]
 
     @tasks.loop(count=1)
-    async def reset_timeout(self) -> None:
-        await asyncio.sleep(60)
+    async def reset_timeout(self, timeout=60) -> None:
+        await asyncio.sleep(timeout)
 
         await self.reset()
         self.remove_instance()
