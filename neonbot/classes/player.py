@@ -209,6 +209,7 @@ class Player:
 
             log.exception(msg, error)
             await self.channel.send(embed=Embed(msg).set_author(self.now_playing.get('title')))
+            await self.after()
 
     def pre_play(self):
         # Play recently added song if added while player is finished playing
