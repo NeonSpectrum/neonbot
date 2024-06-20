@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List
 
 import discord
@@ -210,3 +210,25 @@ class Panel:
             return allocation['ip'] + ':' + str(allocation['port'])
         except (KeyError, TypeError) as e:
             return None
+
+    @staticmethod
+    def start_listener(guild_id: int):
+        server = Guild.get_instance(guild_id)
+
+        if bot.scheduler.get_job('panel-' + str(guild_id)):
+            return
+
+        if len(server.panel.servers) > 0:
+            next_run_time = datetime.now() + timedelta(seconds=5 * len(bot.scheduler.get_jobs()))
+
+            bot.scheduler.add_job(
+                id='panel-' + str(guild_id),
+                func=Panel.start_monitor,
+                trigger='interval',
+                minutes=1,
+                kwargs={
+                    'guild_id': guild_id,
+                },
+                next_run_time=next_run_time
+            )
+            log.info(f'Auto started job panel-{guild_id}')

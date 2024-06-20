@@ -90,20 +90,7 @@ class NeonBot(commands.Bot):
             if server and not server.exchange_gift.finish and server.exchange_gift.message_id:
                 self.add_view(ExchangeGiftView(), message_id=server.exchange_gift.message_id)
 
-            if len(server.panel.servers) > 0:
-                next_run_time = datetime.now() + timedelta(seconds=5 * len(self.scheduler.get_jobs()))
-
-                self.scheduler.add_job(
-                    id='panel-' + str(guild.id),
-                    func=Panel.start_monitor,
-                    trigger='interval',
-                    minutes=1,
-                    kwargs={
-                        'guild_id': guild.id,
-                    },
-                    next_run_time=next_run_time
-                )
-                log.info(f'Auto started job panel-{guild.id}')
+            Panel.start_listener(guild.id)
 
         self.is_listeners_done = True
 
