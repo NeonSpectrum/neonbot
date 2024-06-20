@@ -2,7 +2,6 @@ import asyncio
 import os
 import re
 import sys
-from datetime import datetime, timedelta
 from glob import glob
 from os import sep
 from time import time
