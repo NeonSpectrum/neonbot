@@ -53,7 +53,7 @@ class PterodactylCog(commands.Cog):
         if ptero.channel_id and ptero.message_id:
             await bot.delete_message(await bot.get_channel(ptero.channel_id).fetch_message(ptero.message_id))
 
-        del server.ptero.servers[server_id]
+        server.ptero.servers = {k: v for k, v in server.ptero.servers.items() if k != server_id}
 
         await server.save_changes()
 
