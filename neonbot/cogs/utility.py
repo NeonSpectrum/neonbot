@@ -1,3 +1,4 @@
+import json
 import os
 import random
 from datetime import datetime
@@ -104,6 +105,23 @@ class Utility(commands.Cog):
                 embed=generate_embed().add_field("Status:", "Sent", inline=False)
                 .add_field("Date sent:", format_dt(datetime.now()), inline=False)
             )
+
+    @app_commands.command(name='tts')
+    @app_commands.guilds(*bot.owner_guilds)
+    async def tts(self, interaction: discord.Interaction, message: str) -> None:
+        url = "https://texttospeech.googleapis.com/v1beta1/text:synthesize"
+
+        data = {
+            "input": {"text": message},
+            "voice": {"name": "fr-FR-Wavenet-A", "languageCode": "fr-FR"},
+            "audioConfig": {"audioEncoding": "MP3"}
+        };
+
+        headers = {"content-type": "application/json", "X-Goog-Api-Key": "YOUR_API_KEY"}
+
+        response = await bot.session.post(url=url, json=data, headers=headers)
+        data = await response.json()
+        content = json.loads(data.content)
 
 
 # noinspection PyShadowingNames

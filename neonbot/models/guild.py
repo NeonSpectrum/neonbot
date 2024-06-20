@@ -9,7 +9,7 @@ from neonbot.models.channel_log import ChannelLog
 from neonbot.models.chatgpt import ChatGPT
 from neonbot.models.exchange_gift import ExchangeGift
 from neonbot.models.music import Music
-from neonbot.models.ptero import Ptero
+from neonbot.models.panel import Panel
 
 guilds = {}
 
@@ -21,7 +21,7 @@ class Guild(Document):
     music: Music
     exchange_gift: Optional[ExchangeGift] = None
     chatgpt: Optional[ChatGPT] = None
-    ptero: Optional[Ptero] = None
+    panel: Optional[Panel] = None
 
     class Settings:
         name = 'guilds'
@@ -51,5 +51,5 @@ class Guild(Document):
             music=Music(volume=100, repeat=Repeat.OFF.value, shuffle=False),
             exchange_gift=ExchangeGift(members=[]),
             chatgpt=ChatGPT(chats=[]),
-            ptero=Ptero()
+            panel=Panel()
         ).create()

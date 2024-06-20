@@ -7,31 +7,31 @@ from discord.ext import commands
 
 from neonbot import bot
 from neonbot.classes.embed import Embed
-from neonbot.classes.pterodactyl import Pterodactyl
+from neonbot.classes.panel import Panel
 from neonbot.models.guild import Guild
-from neonbot.models.ptero import PteroServer
+from neonbot.models.panel import PanelServer
 
 
-class PterodactylCog(commands.Cog):
-    ptero = app_commands.Group(name='ptero', description='Pterodactyl commands',
+class PanelCog(commands.Cog):
+    panel = app_commands.Group(name='panel', description='Panel commands',
                                guild_ids=bot.owner_guilds,
                                default_permissions=discord.Permissions(administrator=True))
 
-    @ptero.command(name='startmonitor')
+    @panel.command(name='startmonitor')
     async def startmonitor(self, interaction: discord.Interaction, server_id: str) -> None:
         server = Guild.get_instance(interaction.guild.id)
 
-        details = await Pterodactyl(server_id).get_server_details()
+        details = await Panel(server_id).get_server_details()
 
         if not details:
             await interaction.response.send_message(embed=Embed("Invalid server id."), ephemeral=True)
             return
 
-        if server_id in server.ptero.servers:
+        if server_id in server.panel.servers:
             await interaction.response.send_message(embed=Embed("Server id already exists."), ephemeral=True)
             return
 
-        server.ptero.servers[server_id] = PteroServer(channel_id=interaction.channel_id)
+        server.panel.servers[server_id] = PanelServer(channel_id=interaction.channel_id)
 
         await server.save_changes()
 
@@ -40,20 +40,20 @@ class PterodactylCog(commands.Cog):
             ephemeral=True
         )
 
-    @ptero.command(name='deletemonitor')
+    @panel.command(name='deletemonitor')
     async def deletemonitor(self, interaction: discord.Interaction, server_id: str) -> None:
         server = Guild.get_instance(interaction.guild.id)
 
-        if server_id not in server.ptero.servers:
+        if server_id not in server.panel.servers:
             await interaction.response.send_message(embed=Embed("Server id not in monitor list."), ephemeral=True)
             return
 
-        ptero = server.ptero.servers[server_id]
+        panel = server.panel.servers[server_id]
 
-        if ptero.channel_id and ptero.message_id:
-            await bot.delete_message(await bot.get_channel(ptero.channel_id).fetch_message(ptero.message_id))
+        if panel.channel_id and panel.message_id:
+            await bot.delete_message(await bot.get_channel(panel.channel_id).fetch_message(panel.message_id))
 
-        server.ptero.servers[server_id] = PteroServer()
+        server.panel.servers[server_id] = PanelServer()
 
         await server.save_changes()
 
@@ -64,33 +64,33 @@ class PterodactylCog(commands.Cog):
 
     @startmonitor.autocomplete('server_id')
     async def startmonitor_autocomplete(self, interaction: discord.Interaction, current: str):
-        ptero = Guild.get_instance(interaction.guild.id).ptero
+        panel = Guild.get_instance(interaction.guild.id).panel
         servers = [
             {'id': server['attributes']['identifier'], 'name': server['attributes']['name']}
-            for server in (await Pterodactyl.get_server_list())['data']
+            for server in (await Panel.get_server_list())['data']
         ]
 
         return [
             app_commands.Choice(name=server['name'], value=server['id'])
             for server in servers
-            if server['id'] not in ptero.servers and ((current and current in server['name']) or not current)
+            if server['id'] not in panel.servers and ((current and current in server['name']) or not current)
         ]
 
     @deletemonitor.autocomplete('server_id')
     async def deletemonitor_autocomplete(self, interaction: discord.Interaction, current: str):
-        ptero = Guild.get_instance(interaction.guild.id).ptero
+        panel = Guild.get_instance(interaction.guild.id).panel
         servers = [
             {'id': server['attributes']['identifier'], 'name': server['attributes']['name']}
-            for server in (await Pterodactyl.get_server_list())['data']
+            for server in (await Panel.get_server_list())['data']
         ]
 
         return [
             app_commands.Choice(name=server['name'], value=server['id'])
             for server in servers
-            if server['id'] in ptero.servers and ((current and current in server['name']) or not current)
+            if server['id'] in panel.servers and ((current and current in server['name']) or not current)
         ]
 
 
 # noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(PterodactylCog())
+    await bot.add_cog(PanelCog())

@@ -58,9 +58,16 @@ class Database:
     async def start_migration(self, guild_id: int):
         guild = await self.db.guilds.find_one({'_id': guild_id})
 
-        if 'ptero' not in guild:
+        if 'ptero' in guild:
+            await self.db.guilds.update_one({'_id': guild_id}, {
+                '$unset': {
+                    'ptero': 1,
+                }
+            })
+
+        if 'panel' not in guild:
             await self.db.guilds.update_one({'_id': guild_id}, {
                 '$set': {
-                    'ptero.servers': {},
+                    'panel.servers': {},
                 }
             })

@@ -11,14 +11,14 @@ from envparse import env
 from neonbot import bot
 from neonbot.classes.embed import Embed
 from neonbot.models.guild import Guild
-from neonbot.models.ptero import PteroServer, Ptero
+from neonbot.models.panel import PanelServer, Panel
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
 from neonbot.utils.exceptions import ApiError
 from neonbot.utils.functions import format_uptime
 
 
-class Pterodactyl:
+class Panel:
     URL = env.str('PTERODACTYL_URL')
     API_KEY = env.str('PTERODACTYL_API_KEY')
     MCSTATUS_API = 'https://api.mcstatus.io/v2/status/java'
@@ -66,11 +66,11 @@ class Pterodactyl:
     @staticmethod
     async def get_server_list():
         res = await bot.session.get(
-            Pterodactyl.URL + '/api/client',
+            Panel.URL + '/api/client',
             headers={
                 "Accept": "application/json",
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {Pterodactyl.API_KEY}"
+                "Authorization": f"Bearer {Panel.API_KEY}"
             }
         )
 
@@ -80,18 +80,20 @@ class Pterodactyl:
         return await res.json()
 
     @staticmethod
-    async def start_monitor(servers):
-        for server_id, ptero in servers.items():
-            channel_id = ptero.channel_id
+    async def start_monitor(guild_id):
+        server = Guild.get_instance(guild_id)
+
+        for server_id, panel in server.panel.servers.items():
+            channel_id = panel.channel_id
 
             if not channel_id:
                 continue
 
-            ptero = Pterodactyl(server_id)
+            panel = Panel(server_id)
 
             try:
-                details = await ptero.get_server_details()
-                resources = await ptero.get_server_resources()
+                details = await panel.get_server_details()
+                resources = await panel.get_server_resources()
             except ApiError as error:
                 log.warn(error)
                 return
@@ -106,12 +108,12 @@ class Pterodactyl:
                 state = 'offline'
 
             embed = Embed(timestamp=datetime.now())
-            embed.set_author(name, url=Pterodactyl.URL + '/server/' + server_id)
+            embed.set_author(name, url=Panel.URL + '/server/' + server_id)
             embed.set_description(description)
             embed.set_thumbnail(ICONS['green'] if state == 'running' else ICONS['red'])
             embed.set_footer(identifier)
 
-            image_url = ptero.get_variable('DISCORD_IMAGE_URL')
+            image_url = panel.get_variable('DISCORD_IMAGE_URL')
 
             if image_url and validators.url(image_url):
                 embed.set_image(image_url)
@@ -139,14 +141,14 @@ class Pterodactyl:
                 embed.add_field('\u200b', '\u200b')
 
                 if 'minecraft' in name.lower():
-                    await ptero.add_minecraft(embed)
+                    await panel.add_minecraft(embed)
             else:
                 embed.add_field('Status', state.title())
 
             channel = bot.get_channel(channel_id)
             server = Guild.get_instance(channel.guild.id)
 
-            message_id = server.ptero.servers[server_id].message_id
+            message_id = server.panel.servers[server_id].message_id
 
             try:
                 message = await channel.fetch_message(message_id) if message_id else None
@@ -156,7 +158,7 @@ class Pterodactyl:
             try:
                 if not message:
                     message = await channel.send(embed=embed)
-                    server.ptero.servers[server_id].message_id = message.id
+                    server.panel.servers[server_id].message_id = message.id
                     await server.save_changes()
                 else:
                     await message.edit(embed=embed)

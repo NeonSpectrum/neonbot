@@ -82,7 +82,7 @@ class NeonBot(commands.Bot):
         if self.is_listeners_done:
             return
 
-        from .classes.pterodactyl import Pterodactyl
+        from .classes.panel import Panel
 
         for guild in self.guilds:
             server = Guild.get_instance(guild.id)
@@ -90,20 +90,20 @@ class NeonBot(commands.Bot):
             if server and not server.exchange_gift.finish and server.exchange_gift.message_id:
                 self.add_view(ExchangeGiftView(), message_id=server.exchange_gift.message_id)
 
-            if len(server.ptero.servers) > 0:
+            if len(server.panel.servers) > 0:
                 next_run_time = datetime.now() + timedelta(seconds=5 * len(self.scheduler.get_jobs()))
 
                 self.scheduler.add_job(
-                    id='ptero-' + str(guild.id),
-                    func=Pterodactyl.start_monitor,
+                    id='panel-' + str(guild.id),
+                    func=Panel.start_monitor,
                     trigger='interval',
                     minutes=1,
                     kwargs={
-                        'servers': server.ptero.servers,
+                        'guild_id': guild.id,
                     },
                     next_run_time=next_run_time
                 )
-                log.info(f'Auto started job ptero-{guild.id}')
+                log.info(f'Auto started job panel-{guild.id}')
 
         self.is_listeners_done = True
 

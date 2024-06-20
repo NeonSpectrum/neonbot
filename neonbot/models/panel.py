@@ -3,10 +3,10 @@ from typing import List, Optional, Dict
 from pydantic import BaseModel, RootModel
 
 
-class PteroServer(BaseModel):
+class PanelServer(BaseModel):
     channel_id: Optional[int] = None
     message_id: Optional[int] = None
 
 
-class Ptero(BaseModel):
-    servers: Dict[str, PteroServer]
+class Panel(BaseModel):
+    servers: Dict[str, PanelServer]
