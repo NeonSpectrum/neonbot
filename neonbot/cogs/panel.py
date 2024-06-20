@@ -53,7 +53,7 @@ class PanelCog(commands.Cog):
         if panel.channel_id and panel.message_id:
             await bot.delete_message(await bot.get_channel(panel.channel_id).fetch_message(panel.message_id))
 
-        server.panel.servers[server_id] = PanelServer()
+        server.panel.servers.pop(server_id, None)
 
         await server.save_changes()
 
