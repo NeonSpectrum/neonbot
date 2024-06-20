@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 from beanie import Document
+from beanie.odm.queries.find import FindOne
 
 from neonbot.enums import Repeat
 from neonbot.models.channel_log import ChannelLog
@@ -38,6 +39,10 @@ class Guild(Document):
     @staticmethod
     def get_instance(guild_id: int) -> Optional[Guild]:
         return guilds[guild_id]
+
+    @staticmethod
+    def get_model(guild_id: int) -> FindOne[Guild]:
+        return Guild.find_one(Guild.id == guild_id)
 
     @staticmethod
     async def create_default_collection(guild_id: int):

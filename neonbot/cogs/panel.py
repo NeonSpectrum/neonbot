@@ -53,7 +53,7 @@ class PanelCog(commands.Cog):
         if panel.channel_id and panel.message_id:
             await bot.delete_message(await bot.get_channel(panel.channel_id).fetch_message(panel.message_id))
 
-        await Guild.find_one(Guild.id == interaction.guild.id).update_one({
+        await Guild.get_model(interaction.guild.id).update_one({
             '$unset': {
                 'panel.servers' + server_id: 1,
             }
