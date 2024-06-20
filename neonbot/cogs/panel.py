@@ -36,6 +36,8 @@ class PanelCog(commands.Cog):
 
         await server.save_changes()
 
+        Panel.start_listener(interaction.guild.id)
+
         await interaction.response.send_message(
             embed=Embed(f'Started monitor for `{server_id}` on {interaction.channel.mention}'),
             ephemeral=True
