@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import List
 
 import discord
+from beanie.odm.operators.update.general import Unset
 from discord import app_commands
 from discord.ext import commands
 
@@ -53,11 +54,9 @@ class PanelCog(commands.Cog):
         if panel.channel_id and panel.message_id:
             await bot.delete_message(await bot.get_channel(panel.channel_id).fetch_message(panel.message_id))
 
-        await Guild.get_model(interaction.guild.id).update_one({
-            '$unset': {
-                'panel.servers' + server_id: 1,
-            }
-        })
+        await Guild.get_model(interaction.guild.id).update_one(Unset({
+            'panel.servers' + server_id: 1,
+        }))
 
         await interaction.response.send_message(
             embed=Embed(f'Removed monitor for `{server_id}` on {interaction.channel.mention}'),
