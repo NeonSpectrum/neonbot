@@ -56,9 +56,7 @@ class PanelCog(commands.Cog):
         if panel.channel_id and panel.message_id:
             await bot.delete_message(await bot.get_channel(panel.channel_id).fetch_message(panel.message_id))
 
-        await Guild.get_model(interaction.guild.id).update_one(Unset({
-            'panel.servers' + server_id: 1,
-        }))
+        server.panel.servers[server_id] = PanelServer()
 
         await interaction.response.send_message(
             embed=Embed(f'Removed monitor for `{server_id}` on {interaction.channel.mention}'),

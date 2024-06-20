@@ -218,7 +218,9 @@ class Panel:
         if bot.scheduler.get_job('panel-' + str(guild_id)):
             return
 
-        if len(server.panel.servers) > 0:
+        servers = {k: v for k, v in server.panel.servers.items() if v.channel_id}
+
+        if len(servers) > 0:
             next_run_time = datetime.now() + timedelta(seconds=5 * len(bot.scheduler.get_jobs()))
 
             bot.scheduler.add_job(
