@@ -277,6 +277,7 @@ class Player:
         self.state = PlayerState.NONE
         await self.disconnect(force=True)
         await self.clear_messages()
+        self.queue = []
 
     async def stop(self):
         await self.clear_messages()
