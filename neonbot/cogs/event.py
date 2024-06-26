@@ -126,16 +126,16 @@ class Event(commands.Cog):
     async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
         player = Player.get_instance_from_guild(member.guild)
 
-        if member.id == bot.user.id:
-            if before.channel and not after.channel:
-                # Check if the bot was disconnected
-                if player and player.connection and not player.connection.is_connected():
-                    await player.reset_timeout(timeout=10)
-
-            if not before.channel and after.channel:
-                player.reset_timeout.cancel()
-
-            return
+        # if member.id == bot.user.id:
+        #     if before.channel and not after.channel:
+        #         # Check if the bot was disconnected
+        #         if player and player.connection and not player.connection.is_connected():
+        #             await player.reset_timeout(timeout=10)
+        #
+        #     if not before.channel and after.channel:
+        #         player.reset_timeout.cancel()
+        #
+        #     return
 
         if player and player.connection:
             voice_members = [
