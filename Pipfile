@@ -6,7 +6,6 @@ name = "pypi"
 [packages]
 environs = "*"
 motor = "*"
-discord = "*"
 python-i18n = "*"
 dnspython = "*"
 pynacl = "*"
