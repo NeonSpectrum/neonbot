@@ -20,18 +20,23 @@ class Ytdl:
         self.ytdl = yt_dlp.YoutubeDL(
             {
                 "default_search": "ytsearch5",
-                "format": "bestaudio/best/worst",
+                "format": "bestaudio/best",
                 "quiet": True,
                 "nocheckcertificate": True,
                 "ignoreerrors": False,
                 "extract_flat": "in_playlist",
-                "geo_bypass": True,
-                "geo_bypass_country": "PH",
-                "source_address": "0.0.0.0",
+                # "geo_bypass": True,
+                # "geo_bypass_country": "PH",
+                # "source_address": "0.0.0.0",
                 "outtmpl": YOUTUBE_TMP_DIR + "/%(id)s",
                 "compat_opts": {
                     "no-youtube-unavailable-videos": True
                 },
+                "postprocessors": [{
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": "mp3",
+                    "preferredquality": "192",
+                }],
                 **extra_params,
             }
         )
