@@ -165,6 +165,7 @@ class NeonBot(commands.Bot):
         from .classes.player import Player
 
         await asyncio.gather(*[player.clear_messages() for player in Player.servers.values()])
+        await self.scheduler.shutdown(wait=True)
         await self.session.close()
         await super().close()
 
