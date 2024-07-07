@@ -4,6 +4,8 @@ LOG_FORMAT = (
 )
 
 YOUTUBE_TMP_DIR = "./tmp/youtube_dl"
+YOUTUBE_DOWNLOADS_DIR = "./tmp/youtube_dl/downloads"
+YOUTUBE_CACHE_DIR = "./tmp/youtube_dl/cache"
 
 PERMISSIONS = 8
 
