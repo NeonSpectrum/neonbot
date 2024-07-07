@@ -151,7 +151,8 @@ class Event(commands.Cog):
             else:
                 if player.connection.is_playing():
                     await player.pause(requester=bot.user, auto=True)
-                await player.reset_timeout.start()
+                if not player.reset_timeout.is_running():
+                    await player.reset_timeout.start()
 
         server = Guild.get_instance(member.guild.id)
 

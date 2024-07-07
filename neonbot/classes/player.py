@@ -109,6 +109,11 @@ class Player:
         await asyncio.sleep(timeout)
 
         await self.reset()
+
+        msg = "Player reset due to inactivity."
+        log.cmd(self.ctx, msg)
+        await self.channel.send(embed=Embed(msg))
+
         self.remove_instance()
 
     async def connect(self, channel: discord.VoiceChannel):
