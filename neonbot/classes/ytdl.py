@@ -12,6 +12,8 @@ from ..utils.exceptions import YtdlError
 
 
 class Ytdl:
+    EXTENSION = 'mp3'
+
     def __init__(self, extra_params=None) -> None:
         if extra_params is None:
             extra_params = {}
@@ -34,7 +36,7 @@ class Ytdl:
                 },
                 "postprocessors": [{
                     "key": "FFmpegExtractAudio",
-                    "preferredcodec": "mp3",
+                    "preferredcodec": self.EXTENSION,
                     "preferredquality": "192",
                 }],
                 **extra_params,
