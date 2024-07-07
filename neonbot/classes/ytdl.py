@@ -61,7 +61,7 @@ class Ytdl:
                 return YtdlInfo(result)
             except yt_dlp.utils.DownloadError as error:
                 tries += 1
-                log.warn('Download failed. Retrying...[{tries}]')
+                log.warn(f'Download failed. Retrying...[{tries}]')
                 if tries > max_retries:
                     raise YtdlError(error)
                 await asyncio.sleep(1)
@@ -81,7 +81,7 @@ class Ytdl:
                 return YtdlInfo(result)
             except yt_dlp.utils.DownloadError as error:
                 tries += 1
-                log.warn('Download failed. Retrying...[{tries}]')
+                log.warn(f'Download failed. Retrying...[{tries}]')
                 if tries > max_retries:
                     raise YtdlError(error)
                 await asyncio.sleep(1)
