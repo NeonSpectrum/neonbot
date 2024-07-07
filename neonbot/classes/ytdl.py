@@ -46,17 +46,27 @@ class Ytdl:
         )
 
     async def extract_info(self, keyword: str) -> YtdlInfo:
-        try:
-            result = await self.loop.run_in_executor(
-                self.thread_pool,
-                functools.partial(
-                    self.ytdl.extract_info, keyword, download=False, process=True
-                ),
-            )
+        tries = 0
+        max_retries = 5
 
-            return YtdlInfo(result)
-        except yt_dlp.utils.YoutubeDLError as error:
-            raise YtdlError(error)
+        while tries <= max_retries:
+            try:
+                result = await self.loop.run_in_executor(
+                    self.thread_pool,
+                    functools.partial(
+                        self.ytdl.extract_info, keyword, download=False, process=True
+                    ),
+                )
+
+                return YtdlInfo(result)
+            except yt_dlp.utils.DownloadError as error:
+                tries += 1
+                log.warn('Download failed. Retrying...[{tries}]')
+                if tries > max_retries:
+                    raise YtdlError(error)
+                await asyncio.sleep(1)
+            except yt_dlp.utils.YoutubeDLError as error:
+                raise YtdlError(error)
 
     async def process_entry(self, info: dict) -> YtdlInfo:
         tries = 0
