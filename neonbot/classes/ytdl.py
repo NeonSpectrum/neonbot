@@ -28,7 +28,7 @@ class Ytdl:
                 # "geo_bypass": True,
                 # "geo_bypass_country": "PH",
                 # "source_address": "0.0.0.0",
-                "outtmpl": YOUTUBE_TMP_DIR + "/%(id)s",
+                "outtmpl": YOUTUBE_TMP_DIR + "/%(id)s.%(ext)s",
                 "compat_opts": {
                     "no-youtube-unavailable-videos": True
                 },
