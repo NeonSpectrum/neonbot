@@ -1,10 +1,11 @@
 from datetime import datetime
 
-from neonbot.classes.ytdl import Ytdl
 from neonbot.utils.functions import format_seconds
 
 
 class YtdlInfo:
+    EXTENSION = 'mp3'
+
     def __init__(self, result):
         self.result = result
 
@@ -65,7 +66,7 @@ class YtdlInfo:
             duration=entry.get('duration'),
             formatted_duration=format_seconds(entry.get('duration')) if entry.get('duration') else "N/A",
             thumbnail=entry.get('thumbnail'),
-            stream=entry.get('url') if entry.get('is_live') else f"./tmp/youtube_dl/{entry.get('stream') + '.' + Ytdl.EXTENSION}",
+            stream=entry.get('url') if entry.get('is_live') else f"./tmp/youtube_dl/{entry.get('stream') + '.' + self.EXTENSION}",
             url=entry.get('webpage_url'),
             is_live=entry.get('is_live'),
             view_count=f"{entry.get('view_count'):,}",

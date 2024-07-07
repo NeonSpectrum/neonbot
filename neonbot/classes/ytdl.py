@@ -36,7 +36,7 @@ class Ytdl:
                 },
                 "postprocessors": [{
                     "key": "FFmpegExtractAudio",
-                    "preferredcodec": self.EXTENSION,
+                    "preferredcodec": YtdlInfo.EXTENSION,
                     "preferredquality": "192",
                 }],
                 **extra_params,
