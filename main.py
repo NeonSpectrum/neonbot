@@ -7,6 +7,8 @@ import openai
 from envparse import env
 from dotenv import load_dotenv
 
+from neonbot.utils.constants import YOUTUBE_DOWNLOADS_DIR, YOUTUBE_CACHE_DIR
+
 load_dotenv()
 env.read_envfile()
 i18n.load_path.append('./neonbot/lang')
@@ -19,7 +21,8 @@ def main() -> None:
     from neonbot.utils.constants import YOUTUBE_TMP_DIR
 
     shutil.rmtree(YOUTUBE_TMP_DIR, ignore_errors=True)
-    os.makedirs(YOUTUBE_TMP_DIR, exist_ok=True)
+    os.makedirs(YOUTUBE_DOWNLOADS_DIR, exist_ok=True)
+    os.makedirs(YOUTUBE_CACHE_DIR, exist_ok=True)
 
     # Clear debug.log on startup
     open('./debug.log', 'w').close()
