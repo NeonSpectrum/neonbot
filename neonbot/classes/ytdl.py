@@ -8,6 +8,7 @@ import yt_dlp
 
 from .ytdl_info import YtdlInfo
 from .. import bot
+from ..utils import log
 from ..utils.constants import YOUTUBE_TMP_DIR
 from ..utils.exceptions import YtdlError
 
@@ -70,6 +71,7 @@ class Ytdl:
                 return YtdlInfo(result)
             except yt_dlp.utils.DownloadError as error:
                 tries += 1
+                log.warn('Download failed. Retrying...[{tries}]')
                 if tries > max_retries:
                     raise YtdlError(error)
                 await asyncio.sleep(1)
