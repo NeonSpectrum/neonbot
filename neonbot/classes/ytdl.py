@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import functools
 from concurrent.futures import ThreadPoolExecutor
 
@@ -57,15 +58,23 @@ class Ytdl:
             raise YtdlError(error)
 
     async def process_entry(self, info: dict) -> YtdlInfo:
-        try:
-            result = await self.loop.run_in_executor(
-                self.thread_pool,
-                functools.partial(self.ytdl.process_ie_result, info, download=not info.get('is_live')),
-            )
+        tries = 0
+        max_retries = 5
 
-            return YtdlInfo(result)
-        except yt_dlp.utils.YoutubeDLError as error:
-            raise YtdlError(error)
+        while tries <= max_retries:
+            try:
+                result = await self.loop.run_in_executor(
+                    self.thread_pool,
+                    functools.partial(self.ytdl.process_ie_result, info, download=not info.get('is_live')),
+                )
+                return YtdlInfo(result)
+            except yt_dlp.utils.DownloadError as error:
+                tries += 1
+                if tries > max_retries:
+                    raise YtdlError(error)
+                await asyncio.sleep(1)
+            except yt_dlp.utils.YoutubeDLError as error:
+                raise YtdlError(error)
 
     @classmethod
     def create(cls, extra_params) -> Ytdl:
