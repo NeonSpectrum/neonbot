@@ -14,8 +14,6 @@ from ..utils.exceptions import YtdlError
 
 
 class Ytdl:
-    EXTENSION = 'mp3'
-
     def __init__(self, extra_params=None) -> None:
         if extra_params is None:
             extra_params = {}
@@ -32,7 +30,7 @@ class Ytdl:
                 # "geo_bypass": True,
                 # "geo_bypass_country": "PH",
                 # "source_address": "0.0.0.0",
-                "outtmpl": YOUTUBE_DOWNLOADS_DIR + "/%(id)s.%(ext)s",
+                "outtmpl": YOUTUBE_DOWNLOADS_DIR + "/%(id)s",
                 "cachedir": YOUTUBE_CACHE_DIR,
                 "compat_opts": {
                     "no-youtube-unavailable-videos": True

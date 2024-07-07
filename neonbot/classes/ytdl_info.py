@@ -67,7 +67,7 @@ class YtdlInfo:
             duration=entry.get('duration'),
             formatted_duration=format_seconds(entry.get('duration')) if entry.get('duration') else "N/A",
             thumbnail=entry.get('thumbnail'),
-            stream=entry.get('url') if entry.get('is_live') else f"{YOUTUBE_DOWNLOADS_DIR}/{entry.get('id')}.{self.EXTENSION}",
+            stream=entry.get('url') if entry.get('is_live') else f"{YOUTUBE_DOWNLOADS_DIR}/{entry.get('id')}",
             url=entry.get('webpage_url'),
             is_live=entry.get('is_live'),
             view_count=f"{entry.get('view_count'):,}",
