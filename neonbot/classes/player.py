@@ -190,7 +190,7 @@ class Player:
 
         try:
             if not self.now_playing.get('stream'):
-                ytdl_info = await Ytdl().process_entry(self.now_playing)
+                ytdl_info = await Ytdl().extract_info(self.now_playing['url'], download=True)
                 info = ytdl_info.get_track(detailed=True)
                 self.now_playing = {'index': self.track_list[self.current_queue] + 1, **self.now_playing, **info}
 

@@ -5,8 +5,6 @@ from neonbot.utils.functions import format_seconds
 
 
 class YtdlInfo:
-    EXTENSION = 'mp3'
-
     def __init__(self, result):
         self.result = result
 

@@ -39,7 +39,7 @@ class Ytdl:
             }
         )
 
-    async def extract_info(self, keyword: str) -> YtdlInfo:
+    async def extract_info(self, keyword: str, download: bool = False) -> YtdlInfo:
         tries = 0
         max_retries = 5
 
@@ -48,7 +48,7 @@ class Ytdl:
                 result = await self.loop.run_in_executor(
                     self.thread_pool,
                     functools.partial(
-                        self.ytdl.extract_info, keyword, download=False, process=True
+                        self.ytdl.extract_info, keyword, download, process=True
                     ),
                 )
 
