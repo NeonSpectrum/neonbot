@@ -19,8 +19,8 @@ from neonbot.utils.functions import format_uptime
 
 
 class Panel:
-    URL = env.str('PTERODACTYL_URL')
-    API_KEY = env.str('PTERODACTYL_API_KEY')
+    URL = env.str('PANEL_URL')
+    API_KEY = env.str('PANEL_API_KEY')
     MCSTATUS_API = 'https://api.mcstatus.io/v2/status/java'
 
     def __init__(self, server_id: str):
@@ -188,6 +188,8 @@ class Panel:
             )
         except ContentTypeError as error:
             log.error(error)
+        except asyncio.TimeoutError:
+            pass
 
     def get_variable(self, key, default=None):
         try:
