@@ -163,7 +163,7 @@ class Player:
             return
 
         self.connection.pause()
-        log.cmd(self.ctx, t('music.player_paused'))
+        log.cmd(self.ctx, t('music.player_paused', user=requester.name))
 
         self.state = PlayerState.AUTO_PAUSED if auto else PlayerState.PAUSED
 
@@ -175,7 +175,7 @@ class Player:
             return
 
         self.connection.resume()
-        log.cmd(self.ctx, t('music.player_resumed'))
+        log.cmd(self.ctx, t('music.player_resumed', user=requester.name))
 
         self.state = PlayerState.PLAYING
 
