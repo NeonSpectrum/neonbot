@@ -5,6 +5,8 @@ import pytz
 
 import discord
 from envparse import env
+import markdown
+from bs4 import BeautifulSoup
 
 
 async def shell_exec(command: str) -> str:
@@ -61,23 +63,27 @@ def get_log_prefix() -> str:
     return f"[{now.strftime('%I:%M:%S %p')}] :bust_in_silhouette:"
 
 
-def split_long_message(message: str):
-    if len(message) < 1900:
-        return [message]
+def split_long_message(text: str):
+    if len(text) < 2000:
+        return [text]
 
-    lines = message.split('\n')
+    lines = text.split('\n')
     messages = []
-    message = []
+    message = ''
 
-    for index, line in enumerate(lines):
-        message.append(line)
+    for line in lines:
+        if len(message) + len(line) + 1 > 2000:
+            messages.append(message)
+            message = line + "\n"
+        else:
+            message += line + "\n"
 
-        if len('\n'.join(message)) > 1900:
-            message.pop()
-            messages.append('\n'.join(message))
-            message = [line]
-
-        if index == len(lines) - 1:
-            messages.append('\n'.join(message))
+    if message:
+        messages.append(message)
 
     return messages
+
+def md_to_text(md):
+    html = markdown.markdown(md)
+    soup = BeautifulSoup(html, features='html.parser')
+    return soup.get_text()

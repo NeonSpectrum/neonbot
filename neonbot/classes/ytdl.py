@@ -61,6 +61,8 @@ class Ytdl:
                 await asyncio.sleep(1)
             except yt_dlp.utils.YoutubeDLError as error:
                 raise YtdlError(error)
+            except:
+                raise YtdlError()
 
     async def process_entry(self, info: dict) -> YtdlInfo:
         tries = 0

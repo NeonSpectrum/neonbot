@@ -1,5 +1,6 @@
 import traceback
 from datetime import datetime, timezone
+from io import BytesIO
 from typing import Union, Optional
 
 import discord
@@ -11,12 +12,13 @@ from discord.utils import escape_markdown
 from neonbot import bot
 from neonbot.classes.chatgpt.chatgpt import ChatGPT
 from neonbot.classes.embed import Embed
+from neonbot.classes.gemini import GeminiChat
 from neonbot.classes.player import Player
 from neonbot.classes.voice_events import VoiceEvents
 from neonbot.enums import PlayerState
 from neonbot.models.guild import Guild
 from neonbot.utils import log, exceptions
-from neonbot.utils.functions import format_seconds, get_log_prefix
+from neonbot.utils.functions import format_seconds, get_log_prefix, split_long_message, md_to_text
 from neonbot.utils.functions import get_command_string
 
 
@@ -47,6 +49,7 @@ class Event(commands.Cog):
             return
 
         ctx = await bot.get_context(message)
+        content = message.content
 
         if ctx.channel.type == discord.ChannelType.private:
             if message.content.lower() == "invite":
@@ -61,6 +64,26 @@ class Event(commands.Cog):
 
         if await ChatGPT().create_thread(ctx):
             return
+
+        if content.startswith('?? '):
+            gemini_chat = GeminiChat(ctx)
+
+            if not gemini_chat.get_prompt():
+                return
+
+            await ctx.message.add_reaction('🤔')
+
+            async with ctx.channel.typing():
+                await gemini_chat.generate_content(ctx)
+                response = gemini_chat.get_response()
+
+                if len(response) > 2000:
+                    response = md_to_text(response)
+                    await ctx.reply(file=discord.File(BytesIO(response.encode()), filename=gemini_chat.get_prompt() + '.txt'))
+                else:
+                    await ctx.reply(gemini_chat.get_response())
+
+                return
 
         if ctx.command is not None:
             async with ctx.channel.typing():

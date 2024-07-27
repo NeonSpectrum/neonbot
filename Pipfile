@@ -23,6 +23,8 @@ openai = "*"
 tiktoken = "*"
 apscheduler = "*"
 validators = "*"
+google-generativeai = "*"
+markdown = "*"
 
 [dev-packages]
 pylint = "*"
