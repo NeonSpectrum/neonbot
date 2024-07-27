@@ -1,8 +1,12 @@
+from io import BytesIO
 from typing import List, Union
 
 import google.generativeai as genai
+from PIL import Image
 from discord.ext import commands
 from envparse import env
+
+from neonbot.utils import log
 
 genai.configure(api_key=env.str('GEMINI_API_KEY'))
 
@@ -19,7 +23,13 @@ class GeminiChat:
 
         if len(ctx.message.attachments) > 0:
             for attachment in ctx.message.attachments:
-                prompts.append(await attachment.read())
+                try:
+                    attachment_data = await attachment.read()
+                    image_data = BytesIO(attachment_data)
+                    image = Image.open(image_data)
+                    prompts.append(image)
+                except (IOError, OSError):
+                    pass
 
         self.response = await self.model.generate_content_async(prompts)
 

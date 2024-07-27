@@ -25,6 +25,7 @@ apscheduler = "*"
 validators = "*"
 google-generativeai = "*"
 markdown = "*"
+pillow = "*"
 
 [dev-packages]
 pylint = "*"
