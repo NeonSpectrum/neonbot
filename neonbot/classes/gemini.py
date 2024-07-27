@@ -14,7 +14,7 @@ class GeminiChat:
     def __init__(self, ctx):
         self.model = genai.GenerativeModel('gemini-1.5-flash')
         self.response = None
-        self.prompt = ctx.message.content[3:].strip()
+        self.prompt = ctx.message.content.lstrip('? ')
 
     async def generate_content(self, ctx: commands.Context):
         prompts = [self.prompt]
