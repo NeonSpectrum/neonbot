@@ -65,13 +65,16 @@ class Event(commands.Cog):
         if await ChatGPT().create_thread(ctx):
             return
 
-        if content.startswith('?? '):
+        if content.startswith('?? ') or content.startswith('??? '):
             gemini_chat = GeminiChat(ctx)
 
             if not gemini_chat.get_prompt():
                 return
 
             await ctx.message.add_reaction('🤔')
+
+            if content.startswith('?? '):
+                gemini_chat.set_prompt_concise()
 
             async with ctx.channel.typing():
                 await gemini_chat.generate_content(ctx)

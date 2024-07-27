@@ -17,8 +17,6 @@ class GeminiChat:
         self.prompt = ctx.message.content[3:].strip()
 
     async def generate_content(self, ctx: commands.Context):
-        self.modify_prompt()
-
         prompts = [self.prompt]
 
         if len(ctx.message.attachments) > 0:
@@ -39,5 +37,5 @@ class GeminiChat:
     def get_prompt(self):
         return self.prompt
 
-    def modify_prompt(self):
+    def set_prompt_concise(self):
         self.prompt = 'Please provide a concise answer. ' + self.prompt
