@@ -1,6 +1,7 @@
 from io import BytesIO
 from typing import List, Union
 
+import discord
 import google.generativeai as genai
 from PIL import Image
 from discord.ext import commands
@@ -17,10 +18,27 @@ class GeminiChat:
         self.prompt = ctx.message.content.lstrip('? ')
 
     async def generate_content(self, ctx: commands.Context):
-        prompts = [self.prompt]
+        prompts = []
+        attachments = []
 
-        if len(ctx.message.attachments) > 0:
-            for attachment in ctx.message.attachments:
+        # Check for message reference
+        if ctx.message.reference:
+            reply_to_message_id = ctx.message.reference.message_id
+
+            try:
+                replied_message = await ctx.message.channel.fetch_message(reply_to_message_id)
+
+                prompts.append(replied_message.content)
+                attachments += replied_message.attachments
+            except discord.NotFound:
+                pass
+
+        # Add current message contents
+        prompts.append(self.prompt)
+        attachments += ctx.message.attachments
+
+        if len(attachments) > 0:
+            for attachment in attachments:
                 try:
                     attachment_data = await attachment.read()
                     image_data = BytesIO(attachment_data)
