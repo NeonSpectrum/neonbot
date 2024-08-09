@@ -83,4 +83,3 @@ validators==0.33.0; python_version >= '3.8'
 websockets==12.0; python_version >= '3.8'
 yarl==1.9.4; python_version >= '3.7'
 yt-dlp>=2024.8.6; python_version >= '3.8'
-https://github.com/coletdjnz/yt-dlp-youtube-oauth2/archive/refs/heads/master.zip

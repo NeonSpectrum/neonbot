@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "6d1d4f3016226dd6b8e0b295f65b30e32f2a1caa0a71f0cba9f8c0151a4cd7bc"
+            "sha256": "d0c75eaad3a730aefa30c35e9fceffd2de447a54ef7c3498a121b4c9fbe1303e"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -2110,9 +2110,6 @@
             "index": "pypi",
             "markers": "python_version >= '3.8'",
             "version": "==2024.8.6"
-        },
-        "yt-dlp-youtube-oauth2": {
-            "file": "https://github.com/coletdjnz/yt-dlp-youtube-oauth2/archive/refs/heads/master.zip"
         }
     },
     "develop": {
