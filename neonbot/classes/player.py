@@ -18,6 +18,7 @@ from neonbot.models.guild import Guild
 from neonbot.utils import log
 from neonbot.utils.constants import FFMPEG_OPTIONS, ICONS
 from neonbot.utils.exceptions import YtdlError
+from neonbot.utils.functions import remove_ansi
 
 
 class Player:
@@ -213,7 +214,7 @@ class Player:
                 msg = t('music.player_error')
 
             log.exception(msg, error)
-            await self.channel.send(embed=Embed(msg).set_author(self.now_playing.get('title')))
+            await self.channel.send(embed=Embed(remove_ansi(msg)).set_author(self.now_playing.get('title')))
             await self.after()
 
     def pre_play(self):

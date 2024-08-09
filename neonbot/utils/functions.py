@@ -1,4 +1,5 @@
 import asyncio
+import re
 from datetime import timedelta, datetime
 from typing import Union
 import pytz
@@ -87,3 +88,7 @@ def md_to_text(md):
     html = markdown.markdown(md)
     soup = BeautifulSoup(html, features='html.parser')
     return soup.get_text()
+
+def remove_ansi(text):
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    return ansi_escape.sub('', text)
