@@ -5,6 +5,7 @@ import functools
 from concurrent.futures import ThreadPoolExecutor
 
 import yt_dlp
+from envparse import env
 
 from .ytdl_info import YtdlInfo
 from .. import bot
@@ -35,7 +36,7 @@ class Ytdl:
                 "compat_opts": {
                     "no-youtube-unavailable-videos": True
                 },
-                "usenetrc": True,
+                "cookies": env.str('YTDL_COOKIE', None),
                 **extra_params,
             }
         )
