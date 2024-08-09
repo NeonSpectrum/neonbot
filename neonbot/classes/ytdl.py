@@ -36,7 +36,6 @@ class Ytdl:
                 "compat_opts": {
                     "no-youtube-unavailable-videos": True
                 },
-                "cookies": env.str('YTDL_COOKIE', default=None),
                 **extra_params,
             }
         )
