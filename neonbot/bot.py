@@ -141,6 +141,7 @@ class NeonBot(commands.Bot):
         else:
             if 'view' not in kwargs:
                 kwargs['view'] = None
+            del kwargs['ephemeral']
             await interaction.edit_original_response(*args, **kwargs)
 
     async def edit_message(self, message: Union[discord.Message, None], **kwargs) -> None:
