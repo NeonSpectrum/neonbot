@@ -20,7 +20,6 @@ def main() -> None:
 
     shutil.rmtree(YOUTUBE_TMP_DIR, ignore_errors=True)
     os.makedirs(YOUTUBE_DOWNLOADS_DIR, exist_ok=True)
-    os.makedirs(YOUTUBE_CACHE_DIR, exist_ok=True)
 
     # Clear debug.log on startup
     open('./debug.log', 'w').close()
