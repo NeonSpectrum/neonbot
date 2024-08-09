@@ -18,7 +18,7 @@ def main() -> None:
     from neonbot import bot
     from neonbot.utils.constants import YOUTUBE_TMP_DIR, YOUTUBE_DOWNLOADS_DIR, YOUTUBE_CACHE_DIR
 
-    shutil.rmtree(YOUTUBE_TMP_DIR, ignore_errors=True)
+    shutil.rmtree(YOUTUBE_DOWNLOADS_DIR, ignore_errors=True)
     os.makedirs(YOUTUBE_DOWNLOADS_DIR, exist_ok=True)
 
     # Clear debug.log on startup
