@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import functools
+import os
 from concurrent.futures import ThreadPoolExecutor
 
 import yt_dlp
@@ -24,7 +25,7 @@ class Ytdl:
             {
                 "default_search": "ytsearch5",
                 "format": "bestaudio/best",
-                "quiet": True,
+                "quiet": os.path.isfile(YOUTUBE_CACHE_DIR + "/youtube-oauth2/token_data.json"),
                 "nocheckcertificate": True,
                 "ignoreerrors": False,
                 "extract_flat": "in_playlist",
