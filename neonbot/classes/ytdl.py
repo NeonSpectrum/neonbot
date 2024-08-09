@@ -26,6 +26,7 @@ class Ytdl:
                 "default_search": "ytsearch5",
                 "format": "bestaudio/best",
                 "quiet": os.path.isfile(YOUTUBE_CACHE_DIR + "/youtube-oauth2/token_data.json"),
+                "no_warnings": True,
                 "nocheckcertificate": True,
                 "ignoreerrors": False,
                 "extract_flat": "in_playlist",
