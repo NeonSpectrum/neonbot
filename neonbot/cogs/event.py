@@ -18,7 +18,7 @@ from neonbot.classes.voice_events import VoiceEvents
 from neonbot.enums import PlayerState
 from neonbot.models.guild import Guild
 from neonbot.utils import log, exceptions
-from neonbot.utils.functions import format_seconds, get_log_prefix, split_long_message, md_to_text
+from neonbot.utils.functions import format_seconds, get_log_prefix, split_long_message, md_to_text, remove_ansi
 from neonbot.utils.functions import get_command_string
 
 
@@ -124,7 +124,7 @@ class Event(commands.Cog):
         log.cmd(interaction, f"Command error: {error}")
 
         if isinstance(error, send_msg):
-            embed = Embed(error)
+            embed = Embed(remove_ansi(error))
         else:
             embed = Embed("There was an error executing the command. Please contact the administrator.")
 
