@@ -200,7 +200,7 @@ class Administration(commands.Cog):
         guild.chatgpt.channel_id = channel.id if enable else None
         await guild.save_changes()
 
-        if guild.channel.chatgpt:
+        if guild.chatgpt.channel_id:
             await interaction.response.send_message(embed=Embed(f"ChatGPT is now set to {channel.mention}."))
 
             embed = Embed()
