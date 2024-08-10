@@ -186,9 +186,7 @@ class Panel:
                 if len(players) > 0 else
                 '*```No players online```*'
             )
-        except ContentTypeError as error:
-            log.error(error)
-        except asyncio.TimeoutError:
+        except (ContentTypeError, asyncio.TimeoutError) as error:
             pass
 
     def get_variable(self, key, default=None):
