@@ -6,7 +6,7 @@ from i18n import t
 from .embed import Embed
 from .view import View, Button
 from .. import bot
-from ..enums import Repeat
+from ..enums import Repeat, PlayerState
 
 if TYPE_CHECKING:
     from .player import Player
@@ -61,11 +61,15 @@ class PlayerControls:
             await self.player.pause(requester=interaction.user)
         elif button.emoji.name == "⏮️":  # prev
             if self.player.current_queue == 0:
-                self.player.current_queue = len(self.player.queue) - 2
+                self.player.current_queue = len(self.player.track_list) - 1
             else:
-                self.player.current_queue -= 2
+                self.player.current_queue -= 1
 
+            # Reduce current_queue by 1 since next will increment it again
+            self.player.current_queue -= 1
+            self.player.state = PlayerState.JUMPED
             self.player.next()
+
             await interaction.channel.send(
                 embed=Embed(t('music.player_controls_pressed', action='back', user=interaction.user.mention))
             )

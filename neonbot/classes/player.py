@@ -275,7 +275,7 @@ class Player:
         self.connection.stop()
 
     def jump(self, index):
-        self.track_list.append(index - 1)
+        self.track_list.append(index)
         self.state = PlayerState.JUMPED
         self.connection.stop()
 

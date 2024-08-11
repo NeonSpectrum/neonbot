@@ -50,7 +50,7 @@ class Music(commands.Cog):
         """Searches the url or the keyword and add it to queue. This will queue the first search."""
 
         player = await Player.get_instance(interaction)
-        last_index = len(player.queue)
+        last_index = len(player.queue) - 1
 
         if re.search(YOUTUBE_REGEX, value):
             await Youtube(interaction).search_url(value)
@@ -78,7 +78,7 @@ class Music(commands.Cog):
         """Searches the keyword, choose from the list, add it to queue."""
 
         player = await Player.get_instance(interaction)
-        last_index = len(player.queue)
+        last_index = len(player.queue) - 1
 
         await Youtube(interaction).search_keyword(value)
 
@@ -196,7 +196,7 @@ class Music(commands.Cog):
             await interaction.response.send_message(embed=Embed("Invalid index."), ephemeral=True)
             return
 
-        player.jump(index)
+        player.jump(index - 1)
         track = player.get_track(index - 1)
 
         await interaction.response.send_message(
