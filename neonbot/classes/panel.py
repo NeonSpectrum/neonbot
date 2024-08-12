@@ -81,89 +81,92 @@ class Panel:
 
     @staticmethod
     async def start_monitor(guild_id):
-        server = Guild.get_instance(guild_id)
+        try:
+            server = Guild.get_instance(guild_id)
 
-        for server_id, panel in server.panel.servers.items():
-            channel_id = panel.channel_id
+            for server_id, panel in server.panel.servers.items():
+                channel_id = panel.channel_id
 
-            if not channel_id:
-                continue
+                if not channel_id:
+                    continue
 
-            panel = Panel(server_id)
+                panel = Panel(server_id)
 
-            try:
-                details = await panel.get_server_details()
-                resources = await panel.get_server_resources()
-            except ApiError as error:
-                log.warn(error)
-                return
+                try:
+                    details = await panel.get_server_details()
+                    resources = await panel.get_server_resources()
+                except ApiError as error:
+                    log.warn(error)
+                    return
 
-            identifier = details['attributes']['identifier']
-            name = details['attributes']['name']
-            description = details['attributes']['description']
+                identifier = details['attributes']['identifier']
+                name = details['attributes']['name']
+                description = details['attributes']['description']
 
-            try:
-                state = resources['attributes']['current_state']
-            except (KeyError, TypeError):
-                state = 'offline'
+                try:
+                    state = resources['attributes']['current_state']
+                except (KeyError, TypeError):
+                    state = 'offline'
 
-            embed = Embed(timestamp=datetime.now())
-            embed.set_author(name, url=Panel.URL + '/server/' + server_id)
-            embed.set_description(description)
-            embed.set_thumbnail(ICONS['green'] if state == 'running' else ICONS['red'])
-            embed.set_footer(identifier)
+                embed = Embed(timestamp=datetime.now())
+                embed.set_author(name, url=Panel.URL + '/server/' + server_id)
+                embed.set_description(description)
+                embed.set_thumbnail(ICONS['green'] if state == 'running' else ICONS['red'])
+                embed.set_footer(identifier)
 
-            image_url = panel.get_variable('DISCORD_IMAGE_URL')
+                image_url = panel.get_variable('DISCORD_IMAGE_URL')
 
-            if image_url and validators.url(image_url):
-                embed.set_image(image_url)
+                if image_url and validators.url(image_url):
+                    embed.set_image(image_url)
 
-            if state != 'offline':
-                state = resources['attributes']['current_state']
+                if state != 'offline':
+                    state = resources['attributes']['current_state']
 
-                current_cpu_usage = resources['attributes']['resources']['cpu_absolute']
-                current_cpu_usage = f"{current_cpu_usage:.2f}"
-                max_cpu_usage = details['attributes']['limits']['cpu']
-                max_cpu_usage = f'{max_cpu_usage}' if max_cpu_usage != 0 else '∞'
+                    current_cpu_usage = resources['attributes']['resources']['cpu_absolute']
+                    current_cpu_usage = f"{current_cpu_usage:.2f}"
+                    max_cpu_usage = details['attributes']['limits']['cpu']
+                    max_cpu_usage = f'{max_cpu_usage}' if max_cpu_usage != 0 else '∞'
 
-                current_memory_usage = resources['attributes']['resources']['memory_bytes'] / 1024 / 1024
-                current_memory_usage = f"{current_memory_usage:,.0f}"
-                max_memory_usage = details['attributes']['limits']['memory']
-                max_memory_usage = f'{max_memory_usage:,.0f}' if max_memory_usage != 0 else '∞'
+                    current_memory_usage = resources['attributes']['resources']['memory_bytes'] / 1024 / 1024
+                    current_memory_usage = f"{current_memory_usage:,.0f}"
+                    max_memory_usage = details['attributes']['limits']['memory']
+                    max_memory_usage = f'{max_memory_usage:,.0f}' if max_memory_usage != 0 else '∞'
 
-                uptime = resources['attributes']['resources']['uptime']
+                    uptime = resources['attributes']['resources']['uptime']
 
-                embed.add_field('Status', state.title())
-                embed.add_field('Uptime', format_uptime(uptime))
-                embed.add_field('\u200b', '\u200b')
-                embed.add_field('CPU Usage', f"{current_cpu_usage} / {max_cpu_usage} %")
-                embed.add_field('Memory Usage', f"{current_memory_usage} / {max_memory_usage} MB")
-                embed.add_field('\u200b', '\u200b')
+                    embed.add_field('Status', state.title())
+                    embed.add_field('Uptime', format_uptime(uptime))
+                    embed.add_field('\u200b', '\u200b')
+                    embed.add_field('CPU Usage', f"{current_cpu_usage} / {max_cpu_usage} %")
+                    embed.add_field('Memory Usage', f"{current_memory_usage} / {max_memory_usage} MB")
+                    embed.add_field('\u200b', '\u200b')
 
-                if 'minecraft' in name.lower():
-                    await panel.add_minecraft(embed)
-            else:
-                embed.add_field('Status', state.title())
-
-            channel = bot.get_channel(channel_id)
-            server = Guild.get_instance(channel.guild.id)
-
-            message_id = server.panel.servers[server_id].message_id
-
-            try:
-                message = await channel.fetch_message(message_id) if message_id else None
-            except discord.NotFound:
-                message = None
-
-            try:
-                if not message:
-                    message = await channel.send(embed=embed)
-                    server.panel.servers[server_id].message_id = message.id
-                    await server.save_changes()
+                    if 'minecraft' in name.lower():
+                        await panel.add_minecraft(embed)
                 else:
-                    await message.edit(embed=embed)
-            except discord.HTTPException as error:
-                log.error(error)
+                    embed.add_field('Status', state.title())
+
+                channel = bot.get_channel(channel_id)
+                server = Guild.get_instance(channel.guild.id)
+
+                message_id = server.panel.servers[server_id].message_id
+
+                try:
+                    message = await channel.fetch_message(message_id) if message_id else None
+                except discord.NotFound:
+                    message = None
+
+                try:
+                    if not message:
+                        message = await channel.send(embed=embed)
+                        server.panel.servers[server_id].message_id = message.id
+                        await server.save_changes()
+                    else:
+                        await message.edit(embed=embed)
+                except discord.HTTPException as error:
+                    log.error(error)
+        except asyncio.CancelledError:
+            pass
 
     async def add_minecraft(self, embed):
         server_ip = self.get_default_ip()

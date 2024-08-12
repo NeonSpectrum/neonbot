@@ -177,7 +177,7 @@ class NeonBot(commands.Bot):
         from .classes.player import Player
 
         log.info('Stopping scheduler...')
-        self.scheduler.shutdown(wait=True)
+        self.scheduler.shutdown(wait=False)
 
         log.info('Stopping all music...')
         await asyncio.gather(*[player.reset() for player in Player.servers.values()])
