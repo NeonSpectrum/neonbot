@@ -165,12 +165,27 @@ class NeonBot(commands.Bot):
     async def send_to_owner(self, *args: Any, **kwargs: Any) -> None:
         await self.get_user(self.app_info.owner.id).send(*args, **kwargs)
 
+    def kill_all_tasks(self):
+        if self.loop.is_running():
+            for task in asyncio.all_tasks():
+                try:
+                    task.cancel()
+                except Exception as ex:
+                    pass
+
     async def close(self) -> None:
         from .classes.player import Player
 
+        log.info('Stopping scheduler...')
         self.scheduler.shutdown(wait=True)
-        await asyncio.gather(*[player.clear_messages() for player in Player.servers.values()])
+
+        log.info('Stopping all music...')
+        await asyncio.gather(*[player.reset() for player in Player.servers.values()])
+
+        log.info('Closing session...')
         await self.session.close()
+
+        log.info('Stopping bot...')
         await super().close()
 
     async def start(self, *args, **kwargs) -> None:
