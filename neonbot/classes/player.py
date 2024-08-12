@@ -234,8 +234,7 @@ class Player:
             log.error(error)
             return
 
-        if not self.last_track:
-            self.last_track = self.now_playing
+        self.last_track = self.now_playing
 
         if self.state == PlayerState.NONE:
             return
@@ -274,7 +273,6 @@ class Player:
         if self.state != PlayerState.REMOVED:
             await self.send_finished_message()
 
-        self.last_track = None
         self.loop.create_task(self.play())
 
     def next(self):
