@@ -55,18 +55,16 @@ class PlayerControls:
             if self.player.connection.is_paused():
                 await self.player.resume(requester=interaction.user)
             else:
-                self.player.current_queue = 0
+                self.player.current_track = 0
                 await self.player.play()
         elif button.emoji.name == "⏸️":  # pause
             await self.player.pause(requester=interaction.user)
         elif button.emoji.name == "⏮️":  # prev
-            if self.player.current_queue == 0:
-                self.player.current_queue = len(self.player.track_list) - 1
+            if self.player.current_track == 0:
+                self.player.jump_to_track = len(self.player.track_list) - 1
             else:
-                self.player.current_queue -= 1
+                self.player.jump_to_track = self.player.current_track - 1
 
-            # Reduce current_queue by 1 since next will increment it again
-            self.player.current_queue -= 1
             self.player.state = PlayerState.JUMPED
             self.player.next()
 

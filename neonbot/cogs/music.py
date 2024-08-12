@@ -140,7 +140,7 @@ class Music(commands.Cog):
         for i in range(0, len(player.queue), 10):
             temp = []
             for index, song in enumerate(player.queue[i: i + 10], i):
-                is_current = player.track_list[player.current_queue] == index
+                is_current = player.track_list[player.current_track] == index
                 title = f"`{'*' if is_current else ''}{index + 1}.` [{song['title']}]({song['url']})"
                 description = f"""\
 {f"~~{title}~~" if "removed" in song else title}

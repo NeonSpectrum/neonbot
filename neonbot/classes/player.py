@@ -30,7 +30,7 @@ class Player:
         self.settings = Guild.get_instance(ctx.guild.id)
         self.player_controls = PlayerControls(self)
         self.queue = []
-        self.current_queue = 0
+        self.current_track = 0
         self.track_list = [0]
         self.shuffled_list = []
         self.messages: Dict[str, Optional[discord.Message]] = dict(
@@ -40,6 +40,7 @@ class Player:
         self.last_track = None
         self.last_voice_channel: Optional[discord.VoiceChannel] = None
         self.state = PlayerState.NONE
+        self.jump_to_track = None
 
     @property
     def channel(self):
@@ -83,14 +84,14 @@ class Player:
 
     @property
     def is_last_track(self):
-        return self.track_list[self.current_queue] == len(self.queue) - 1
+        return self.track_list[self.current_track] == len(self.queue) - 1
 
     @property
     def now_playing(self) -> Union[dict, None]:
         try:
             return {
-                **self.queue[self.track_list[self.current_queue]],
-                'index': self.track_list[self.current_queue] + 1
+                **self.queue[self.track_list[self.current_track]],
+                'index': self.track_list[self.current_track] + 1
             }
         except IndexError:
             return None
@@ -98,7 +99,7 @@ class Player:
     @now_playing.setter
     def now_playing(self, value) -> None:
         try:
-            self.queue[self.track_list[self.current_queue]] = value
+            self.queue[self.track_list[self.current_track]] = value
         except IndexError:
             pass
 
@@ -193,7 +194,7 @@ class Player:
             if not self.now_playing.get('stream'):
                 ytdl_info = await Ytdl().extract_info(self.now_playing['url'], download=True)
                 info = ytdl_info.get_track(detailed=True)
-                self.now_playing = {'index': self.track_list[self.current_queue] + 1, **self.now_playing, **info}
+                self.now_playing = {'index': self.track_list[self.current_track] + 1, **self.now_playing, **info}
 
             song = discord.FFmpegPCMAudio(
                 self.now_playing['stream'],
@@ -215,7 +216,7 @@ class Player:
 
             log.exception(msg, error)
             await self.channel.send(embed=Embed(remove_ansi(msg)).set_author(self.now_playing.get('title')))
-            await self.after()
+            self.loop.create_task(self.after())
 
     def pre_play(self):
         # Play recently added song if added while player is finished playing
@@ -223,17 +224,18 @@ class Player:
             self.repeat == Repeat.OFF
             and not self.connection.is_playing()
             and not self.connection.is_paused()
-            and self.track_list[self.current_queue] == len(self.queue) - 2
+            and self.track_list[self.current_track] == len(self.queue) - 2
         ):
-            self.track_list.append(self.track_list[self.current_queue] + 1)
-            self.current_queue += 1
+            self.track_list.append(self.track_list[self.current_track] + 1)
+            self.current_track += 1
 
     async def after(self, error=None):
         if error:
             log.error(error)
             return
 
-        self.last_track = self.now_playing
+        if not self.last_track:
+            self.last_track = self.now_playing
 
         if self.state == PlayerState.NONE:
             return
@@ -242,7 +244,10 @@ class Player:
             await self.send_playing_message()
             return
 
-        if self.state != PlayerState.JUMPED:
+        if self.state == PlayerState.JUMPED:
+            self.current_track = self.jump_to_track
+            self.jump_to_track = None
+        else:
             # If shuffle
             if self.is_shuffle:
                 self.process_shuffle()
@@ -262,20 +267,22 @@ class Player:
                 self.track_list.append(0)
 
             else:
-                self.track_list.append(self.track_list[self.current_queue] + 1)
+                self.track_list.append(self.track_list[self.current_track] + 1)
 
-        self.current_queue += 1
+            self.current_track += 1
 
         if self.state != PlayerState.REMOVED:
             await self.send_finished_message()
 
-        await self.play()
+        self.last_track = None
+        self.loop.create_task(self.play())
 
     def next(self):
         self.connection.stop()
 
     def jump(self, index):
         self.track_list.append(index)
+        self.jump_to_track = self.current_track + 1
         self.state = PlayerState.JUMPED
         self.connection.stop()
 
@@ -288,7 +295,7 @@ class Player:
     async def stop(self):
         await self.clear_messages()
         self.state = PlayerState.STOPPED
-        self.current_queue = 0
+        self.current_track = 0
         self.next()
 
     async def remove_song(self, index: int):
@@ -300,23 +307,23 @@ class Player:
                     self.track_list[i] -= 1
 
         # if current track is playing now
-        if self.track_list[self.current_queue] == index:
-            self.current_queue -= 1
+        if self.track_list[self.current_track] == index:
+            self.current_track -= 1
             self.state = PlayerState.REMOVED
             self.next()
 
-        if self.track_list[self.current_queue] > index:
-            self.current_queue -= 1
+        if self.track_list[self.current_track] > index:
+            self.current_track -= 1
             await self.refresh_player_message(embed=True)
 
-    def process_shuffle(self) -> bool:
+    def process_shuffle(self) -> None:
         def choices():
             return [x for x in range(0, len(self.queue)) if x not in self.shuffled_list]
 
         if len(self.queue) == 1:
             self.shuffled_list = []
         elif len(self.shuffled_list) == 0 or len(choices()) == 0:
-            self.shuffled_list = [self.track_list[self.current_queue]]
+            self.shuffled_list = [self.track_list[self.current_track]]
             return self.process_shuffle()
 
         index = random.choice(choices())
