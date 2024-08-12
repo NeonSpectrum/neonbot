@@ -286,7 +286,9 @@ class Player:
 
     async def reset(self):
         self.state = PlayerState.NONE
+        log.info('Disconnecting from ' + str(self.ctx.guild.id))
         await self.disconnect(force=True)
+        log.info('Clearing messages from ' + str(self.ctx.guild.id))
         await self.clear_messages()
         self.queue = []
 
