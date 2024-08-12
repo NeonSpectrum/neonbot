@@ -165,14 +165,6 @@ class NeonBot(commands.Bot):
     async def send_to_owner(self, *args: Any, **kwargs: Any) -> None:
         await self.get_user(self.app_info.owner.id).send(*args, **kwargs)
 
-    def kill_all_tasks(self):
-        if self.loop.is_running():
-            for task in asyncio.all_tasks():
-                try:
-                    task.cancel()
-                except Exception as ex:
-                    pass
-
     async def close(self) -> None:
         from .classes.player import Player
 
