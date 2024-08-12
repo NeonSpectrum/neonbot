@@ -173,7 +173,7 @@ class NeonBot(commands.Bot):
         self.scheduler.shutdown(wait=False)
 
         log.info('Stopping all music...')
-        await asyncio.gather(*[player.reset() for player in Player.servers.values()])
+        await asyncio.gather(*[player.reset(timeout=3) for player in Player.servers.values()])
 
         log.info('Closing session...')
         await self.session.close()

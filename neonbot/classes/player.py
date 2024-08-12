@@ -129,9 +129,12 @@ class Player:
 
         log.cmd(self.ctx, t('music.player_connected', channel=channel))
 
-    async def disconnect(self, force=True) -> None:
+    async def disconnect(self, force=True, timeout=None) -> None:
         if self.connection and self.connection.is_connected():
-            await self.connection.disconnect(force=force)
+            try:
+                await asyncio.wait_for(self.connection.disconnect(force=force), timeout=timeout)
+            except asyncio.TimeoutError:
+                pass
 
     async def set_repeat(self, mode: Repeat, requester: discord.User):
         self.settings.music.repeat = mode.value
@@ -284,11 +287,9 @@ class Player:
         self.state = PlayerState.JUMPED
         self.connection.stop()
 
-    async def reset(self):
+    async def reset(self, timeout=None):
         self.state = PlayerState.NONE
-        log.info('Disconnecting from ' + str(self.ctx.guild.id))
-        await self.disconnect(force=True)
-        log.info('Clearing messages from ' + str(self.ctx.guild.id))
+        await self.disconnect(force=True, timeout=timeout)
         await self.clear_messages()
         self.queue = []
 
