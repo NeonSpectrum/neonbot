@@ -38,7 +38,7 @@ class Player:
             finished=None,
         )
         self.last_track = None
-        self.last_voice_channel: Optional[discord.VoiceChannel] = None
+        self.last_voice_channel: Optional[discord.abc.Connectable] = None
         self.state = PlayerState.NONE
         self.jump_to_track = None
 
@@ -123,18 +123,17 @@ class Player:
             return
 
         if not channel and self.last_voice_channel:
-            await self.last_voice_channel.connect()
+            await self.last_voice_channel.connect(self_deaf=True)
         else:
-            self.last_voice_channel = await channel.connect()
+            self.last_voice_channel = await channel.connect(self_deaf=True)
 
         log.cmd(self.ctx, t('music.player_connected', channel=channel))
 
     async def disconnect(self, force=True, timeout=None) -> None:
         if self.connection and self.connection.is_connected():
-            try:
-                await asyncio.wait_for(self.connection.disconnect(force=force), timeout=timeout)
-            except asyncio.TimeoutError:
-                pass
+            if timeout:
+                self.connection.timeout = timeout
+            await self.connection.disconnect(force=force)
 
     async def set_repeat(self, mode: Repeat, requester: discord.User):
         self.settings.music.repeat = mode.value
