@@ -40,6 +40,7 @@ class NeonBot(commands.Bot):
         self.setting: Optional[Setting] = None
         self.scheduler: Optional[AsyncIOScheduler] = None
         self.is_listeners_done = False
+        self.is_player_cache_loaded = False
 
     def get_presence(self) -> Tuple[discord.Status, discord.Activity]:
         activity_type = self.setting.activity_type
@@ -78,7 +79,7 @@ class NeonBot(commands.Bot):
         await self.tree.sync(guild=guild)
         log.info(f"Command synced to: {guild or 'Global'}")
 
-    async def start_listeners(self):
+    def start_listeners(self):
         if self.is_listeners_done:
             return
 
@@ -93,6 +94,19 @@ class NeonBot(commands.Bot):
             Panel.start_listener(guild.id)
 
         self.is_listeners_done = True
+
+    def load_player_cache(self):
+        if self.is_player_cache_loaded:
+            return
+
+        from .classes.player import Player
+
+        for guild in self.guilds:
+            if Player.has_cache(guild.id):
+                log.info(f'Loading player cache on {guild} ({guild.id})...')
+                self.loop.create_task(Player.load_cache(guild.id))
+
+        self.is_player_cache_loaded = True
 
     async def add_cogs(self):
         files = sorted(glob(f"neonbot{sep}cogs{sep}[!_]*.py"))
@@ -171,6 +185,10 @@ class NeonBot(commands.Bot):
 
         log.info('Stopping scheduler...')
         self.scheduler.shutdown(wait=False)
+
+        log.info('Saving all music...')
+        for player in Player.servers.values():
+            player.save_cache()
 
         log.info('Stopping all music...')
         await asyncio.gather(*[player.reset(timeout=3) for player in Player.servers.values()])

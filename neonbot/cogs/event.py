@@ -40,7 +40,8 @@ class Event(commands.Cog):
     async def on_ready() -> None:
         log.info("Ready!\n")
         bot.set_ready()
-        await bot.start_listeners()
+        bot.start_listeners()
+        bot.load_player_cache()
 
     @staticmethod
     @bot.event

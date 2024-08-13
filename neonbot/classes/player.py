@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+import json
+import os
 import random
+from os import path
 from typing import Union, List, Optional, Dict
 
 import discord
@@ -16,8 +19,8 @@ from neonbot.classes.ytdl import Ytdl
 from neonbot.enums import Repeat, PlayerState
 from neonbot.models.guild import Guild
 from neonbot.utils import log
-from neonbot.utils.constants import FFMPEG_OPTIONS, ICONS
-from neonbot.utils.exceptions import YtdlError
+from neonbot.utils.constants import FFMPEG_OPTIONS, ICONS, PLAYER_CACHE_PATH
+from neonbot.utils.exceptions import YtdlError, PlayerLoadCacheError, PlayerError
 from neonbot.utils.functions import remove_ansi
 
 
@@ -38,7 +41,7 @@ class Player:
             finished=None,
         )
         self.last_track = None
-        self.last_voice_channel: Optional[discord.abc.Connectable] = None
+        self.last_voice_channel: Optional[discord.VoiceChannel] = None
         self.state = PlayerState.NONE
         self.jump_to_track = None
 
@@ -51,8 +54,8 @@ class Player:
         return self.ctx.voice_client
 
     @staticmethod
-    async def get_instance(interaction: discord.Interaction) -> Player:
-        ctx = await bot.get_context(interaction)
+    async def get_instance(origin: Union[discord.Interaction, discord.Message]) -> Player:
+        ctx = await bot.get_context(origin)
         guild_id = ctx.guild.id
 
         if guild_id not in Player.servers.keys():
@@ -118,22 +121,24 @@ class Player:
 
         self.remove_instance()
 
-    async def connect(self, channel: discord.VoiceChannel):
+    async def connect(self, channel: Optional[discord.VoiceChannel] = None):
         if self.connection:
             return
 
         if not channel and self.last_voice_channel:
             await self.last_voice_channel.connect(self_deaf=True)
         else:
-            self.last_voice_channel = await channel.connect(self_deaf=True)
+            self.last_voice_channel = channel
+            await channel.connect(self_deaf=True)
 
         log.cmd(self.ctx, t('music.player_connected', channel=channel))
 
     async def disconnect(self, force=True, timeout=None) -> None:
         if self.connection and self.connection.is_connected():
-            if timeout:
-                self.connection.timeout = timeout
-            await self.connection.disconnect(force=force)
+            try:
+                await asyncio.wait_for(self.connection.disconnect(force=force), timeout=timeout)
+            except asyncio.TimeoutError:
+                pass
 
     async def set_repeat(self, mode: Repeat, requester: discord.User):
         self.settings.music.repeat = mode.value
@@ -434,6 +439,69 @@ class Player:
         url = self.last_track['url']
 
         return Embed(f"{t('music.finished_playing.index', index=self.last_track['index'])}: [{title}]({url})")
+
+    @staticmethod
+    def has_cache(guild_id):
+        file = PLAYER_CACHE_PATH % guild_id
+        return path.exists(file)
+
+    @staticmethod
+    async def load_cache(guild_id):
+        file = PLAYER_CACHE_PATH % guild_id
+
+        try:
+            with open(file, "r") as f:
+                def map_queue(track):
+                    track['requested'] = bot.get_user(track['requested'])
+                    return track
+
+                cache = json.load(f)
+                channel = bot.get_channel(cache['channel_id'])
+
+                if not channel:
+                    raise PlayerError('Can\'t find channel.')
+
+                origin = await channel.send(embed=Embed('Picking up where you left off...'))
+
+                player = await Player.get_instance(origin)
+                player.queue = list(map(map_queue, cache['queue']))
+                player.current_track = cache['current_track']
+                player.track_list = cache['track_list']
+                player.shuffled_list = cache['shuffled_list']
+                player.state = PlayerState.get_by_value(cache['state'])
+                player.last_voice_channel = bot.get_channel(cache['voice_channel_id'])
+
+                if player.state == PlayerState.PLAYING:
+                    await player.connect()
+                    await player.play()
+
+                await origin.delete()
+
+            os.remove(file)
+        except Exception as error:
+            log.error(error)
+
+    def save_cache(self):
+        if len(self.queue) == 0:
+            return
+
+        file = PLAYER_CACHE_PATH % self.ctx.guild.id
+
+        with open(file, "w") as f:
+            def map_queue(track):
+                track['requested'] = track['requested'].id
+                track['stream'] = None
+                return track
+
+            json.dump({
+                'voice_channel_id': self.last_voice_channel.id,
+                'channel_id': self.ctx.channel.id,
+                'queue': list(map(map_queue, self.queue)),
+                'current_track': self.current_track,
+                'track_list': self.track_list,
+                'shuffled_list': self.shuffled_list,
+                'state': self.state.value,
+            }, f, indent=4)
 
     def add_to_queue(self, data: Union[List, dict], *, requested: discord.User = None) -> None:
         if not data:
