@@ -20,7 +20,7 @@ from neonbot.enums import Repeat, PlayerState
 from neonbot.models.guild import Guild
 from neonbot.utils import log
 from neonbot.utils.constants import FFMPEG_OPTIONS, ICONS, PLAYER_CACHE_PATH
-from neonbot.utils.exceptions import YtdlError, PlayerLoadCacheError, PlayerError
+from neonbot.utils.exceptions import YtdlError, PlayerError
 from neonbot.utils.functions import remove_ansi
 
 
