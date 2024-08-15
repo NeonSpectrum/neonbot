@@ -70,7 +70,11 @@ class PlayerControls:
         elif button.emoji.name == "⏮️":  # prev
             self.player.jump_to_track = self.player.current_track - 1
             self.player.state = PlayerState.JUMPED
-            self.player.next()
+
+            if self.player.connection.is_playing():
+                self.player.next()
+            else:
+                await self.player.after()
 
             await interaction.channel.send(
                 embed=Embed(t('music.player_controls_pressed', action='back', user=interaction.user.mention))
