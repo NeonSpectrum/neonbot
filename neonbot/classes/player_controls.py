@@ -25,6 +25,8 @@ class PlayerControls:
         else:
             views[0].style = discord.ButtonStyle.secondary
 
+        views[1].disabled = not (0 <= self.player.current_track -1 < len(self.player.track_list))
+
         if self.player.connection and self.player.connection.is_playing():
             views[2].emoji = "⏸️"
         else:
@@ -66,11 +68,7 @@ class PlayerControls:
         elif button.emoji.name == "⏸️":  # pause
             await self.player.pause(requester=interaction.user)
         elif button.emoji.name == "⏮️":  # prev
-            if self.player.current_track == 0:
-                self.player.jump_to_track = len(self.player.track_list) - 1
-            else:
-                self.player.jump_to_track = self.player.current_track - 1
-
+            self.player.jump_to_track = self.player.current_track - 1
             self.player.state = PlayerState.JUMPED
             self.player.next()
 
