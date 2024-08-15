@@ -261,6 +261,7 @@ class Player:
             and not self.connection.is_playing()
             and not self.connection.is_paused()
             and self.track_list[self.current_track] == len(self.queue) - 2
+            and self.state != PlayerState.JUMPED
         ):
             self.track_list.append(self.track_list[self.current_track] + 1)
             self.current_track += 1
