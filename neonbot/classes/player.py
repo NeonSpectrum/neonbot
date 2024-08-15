@@ -273,6 +273,9 @@ class Player:
 
         self.last_track = self.now_playing
 
+        if self.state == PlayerState.NONE:
+            return
+
         if self.state == PlayerState.STOPPED:
             await self.send_finished_message(detailed=True)
             return
