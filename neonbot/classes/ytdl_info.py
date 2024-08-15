@@ -48,6 +48,9 @@ class YtdlInfo:
 
 
     def format_description(self, description: str) -> str:
+        if not description:
+            return description
+
         description_arr = description.split("\n")[:15]
         while len("\n".join(description_arr)) > 1000:
             description_arr.pop()
@@ -81,5 +84,5 @@ class YtdlInfo:
             view_count=f"{entry.get('view_count'):,}",
             upload_date=datetime.strptime(entry.get('upload_date'), "%Y%m%d").strftime(
                 "%b %d, %Y"
-            ),
+            ) if entry.get('upload_date') else None,
         )

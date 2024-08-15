@@ -272,9 +272,6 @@ class Player:
 
         self.last_track = self.now_playing
 
-        if self.state == PlayerState.NONE:
-            return
-
         if self.state == PlayerState.STOPPED:
             await self.send_playing_message()
             return
@@ -297,7 +294,7 @@ class Player:
                 if self.autoplay:
                     try:
                         await self.process_autoplay()
-                    except:
+                    except ApiError:
                         return
                 else:
                     await self.send_finished_message(detailed=True)
@@ -329,7 +326,7 @@ class Player:
     async def reset(self, timeout=None):
         self.state = PlayerState.NONE
         await self.disconnect(force=True, timeout=timeout)
-        await self.clear_messages()
+        await self.send_finished_message()
         self.queue = []
 
     async def stop(self):
