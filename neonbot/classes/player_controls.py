@@ -16,6 +16,7 @@ class PlayerControls:
     def __init__(self, player):
         self.player: Player = player
         self.view = None
+        self.next_disabled = False
 
     def update_buttons(self, views):
         # ["🔀","⏮️","⏸️","⏭️","🔁"]
@@ -31,6 +32,13 @@ class PlayerControls:
             views[2].emoji = "⏸️"
         else:
             views[2].emoji = "▶️"
+
+        views[3].disabled = self.next_disabled = (
+            self.player.repeat == Repeat.OFF
+            and self.player.is_last_track
+            and not self.player.autoplay
+            and not self.player.shuffle
+        )
 
         if self.player.repeat == Repeat.OFF:
             views[4].emoji = "🔁"

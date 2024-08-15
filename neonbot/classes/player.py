@@ -287,6 +287,7 @@ class Player:
 
             # If repeat is on SINGLE
             elif self.repeat == Repeat.SINGLE:
+                await self.send_finished_message()
                 await self.play()
                 return
 
@@ -296,6 +297,7 @@ class Player:
                     try:
                         await self.process_autoplay()
                     except ApiError:
+                        await self.send_finished_message(detailed=True)
                         return
                 else:
                     await self.send_finished_message(detailed=True)
@@ -479,7 +481,9 @@ class Player:
         title = self.last_track['title']
         url = self.last_track['url']
 
-        return Embed(f"{t('music.finished_playing.index', index=self.last_track['index'])}: [{title}]({url})")
+        formatted_title = f'[{title}]({url})' if url else title
+
+        return Embed(f"{t('music.finished_playing.index', index=self.last_track['index'])}: {formatted_title}")
 
     @staticmethod
     def has_cache(guild_id):
@@ -554,3 +558,7 @@ class Player:
         for info in data:
             info['requested'] = requested
             self.queue.append(info)
+
+        # Update next button
+        if self.player_controls.next_disabled:
+            self.loop.create_task(self.refresh_player_message())
