@@ -73,7 +73,6 @@ class NeonBot(commands.Bot):
             # This copies the global commands over to your guild.
             await asyncio.gather(*[self.sync_command(guild) for guild in guilds])
 
-
         await self.db.start_migration(guilds)
         await self.db.get_guilds(guilds)
 
