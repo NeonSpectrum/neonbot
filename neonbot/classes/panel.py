@@ -165,6 +165,8 @@ class Panel:
                         await message.edit(embed=embed)
                 except discord.HTTPException as error:
                     log.error(error)
+        except asyncio.TimeoutError:
+            log.error('Panel server timeout!')
         except asyncio.CancelledError:
             pass
 
