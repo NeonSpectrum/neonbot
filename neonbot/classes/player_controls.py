@@ -113,8 +113,8 @@ class PlayerControls:
             Button(emoji="⏭️", style=discord.ButtonStyle.primary),
             Button(emoji="🔁"),
             Button(emoji="♾️", label="Autoplay"),
-            Button(emoji="⏹️", label="Stop", style=discord.ButtonStyle.danger),
-            Button(emoji="⏏️", label="Reset", style=discord.ButtonStyle.danger),
+            Button(emoji="⏹️", label="Stop"),
+            Button(emoji="⏏️", label="Reset"),
         ]
         self.update_buttons(buttons)
 
