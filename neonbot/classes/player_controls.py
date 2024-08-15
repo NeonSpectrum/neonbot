@@ -53,8 +53,9 @@ class PlayerControls:
         if not interaction.user.voice or (
             interaction.user.voice and interaction.user.voice.channel != self.player.connection.channel
         ):
-            await bot.send_response(interaction, embed=Embed(t('music.cannot_interact')), ephemeral=True)
-            return
+            if not bot.is_owner(interaction.user):
+                await bot.send_response(interaction, embed=Embed(t('music.cannot_interact')), ephemeral=True)
+                return
 
         if button.emoji.name == "▶️":  # play
             if self.player.connection.is_paused():
