@@ -273,7 +273,7 @@ class Player:
         self.last_track = self.now_playing
 
         if self.state == PlayerState.STOPPED:
-            await self.send_playing_message()
+            await self.send_finished_message(detailed=True)
             return
 
         if self.state == PlayerState.JUMPED:
@@ -332,7 +332,6 @@ class Player:
     async def stop(self):
         await self.clear_messages()
         self.state = PlayerState.STOPPED
-        self.current_track = 0
         self.next()
 
     async def remove_song(self, index: int):
