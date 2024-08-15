@@ -76,11 +76,15 @@ class PlayerControls:
                 embed=Embed(t('music.player_controls_pressed', action='back', user=interaction.user.mention))
             )
         elif button.emoji.name == "⏭️":  # next
-            if self.player.current_track != len(self.player.track_list) - 1:
-                self.player.jump_to_track = self.player.current_track + 1
-                self.player.state = PlayerState.JUMPED
+            if self.player.connection.is_playing():
+                if self.player.current_track != len(self.player.track_list) - 1:
+                    self.player.jump_to_track = self.player.current_track + 1
+                    self.player.state = PlayerState.JUMPED
 
-            self.player.next()
+                self.player.next()
+            else:
+                await self.player.after()
+
             await interaction.channel.send(
                 embed=Embed(t('music.player_controls_pressed', action='next', user=interaction.user.mention))
             )
