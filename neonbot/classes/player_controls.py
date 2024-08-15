@@ -18,10 +18,13 @@ class PlayerControls:
         self.view = None
 
     def update_buttons(self, views):
-        for view in views:
-            view.style = discord.ButtonStyle.primary
-
         # ["🔀","⏮️","⏸️","⏭️","🔁"]
+
+        if self.player.shuffle:
+            views[0].style = discord.ButtonStyle.primary
+        else:
+            views[0].style = discord.ButtonStyle.secondary
+
         if self.player.connection and self.player.connection.is_playing():
             views[2].emoji = "⏸️"
         else:
@@ -37,10 +40,12 @@ class PlayerControls:
             views[4].emoji = "🔁"
             views[4].style = discord.ButtonStyle.primary
 
-        if self.player.is_shuffle:
-            views[0].style = discord.ButtonStyle.primary
+        if self.player.autoplay:
+            views[5].style = discord.ButtonStyle.primary
         else:
-            views[0].style = discord.ButtonStyle.secondary
+            views[5].style = discord.ButtonStyle.secondary
+
+        views[6].disabled = self.player.state == PlayerState.STOPPED
 
         return views
 
@@ -86,14 +91,30 @@ class PlayerControls:
             await self.player.set_repeat(modes[index], requester=interaction.user)
         elif button.emoji.name == "🔀":  # shuffle
             await self.player.set_shuffle(requester=interaction.user)
+        elif button.emoji.name == "♾️":  # autoplay
+            await self.player.set_autoplay(requester=interaction.user)
+        elif button.emoji.name == "⏹️": # stop
+            await self.player.stop()
+            await interaction.channel.send(
+                embed=Embed(t('music.player_controls_pressed', action='stop', user=interaction.user.mention))
+            )
+        elif button.emoji.name == "⏏️": # reset
+            await self.player.reset()
+            self.player.remove_instance()
+            await interaction.channel.send(
+                embed=Embed(t('music.player_controls_pressed', action='reset', user=interaction.user.mention))
+            )
 
     def initialize(self) -> None:
         buttons = [
             Button(emoji="🔀"),
-            Button(emoji="⏮️"),
-            Button(emoji="⏸️"),
-            Button(emoji="⏭️"),
+            Button(emoji="⏮️", style=discord.ButtonStyle.primary),
+            Button(emoji="⏸️", style=discord.ButtonStyle.primary),
+            Button(emoji="⏭️", style=discord.ButtonStyle.primary),
             Button(emoji="🔁"),
+            Button(emoji="♾️", label="Autoplay"),
+            Button(emoji="⏹️", label="Stop"),
+            Button(emoji="⏏️", label="Reset"),
         ]
         self.update_buttons(buttons)
 

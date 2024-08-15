@@ -53,7 +53,7 @@ class Guild(Document):
             id=guild_id,
             prefix='.',
             channel_log=ChannelLog(),
-            music=Music(volume=100, repeat=Repeat.OFF.value, shuffle=False),
+            music=Music(volume=100, repeat=Repeat.OFF.value, shuffle=False, autoplay=False),
             exchange_gift=ExchangeGift(members=[]),
             chatgpt=ChatGPT(chats=[]),
             panel=Panel()

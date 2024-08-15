@@ -155,7 +155,7 @@ class Music(commands.Cog):
             t('music.songs', count=len(player.queue)),
             format_seconds(duration),
             t('music.volume_footer', volume=player.volume),
-            t('music.shuffle_footer', shuffle='on' if player.is_shuffle else 'off'),
+            t('music.shuffle_footer', shuffle='on' if player.shuffle else 'off'),
             t('music.repeat_footer', repeat=Repeat(player.repeat).name.lower()),
         ]
 

@@ -4,6 +4,7 @@ import asyncio
 import functools
 import os
 from concurrent.futures import ThreadPoolExecutor
+from typing import Coroutine, Optional
 
 import yt_dlp
 from envparse import env
@@ -12,7 +13,7 @@ from .ytdl_info import YtdlInfo
 from .. import bot
 from ..utils import log
 from ..utils.constants import YOUTUBE_DOWNLOADS_DIR, YOUTUBE_CACHE_DIR
-from ..utils.exceptions import YtdlError
+from ..utils.exceptions import YtdlError, ApiError
 
 
 class Ytdl:
@@ -57,7 +58,7 @@ class Ytdl:
                     ),
                 )
 
-                return YtdlInfo(result)
+                return YtdlInfo(self, result)
             except yt_dlp.utils.DownloadError as error:
                 tries += 1
                 log.warn(f'Download failed. Retrying...[{tries}]')
@@ -79,7 +80,7 @@ class Ytdl:
                     self.thread_pool,
                     functools.partial(self.ytdl.process_ie_result, info, download=not info.get('is_live')),
                 )
-                return YtdlInfo(result)
+                return YtdlInfo(self, result)
             except yt_dlp.utils.DownloadError as error:
                 tries += 1
                 log.warn(f'Download failed. Retrying...[{tries}]')
@@ -88,6 +89,45 @@ class Ytdl:
                 await asyncio.sleep(1)
             except yt_dlp.utils.YoutubeDLError as error:
                 raise YtdlError(error)
+
+    @staticmethod
+    def prepare_filename(*args, **kwargs):
+        return Ytdl().ytdl.prepare_filename(*args, **kwargs)
+
+    @staticmethod
+    async def get_related_video(video_id: int) -> Optional[int]:
+        res = await bot.session.get(
+            'https://youtube-v31.p.rapidapi.com/search',
+            params={
+                'relatedToVideoId': str(video_id),
+                'part': 'id,snippet',
+                'type': 'video',
+                'maxResults': 10
+            },
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+                "x-rapidapi-host": "youtube-v31.p.rapidapi.com",
+                "x-rapidapi-key": env.str('RAPID_API_KEY')
+            }
+        )
+
+        if res.status == 429:
+            raise ApiError('Quota Exceeded')
+
+        if res.status != 200:
+            raise ApiError('Autoplay error: ' + await res.text())
+
+        data = await res.json()
+
+        if len(data['items']) == 0:
+            raise ApiError('Track not found')
+
+        for track in data['items']:
+            if 'videoId' not in track['id'] or track['snippet']['liveBroadcastContent'] != 'none':
+                continue
+
+            return track['id']['videoId']
 
     @classmethod
     def create(cls, extra_params) -> Ytdl:

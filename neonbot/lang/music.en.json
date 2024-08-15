@@ -2,7 +2,7 @@
     "player_connected": "Connected to %{channel}",
     "repeat_changed": "%{user} changed repeat to **%{mode}**.",
     "shuffle_changed": "%{user} changed shuffle to **%{mode}**.",
-    "player_next": "%{user} changed shuffle to **%{mode}**.",
+    "autoplay_changed": "%{user} changed autoplay to **%{mode}**.",
     "volume_changed": "Volume changed to %{volume}%.",
     "player_paused": "%{user} changed player state to **paused**.",
     "player_resumed": "%{user} changed player state to **playing**.",
@@ -19,6 +19,7 @@
     "volume_footer": "Volume: %{volume}%",
     "shuffle_footer": "Shuffle: %{shuffle}",
     "repeat_footer": "Repeat: %{repeat}",
+    "autoplay_footer": "Autoplay: %{autoplay}",
     "no_song_playing": "No song playing.",
     "nowplaying": {
         "uploader": "Uploader",
@@ -58,5 +59,6 @@
     "youtube_failed_to_find_similar": "Failed to find similar song to YouTube.",
     "jumped_to": "Jumped to #%{index}: [%{title}](%{url})",
     "removed_song": "Removed song #%{index}: [%{title}](%{url})",
-    "cannot_interact": "Cannot interact. You're not in the current voice channel."
+    "cannot_interact": "Cannot interact. You're not in the current voice channel.",
+    "autoplay_disabled_for_quota": "Autoplay is currently unavailable due to quota restrictions."
 }

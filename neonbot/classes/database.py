@@ -38,7 +38,7 @@ class Database:
 
         return self
 
-    async def get_guilds(self, guilds: list) -> None:
+    async def get_guilds(self, guilds: List[discord.Guild]) -> None:
         guild_ids = [guild.id for guild in guilds]
         existing_guild_ids = [server.id for server in await Guild.find(In(Guild.id, guild_ids)).to_list()]
         new_guild = [guild for guild in guilds if guild.id not in existing_guild_ids]
@@ -51,23 +51,31 @@ class Database:
 
     async def cache_guild(self, guild):
         log.info(f"Caching guild settings: {guild} ({guild.id})")
-        await self.start_migration(guild.id)
         await Guild.create_instance(guild.id)
         await ChatGPT.cleanup_threads(guild)
 
-    async def start_migration(self, guild_id: int):
-        guild = await self.db.guilds.find_one({'_id': guild_id})
+    async def start_migration(self, guilds: List[discord.Guild]):
+        for guild in guilds:
+            guild = await self.db.guilds.find_one({'_id': guild.id})
 
-        if 'ptero' in guild:
-            await self.db.guilds.update_one({'_id': guild_id}, {
-                '$unset': {
-                    'ptero': 1,
-                }
-            })
+            if 'ptero' in guild:
+                await self.db.guilds.update_one({'_id': guild.id}, {
+                    '$unset': {
+                        'ptero': 1,
+                    }
+                })
 
-        if 'panel' not in guild:
-            await self.db.guilds.update_one({'_id': guild_id}, {
-                '$set': {
-                    'panel.servers': {},
-                }
-            })
+            if 'panel' not in guild:
+                await self.db.guilds.update_one({'_id': guild.id}, {
+                    '$set': {
+                        'panel.servers': {},
+                    }
+                })
+
+            if 'autoplay' not in guild['music']:
+                await self.db.guilds.update_one({'_id': guild.id}, {
+                    '$set': {
+                        'music.autoplay': False,
+                    }
+                })
+

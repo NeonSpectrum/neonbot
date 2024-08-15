@@ -12,9 +12,6 @@ from neonbot.utils.exceptions import YtdlError
 
 
 class Youtube(WithInteraction):
-    async def send_message(self, *args, **kwargs):
-        await bot.send_response(self.interaction, *args, **kwargs)
-
     async def search_keyword(self, keyword: str):
         player = await Player.get_instance(self.interaction)
 

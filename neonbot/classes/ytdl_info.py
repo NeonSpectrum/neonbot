@@ -1,11 +1,13 @@
 from datetime import datetime
+from os import path
 
 from neonbot.utils.constants import YOUTUBE_DOWNLOADS_DIR
 from neonbot.utils.functions import format_seconds
 
 
 class YtdlInfo:
-    def __init__(self, result):
+    def __init__(self, ytdl, result):
+        self.ytdl = ytdl
         self.result = result
 
     @property
@@ -20,22 +22,30 @@ class YtdlInfo:
             uploader=self.result.get('uploader')
         )
 
-    def get_list(self, detailed: bool = False):
+    def get_list(self):
         entries = self.result.get('entries', [])
+        data = []
 
-        if detailed:
-            return [self.format_detailed_result(entry) for entry in entries if entry]
+        for entry in entries:
+            if not entry:
+                continue
 
-        return [self.format_simple_result(entry) for entry in entries if entry]
+            if self.result.get('id') and path.exists(f"{YOUTUBE_DOWNLOADS_DIR}/{entry.get('id')}"):
+                data.append(self.format_detailed_result(entry))
+            else:
+                data.append(self.format_simple_result(entry))
 
-    def get_track(self, detailed: bool = False):
+        return data
+
+    def get_track(self):
         if not self.result:
             return None
 
-        if detailed:
+        if self.result.get('id') and path.exists(f"{YOUTUBE_DOWNLOADS_DIR}/{self.result.get('id')}"):
             return self.format_detailed_result(self.result)
 
         return self.format_simple_result(self.result)
+
 
     def format_description(self, description: str) -> str:
         description_arr = description.split("\n")[:15]
@@ -65,7 +75,7 @@ class YtdlInfo:
             duration=entry.get('duration'),
             formatted_duration=format_seconds(entry.get('duration')) if entry.get('duration') else "N/A",
             thumbnail=entry.get('thumbnail'),
-            stream=entry.get('url') if entry.get('is_live') else f"{YOUTUBE_DOWNLOADS_DIR}/{entry.get('id')}",
+            stream=entry.get('url') if entry.get('is_live') else self.ytdl.prepare_filename(entry),
             url=entry.get('webpage_url'),
             is_live=entry.get('is_live'),
             view_count=f"{entry.get('view_count'):,}",

@@ -20,7 +20,7 @@ from neonbot.enums import Repeat, PlayerState
 from neonbot.models.guild import Guild
 from neonbot.utils import log
 from neonbot.utils.constants import FFMPEG_OPTIONS, ICONS, PLAYER_CACHE_PATH
-from neonbot.utils.exceptions import YtdlError, PlayerError
+from neonbot.utils.exceptions import YtdlError, PlayerError, ApiError
 from neonbot.utils.functions import remove_ansi
 
 
@@ -82,8 +82,32 @@ class Player:
         return self.settings.music.repeat
 
     @property
-    def is_shuffle(self) -> bool:
+    def shuffle(self) -> bool:
         return self.settings.music.shuffle
+
+    @property
+    def autoplay(self) -> bool:
+        return self.settings.music.autoplay
+
+    @volume.setter
+    def volume(self, value) -> None:
+        self.settings.music.volume = value
+        self.loop.create_task(self.settings.save_changes())
+
+    @repeat.setter
+    def repeat(self, value) -> None:
+        self.settings.music.repeat = value
+        self.loop.create_task(self.settings.save_changes())
+
+    @shuffle.setter
+    def shuffle(self, value) -> None:
+        self.settings.music.shuffle = value
+        self.loop.create_task(self.settings.save_changes())
+
+    @autoplay.setter
+    def autoplay(self, value) -> None:
+        self.settings.music.autoplay = value
+        self.loop.create_task(self.settings.save_changes())
 
     @property
     def is_last_track(self):
@@ -141,8 +165,7 @@ class Player:
                 pass
 
     async def set_repeat(self, mode: Repeat, requester: discord.User):
-        self.settings.music.repeat = mode.value
-        await self.settings.save_changes()
+        self.repeat = mode.value
 
         await self.channel.send(
             embed=Embed(t('music.repeat_changed', mode=mode.name.lower(), user=requester.mention))
@@ -150,11 +173,18 @@ class Player:
         await self.refresh_player_message(embed=True)
 
     async def set_shuffle(self, requester: discord.User):
-        self.settings.music.shuffle = not self.is_shuffle
-        await self.settings.save_changes()
+        self.shuffle = not self.shuffle
 
         await self.channel.send(
-            embed=Embed(t('music.shuffle_changed', mode='on' if self.is_shuffle else 'off', user=requester.mention))
+            embed=Embed(t('music.shuffle_changed', mode='on' if self.shuffle else 'off', user=requester.mention))
+        )
+        await self.refresh_player_message(embed=True)
+
+    async def set_autoplay(self, requester: discord.User):
+        self.autoplay = not self.autoplay
+
+        await self.channel.send(
+            embed=Embed(t('music.autoplay_changed', mode='on' if self.autoplay else 'off', user=requester.mention))
         )
         await self.refresh_player_message(embed=True)
 
@@ -162,8 +192,7 @@ class Player:
         if self.connection and self.connection.source:
             self.connection.source.volume = volume / 100
 
-        self.settings.music.volume = volume
-        await self.settings.save_changes()
+        self.volume = volume
 
         await self.refresh_player_message(embed=True)
 
@@ -200,7 +229,7 @@ class Player:
         try:
             if not self.now_playing.get('stream'):
                 ytdl_info = await Ytdl().extract_info(self.now_playing['url'], download=True)
-                info = ytdl_info.get_track(detailed=True)
+                info = ytdl_info.get_track()
                 self.now_playing = {'index': self.track_list[self.current_track] + 1, **self.now_playing, **info}
 
             song = discord.FFmpegPCMAudio(
@@ -255,7 +284,7 @@ class Player:
             self.jump_to_track = None
         else:
             # If shuffle
-            if self.is_shuffle:
+            if self.shuffle:
                 self.process_shuffle()
 
             # If repeat is on SINGLE
@@ -265,8 +294,14 @@ class Player:
 
             # If last track and repeat is OFF
             elif self.is_last_track and self.repeat == Repeat.OFF:
-                await self.send_finished_message(detailed=True)
-                return
+                if self.autoplay:
+                    try:
+                        await self.process_autoplay()
+                    except:
+                        return
+                else:
+                    await self.send_finished_message(detailed=True)
+                    return
 
             # If last track and repeat is ALL
             elif self.is_last_track and self.repeat == Repeat.ALL:
@@ -335,6 +370,24 @@ class Player:
         self.shuffled_list.append(index)
         self.track_list.append(index)
 
+    async def process_autoplay(self) -> None:
+        try:
+            related_video_id = await Ytdl.get_related_video(self.now_playing['id'])
+
+            ytdl_info = await Ytdl().extract_info(str(related_video_id), download=True)
+            data = ytdl_info.get_track()
+
+            if data:
+                self.add_to_queue(data, requested=bot.user)
+                self.track_list.append(self.track_list[self.current_track] + 1)
+        except ApiError as error:
+            if error == 'Quota Exceeded':
+                self.autoplay = False
+                await self.ctx.channel.send(embed=Embed(t('music.autoplay_disabled_for_quota')))
+                await self.refresh_player_message(embed=True)
+
+            raise ApiError(error)
+
     async def send_playing_message(self) -> None:
         if not self.now_playing:
             return
@@ -378,11 +431,8 @@ class Player:
         self.messages['playing'] = None
         self.messages['finished'] = None
 
-    async def refresh_player_message(self, *, embed=False, refresh=True):
+    async def refresh_player_message(self, *, embed=False):
         self.player_controls.refresh()
-
-        if not refresh:
-            return
 
         if self.messages['playing']:
             await bot.edit_message(
@@ -402,8 +452,9 @@ class Player:
             str(now_playing['requested']),
             now_playing['formatted_duration'],
             t('music.volume_footer', volume=self.volume),
-            t('music.shuffle_footer', shuffle='on' if self.is_shuffle else 'off'),
+            t('music.shuffle_footer', shuffle='on' if self.shuffle else 'off'),
             t('music.repeat_footer', repeat=Repeat(self.repeat).name.lower()),
+            t('music.autoplay_footer', autoplay='on' if self.autoplay else 'off'),
         ]
 
     def get_playing_embed(self):
@@ -419,14 +470,7 @@ class Player:
         )
 
     def get_track_embed(self, track):
-        footer = [
-            str(track['requested']),
-            track['formatted_duration'],
-            t('music.volume_footer', volume=self.volume),
-            t('music.shuffle_footer', shuffle='on' if self.is_shuffle else 'off'),
-            t('music.repeat_footer', repeat=Repeat(self.repeat).name.lower()),
-        ]
-
+        footer = self.get_footer(track)
         embed = Embed(title=track['title'], url=track['url'])
         embed.set_footer(
             text=' | '.join(footer), icon_url=track['requested'].display_avatar
