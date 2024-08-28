@@ -332,7 +332,7 @@ class Player:
     async def reset(self, timeout=None):
         self.state = PlayerState.NONE
         await self.disconnect(force=True, timeout=timeout)
-        await self.send_finished_message()
+        await self.clear_messages()
         self.queue = []
 
     async def stop(self):
