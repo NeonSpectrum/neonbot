@@ -79,7 +79,7 @@ class YtdlInfo:
             formatted_duration=format_seconds(entry.get('duration')) if entry.get('duration') else "N/A",
             thumbnail=entry.get('thumbnail'),
             stream=entry.get('url') if entry.get('is_live') else self.ytdl.prepare_filename(entry),
-            url=entry.get('webpage_url'),
+            url='https://www.youtube.com/watch?v=' + entry.get('id'),
             is_live=entry.get('is_live'),
             view_count=f"{entry.get('view_count'):,}",
             upload_date=datetime.strptime(entry.get('upload_date'), "%Y%m%d").strftime(
