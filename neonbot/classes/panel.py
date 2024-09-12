@@ -125,20 +125,19 @@ class Panel:
                     current_cpu_usage = resources['attributes']['resources']['cpu_absolute']
                     current_cpu_usage = f"{current_cpu_usage:.2f}"
                     max_cpu_usage = details['attributes']['limits']['cpu']
-                    max_cpu_usage = f'{max_cpu_usage}' if max_cpu_usage != 0 else '∞'
 
                     current_memory_usage = resources['attributes']['resources']['memory_bytes'] / 1024 / 1024
                     current_memory_usage = f"{current_memory_usage:,.0f}"
                     max_memory_usage = details['attributes']['limits']['memory']
-                    max_memory_usage = f'{max_memory_usage:,.0f}' if max_memory_usage != 0 else '∞'
+                    max_memory_usage = f'{max_memory_usage:,.0f}' if max_memory_usage != 0 else 0
 
                     uptime = resources['attributes']['resources']['uptime']
 
                     embed.add_field('Status', state.title())
                     embed.add_field('Uptime', format_uptime(uptime))
                     embed.add_field('\u200b', '\u200b')
-                    embed.add_field('CPU Usage', f"{current_cpu_usage} / {max_cpu_usage} %")
-                    embed.add_field('Memory Usage', f"{current_memory_usage} / {max_memory_usage} MB")
+                    embed.add_field('CPU Usage', f"{current_cpu_usage} / {max_cpu_usage} %" if max_cpu_usage != 0 else f"{current_cpu_usage} %")
+                    embed.add_field('Memory Usage', f"{current_memory_usage} / {max_memory_usage} MB" if max_memory_usage != 0 else f"{current_memory_usage} MB")
                     embed.add_field('\u200b', '\u200b')
 
                     if 'minecraft' in name.lower():
