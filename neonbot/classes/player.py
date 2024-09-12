@@ -333,6 +333,7 @@ class Player:
         self.state = PlayerState.NONE
         await self.disconnect(force=True, timeout=timeout)
         await self.clear_messages()
+        self.delete_cache()
         self.queue = []
 
     async def stop(self):
@@ -550,6 +551,14 @@ class Player:
                 'shuffled_list': self.shuffled_list,
                 'state': self.state.value,
             }, f, indent=4)
+
+    def delete_cache(self):
+        file = PLAYER_CACHE_PATH % self.ctx.guild.id
+
+        try:
+            os.remove(file)
+        except Exception as error:
+            log.error(error)
 
     def add_to_queue(self, data: Union[List, dict], *, requested: discord.User = None) -> None:
         if not data:
