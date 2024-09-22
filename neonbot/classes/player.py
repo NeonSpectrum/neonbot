@@ -555,6 +555,9 @@ class Player:
     def delete_cache(self):
         file = PLAYER_CACHE_PATH % self.ctx.guild.id
 
+        if not self.has_cache(self.ctx.guild.id):
+            return
+
         try:
             os.remove(file)
         except Exception as error:
