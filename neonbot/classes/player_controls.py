@@ -7,6 +7,7 @@ from .embed import Embed
 from .view import View, Button
 from .. import bot
 from ..enums import Repeat, PlayerState
+from ..utils import log
 
 if TYPE_CHECKING:
     from .player import Player
@@ -60,6 +61,10 @@ class PlayerControls:
         return views
 
     async def callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+        async def send_message(message):
+            await interaction.channel.send(embed=Embed(message))
+            log.cmd(interaction, message)
+
         if not interaction.user.voice or (
             interaction.user.voice and interaction.user.voice.channel != self.player.connection.channel
         ):
@@ -84,9 +89,7 @@ class PlayerControls:
             else:
                 await self.player.after()
 
-            await interaction.channel.send(
-                embed=Embed(t('music.player_controls_pressed', action='back', user=interaction.user.mention))
-            )
+            await send_message(t('music.player_controls_pressed', action='back', user=interaction.user.mention))
         elif button.emoji.name == "⏭️":  # next
             if self.player.connection.is_playing():
                 if self.player.current_track != len(self.player.track_list) - 1:
@@ -97,9 +100,7 @@ class PlayerControls:
             else:
                 await self.player.after()
 
-            await interaction.channel.send(
-                embed=Embed(t('music.player_controls_pressed', action='next', user=interaction.user.mention))
-            )
+            await send_message(t('music.player_controls_pressed', action='next', user=interaction.user.mention))
         elif button.emoji.name in ("🔁", "🔂"):  # repeat
             modes = [Repeat.OFF, Repeat.SINGLE, Repeat.ALL]
             index = (modes.index(Repeat(self.player.repeat)) + 1) % 3
@@ -110,15 +111,11 @@ class PlayerControls:
             await self.player.set_autoplay(requester=interaction.user)
         elif button.emoji.name == "⏹️": # stop
             await self.player.stop()
-            await interaction.channel.send(
-                embed=Embed(t('music.player_controls_pressed', action='stop', user=interaction.user.mention))
-            )
+            await send_message(t('music.player_controls_pressed', action='stop', user=interaction.user.mention))
         elif button.emoji.name == "⏏️": # reset
             await self.player.reset()
             self.player.remove_instance()
-            await interaction.channel.send(
-                embed=Embed(t('music.player_controls_pressed', action='reset', user=interaction.user.mention))
-            )
+            await send_message(t('music.player_controls_pressed', action='reset', user=interaction.user.mention))
 
     def initialize(self) -> None:
         buttons = [

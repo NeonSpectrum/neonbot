@@ -167,25 +167,28 @@ class Player:
     async def set_repeat(self, mode: Repeat, requester: discord.User):
         self.repeat = mode.value
 
-        await self.channel.send(
-            embed=Embed(t('music.repeat_changed', mode=mode.name.lower(), user=requester.mention))
-        )
+        msg = t('music.repeat_changed', mode=mode.name.lower(), user=requester.mention)
+        await self.channel.send(embed=Embed(msg))
+        log.cmd(self.ctx, msg, user=requester)
+
         await self.refresh_player_message(embed=True)
 
     async def set_shuffle(self, requester: discord.User):
         self.shuffle = not self.shuffle
 
-        await self.channel.send(
-            embed=Embed(t('music.shuffle_changed', mode='on' if self.shuffle else 'off', user=requester.mention))
-        )
+        msg = t('music.shuffle_changed', mode='on' if self.shuffle else 'off', user=requester.mention)
+        await self.channel.send(embed=Embed(msg))
+        log.cmd(self.ctx, msg, user=requester)
+
         await self.refresh_player_message(embed=True)
 
     async def set_autoplay(self, requester: discord.User):
         self.autoplay = not self.autoplay
 
-        await self.channel.send(
-            embed=Embed(t('music.autoplay_changed', mode='on' if self.autoplay else 'off', user=requester.mention))
-        )
+        msg = t('music.autoplay_changed', mode='on' if self.autoplay else 'off', user=requester.mention)
+        await self.channel.send(embed=Embed(msg))
+        log.cmd(self.ctx, msg, user=requester)
+
         await self.refresh_player_message(embed=True)
 
     async def set_volume(self, volume: int):
