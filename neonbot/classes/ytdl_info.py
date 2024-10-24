@@ -81,7 +81,7 @@ class YtdlInfo:
             stream=entry.get('url') if entry.get('is_live') else self.ytdl.prepare_filename(entry),
             url='https://www.youtube.com/watch?v=' + entry.get('id'),
             is_live=entry.get('is_live'),
-            view_count=f"{entry.get('view_count'):,}",
+            view_count=f"{entry.get('view_count'):,}" if entry.get('view_count') else "N/A",
             upload_date=datetime.strptime(entry.get('upload_date'), "%Y%m%d").strftime(
                 "%b %d, %Y"
             ) if entry.get('upload_date') else None,
