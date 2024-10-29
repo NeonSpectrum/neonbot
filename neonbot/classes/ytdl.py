@@ -4,7 +4,7 @@ import asyncio
 import functools
 import os
 from concurrent.futures import ThreadPoolExecutor
-from typing import Coroutine, Optional
+from typing import Coroutine, Optional, List
 
 import yt_dlp
 from envparse import env
@@ -95,7 +95,7 @@ class Ytdl:
         return Ytdl().ytdl.prepare_filename(*args, **kwargs)
 
     @staticmethod
-    async def get_related_video(video_id: int) -> Optional[int]:
+    async def get_related_video(video_id: int, *, playlist: Optional[List[int]] = None) -> Optional[int]:
         res = await bot.session.get(
             'https://youtube-v31.p.rapidapi.com/search',
             params={
@@ -120,14 +120,21 @@ class Ytdl:
 
         data = await res.json()
 
-        if len(data['items']) == 0:
+        if 'items' in data and len(data['items']) <= 1:
             raise ApiError('Track not found')
 
-        for track in data['items']:
+        for track in data['items'][1:]:
             if 'videoId' not in track['id'] or track['snippet']['liveBroadcastContent'] != 'none':
                 continue
 
-            return track['id']['videoId']
+            track_id = track['id']['videoId']
+
+            if playlist and track_id in playlist:
+                continue
+
+            return track_id
+
+        raise ApiError('Track not found')
 
     @classmethod
     def create(cls, extra_params) -> Ytdl:

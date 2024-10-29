@@ -378,7 +378,10 @@ class Player:
 
     async def process_autoplay(self) -> None:
         try:
-            related_video_id = await Ytdl.get_related_video(self.now_playing['id'])
+            related_video_id = await Ytdl.get_related_video(
+                self.now_playing['id'],
+                playlist=list(map(lambda track: track['id'], self.queue))
+            )
 
             ytdl_info = await Ytdl().extract_info(str(related_video_id), download=True)
             data = ytdl_info.get_track()
