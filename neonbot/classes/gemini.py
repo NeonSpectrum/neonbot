@@ -6,6 +6,8 @@ from PIL import Image
 from discord.ext import commands
 from envparse import env
 
+from neonbot.utils import log
+
 genai.configure(api_key=env.str('GEMINI_API_KEY'))
 
 class GeminiChat:
@@ -45,11 +47,16 @@ class GeminiChat:
                     pass
 
         self.response = await self.model.generate_content_async(prompts)
+        self.log()
         return self
 
     async def generate_content(self):
         self.response = await self.model.generate_content_async([self.prompt])
+        self.log()
         return self
+
+    def log(self):
+        log.info(f"Gemini Chat\nQuestion: {self.prompt}\nAnswer: {self.response}")
 
     def get_response(self):
         return self.response.text if self.response else None
