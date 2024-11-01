@@ -56,7 +56,7 @@ class GeminiChat:
         return self
 
     def log(self):
-        log.info(f"Gemini Chat\nQuestion: {self.prompt}\nAnswer: {self.response}")
+        log.info(f"Gemini Chat\nQuestion: {self.prompt}\nAnswer: {self.get_response()}")
 
     def get_response(self):
         return self.response.text if self.response else None
