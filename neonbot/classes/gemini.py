@@ -1,5 +1,4 @@
 from io import BytesIO
-from typing import List, Union
 
 import discord
 import google.generativeai as genai
@@ -7,17 +6,15 @@ from PIL import Image
 from discord.ext import commands
 from envparse import env
 
-from neonbot.utils import log
-
 genai.configure(api_key=env.str('GEMINI_API_KEY'))
 
 class GeminiChat:
-    def __init__(self, ctx):
+    def __init__(self, message):
         self.model = genai.GenerativeModel('gemini-1.5-flash')
         self.response = None
-        self.prompt = ctx.message.content.lstrip('? ')
+        self.prompt = message.lstrip('? ')
 
-    async def generate_content(self, ctx: commands.Context):
+    async def generate_content_from_ctx(self, ctx: commands.Context):
         prompts = []
         attachments = []
 
@@ -48,6 +45,11 @@ class GeminiChat:
                     pass
 
         self.response = await self.model.generate_content_async(prompts)
+        return self
+
+    async def generate_content(self):
+        self.response = await self.model.generate_content_async([self.prompt])
+        return self
 
     def get_response(self):
         return self.response.text if self.response else None
@@ -57,3 +59,8 @@ class GeminiChat:
 
     def set_prompt_concise(self):
         self.prompt = 'Please provide a concise answer. ' + self.prompt
+
+    @staticmethod
+    async def generate(prompt):
+        gemini_chat = await GeminiChat(prompt).generate_content()
+        return gemini_chat.get_response()

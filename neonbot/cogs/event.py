@@ -67,7 +67,7 @@ class Event(commands.Cog):
             return
 
         if content.startswith('?? ') or content.startswith('??? '):
-            gemini_chat = GeminiChat(ctx)
+            gemini_chat = GeminiChat(ctx.message.content)
 
             if not gemini_chat.get_prompt():
                 return
@@ -78,7 +78,7 @@ class Event(commands.Cog):
                 gemini_chat.set_prompt_concise()
 
             async with ctx.channel.typing():
-                await gemini_chat.generate_content(ctx)
+                await gemini_chat.generate_content_from_ctx(ctx)
                 response = gemini_chat.get_response()
 
                 if len(response) > 2000:
