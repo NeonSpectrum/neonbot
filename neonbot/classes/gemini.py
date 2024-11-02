@@ -68,6 +68,9 @@ class GeminiChat:
         self.prompt = 'Please provide a concise answer. ' + self.prompt
 
     @staticmethod
-    async def generate(prompt):
-        gemini_chat = await GeminiChat(prompt).generate_content()
+    async def generate(prompt, precise=False):
+        gemini_chat = GeminiChat(prompt)
+        if precise:
+            gemini_chat.set_prompt_concise()
+        await gemini_chat.generate_content()
         return gemini_chat.get_response()

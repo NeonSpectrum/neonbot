@@ -125,7 +125,7 @@ class Ytdl:
             if 'items' in data and len(data['items']) <= 1:
                 raise ApiError('Track not found')
 
-            title = await GeminiChat.generate(f'whats the title of this song: "{track['title']}". only return the exact title')
+            title = await GeminiChat.generate(f'whats the title of this song: "{track['title']}". only return the exact title', precise=True)
 
             for track in data['items'][1:]:
                 if 'videoId' not in track['id'] or track['snippet']['liveBroadcastContent'] != 'none':
