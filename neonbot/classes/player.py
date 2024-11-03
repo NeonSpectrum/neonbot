@@ -548,7 +548,7 @@ class Player:
             json.dump({
                 'voice_channel_id': self.last_voice_channel.id,
                 'channel_id': self.ctx.channel.id,
-                'queue': list(map(map_queue, self.queue)),
+                'queue': list(map(map_queue, self.queue.copy())),
                 'current_track': self.current_track,
                 'track_list': self.track_list,
                 'shuffled_list': self.shuffled_list,
