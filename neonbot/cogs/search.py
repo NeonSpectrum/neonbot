@@ -2,6 +2,7 @@ import json
 import textwrap
 from datetime import datetime
 from io import BytesIO
+from typing import cast
 
 import aiohttp
 import discord
@@ -42,7 +43,7 @@ class Search(commands.Cog):
         )
         data = await res.json()
 
-        await interaction.response.send_message(embed=Embed(data['joke']))
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed(data['joke']))
 
     @app_commands.command(name='image')
     async def image(self, interaction: discord.Interaction, keyword: str) -> None:
@@ -73,7 +74,7 @@ class Search(commands.Cog):
         )
         embed.set_image(url=image["items"][0]['link'])
 
-        await interaction.response.send_message(embed=embed)
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
 
     @app_commands.command(name='dictionary')
     async def dictionary(self, interaction: discord.Interaction, word: str) -> None:
@@ -91,7 +92,8 @@ class Search(commands.Cog):
             raise ApiError(error)
 
         if not data or not isinstance(data[0], dict):
-            await interaction.response.send_message(embed=Embed("Word not found."), ephemeral=True)
+            await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed("Word not found."),
+                                                                                       ephemeral=True)
             return
 
         dictionary = data[0]
@@ -122,9 +124,10 @@ class Search(commands.Cog):
 
         if audio:
             content = await res.read()
-            await interaction.response.send_message(embed=embed, file=discord.File(BytesIO(content), word + ".wav"))
+            await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed, file=discord.File(
+                BytesIO(content), word + ".wav"))
         else:
-            await interaction.response.send_message(embed=embed)
+            await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
 
     @app_commands.command(name='weather')
     async def weather(self, interaction: discord.Interaction, location: str) -> None:
@@ -144,7 +147,8 @@ class Search(commands.Cog):
             raise ApiError(data.message)
 
         if int(data['cod']) == 404:
-            await interaction.response.send_message(embed=Embed("City not found."), ephemeral=True)
+            await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed("City not found."),
+                                                                                       ephemeral=True)
             return
 
         embed = Embed()
@@ -199,7 +203,7 @@ class Search(commands.Cog):
         embed.add_field("🎛 Pressure", f"{data['main']['pressure']} hpa", inline=False)
         embed.add_field("💧 Humidity", f"{data['main']['humidity']}%", inline=False)
 
-        await interaction.response.send_message(embed=embed)
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
 
     @weather.autocomplete(name='location')
     async def location_autocomplete(self, interaction: discord.Interaction, current: str):
@@ -242,7 +246,7 @@ class Search(commands.Cog):
             lyrics = div.select("div:nth-of-type(5)")[0].get_text().splitlines()
         except:
             log.exception("There was an error parsing the url.")
-            await interaction.response.send_message(
+            await cast(discord.InteractionResponse, interaction.response).send_message(
                 embed=Embed("There was error fetching the lyrics."), ephemeral=True
             )
         else:
@@ -276,7 +280,8 @@ class Search(commands.Cog):
         results = (await jikan.search(search_type="anime", query=keyword))['results']
 
         if not results:
-            await interaction.response.send_message(embed=Embed("Anime not found."), ephemeral=True)
+            await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed("Anime not found."),
+                                                                                       ephemeral=True)
             return
 
         anime = await jikan.anime(results[0]['mal_id'])
@@ -309,7 +314,7 @@ class Search(commands.Cog):
         embed.add_field("Aired", anime['aired']['string'])
         embed.add_field("Genres", ", ".join([genre['name'] for genre in anime['genres']]))
 
-        await interaction.response.send_message(embed=embed)
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
 
     @anime.command(name='top')
     async def anime_top(self, interaction: discord.Interaction) -> None:
@@ -377,7 +382,8 @@ class Search(commands.Cog):
 
         if "error" in data:
             if data['error']['code'] == 400 and data['error']['message'] == "Invalid Value":
-                await interaction.response.send_message(embed=Embed("Invalid language."), ephemeral=True)
+                await cast(discord.InteractionResponse, interaction.response).send_message(
+                    embed=Embed("Invalid language."), ephemeral=True)
                 return
 
             raise ApiError(data['error']['message'])
@@ -391,7 +397,7 @@ class Search(commands.Cog):
         embed.add_field(f"**{self.lang_list[source_lang]}**", sentence)
         embed.add_field(f"**{self.lang_list[target_lang]}**", translated_text)
 
-        await interaction.response.send_message(embed=embed)
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
 
     @translate.autocomplete(name='lang')
     async def lang_autocomplete(self, interaction: discord.Interaction, current: str) -> list[Choice]:
@@ -404,7 +410,7 @@ class Search(commands.Cog):
 
     @chatgpt.command(name='image')
     async def chatgpt_image(self, interaction: discord.Interaction, keyword: str):
-        await interaction.response.defer()
+        await cast(discord.InteractionResponse, interaction.response).defer()
 
         response = await ChatGPT().generate_image(keyword)
 

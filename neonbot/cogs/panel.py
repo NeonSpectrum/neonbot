@@ -1,8 +1,6 @@
-from datetime import datetime
-from typing import List
+from typing import cast
 
 import discord
-from beanie.odm.operators.update.general import Unset
 from discord import app_commands
 from discord.ext import commands
 
@@ -25,11 +23,13 @@ class PanelCog(commands.Cog):
         details = await Panel(server_id).get_server_details()
 
         if not details:
-            await interaction.response.send_message(embed=Embed("Invalid server id."), ephemeral=True)
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed("Invalid server id."), ephemeral=True)
             return
 
         if server_id in server.panel.servers:
-            await interaction.response.send_message(embed=Embed("Server id already exists."), ephemeral=True)
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed("Server id already exists."), ephemeral=True)
             return
 
         server.panel.servers[server_id] = PanelServer(channel_id=interaction.channel_id)
@@ -38,7 +38,7 @@ class PanelCog(commands.Cog):
 
         Panel.start_listener(interaction.guild.id)
 
-        await interaction.response.send_message(
+        await cast(discord.InteractionResponse, interaction.response).send_message(
             embed=Embed(f'Started monitor for `{server_id}` on {interaction.channel.mention}'),
             ephemeral=True
         )
@@ -48,7 +48,8 @@ class PanelCog(commands.Cog):
         server = Guild.get_instance(interaction.guild.id)
 
         if server_id not in server.panel.servers:
-            await interaction.response.send_message(embed=Embed("Server id not in monitor list."), ephemeral=True)
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed("Server id not in monitor list."), ephemeral=True)
             return
 
         panel = server.panel.servers[server_id]
@@ -58,7 +59,7 @@ class PanelCog(commands.Cog):
 
         server.panel.servers[server_id] = PanelServer()
 
-        await interaction.response.send_message(
+        await cast(discord.InteractionResponse, interaction.response).send_message(
             embed=Embed(f'Removed monitor for `{server_id}` on {interaction.channel.mention}'),
             ephemeral=True
         )

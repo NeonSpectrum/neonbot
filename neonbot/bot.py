@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from glob import glob
 from os import sep
 from time import time
-from typing import Optional, Tuple, Union, Any, Type
+from typing import Optional, Tuple, Union, Any, Type, cast
 
 import discord
 import psutil
@@ -152,9 +152,10 @@ class NeonBot(commands.Bot):
         )
 
     async def send_response(self, interaction: discord.Interaction, *args, **kwargs):
-        if not interaction.response.is_done():
-            await interaction.response.send_message(*args, **kwargs)
-        elif interaction.response.type == discord.InteractionResponseType.deferred_message_update:
+        if not cast(discord.InteractionResponse, interaction.response).is_done():
+            await cast(discord.InteractionResponse, interaction.response).send_message(*args, **kwargs)
+        elif cast(discord.InteractionResponse,
+                  interaction.response).type == discord.InteractionResponseType.deferred_message_update:
             await interaction.followup.send(*args, **kwargs)
         else:
             if 'view' not in kwargs:

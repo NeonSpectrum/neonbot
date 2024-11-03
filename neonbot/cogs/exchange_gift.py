@@ -1,19 +1,10 @@
-import os
-import random
-from datetime import datetime
-from time import time
-from typing import Optional
+from typing import Optional, cast
 
 import discord
-import openai
-import psutil
 from discord import app_commands
 from discord.ext import commands
-from discord.utils import format_dt
-from envparse import env
-from yt_dlp import version as ytdl_version
 
-from .. import __author__, __title__, __version__, bot
+from .. import bot
 from ..classes.embed import Embed
 from ..classes.exchange_gift import ExchangeGift
 from ..views.ExchangeGiftView import ExchangeGiftView
@@ -42,7 +33,7 @@ class ExchangeGiftCog(commands.Cog):
                                              view=ExchangeGiftView(
                                                  bot.get_channel(int(discussion_id)).jump_url))
 
-        await interaction.response.send_message(embed=Embed('Done!'), ephemeral=True)
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed('Done!'), ephemeral=True)
 
     @exchangegift.command(name='finish')
     async def exchangegift_finish(self, interaction: discord.Interaction):
@@ -57,12 +48,13 @@ class ExchangeGiftCog(commands.Cog):
 
         await exchange_gift.set_finish()
 
-        await interaction.response.send_message(embed=Embed('Done!'), ephemeral=True)
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed('Done!'), ephemeral=True)
 
     @exchangegift.command(name='shuffle')
     async def exchangegift_shuffle(self, interaction: discord.Interaction):
         await ExchangeGift(interaction).shuffle()
-        await interaction.response.send_message(embed=Embed(f'Exchange gift has been shuffled.'))
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed(f'Exchange gift has been shuffled.'))
 
     @exchangegift.command(name='send')
     @app_commands.default_permissions(administrator=True)
@@ -82,10 +74,10 @@ class ExchangeGiftCog(commands.Cog):
             )
             embed.add_field('Users:', "\n".join(members))
 
-            await interaction.response.send_message(embed=embed)
+            await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
             return
 
-        await interaction.response.defer()
+        await cast(discord.InteractionResponse, interaction.response).defer()
 
         members = [exchange_gift.get(specific_user.id)] if specific_user else exchange_gift.get_all()
 
@@ -119,7 +111,8 @@ class ExchangeGiftCog(commands.Cog):
     @exchangegift.command(name='setbudget')
     async def exchangegift_setbudget(self, interaction: discord.Interaction, budget: int):
         await ExchangeGift(interaction).set_budget(budget)
-        await interaction.response.send_message(embed=Embed(f'Budget has been set to `{budget}`.'))
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed(f'Budget has been set to `{budget}`.'))
 
 
 # noinspection PyShadowingNames

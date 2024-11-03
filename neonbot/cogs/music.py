@@ -1,5 +1,5 @@
 import re
-from typing import Optional
+from typing import Optional, cast
 
 import discord
 from discord import app_commands
@@ -22,7 +22,8 @@ async def in_voice(interaction: discord.Interaction) -> bool:
         return True
 
     if not interaction.user.voice:
-        await interaction.response.send_message(embed=Embed("You need to be in the channel."), ephemeral=True)
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed("You need to be in the channel."), ephemeral=True)
         return False
     return True
 
@@ -31,7 +32,8 @@ async def has_player(interaction: discord.Interaction) -> bool:
     player = await Player.get_instance(interaction)
 
     if not player.connection:
-        await interaction.response.send_message(embed=Embed("No active player."), ephemeral=True)
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed("No active player."),
+                                                                                   ephemeral=True)
         return False
     return True
 
@@ -97,7 +99,8 @@ class Music(commands.Cog):
         player = await Player.get_instance(interaction)
 
         if not player.connection or not player.connection.is_playing():
-            await interaction.response.send_message(embed=Embed(t('music.no_song_playing')), ephemeral=True)
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed(t('music.no_song_playing')), ephemeral=True)
             return
 
         now_playing = player.now_playing
@@ -120,7 +123,7 @@ class Music(commands.Cog):
         embed.set_footer(
             text=" | ".join(footer), icon_url=now_playing['requested'].display_avatar
         )
-        await interaction.response.send_message(embed=embed)
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
 
     @app_commands.command(name='playlist')
     @app_commands.check(in_voice)
@@ -134,7 +137,8 @@ class Music(commands.Cog):
         duration = 0
 
         if not queue:
-            await interaction.response.send_message(embed=Embed(t('music.empty_playlist')), ephemeral=True)
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed(t('music.empty_playlist')), ephemeral=True)
             return
 
         for i in range(0, len(player.queue), 10):
@@ -177,11 +181,13 @@ class Music(commands.Cog):
         player = await Player.get_instance(interaction)
 
         if volume < 1 or volume > 100:
-            await interaction.response.send_message(embed=Embed(t('music.volume_rules')), ephemeral=True)
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed(t('music.volume_rules')), ephemeral=True)
             return
 
         await player.set_volume(volume)
-        await interaction.response.send_message(embed=Embed(t('music.volume_changed', volume=volume)))
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed(t('music.volume_changed', volume=volume)))
 
     @app_commands.command(name='jump')
     @app_commands.check(in_voice)
@@ -193,13 +199,14 @@ class Music(commands.Cog):
         player = await Player.get_instance(interaction)
 
         if index > len(player.queue) or index < 0:
-            await interaction.response.send_message(embed=Embed("Invalid index."), ephemeral=True)
+            await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed("Invalid index."),
+                                                                                       ephemeral=True)
             return
 
         player.jump(index - 1)
         track = player.get_track(index - 1)
 
-        await interaction.response.send_message(
+        await cast(discord.InteractionResponse, interaction.response).send_message(
             embed=Embed(t('music.jumped_to', index=index, title=track['title'], url=track['url']))
         )
 
@@ -213,13 +220,14 @@ class Music(commands.Cog):
         player = await Player.get_instance(interaction)
 
         if index > len(player.queue) or index < 0:
-            await interaction.response.send_message(embed=Embed("Invalid index."), ephemeral=True)
+            await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed("Invalid index."),
+                                                                                       ephemeral=True)
             return
 
         track = player.get_track(index - 1)
         await player.remove_song(index - 1)
 
-        await interaction.response.send_message(
+        await cast(discord.InteractionResponse, interaction.response).send_message(
             embed=Embed(t('music.removed_song', index=index, title=track['title'], url=track['url']))
         )
 
@@ -236,7 +244,7 @@ class Music(commands.Cog):
 
         msg = "Player reset."
         log.cmd(interaction, msg)
-        await interaction.response.send_message(embed=Embed(msg))
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed(msg))
 
     @app_commands.command(name='stop')
     @app_commands.check(in_voice)
@@ -250,7 +258,7 @@ class Music(commands.Cog):
 
         msg = "Player stopped."
         log.cmd(interaction, msg)
-        await interaction.response.send_message(embed=Embed(msg))
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed(msg))
 
     @app_commands.command(name='reconnect')
     @app_commands.check(has_player)
@@ -264,7 +272,7 @@ class Music(commands.Cog):
 
         msg = "Player reconnected."
         log.cmd(interaction, msg)
-        await interaction.response.send_message(embed=Embed(msg))
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed(msg))
 
 
 # noinspection PyShadowingNames

@@ -1,7 +1,7 @@
 import contextlib
 import sys
 from io import StringIO
-from typing import Generator, Optional
+from typing import Generator, Optional, cast
 
 import discord
 from discord import app_commands
@@ -9,9 +9,9 @@ from discord.ext import commands
 from discord.ui import View
 
 from .. import bot
-from ..classes.select_choices import SelectChoices
 from ..classes.embed import Embed
 from ..classes.player import Player
+from ..classes.select_choices import SelectChoices
 from ..models.guild import Guild
 from ..utils.constants import ICONS
 
@@ -82,7 +82,7 @@ class Administration(commands.Cog):
     ) -> None:
         """Deletes a number of messages of a specific member (if specified). *MANAGE_MESSAGES"""
 
-        await interaction.response.defer()
+        await cast(discord.InteractionResponse, interaction.response).defer()
 
         async for message in interaction.channel.history(limit=1000 if member else count):
             if count <= 0:
@@ -103,7 +103,8 @@ class Administration(commands.Cog):
 
         await server.save_changes()
 
-        await interaction.response.send_message(embed=Embed(f"Prefix is now set to `{server.prefix}`."))
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed(f"Prefix is now set to `{server.prefix}`."))
 
     @settings.command(name='set-status')
     async def set_status(self, interaction: discord.Interaction, status: discord.Status) -> None:
@@ -112,12 +113,13 @@ class Administration(commands.Cog):
         if status is False:
             return
 
-        bot.setting.status = status.value
+        bot.setting.status = str(status)
         await bot.setting.save_changes()
 
         await bot.update_presence()
 
-        await interaction.response.send_message(embed=Embed(f"Status is now set to {bot.settings.get('status')}."))
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed(f"Status is now set to {bot.settings.get('status')}."))
 
     @settings.command(name='set-presence')
     async def set_presence(
@@ -128,6 +130,7 @@ class Administration(commands.Cog):
     ) -> None:
         """Sets the presence of the bot. *BOT_OWNER"""
 
+        # noinspection PyUnresolvedReferences
         bot.setting.activity_type = presence_type.name
         bot.setting.activity_name = name
 
@@ -135,7 +138,8 @@ class Administration(commands.Cog):
 
         await bot.update_presence()
 
-        await interaction.response.send_message(
+        # noinspection PyUnresolvedReferences
+        await cast(discord.InteractionResponse, interaction.response).send_message(
             embed=Embed(
                 f"Presence is now set to **{presence_type.name} {name}**."
             )
@@ -175,7 +179,7 @@ class Administration(commands.Cog):
         view = View()
         view.add_item(select)
 
-        await interaction.response.send_message(view=view, ephemeral=True)
+        await cast(discord.InteractionResponse, interaction.response).send_message(view=view, ephemeral=True)
 
     @server.command(name='get-logs')
     async def get_logs(self, interaction: discord.Interaction):
@@ -186,11 +190,11 @@ class Administration(commands.Cog):
         embed = Embed()
         embed.set_author('Log Channels', icon_url=bot.user.display_avatar)
 
-        for name, channel_id in guild.channel_log.dict().items():
+        for name, channel_id in guild.channel_log.model_dump().items():
             channel = bot.get_channel(channel_id or -1)
             embed.add_field(name.title().replace('_', ''), channel.mention if channel else 'None', inline=False)
 
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed, ephemeral=True)
 
     @server.command(name='set-chatgpt')
     async def set_chatgpt(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
@@ -201,7 +205,8 @@ class Administration(commands.Cog):
         await guild.save_changes()
 
         if guild.chatgpt.channel_id:
-            await interaction.response.send_message(embed=Embed(f"ChatGPT is now set to {channel.mention}."))
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed(f"ChatGPT is now set to {channel.mention}."))
 
             embed = Embed()
             embed.set_author('OpenAI - ChatGPT', url='https://chat.openai.com', icon_url=ICONS['openai'])
@@ -209,7 +214,8 @@ class Administration(commands.Cog):
 
             await channel.send(embed=embed)
         else:
-            await interaction.response.send_message(embed=Embed("ChatGPT is now disabled."))
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed("ChatGPT is now disabled."))
 
 
 # noinspection PyShadowingNames

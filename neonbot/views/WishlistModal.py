@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, cast
 
 import discord
 
@@ -24,7 +24,8 @@ class WishlistModal(discord.ui.Modal, title='Set your wishlist'):
         await exchange_gift.set_wishlist(wishlist)
 
         if self.parent:
-            await interaction.response.defer()
+            await cast(discord.InteractionResponse, interaction.response).defer()
             await self.parent.edit_original_response(embed=Embed(f'Your wishlist: ```{wishlist}```'))
         else:
-            await interaction.response.send_message(embed=Embed('Your wishlist has been updated.'), ephemeral=True)
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed('Your wishlist has been updated.'), ephemeral=True)

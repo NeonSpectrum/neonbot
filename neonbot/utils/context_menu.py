@@ -1,7 +1,9 @@
 from datetime import datetime
+from typing import cast
 
 import discord
 from discord import app_commands
+from discord.ext.commands import Flag
 from discord.utils import format_dt
 
 from neonbot.classes.embed import Embed
@@ -18,14 +20,15 @@ def load_context_menu(bot):
         await member.remove_roles(guest_role)
         await member.add_roles(member_role)
 
-        await interaction.response.send_message(embed=Embed(f'{member.mention} added to {member_role.mention} role.'),
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed(f'{member.mention} added to {member_role.mention} role.'),
                                                 ephemeral=True)
 
     @bot.tree.context_menu(name='Profile')
     async def profile(interaction: discord.Interaction, member: discord.Member):
         user = await bot.fetch_user(member.id)
         roles = member.roles[1:]
-        flags = [flag.name.title().replace('_', ' ') for flag in member.public_flags.all()]
+        flags = [flag.name.title().replace('_', ' ') for flag in member.public_flags.all() if isinstance(flag, Flag)]
 
         embed = Embed(member.mention, timestamp=datetime.now())
         embed.set_author(str(member), icon_url=member.display_avatar.url)
@@ -41,4 +44,4 @@ def load_context_menu(bot):
         if user.banner:
             embed.set_image(user.banner.url)
 
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed, ephemeral=True)

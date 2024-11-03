@@ -1,8 +1,8 @@
-import json
 import os
 import random
 from datetime import datetime
 from time import time
+from typing import cast
 
 import discord
 import psutil
@@ -24,7 +24,8 @@ class Utility(commands.Cog):
     async def random(self, interaction: discord.Interaction, word_list: str) -> None:
         """Picks a text in the given list."""
 
-        await interaction.response.send_message(embed=Embed(random.choice(word_list.split(',')).strip()))
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed(random.choice(word_list.split(',')).strip()))
 
     @app_commands.command(name='stats')
     async def status(self, interaction: discord.Interaction) -> None:
@@ -56,7 +57,7 @@ class Utility(commands.Cog):
             """
         )
 
-        await interaction.response.send_message(embed=embed)
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
 
     @app_commands.command(name='sms')
     @app_commands.guilds(*bot.owner_guilds)
@@ -75,7 +76,8 @@ class Utility(commands.Cog):
 
             return embed
 
-        await interaction.response.send_message(embed=generate_embed().add_field("Status:", "Sending...", inline=False))
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=generate_embed().add_field("Status:", "Sending...", inline=False))
 
         api_key = env.str("SEMAPHONE_API_KEY")
         sender_name = env.str("SEMAPHONE_SENDER_NAME")
