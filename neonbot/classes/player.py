@@ -16,6 +16,7 @@ from neonbot import bot
 from neonbot.classes.embed import Embed
 from neonbot.classes.player_controls import PlayerControls
 from neonbot.classes.ytdl import Ytdl
+from neonbot.classes.ytmusic import YTMusic
 from neonbot.enums import Repeat, PlayerState
 from neonbot.models.guild import Guild
 from neonbot.utils import log
@@ -377,25 +378,21 @@ class Player:
         self.track_list.append(index)
 
     async def process_autoplay(self) -> None:
-        try:
-            related_video_id = await Ytdl.get_related_video(
-                self.now_playing,
-                playlist=list(map(lambda track: track['id'], self.queue))
-            )
+        related_video_id = await YTMusic().get_related_video(
+            self.now_playing,
+            playlist=list(map(lambda track: track['id'], self.queue))
+        )
 
-            ytdl_info = await Ytdl().extract_info(str(related_video_id), download=True)
-            data = ytdl_info.get_track()
+        if not related_video_id:
+            await self.ctx.channel.send(embed=Embed(t('music.no_related_video_found')))
+            raise ApiError('No related video found.')
 
-            if data:
-                self.add_to_queue(data, requested=bot.user)
-                self.track_list.append(self.track_list[self.current_track] + 1)
-        except ApiError as error:
-            if error == 'Quota Exceeded':
-                self.autoplay = False
-                await self.ctx.channel.send(embed=Embed(t('music.autoplay_disabled_for_quota')))
-                await self.refresh_player_message(embed=True)
+        ytdl_info = await Ytdl().extract_info(str(related_video_id), download=True)
+        data = ytdl_info.get_track()
 
-            raise ApiError(error)
+        if data:
+            self.add_to_queue(data, requested=bot.user)
+            self.track_list.append(self.track_list[self.current_track] + 1)
 
     async def send_playing_message(self) -> None:
         if not self.now_playing:

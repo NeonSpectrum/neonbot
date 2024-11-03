@@ -3,7 +3,6 @@ import os
 import shutil
 
 import i18n
-import openai
 from envparse import env
 from dotenv import load_dotenv
 
@@ -16,7 +15,7 @@ i18n.set('skip_locale_root_data', True)
 
 def main() -> None:
     from neonbot import bot
-    from neonbot.utils.constants import YOUTUBE_TMP_DIR, YOUTUBE_DOWNLOADS_DIR, PLAYER_CACHE_DIR
+    from neonbot.utils.constants import YOUTUBE_DOWNLOADS_DIR, PLAYER_CACHE_DIR
 
     shutil.rmtree(YOUTUBE_DOWNLOADS_DIR, ignore_errors=True)
     os.makedirs(YOUTUBE_DOWNLOADS_DIR, exist_ok=True)

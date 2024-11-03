@@ -3,25 +3,21 @@ from __future__ import annotations
 import asyncio
 import functools
 import os
-from concurrent.futures import ThreadPoolExecutor
-from typing import Optional, List, Union
 
 import yt_dlp
-from envparse import env
 
-from .gemini import GeminiChat
 from .ytdl_info import YtdlInfo
 from .. import bot
 from ..utils import log
 from ..utils.constants import YOUTUBE_DOWNLOADS_DIR, YOUTUBE_CACHE_DIR
-from ..utils.exceptions import YtdlError, ApiError
+from ..utils.exceptions import YtdlError
 
 
 class Ytdl:
     def __init__(self, extra_params=None) -> None:
         if extra_params is None:
             extra_params = {}
-        self.thread_pool = ThreadPoolExecutor()
+        self.thread_pool = bot.thread_pool
         self.loop = bot.loop
         self.ytdl = yt_dlp.YoutubeDL(
             {
@@ -94,57 +90,6 @@ class Ytdl:
     @staticmethod
     def prepare_filename(*args, **kwargs):
         return Ytdl().ytdl.prepare_filename(*args, **kwargs)
-
-    @staticmethod
-    async def get_related_video(track: Union[dict, None], *, playlist: Optional[List[int]] = None) -> Optional[int]:
-        res = await bot.session.get(
-            'https://youtube-v31.p.rapidapi.com/search',
-            params={
-                'relatedToVideoId': str(track['id']),
-                'part': 'id,snippet',
-                'type': 'video',
-                'maxResults': 10
-            },
-            headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-                "x-rapidapi-host": "youtube-v31.p.rapidapi.com",
-                "x-rapidapi-key": env.str('RAPID_API_KEY')
-            }
-        )
-
-        if res.status == 429:
-            raise ApiError('Quota Exceeded')
-
-        if res.status != 200:
-            raise ApiError('Autoplay error: ' + await res.text())
-
-        data = await res.json()
-
-        try:
-            if 'items' in data and len(data['items']) <= 1:
-                raise ApiError('Track not found')
-
-            title = await GeminiChat.generate(f'whats the title of this song: "{track['title']}". only return the exact title', precise=True)
-
-            for track in data['items'][1:]:
-                if 'videoId' not in track['id'] or track['snippet']['liveBroadcastContent'] != 'none':
-                    continue
-
-                track_id = track['id']['videoId']
-
-                if playlist and track_id in playlist:
-                    continue
-
-                if title and title.lower() in track['snippet']['title'].lower():
-                    continue
-
-                return track_id
-            else:
-                raise ApiError('Track not found')
-        except KeyError as error:
-            log.error(error)
-            raise ApiError('Key Error')
 
     @classmethod
     def create(cls, extra_params) -> Ytdl:

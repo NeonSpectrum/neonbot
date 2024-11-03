@@ -60,5 +60,6 @@
     "jumped_to": "Jumped to #%{index}: [%{title}](%{url})",
     "removed_song": "Removed song #%{index}: [%{title}](%{url})",
     "cannot_interact": "Cannot interact. You're not in the current voice channel.",
-    "autoplay_disabled_for_quota": "Autoplay is currently unavailable due to quota restrictions."
+    "autoplay_disabled_for_quota": "Autoplay is currently unavailable due to quota restrictions.",
+    "no_related_video_found": "No related video found."
 }

@@ -2,10 +2,11 @@ import asyncio
 import os
 import re
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from glob import glob
 from os import sep
 from time import time
-from typing import Optional, Tuple, Union, Any
+from typing import Optional, Tuple, Union, Any, Type
 
 import discord
 import psutil
@@ -30,6 +31,7 @@ class NeonBot(commands.Bot):
         self.default_prefix = env.str("DEFAULT_PREFIX", default=".")
         self.user_agent = f"NeonBot v{__version__}"
         self.loop = asyncio.get_event_loop()
+        self.thread_pool = ThreadPoolExecutor()
         super().__init__(intents=discord.Intents.all(), command_prefix=self.default_prefix,
                          owner_ids=set(env.list("OWNER_IDS", default=[], subcast=int)))
 
@@ -42,7 +44,7 @@ class NeonBot(commands.Bot):
         self.is_listeners_done = False
         self.is_player_cache_loaded = False
 
-    def get_presence(self) -> Tuple[discord.Status, discord.Activity]:
+    def get_presence(self) -> Tuple[Type[discord.Status], discord.Activity]:
         activity_type = self.setting.activity_type
         activity_name = self.setting.activity_name
         status = self.setting.status
@@ -146,7 +148,7 @@ class NeonBot(commands.Bot):
                 name=setting.activity_name,
                 type=discord.ActivityType[setting.activity_type]
             ),
-            status=discord.Status[setting.status]
+            status=getattr(discord.Status, setting.status)
         )
 
     async def send_response(self, interaction: discord.Interaction, *args, **kwargs):

@@ -2,11 +2,11 @@ import re
 
 from i18n import t
 
-from neonbot import bot
 from neonbot.classes.embed import Embed, EmbedChoices
 from neonbot.classes.player import Player
 from neonbot.classes.with_interaction import WithInteraction
 from neonbot.classes.ytdl import Ytdl
+from neonbot.classes.ytmusic import YTMusic
 from neonbot.utils.constants import YOUTUBE_REGEX
 from neonbot.utils.exceptions import YtdlError
 
@@ -43,26 +43,23 @@ class Youtube(WithInteraction):
         await self.send_message(embed=Embed(t('music.searching')))
 
         try:
-            ytdl_info = await Ytdl({
-                "default_search": "ytsearch1"
-            }).extract_info(keyword + ' official lyric')
+            video_id = await YTMusic().search(keyword)
 
-            data = ytdl_info.get_list()
-
-            if len(data) == 0:
+            if not video_id:
                 raise YtdlError()
+
+            ytdl_info = await Ytdl().extract_info(str(video_id))
+            data = ytdl_info.get_track()
 
         except YtdlError:
             await self.send_message(embed=Embed(t('music.no_songs_available')))
             return
 
-        info = data[0]
-
         await self.send_message(embed=Embed(
-            t('music.added_to_queue', queue=len(player.queue) + 1, title=info['title'], url=info['url'])
+            t('music.added_to_queue', queue=len(player.queue) + 1, title=data['title'], url=data['url'])
         ))
 
-        player.add_to_queue(info, requested=self.interaction.user)
+        player.add_to_queue(data, requested=self.interaction.user)
 
     async def search_url(self, url: str):
         if not re.search(YOUTUBE_REGEX, url):

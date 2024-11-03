@@ -135,7 +135,7 @@ class Search(commands.Cog):
             params={
                 "q": location,
                 "units": "metric",
-                "appid": "a88701020436549755f42d7e4be71762",
+                "appid": env.str('OPENWEATHERMAP_API'),
             },
         )
         data = await res.json()

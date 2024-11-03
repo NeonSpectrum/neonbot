@@ -21,12 +21,13 @@ beanie = "*"
 "discord.py" = {extras = ["voice"], version = "*"}
 openai = "*"
 tiktoken = "*"
-apscheduler = "*"
 validators = "*"
 google-generativeai = "*"
 markdown = "*"
 pillow = "*"
 yt-dlp-youtube-oauth2 = {file = "https://github.com/coletdjnz/yt-dlp-youtube-oauth2/archive/refs/heads/master.zip"}
+ytmusicapi = "*"
+apscheduler = "*"
 
 [dev-packages]
 pylint = "*"
