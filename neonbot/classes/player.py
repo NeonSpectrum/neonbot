@@ -156,7 +156,7 @@ class Player:
             self.last_voice_channel = channel
             await channel.connect(self_deaf=True)
 
-        log.cmd(self.ctx, t('music.player_connected', channel=channel))
+        log.cmd(self.ctx, t('music.player_connected', channel=self.last_voice_channel))
 
     async def disconnect(self, force=True, timeout=None) -> None:
         if self.connection and self.connection.is_connected():
