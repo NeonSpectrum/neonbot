@@ -4,8 +4,9 @@ import asyncio
 import json
 import os
 import random
+from _typeshed import SupportsWrite
 from os import path
-from typing import Union, List, Optional, Dict
+from typing import Union, List, Optional, Dict, cast
 
 import discord
 from discord.ext import commands, tasks
@@ -553,7 +554,7 @@ class Player:
                 'track_list': self.track_list,
                 'shuffled_list': self.shuffled_list,
                 'state': self.state.value,
-            }, f, indent=4)
+            }, cast(SupportsWrite[str], f), indent=4)
 
     def delete_cache(self):
         file = PLAYER_CACHE_PATH % self.ctx.guild.id
