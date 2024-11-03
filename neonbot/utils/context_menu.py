@@ -3,7 +3,6 @@ from typing import cast
 
 import discord
 from discord import app_commands
-from discord.ext.commands import Flag
 from discord.utils import format_dt
 
 from neonbot.classes.embed import Embed
@@ -28,7 +27,8 @@ def load_context_menu(bot):
     async def profile(interaction: discord.Interaction, member: discord.Member):
         user = await bot.fetch_user(member.id)
         roles = member.roles[1:]
-        flags = [flag.name.title().replace('_', ' ') for flag in member.public_flags.all() if isinstance(flag, Flag)]
+        # noinspection PyUnresolvedReferences
+        flags = [flag.name.title().replace('_', ' ') for flag in member.public_flags.all()]
 
         embed = Embed(member.mention, timestamp=datetime.now())
         embed.set_author(str(member), icon_url=member.display_avatar.url)
