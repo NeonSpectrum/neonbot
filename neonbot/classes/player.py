@@ -333,11 +333,12 @@ class Player:
         self.state = PlayerState.JUMPED
         self.connection.stop()
 
-    async def reset(self, timeout=None):
+    async def reset(self, timeout=None, clear_cache=True):
         self.state = PlayerState.NONE
         await self.disconnect(force=True, timeout=timeout)
         await self.clear_messages()
-        self.delete_cache()
+        if clear_cache:
+            self.delete_cache()
         self.queue = []
 
     async def stop(self):
@@ -541,7 +542,8 @@ class Player:
 
         with open(file, "w") as f:
             def map_queue(track):
-                track['requested'] = track['requested'].id
+                if isinstance(track['requested'], discord.User):
+                    track['requested'] = track['requested'].id
                 track['stream'] = None
                 return track
 
