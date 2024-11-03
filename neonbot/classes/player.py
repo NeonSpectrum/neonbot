@@ -542,7 +542,7 @@ class Player:
 
         with open(file, "w") as f:
             def map_queue(track):
-                if isinstance(track['requested'], discord.User):
+                if isinstance(track['requested'], (discord.User, discord.Member)):
                     track['requested'] = track['requested'].id
                 track['stream'] = None
                 return track
