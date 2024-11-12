@@ -1,8 +1,9 @@
 import functools
 from typing import Optional
 
-from neonbot import bot
 from ytmusicapi import YTMusic
+
+from neonbot import bot
 
 ytmusic = YTMusic()
 
@@ -22,7 +23,7 @@ class YTMusic:
     async def get_related_video(self, track: dict, playlist: list = None) -> Optional[int]:
         result = await bot.loop.run_in_executor(
             bot.thread_pool,
-            functools.partial(ytmusic.get_watch_playlist, track['id'], limit=10),
+            functools.partial(ytmusic.get_watch_playlist, track['id'], limit=1),
         )
         tracks = result['tracks']
 

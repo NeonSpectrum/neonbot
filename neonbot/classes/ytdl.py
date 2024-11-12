@@ -36,7 +36,7 @@ class Ytdl:
                 "compat_opts": {
                     "no-youtube-unavailable-videos": True
                 },
-                "username": "oauth2",
+                "username": "oauth",
                 "password": "",
                 **extra_params,
             }
