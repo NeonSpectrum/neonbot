@@ -23,7 +23,7 @@ class Ytdl:
             {
                 "default_search": "ytsearch5",
                 "format": "bestaudio/best",
-                "quiet": os.path.isfile(YOUTUBE_CACHE_DIR + "/youtube-oauth2/token_data.json"),
+                "quiet": os.path.isfile(YOUTUBE_CACHE_DIR + "/youtube/oauth_refresh_token_default.json"),
                 "no_warnings": True,
                 "nocheckcertificate": True,
                 "ignoreerrors": False,
