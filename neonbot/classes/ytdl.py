@@ -35,7 +35,7 @@ class Ytdl:
                 "compat_opts": {
                     "no-youtube-unavailable-videos": True
                 },
-                "cookies": "./keys/cookies.txt",
+                "cookiefile": "./keys/cookies.txt",
                 **extra_params,
             }
         )
