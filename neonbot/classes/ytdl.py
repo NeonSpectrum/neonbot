@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import functools
-import os
 
 import yt_dlp
 
@@ -23,7 +22,7 @@ class Ytdl:
             {
                 "default_search": "ytsearch5",
                 "format": "bestaudio/best",
-                "quiet": os.path.isfile(YOUTUBE_CACHE_DIR + "/youtube/oauth_refresh_token_default.json"),
+                "quiet": True,
                 "no_warnings": True,
                 "nocheckcertificate": True,
                 "ignoreerrors": False,
@@ -36,8 +35,7 @@ class Ytdl:
                 "compat_opts": {
                     "no-youtube-unavailable-videos": True
                 },
-                "username": "oauth",
-                "password": "",
+                "cookies": "./keys/cookies.txt",
                 **extra_params,
             }
         )
