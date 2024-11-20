@@ -18,7 +18,7 @@ from neonbot.classes.voice_events import VoiceEvents
 from neonbot.enums import PlayerState
 from neonbot.models.guild import Guild
 from neonbot.utils import log, exceptions
-from neonbot.utils.functions import format_seconds, get_log_prefix, split_long_message, md_to_text, remove_ansi
+from neonbot.utils.functions import format_seconds, get_log_prefix, md_to_text, remove_ansi
 from neonbot.utils.functions import get_command_string
 
 
@@ -191,7 +191,7 @@ class Event(commands.Cog):
             if connect_channel and embed:
                 await connect_channel.send(embed=embed)
 
-        elif deafen_channel and voice_events.is_self_deafen_changed:
+        if deafen_channel and voice_events.is_self_deafen_changed:
             await deafen_channel.send(embed=voice_events.get_self_deafen_message())
         elif mute_channel and voice_events.is_self_muted_changed:
             await mute_channel.send(embed=voice_events.get_self_muted_message())
@@ -200,9 +200,9 @@ class Event(commands.Cog):
         elif server_mute_channel and voice_events.is_server_muted_changed:
             await server_mute_channel.send(embed=voice_events.get_server_muted_message())
         elif stream_channel and voice_events.is_self_stream_changed:
-            await mute_channel.send(embed=voice_events.get_self_stream_message())
+            await stream_channel.send(embed=voice_events.get_self_stream_message())
         elif video_channel and voice_events.is_self_video_changed:
-            await mute_channel.send(embed=voice_events.get_self_video_message())
+            await video_channel.send(embed=voice_events.get_self_video_message())
 
     @staticmethod
     @bot.event
