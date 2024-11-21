@@ -152,7 +152,6 @@ class Administration(commands.Cog):
         guild = Guild.get_instance(interaction.guild_id)
         select = SelectChoices('Select log type...', [
             'connect',
-            'disconnect',
             'mute',
             'deafen',
             'server_deafen',
