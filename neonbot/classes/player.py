@@ -529,10 +529,10 @@ class Player:
                     await player.play()
 
                 await origin.delete()
-
-            os.remove(file)
         except Exception as error:
             log.error(error)
+        finally:
+            os.remove(file)
 
     def save_cache(self):
         if len(self.queue) == 0:
