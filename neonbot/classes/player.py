@@ -542,7 +542,7 @@ class Player:
 
         with open(file, "w") as f:
             def map_queue(track):
-                if isinstance(track['requested'], (discord.User, discord.Member)):
+                if hasattr(track['requested'], 'id'):
                     track['requested'] = track['requested'].id
                 track['stream'] = None
                 return track
@@ -551,7 +551,7 @@ class Player:
             json.dump({
                 'voice_channel_id': self.last_voice_channel.id,
                 'channel_id': self.ctx.channel.id,
-                'queue': list(map(map_queue, self.queue.copy())),
+                'queue': list(map(map_queue, self.queue)),
                 'current_track': self.current_track,
                 'track_list': self.track_list,
                 'shuffled_list': self.shuffled_list,
