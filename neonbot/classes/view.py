@@ -15,6 +15,8 @@ class Button(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         if inspect.iscoroutinefunction(self._callback):
             await self._callback(self, interaction)
+        else:
+            self._callback(self, interaction)
 
         if not cast(discord.InteractionResponse, interaction.response).is_done():
             await cast(discord.InteractionResponse, interaction.response).defer()

@@ -81,26 +81,27 @@ class PlayerControls:
         elif button.emoji.name == "⏸️":  # pause
             await self.player.pause(requester=interaction.user)
         elif button.emoji.name == "⏮️":  # prev
+            await send_message(t('music.player_controls_pressed', action='back', user=interaction.user.mention))
+
             self.player.jump_to_track = self.player.current_track - 1
             self.player.state = PlayerState.JUMPED
 
             if self.player.connection.is_playing():
                 self.player.next()
             else:
-                await self.player.after()
-
-            await send_message(t('music.player_controls_pressed', action='back', user=interaction.user.mention))
+                bot.loop.create_task(self.player.after())
         elif button.emoji.name == "⏭️":  # next
-            if self.player.connection.is_playing():
-                if self.player.current_track != len(self.player.track_list) - 1:
-                    self.player.jump_to_track = self.player.current_track + 1
-                    self.player.state = PlayerState.JUMPED
-
-                self.player.next()
-            else:
-                await self.player.after()
-
             await send_message(t('music.player_controls_pressed', action='next', user=interaction.user.mention))
+
+            async with self.player.semaphore:
+                if self.player.connection.is_playing():
+                    if self.player.current_track != len(self.player.track_list) - 1:
+                        self.player.jump_to_track = self.player.current_track + 1
+                        self.player.state = PlayerState.JUMPED
+
+                    self.player.next()
+                else:
+                    bot.loop.create_task(self.player.after())
         elif button.emoji.name in ("🔁", "🔂"):  # repeat
             modes = [Repeat.OFF, Repeat.SINGLE, Repeat.ALL]
             index = (modes.index(Repeat(self.player.repeat)) + 1) % 3
@@ -130,7 +131,10 @@ class PlayerControls:
         ]
         self.update_buttons(buttons)
 
-        self.view = View.create_button(buttons, self.callback, timeout=None)
+        def callback(*args, **kwargs):
+            bot.loop.create_task(self.callback(*args, **kwargs))
+
+        self.view = View.create_button(buttons, callback, timeout=None)
 
     def get(self) -> View:
         return self.view
