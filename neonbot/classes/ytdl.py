@@ -36,7 +36,6 @@ class Ytdl:
                     "no-youtube-unavailable-videos": True
                 },
                 "cookiefile": "./keys/cookies.txt",
-                "extractor_args": {'youtube': {'player_client': ['default', '-web_creator']}},
                 **extra_params,
             }
         )
