@@ -35,7 +35,8 @@ class Search(commands.Cog):
             self.city_list = json.load(f)
 
     @app_commands.command(name='joke')
-    @app_commands.user_install()
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def joke(self, interaction: discord.Interaction) -> None:
         """Tells a random dad joke."""
 
@@ -47,7 +48,8 @@ class Search(commands.Cog):
         await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed(data['joke']))
 
     @app_commands.command(name='image')
-    @app_commands.user_install()
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def image(self, interaction: discord.Interaction, keyword: str) -> None:
         """Searches for an image in Google Image."""
 
@@ -79,7 +81,8 @@ class Search(commands.Cog):
         await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
 
     @app_commands.command(name='dictionary')
-    @app_commands.user_install()
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def dictionary(self, interaction: discord.Interaction, word: str) -> None:
         """Searches for a word in Merriam Webster."""
 
@@ -133,7 +136,8 @@ class Search(commands.Cog):
             await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
 
     @app_commands.command(name='weather')
-    @app_commands.user_install()
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def weather(self, interaction: discord.Interaction, location: str) -> None:
         """Searches for a weather forecast in Open Weather Map."""
 
@@ -218,7 +222,8 @@ class Search(commands.Cog):
                ][:25]
 
     @app_commands.command(name='lyrics')
-    @app_commands.user_install()
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def lyrics(self, interaction: discord.Interaction, song: str) -> None:
         """Searches for a lyrics in AZLyrics."""
 
@@ -278,7 +283,8 @@ class Search(commands.Cog):
             await pagination.build()
 
     @anime.command(name='search')
-    @app_commands.user_install()
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def anime_search(self, interaction: discord.Interaction, keyword: str) -> None:
         """Searches for anime information."""
 
@@ -323,7 +329,8 @@ class Search(commands.Cog):
         await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
 
     @anime.command(name='top')
-    @app_commands.user_install()
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def anime_top(self, interaction: discord.Interaction) -> None:
         """Lists top anime."""
 
@@ -347,7 +354,8 @@ class Search(commands.Cog):
         await pagination.build()
 
     @anime.command(name='upcoming')
-    @app_commands.user_install()
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def anime_upcoming(self, interaction: discord.Interaction) -> None:
         """Lists upcoming anime."""
 
@@ -371,7 +379,8 @@ class Search(commands.Cog):
         await pagination.build()
 
     @app_commands.command(name='translate')
-    @app_commands.user_install()
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def translate(
         self, interaction: discord.Interaction, lang: str, sentence: str
     ) -> None:
@@ -418,7 +427,8 @@ class Search(commands.Cog):
                ][:25]
 
     @chatgpt.command(name='image')
-    @app_commands.user_install()
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def chatgpt_image(self, interaction: discord.Interaction, keyword: str):
         await cast(discord.InteractionResponse, interaction.response).defer()
 

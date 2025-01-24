@@ -21,7 +21,8 @@ from ..utils.functions import format_seconds
 class Utility(commands.Cog):
     @app_commands.command(name='random')
     @app_commands.describe(word_list='Word List')
-    @app_commands.user_install()
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def random(self, interaction: discord.Interaction, word_list: str) -> None:
         """Picks a text in the given list."""
 
@@ -29,7 +30,8 @@ class Utility(commands.Cog):
             embed=Embed(random.choice(word_list.split(',')).strip()))
 
     @app_commands.command(name='stats')
-    @app_commands.user_install()
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def status(self, interaction: discord.Interaction) -> None:
         """Shows the information of the bot."""
 
