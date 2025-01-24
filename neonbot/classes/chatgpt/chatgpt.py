@@ -1,16 +1,11 @@
 import asyncio
 
 import discord
-from openai import AsyncOpenAI
 from discord.ext import commands
-from discord.utils import find
 from envparse import env
-from i18n import t
-import tiktoken
+from openai import AsyncOpenAI
 
 from neonbot.classes.chatgpt.chat_thread import ChatThread
-from neonbot.classes.embed import Embed
-from neonbot.models.chatgpt import Message, Chat
 from neonbot.models.guild import Guild
 from neonbot.utils.functions import split_long_message
 
@@ -83,5 +78,5 @@ class ChatGPT:
         server = Guild.get_instance(guild.id)
         active_threads = map(lambda thread: thread.id, filter(lambda thread: not thread.archived, guild.threads))
 
-        server.chatgpt.chats = filter(lambda chat: chat.thread_id in active_threads, server.chatgpt.chats)
+        server.chatgpt.chats = list(filter(lambda chat: chat.thread_id in active_threads, server.chatgpt.chats))
         await server.save_changes()
