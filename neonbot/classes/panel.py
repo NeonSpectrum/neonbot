@@ -4,7 +4,7 @@ from typing import List
 
 import discord
 import validators
-from aiohttp import ContentTypeError
+from aiohttp import ClientSession, ContentTypeError
 from discord.utils import find
 from envparse import env
 
