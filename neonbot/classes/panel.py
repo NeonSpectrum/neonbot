@@ -4,7 +4,7 @@ from typing import List
 
 import discord
 import validators
-from aiohttp import ClientSession, ContentTypeError
+from aiohttp import ContentTypeError
 from discord.utils import find
 from envparse import env
 
@@ -28,16 +28,16 @@ class Panel:
         self.servers = None
         self.details = None
         self.resources = None
-        self.session = ClientSession(ssl=False)
 
     async def get_server_details(self):
-        res = await self.session.get(
+        res = await bot.session.get(
             self.URL + '/api/client/servers/' + self.server_id,
             headers={
                 "Accept": "application/json",
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {self.API_KEY}"
             },
+            ssl=False
         )
 
         if res.status != 200:
@@ -48,13 +48,14 @@ class Panel:
         return self.details
 
     async def get_server_resources(self):
-        res = await self.session.get(
+        res = await bot.session.get(
             self.URL + '/api/client/servers/' + self.server_id + '/resources',
             headers={
                 "Accept": "application/json",
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {self.API_KEY}"
-            }
+            },
+            ssl=False
         )
 
         if res.status != 200:
@@ -66,13 +67,14 @@ class Panel:
 
     @staticmethod
     async def get_server_list():
-        res = await self.session.get(
+        res = await bot.session.get(
             Panel.URL + '/api/client',
             headers={
                 "Accept": "application/json",
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {Panel.API_KEY}"
-            }
+            },
+            ssl=False
         )
 
         if res.status != 200:
@@ -177,7 +179,7 @@ class Panel:
             return
 
         try:
-            res = await self.session.get(self.MCSTATUS_API + '/' + server_ip)
+            res = await bot.session.get(self.MCSTATUS_API + '/' + server_ip)
             data = await res.json()
 
             if not data['online']:
