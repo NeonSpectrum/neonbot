@@ -18,7 +18,6 @@ fuzzywuzzy = "*"
 python-levenshtein = "*"
 psutil = "*"
 beanie = "*"
-"discord.py" = {extras = ["voice"], version = "*"}
 openai = "*"
 tiktoken = "*"
 validators = "*"
@@ -27,6 +26,7 @@ markdown = "*"
 pillow = "*"
 ytmusicapi = "*"
 apscheduler = "*"
+"discord.py" = {extras = ["voice"], version = "*"}
 
 [dev-packages]
 pylint = "*"
