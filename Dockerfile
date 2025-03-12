@@ -7,13 +7,13 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 RUN apt-get -y update \
-    && apt-get install -y --no-install-recommends ffmpeg
+    && apt-get install -y --no-install-recommends ffmpeg git
 
-RUN python -m pip install --upgrade pip && pip install pipenv
-
-# Install pipenv packages
 WORKDIR /app
-COPY Pipfile .
-RUN pipenv install
 
-CMD ["pipenv", "run", "python", "main.py"]
+COPY docker/entrypoint.sh .
+COPY requirements.txt .
+
+RUN chmod +x entrypoint.sh
+
+ENTRYPOINT ["./entrypoint.sh"]
