@@ -7,13 +7,12 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 RUN apt-get -y update \
-    && apt-get install -y --no-install-recommends ffmpeg git
+    && apt-get install -y --no-install-recommends ffmpeg
 
-WORKDIR /app
-
-COPY docker/entrypoint.sh .
 COPY requirements.txt .
 
-RUN chmod +x entrypoint.sh
+RUN pip install --no-cache-dir -r requirements.txt
 
-ENTRYPOINT ["./entrypoint.sh"]
+COPY . .
+
+CMD ["python", "main.py"]
