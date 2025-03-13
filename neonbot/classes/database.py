@@ -25,11 +25,15 @@ class Database:
 
     async def initialize(self) -> Database:
         mongo_url = env.str("MONGO_URL")
-        db_name = env.str("MONGO_DBNAME")
+        db_name = env.str("MONGO_DB_NAME")
+        db_username = env.str('MONGO_DB_USERNAME')
+        db_password = env.str('MONGO_DB_PASSWORD')
+        db_port = env.int("MONGO_DB_PORT", default="27017")
+
         start_time = time()
 
         log.info(f"Connecting to Database...")
-        client = MotorClient(mongo_url, ssl=True)
+        client = MotorClient(mongo_url, port, username=db_username, password=db_password)
         self.db = client.get_database(db_name)
         await init_beanie(database=self.db, document_models=[Guild, Setting])
         log.info(f"MongoDB connection established in {(time() - start_time):.2f}s")
