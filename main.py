@@ -1,6 +1,8 @@
+import asyncio
 import logging
 import os
 import shutil
+import signal
 
 import i18n
 from envparse import env
@@ -23,6 +25,8 @@ def main() -> None:
 
     # Clear debug.log on startup
     open('./debug.log', 'w').close()
+
+    loop = asyncio.get_running_loop()
 
     for signame in (signal.SIGTERM,): 
         loop.add_signal_handler(signame, lambda: asyncio.create_task(bot.close()))
