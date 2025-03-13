@@ -16,7 +16,7 @@ class YtdlInfo:
     def is_playlist(self):
         return self.result.get('_type') == 'playlist'
 
-    def is_downloaded(entry):
+    def is_downloaded(self, entry):
         return entry.get('id') and path.exists(f"{YOUTUBE_DOWNLOADS_DIR}/{entry.get('id')}")
 
     def get_playlist_info(self):
