@@ -216,6 +216,17 @@ class Administration(commands.Cog):
             await cast(discord.InteractionResponse, interaction.response).send_message(
                 embed=Embed("ChatGPT is now disabled."))
 
+    
+    @app_commands.command(name='sync')
+    @app_commands.allowed_installs(guilds=False, users=True)
+    @app_commands.allowed_contexts(guilds=False, dms=True, private_channels=False)
+    @app_commands.is_owner()
+    async def sync(self):
+        await bot.sync_command()
+        await asyncio.gather(*[self.bot(guild) for guild in guilds])
+
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed(f"Commands Synced!"))
+
 
 # noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:
