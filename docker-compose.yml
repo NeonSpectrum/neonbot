@@ -12,7 +12,7 @@ services:
     volumes:
       - mongo-data:/data/db
     environment:
-      MONGO_INITDB_ROOT_USERNAME: neonbot
-      MONGO_INITDB_ROOT_PASSWORD: LGzJq4XJrJ6qF7Ya8taMzXsM
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASSWORD}
 volumes:
   mongo-data:
