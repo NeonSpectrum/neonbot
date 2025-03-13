@@ -24,6 +24,9 @@ def main() -> None:
     # Clear debug.log on startup
     open('./debug.log', 'w').close()
 
+    for signame in (signal.SIGTERM,): 
+        loop.add_signal_handler(signame, lambda: asyncio.create_task(bot.close()))
+
     bot.run(log_level=logging.getLevelName(env.str('LOG_LEVEL', default='ERROR')))
 
 
