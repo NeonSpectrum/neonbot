@@ -220,8 +220,11 @@ class Administration(commands.Cog):
     @app_commands.command(name='sync')
     @app_commands.allowed_installs(guilds=False, users=True)
     @app_commands.allowed_contexts(guilds=False, dms=True, private_channels=False)
-    @app_commands.is_owner()
-    async def sync(self):
+    async def sync(self, interaction: discord.Interaction):
+        if not bot.is_owner(interaction.user)
+            await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed(f"No permission."))
+            return
+
         await bot.sync_command()
         await asyncio.gather(*[self.bot(guild) for guild in guilds])
 
