@@ -35,7 +35,7 @@ class YtdlInfo:
             if not entry:
                 continue
 
-            if not env.str('YTDL_DOWNLOAD') or self.is_downloaded(entry):
+            if not env.bool('YTDL_DOWNLOAD') or self.is_downloaded(entry):
                 data.append(self.format_detailed_result(entry))
             else:
                 data.append(self.format_simple_result(entry))
@@ -46,7 +46,7 @@ class YtdlInfo:
         if not self.result:
             return None
 
-        if not env.str('YTDL_DOWNLOAD') or self.is_downloaded(self.result):
+        if not env.bool('YTDL_DOWNLOAD') or self.is_downloaded(self.result):
             return self.format_detailed_result(self.result)
 
         return self.format_simple_result(self.result)
