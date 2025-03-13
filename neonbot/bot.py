@@ -5,6 +5,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 from glob import glob
 from os import sep
+import signal
 from time import time
 from typing import Optional, Tuple, Union, Any, Type, cast
 
@@ -57,6 +58,8 @@ class NeonBot(commands.Bot):
         )
 
     async def setup_hook(self):
+        bot.loop.add_signal_handler(signal.SIGTERM, lambda: asyncio.create_task(self.close()))
+
         await self.db.initialize()
         self.setting = await Setting.get_instance()
         self.status, self.activity = self.get_presence()
