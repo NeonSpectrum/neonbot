@@ -5,3 +5,14 @@ services:
       - ./:/app
     working_dir: /app
     restart: unless-stopped
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: neonbot
+      MONGO_INITDB_ROOT_PASSWORD: LGzJq4XJrJ6qF7Ya8taMzXsM
+volumes:
+  mongo-data:
