@@ -28,7 +28,7 @@ class Database:
         db_name = env.str("MONGO_DB_NAME")
         db_username = env.str('MONGO_DB_USERNAME')
         db_password = env.str('MONGO_DB_PASSWORD')
-        db_port = env.int("MONGO_DB_PORT", default="27017")
+        db_port = env.int("MONGO_DB_PORT", default=27017)
 
         start_time = time()
 
