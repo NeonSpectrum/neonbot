@@ -58,7 +58,7 @@ class NeonBot(commands.Bot):
         )
 
     async def setup_hook(self):
-        bot.loop.add_signal_handler(signal.SIGTERM, lambda: asyncio.create_task(self.close()))
+        self.loop.add_signal_handler(signal.SIGTERM, lambda: asyncio.create_task(self.close()))
 
         await self.db.initialize()
         self.setting = await Setting.get_instance()
