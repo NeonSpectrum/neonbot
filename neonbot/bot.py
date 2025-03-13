@@ -187,8 +187,9 @@ class NeonBot(commands.Bot):
     async def close(self) -> None:
         from .classes.player import Player
 
-        log.info('Stopping scheduler...')
-        self.scheduler.shutdown(wait=False)
+        if self.scheduler:
+            log.info('Stopping scheduler...')
+            self.scheduler.shutdown(wait=False)
 
         log.info('Saving all music...')
         for player in Player.servers.values():
