@@ -235,7 +235,7 @@ class Player:
 
         try:
             if not self.now_playing.get('stream'):
-                ytdl_info = await Ytdl().extract_info(self.now_playing['url'], download=env.bool('YTDL_DOWNLOAD'))
+                ytdl_info = await Ytdl().extract_info(self.now_playing['url'], download=True)
                 info = ytdl_info.get_track()
                 self.now_playing = {'index': self.track_list[self.current_track] + 1, **self.now_playing, **info}
 
@@ -391,7 +391,7 @@ class Player:
             await self.ctx.channel.send(embed=Embed(t('music.no_related_video_found')))
             raise ApiError('No related video found.')
 
-        ytdl_info = await Ytdl().extract_info(str(related_video_id), download=env.bool('YTDL_DOWNLOAD'))
+        ytdl_info = await Ytdl().extract_info(str(related_video_id), download=True)
         data = ytdl_info.get_track()
 
         if data:

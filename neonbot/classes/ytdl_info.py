@@ -35,7 +35,7 @@ class YtdlInfo:
             if not entry:
                 continue
 
-            if not env.bool('YTDL_DOWNLOAD') or self.is_downloaded(entry):
+            if self.is_downloaded(entry):
                 data.append(self.format_detailed_result(entry))
             else:
                 data.append(self.format_simple_result(entry))
@@ -46,7 +46,7 @@ class YtdlInfo:
         if not self.result:
             return None
 
-        if not env.bool('YTDL_DOWNLOAD') or self.is_downloaded(self.result):
+        if self.is_downloaded(self.result):
             return self.format_detailed_result(self.result)
 
         return self.format_simple_result(self.result)
@@ -83,7 +83,7 @@ class YtdlInfo:
             duration=entry.get('duration'),
             formatted_duration=format_seconds(entry.get('duration')) if entry.get('duration') else "N/A",
             thumbnail=entry.get('thumbnail'),
-            stream=entry.get('url') if entry.get('is_live') or not env.bool('YTDL_DOWNLOAD') else self.ytdl.prepare_filename(entry),
+            stream=entry.get('url') if entry.get('is_live') else self.ytdl.prepare_filename(entry),
             url='https://www.youtube.com/watch?v=' + entry.get('id'),
             is_live=entry.get('is_live'),
             view_count=f"{entry.get('view_count'):,}" if entry.get('view_count') else "N/A",

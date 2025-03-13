@@ -69,13 +69,12 @@ class Ytdl:
     async def process_entry(self, info: dict) -> YtdlInfo:
         tries = 0
         max_retries = 5
-        download = not info.get('is_live') and env.bool('YTDL_DOWNLOAD')
 
         while tries <= max_retries:
             try:
                 result = await self.loop.run_in_executor(
                     self.thread_pool,
-                    functools.partial(self.ytdl.process_ie_result, info, download=download),
+                    functools.partial(self.ytdl.process_ie_result, info, download=not info.get('is_live')),
                 )
                 return YtdlInfo(self, result)
             except yt_dlp.utils.DownloadError as error:
