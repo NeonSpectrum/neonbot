@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import functools
 
+from envparse import env
 import yt_dlp
 
 from .ytdl_info import YtdlInfo
