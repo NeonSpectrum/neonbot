@@ -241,7 +241,7 @@ class Player:
 
             song = discord.FFmpegPCMAudio(
                 self.now_playing['stream'],
-                before_options=None if not self.now_playing['is_live'] else FFMPEG_OPTIONS,
+                before_options=None if not self.now_playing['is_live'] and not env.bool('YTDL_DOWNLOAD') else FFMPEG_OPTIONS,
             )
             source = discord.PCMVolumeTransformer(song, volume=self.volume / 100)
             self.connection.play(source, after=lambda e: self.loop.create_task(self.after(error=e)))
