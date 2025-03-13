@@ -5,6 +5,7 @@ services:
       - ./:/app
     working_dir: /app
     restart: unless-stopped
+    stop_grace_period: 60s
   mongo:
     image: mongo:latest
     ports:
