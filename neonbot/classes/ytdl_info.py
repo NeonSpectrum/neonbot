@@ -14,6 +14,9 @@ class YtdlInfo:
     def is_playlist(self):
         return self.result.get('_type') == 'playlist'
 
+    def is_downloaded(entry):
+        return entry.get('id') and path.exists(f"{YOUTUBE_DOWNLOADS_DIR}/{entry.get('id')}")
+
     def get_playlist_info(self):
         return dict(
             title=self.result.get('title'),
@@ -30,7 +33,7 @@ class YtdlInfo:
             if not entry:
                 continue
 
-            if self.result.get('id') and path.exists(f"{YOUTUBE_DOWNLOADS_DIR}/{entry.get('id')}"):
+            if not env.str('YTDL_DOWNLOAD') or self.is_downloaded(entry):
                 data.append(self.format_detailed_result(entry))
             else:
                 data.append(self.format_simple_result(entry))
@@ -41,7 +44,7 @@ class YtdlInfo:
         if not self.result:
             return None
 
-        if self.result.get('id') and path.exists(f"{YOUTUBE_DOWNLOADS_DIR}/{self.result.get('id')}"):
+        if not env.str('YTDL_DOWNLOAD') or self.is_downloaded(self.result):
             return self.format_detailed_result(self.result)
 
         return self.format_simple_result(self.result)
