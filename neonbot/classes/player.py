@@ -59,10 +59,10 @@ class Player:
 
     @staticmethod
     async def get_instance(origin: Union[discord.Interaction, discord.Message]) -> Player:
-        ctx = await bot.get_context(origin)
-        guild_id = ctx.guild.id
+        guild_id = origin.guild.id
 
         if guild_id not in Player.servers.keys():
+            ctx = await bot.get_context(origin)
             Player.servers[guild_id] = Player(ctx)
 
         return Player.servers[guild_id]
