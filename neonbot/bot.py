@@ -102,7 +102,7 @@ class NeonBot(commands.Bot):
         self.is_listeners_done = True
 
     def load_player_cache(self):
-        if self.is_player_cache_loaded:
+        if not env.bool('LOAD_PLAYER_CACHE', default=False) or self.is_player_cache_loaded:
             return
 
         from .classes.player import Player
