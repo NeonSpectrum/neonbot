@@ -36,7 +36,8 @@ class Ytdl:
                 "compat_opts": {
                     "no-youtube-unavailable-videos": True
                 },
-                "cookiefile": "./keys/cookies.txt",
+                "cookiefile": env.str("YTDL_COOKIES", default=None),
+                "concurrent_fragment_downloads": 8,
                 **extra_params,
             }
         )
