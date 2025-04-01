@@ -39,7 +39,6 @@ class Ytdl:
                 "cookiefile": env.str("YTDL_COOKIES", default=None),
                 "concurrent_fragment_downloads": 8,
                 "external_downloader": "aria2c",
-                "external_downloader_args": "-x 16 -k 1M",
                 **extra_params,
             }
         )
