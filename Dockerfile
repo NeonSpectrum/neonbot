@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 RUN apt-get -y update \
-    && apt-get install -y --no-install-recommends ffmpeg
+    && apt-get install -y --no-install-recommends ffmpeg aria2
 
 COPY requirements.txt .
 
