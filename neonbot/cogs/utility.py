@@ -122,7 +122,7 @@ class Utility(commands.Cog):
 
         await cast(discord.InteractionResponse, interaction.response).defer()
 
-        gemini_chat = GeminiChat(ctx.message.content)
+        gemini_chat = GeminiChat(interaction.message.content)
         gemini_chat.set_prompt_concise()
 
         await gemini_chat.generate_content()
