@@ -1,6 +1,7 @@
 import os
 import random
 from datetime import datetime
+from io import BytesIO
 from time import time
 from typing import cast
 
@@ -12,10 +13,11 @@ from discord.utils import format_dt
 from envparse import env
 from yt_dlp import version as ytdl_version
 
-from .. import __author__, __title__, __version__, bot
-from ..classes.embed import Embed
-from ..utils.constants import ICONS
-from ..utils.functions import format_seconds
+from neonbot import __author__, __title__, __version__, bot
+from neonbot.classes.embed import Embed
+from neonbot.classes.gemini import GeminiChat
+from neonbot.utils.constants import ICONS
+from neonbot.utils.functions import format_seconds, md_to_text
 
 
 class Utility(commands.Cog):
@@ -111,6 +113,27 @@ class Utility(commands.Cog):
                 embed=generate_embed().add_field("Status:", "Sent", inline=False)
                 .add_field("Date sent:", format_dt(datetime.now()), inline=False)
             )
+
+    @app_commands.command(name='ask')
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def ask(self, interaction: discord.Interaction) -> None:
+        """Ask AI."""
+
+        gemini_chat = GeminiChat(ctx.message.content)
+        gemini_chat.set_prompt_concise()
+
+        async with ctx.channel.typing():
+            await gemini_chat.generate_content_from_ctx(ctx)
+            response = gemini_chat.get_response()
+
+            if len(response) > 2000:
+                response = md_to_text(response)
+                await ctx.reply(file=discord.File(BytesIO(response.encode()), filename=gemini_chat.get_prompt() + '.txt'))
+            else:
+                await ctx.reply(gemini_chat.get_response())
+
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
 
 
 # noinspection PyShadowingNames
