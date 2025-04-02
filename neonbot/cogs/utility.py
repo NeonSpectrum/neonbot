@@ -117,12 +117,12 @@ class Utility(commands.Cog):
     @app_commands.command(name='ask')
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    async def ask(self, interaction: discord.Interaction) -> None:
+    async def ask(self, interaction: discord.Interaction, prompt: str) -> None:
         """Ask AI."""
 
         await cast(discord.InteractionResponse, interaction.response).defer()
 
-        gemini_chat = GeminiChat(interaction.message.content)
+        gemini_chat = GeminiChat(prompt)
         gemini_chat.set_prompt_concise()
 
         await gemini_chat.generate_content()
