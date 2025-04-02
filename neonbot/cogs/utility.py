@@ -120,20 +120,14 @@ class Utility(commands.Cog):
     async def ask(self, interaction: discord.Interaction) -> None:
         """Ask AI."""
 
+        await cast(discord.InteractionResponse, interaction.response).defer()
+
         gemini_chat = GeminiChat(ctx.message.content)
         gemini_chat.set_prompt_concise()
 
-        async with ctx.channel.typing():
-            await gemini_chat.generate_content_from_ctx(ctx)
-            response = gemini_chat.get_response()
+        await gemini_chat.generate_content()
 
-            if len(response) > 2000:
-                response = md_to_text(response)
-                await ctx.reply(file=discord.File(BytesIO(response.encode()), filename=gemini_chat.get_prompt() + '.txt'))
-            else:
-                await ctx.reply(gemini_chat.get_response())
-
-        await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
+        await interaction.followup.send(gemini_chat.get_response())
 
 
 # noinspection PyShadowingNames
