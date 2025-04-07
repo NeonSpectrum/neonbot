@@ -58,6 +58,9 @@ class Ytdl:
 
                 return YtdlInfo(self, result)
             except yt_dlp.utils.DownloadError as error:
+                if 'Sign in' in str(error):
+                    raise YtdlError(error)
+
                 tries += 1
                 log.warn(f'Download failed. Retrying...[{tries}]')
                 if tries > max_retries:

@@ -70,7 +70,11 @@ class Youtube(WithInteraction):
 
         await self.send_message(embed=Embed(t('music.fetching_youtube_url')))
 
-        ytdl_info = await Ytdl().extract_info(url)
+        try:
+            ytdl_info = await Ytdl().extract_info(url)
+        except YtdlError:
+            await self.send_message(embed=Embed(t('music.no_songs_available')))
+            return
 
         if ytdl_info.is_playlist:
             data, error = self.remove_invalid_videos(ytdl_info.get_list())
