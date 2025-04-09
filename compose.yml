@@ -6,6 +6,9 @@ services:
     working_dir: /app
     restart: unless-stopped
     stop_grace_period: 60s
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
   mongo:
     image: mongo:latest
     ports:
