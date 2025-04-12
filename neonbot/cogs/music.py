@@ -11,7 +11,7 @@ from neonbot.classes.embed import Embed, PaginationEmbed
 from neonbot.classes.player import Player
 from neonbot.classes.spotify import Spotify
 from neonbot.classes.youtube import Youtube
-from neonbot.enums import Repeat
+from neonbot.enums import Repeat, PlayerState
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS, YOUTUBE_REGEX, SPOTIFY_REGEX
 from neonbot.utils.functions import format_seconds
