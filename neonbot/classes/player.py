@@ -231,8 +231,6 @@ class Player:
         if not self.connection or not self.connection.is_connected() or self.connection.is_playing():
             return
 
-        self.pre_play()
-
         try:
             if not self.now_playing.get('stream'):
                 ytdl_info = await Ytdl().extract_info(self.now_playing['url'], download=True)
@@ -260,18 +258,6 @@ class Player:
             log.exception(msg, error)
             await self.channel.send(embed=Embed(remove_ansi(msg)).set_author(self.now_playing.get('title')))
             self.loop.create_task(self.after())
-
-    def pre_play(self):
-        # Play recently added song if added while player is finished playing
-        if (
-            self.repeat == Repeat.OFF
-            and not self.connection.is_playing()
-            and not self.connection.is_paused()
-            and self.track_list[self.current_track] == len(self.queue) - 2
-            and self.state != PlayerState.JUMPED
-        ):
-            self.track_list.append(self.track_list[self.current_track] + 1)
-            self.current_track += 1
 
     async def after(self, error=None):
         if error:
@@ -311,6 +297,7 @@ class Player:
                         return
                 else:
                     await self.send_finished_message(detailed=True)
+                    self.state = PlayerState.STOPPED
                     return
 
             # If last track and repeat is ALL

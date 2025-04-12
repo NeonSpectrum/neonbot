@@ -62,10 +62,15 @@ class Music(commands.Cog):
             else:
                 await Youtube(interaction).search_keyword_first(value)
 
-            if play_now and player.connection and player.connection.is_playing():
-                player.jump(last_index + 1)
-            elif len(player.queue) > 0:
-                await player.connect(interaction.user.voice.channel)
+            await player.connect(interaction.user.voice.channel)
+
+            if player.state == PlayerState.STOPPED:
+                play_now = True
+
+            if player.connection.is_playing():
+                if play_now:
+                    player.jump(last_index + 1)
+            else:
                 await player.play()
 
     @app_commands.command(name='playsearch')
