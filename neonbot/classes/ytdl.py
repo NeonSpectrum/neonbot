@@ -37,7 +37,6 @@ class Ytdl:
                     "no-youtube-unavailable-videos": True
                 },
                 "cookiefile": env.str("YTDL_COOKIES", default=None),
-                "concurrent_fragment_downloads": 8,
                 "external_downloader": "aria2c",
                 **extra_params,
             }

@@ -32,7 +32,7 @@ class NeonBot(commands.Bot):
         self.default_prefix = env.str("DEFAULT_PREFIX", default=".")
         self.user_agent = f"NeonBot v{__version__}"
         self.loop = asyncio.get_event_loop()
-        self.thread_pool = ThreadPoolExecutor()
+        self.thread_pool = ThreadPoolExecutor(max_workers=1)
         super().__init__(intents=discord.Intents.all(), command_prefix=self.default_prefix,
                          owner_ids=set(env.list("OWNER_IDS", default=[], subcast=int)))
 
