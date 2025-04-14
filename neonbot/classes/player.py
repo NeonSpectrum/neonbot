@@ -21,7 +21,7 @@ from neonbot.classes.ytmusic import YTMusic
 from neonbot.enums import Repeat, PlayerState
 from neonbot.models.guild import Guild
 from neonbot.utils import log
-from neonbot.utils.constants import FFMPEG_OPTIONS, ICONS, PLAYER_CACHE_PATH
+from neonbot.utils.constants import FFMPEG_BEFORE_OPTIONS, FFMPEG_OPTIONS, ICONS, PLAYER_CACHE_PATH
 from neonbot.utils.exceptions import YtdlError, PlayerError, ApiError
 from neonbot.utils.functions import remove_ansi
 
@@ -239,7 +239,8 @@ class Player:
 
             song = discord.FFmpegPCMAudio(
                 self.now_playing['stream'],
-                before_options=None if not self.now_playing['is_live'] else FFMPEG_OPTIONS,
+                before_options=None if not self.now_playing['is_live'] else FFMPEG_BEFORE_OPTIONS,
+                options=FFMPEG_OPTIONS
             )
             source = discord.PCMVolumeTransformer(song, volume=self.volume / 100)
             self.connection.play(source, after=lambda e: self.loop.create_task(self.after(error=e)))
