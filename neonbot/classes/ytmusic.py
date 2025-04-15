@@ -25,12 +25,15 @@ class YTMusic:
             bot.thread_pool,
             functools.partial(ytmusic.get_watch_playlist, track['id'], limit=1),
         )
-        tracks = result['tracks']
+        tracks = result.get('tracks', [])
 
         for track in tracks[1:]:
-            if playlist and track['videoId'] in playlist:
+            if playlist and track.get('videoId') in playlist:
                 continue
 
-            return track['videoId']
+            if track.get('videoType') == 'MUSIC_VIDEO_TYPE_ATV' and 'videoId' in track.get('counterpart'):
+                return track.get('counterpart')['videoId']
+
+            return track.get('videoId')
 
         return None
