@@ -164,7 +164,6 @@ class Music(commands.Cog):
         footer = [
             t('music.songs', count=len(player.queue)),
             format_seconds(duration),
-            t('music.volume_footer', volume=player.volume),
             t('music.shuffle_footer', shuffle='on' if player.shuffle else 'off'),
             t('music.repeat_footer', repeat=Repeat(player.repeat).name.lower()),
         ]
@@ -177,23 +176,6 @@ class Music(commands.Cog):
             text=" | ".join(footer), icon_url=bot.user.display_avatar
         )
         await pagination.build()
-
-    @app_commands.command(name='volume')
-    @app_commands.check(in_voice)
-    @app_commands.guild_only()
-    async def volume(self, interaction: discord.Interaction, volume: app_commands.Range[int, 1, 100]) -> None:
-        """Sets or gets player's volume."""
-
-        player = await Player.get_instance(interaction)
-
-        if volume < 1 or volume > 100:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
-                embed=Embed(t('music.volume_rules')), ephemeral=True)
-            return
-
-        await player.set_volume(volume)
-        await cast(discord.InteractionResponse, interaction.response).send_message(
-            embed=Embed(t('music.volume_changed', volume=volume)))
 
     @app_commands.command(name='jump')
     @app_commands.check(in_voice)

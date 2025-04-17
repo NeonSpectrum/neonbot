@@ -78,10 +78,6 @@ class Player:
             del Player.servers[guild_id]
 
     @property
-    def volume(self) -> int:
-        return self.settings.music.volume
-
-    @property
     def repeat(self) -> int:
         return self.settings.music.repeat
 
@@ -92,11 +88,6 @@ class Player:
     @property
     def autoplay(self) -> bool:
         return self.settings.music.autoplay
-
-    @volume.setter
-    def volume(self, value) -> None:
-        self.settings.music.volume = value
-        self.loop.create_task(self.settings.save_changes())
 
     @repeat.setter
     def repeat(self, value) -> None:
@@ -195,14 +186,6 @@ class Player:
 
         await self.refresh_player_message(embed=True)
 
-    async def set_volume(self, volume: int):
-        if self.connection and self.connection.source:
-            self.connection.source.volume = volume / 100
-
-        self.volume = volume
-
-        await self.refresh_player_message(embed=True)
-
     async def pause(self, requester: discord.User, auto=False):
         if self.connection.is_paused() or not self.connection.is_playing():
             return
@@ -242,7 +225,6 @@ class Player:
                 before_options=None if not self.now_playing['is_live'] else FFMPEG_BEFORE_OPTIONS,
                 options=FFMPEG_OPTIONS
             )
-            source = discord.PCMVolumeTransformer(source, volume=self.volume / 100)
             self.connection.play(source, after=lambda e: self.loop.create_task(self.after(error=e)))
             self.state = PlayerState.PLAYING
             await self.send_playing_message()
@@ -449,7 +431,6 @@ class Player:
         return [
             str(now_playing['requested']),
             now_playing['formatted_duration'],
-            t('music.volume_footer', volume=self.volume),
             t('music.shuffle_footer', shuffle='on' if self.shuffle else 'off'),
             t('music.repeat_footer', repeat=Repeat(self.repeat).name.lower()),
             t('music.autoplay_footer', autoplay='on' if self.autoplay else 'off'),
