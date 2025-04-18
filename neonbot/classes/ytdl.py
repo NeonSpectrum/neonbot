@@ -55,7 +55,7 @@ class Ytdl:
                             ),
                         )
 
-                    return YtdlInfo(self, result)
+                    return YtdlInfo(result)
                 except yt_dlp.utils.DownloadError as error:
                     if 'Sign in' in str(error):
                         raise YtdlError(error)
@@ -82,7 +82,7 @@ class Ytdl:
                             executor,
                             functools.partial(ytdl.process_ie_result, info, download=not info.get('is_live')),
                         )
-                    return YtdlInfo(self, result)
+                    return YtdlInfo(result)
                 except yt_dlp.utils.DownloadError as error:
                     tries += 1
                     log.warn(f'Download failed. Retrying...[{tries}]')
