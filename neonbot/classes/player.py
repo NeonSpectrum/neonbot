@@ -4,6 +4,7 @@ import asyncio
 import json
 import os
 import random
+import weakref
 from os import path
 from typing import Union, List, Optional, Dict
 
@@ -63,7 +64,7 @@ class Player:
 
         if guild_id not in Player.servers.keys():
             ctx = await bot.get_context(origin)
-            Player.servers[guild_id] = Player(ctx)
+            Player.servers[guild_id] = weakref.ref(Player(ctx))
 
         return Player.servers[guild_id]
 
