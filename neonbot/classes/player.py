@@ -34,7 +34,6 @@ class Player:
         self.loop = asyncio.get_event_loop()
         self.settings = Guild.get_instance(ctx.guild.id)
         self.player_controls = PlayerControls(self)
-        self.semaphore = asyncio.Semaphore(1)
 
         self.queue = []
         self.current_track = 0

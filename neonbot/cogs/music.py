@@ -54,24 +54,23 @@ class Music(commands.Cog):
         player = await Player.get_instance(interaction)
         last_index = len(player.queue) - 1
 
-        async with player.semaphore:
-            if re.search(YOUTUBE_REGEX, value):
-                await Youtube(interaction).search_url(value)
-            elif re.search(SPOTIFY_REGEX, value):
-                await Spotify(interaction).search_url(value)
-            else:
-                await Youtube(interaction).search_keyword_first(value)
+        if re.search(YOUTUBE_REGEX, value):
+            await Youtube(interaction).search_url(value)
+        elif re.search(SPOTIFY_REGEX, value):
+            await Spotify(interaction).search_url(value)
+        else:
+            await Youtube(interaction).search_keyword_first(value)
 
-            await player.connect(interaction.user.voice.channel)
+        await player.connect(interaction.user.voice.channel)
 
-            if player.state == PlayerState.STOPPED:
-                play_now = True
+        if player.state == PlayerState.STOPPED:
+            play_now = True
 
-            if player.connection.is_playing():
-                if play_now:
-                    player.jump(last_index + 1)
-            else:
-                await player.play()
+        if player.connection.is_playing():
+            if play_now:
+                player.jump(last_index + 1)
+        else:
+            await player.play()
 
     @app_commands.command(name='playsearch')
     @app_commands.describe(value='Enter keyword...')

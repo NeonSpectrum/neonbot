@@ -93,15 +93,14 @@ class PlayerControls:
         elif button.emoji.name == "⏭️":  # next
             await send_message(t('music.player_controls_pressed', action='next', user=interaction.user.mention))
 
-            async with self.player.semaphore:
-                if self.player.connection.is_playing():
-                    if self.player.current_track != len(self.player.track_list) - 1:
-                        self.player.jump_to_track = self.player.current_track + 1
-                        self.player.state = PlayerState.JUMPED
+            if self.player.connection.is_playing():
+                if self.player.current_track != len(self.player.track_list) - 1:
+                    self.player.jump_to_track = self.player.current_track + 1
+                    self.player.state = PlayerState.JUMPED
 
-                    self.player.next()
-                else:
-                    bot.loop.create_task(self.player.after())
+                self.player.next()
+            else:
+                bot.loop.create_task(self.player.after())
         elif button.emoji.name in ("🔁", "🔂"):  # repeat
             modes = [Repeat.OFF, Repeat.SINGLE, Repeat.ALL]
             index = (modes.index(Repeat(self.player.repeat)) + 1) % 3
