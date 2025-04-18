@@ -51,7 +51,7 @@ FFMPEG_BEFORE_OPTIONS = (
 )
 
 FFMPEG_OPTIONS = (
-    ""
+    "-vn"
 )
 
 YOUTUBE_REGEX = r"^(http(s)?:\/\/)?(((w){3}|music).)?youtu(be|.be)?(\.com)?\/.+"
