@@ -81,7 +81,7 @@ class PlayerControls:
         elif button.emoji.name == "⏸️":  # pause
             await self.player.pause(requester=interaction.user)
         elif button.emoji.name == "⏮️":  # prev
-            await send_message(t('music.player_controls_pressed', action='back', user=interaction.user.mention))
+            bot.loop.create_task(send_message(t('music.player_controls_pressed', action='back', user=interaction.user.mention)))
 
             self.player.jump_to_track = self.player.current_track - 1
             self.player.state = PlayerState.JUMPED
@@ -91,7 +91,7 @@ class PlayerControls:
             else:
                 bot.loop.create_task(self.player.after())
         elif button.emoji.name == "⏭️":  # next
-            await send_message(t('music.player_controls_pressed', action='next', user=interaction.user.mention))
+            bot.loop.create_task(send_message(t('music.player_controls_pressed', action='next', user=interaction.user.mention)))
 
             if self.player.connection.is_playing():
                 if self.player.current_track != len(self.player.track_list) - 1:

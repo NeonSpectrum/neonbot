@@ -29,7 +29,7 @@ class Ytdl:
             "extract_flat": "in_playlist",
             # "geo_bypass": True,
             # "geo_bypass_country": "PH",
-            # "source_address": "0.0.0.0",
+            "source_address": "0.0.0.0",
             "outtmpl": YOUTUBE_DOWNLOADS_DIR + "/%(id)s",
             "cachedir": YOUTUBE_CACHE_DIR,
             "compat_opts": {
