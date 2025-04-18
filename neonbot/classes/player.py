@@ -274,9 +274,9 @@ class Player:
             elif self.is_last_track and self.repeat == Repeat.OFF:
                 if self.autoplay:
                     try:
+                        await self.send_finished_message()
                         await self.process_autoplay()
                     except ApiError:
-                        await self.send_finished_message(detailed=True)
                         return
                 else:
                     await self.send_finished_message(detailed=True)
@@ -285,15 +285,14 @@ class Player:
 
             # If last track and repeat is ALL
             elif self.is_last_track and self.repeat == Repeat.ALL:
+                await self.send_finished_message()
                 self.track_list.append(0)
 
             else:
+                await self.send_finished_message()
                 self.track_list.append(self.track_list[self.current_track] + 1)
 
             self.current_track += 1
-
-        if self.state != PlayerState.REMOVED:
-            await self.send_finished_message()
 
         self.loop.create_task(self.play())
 
