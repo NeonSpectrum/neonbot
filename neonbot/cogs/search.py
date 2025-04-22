@@ -290,6 +290,7 @@ class Search(commands.Cog):
 
         jikan = AioJikan()
         results = (await jikan.search(search_type="anime", query=keyword))['data']
+        await jikan.close()
 
         if not results:
             await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed("Anime not found."),
@@ -304,6 +305,13 @@ class Search(commands.Cog):
             title = anime['title_japanese']
         else:
             title = f"{anime['title_english']} ({anime['title_japanese']})"
+
+        from_date = anime['aired']['prop']['from']
+        from_date = from_date['year'] + '-' + from_date['month'] + '-' + from_date['day']
+
+        to_date = anime['aired']['prop']['to']
+        if to_date:
+            to_date = to_date['year'] + '-' + to_date['month'] + '-' + to_date['day']
 
         embed = Embed()
         embed.set_author(name=title, url=anime['url'])
@@ -322,7 +330,7 @@ class Search(commands.Cog):
         embed.add_field("Episodes", anime['episodes'])
         embed.add_field("Rank", anime['rank'])
         embed.add_field("Status", anime['status'])
-        embed.add_field("Aired", f'{anime['aired']['from']} - {anime['aired']['to']}')
+        embed.add_field("Aired", f'{from_date} - {to_date or 'N/A'}')
         embed.add_field("Genres", ", ".join([genre['name'] for genre in anime['genres']]))
 
         await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
