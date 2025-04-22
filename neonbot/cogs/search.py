@@ -307,11 +307,11 @@ class Search(commands.Cog):
             title = f"{anime['title_english']} ({anime['title_japanese']})"
 
         from_date = anime['aired']['prop']['from']
-        from_date = from_date['year'] + '-' + from_date['month'] + '-' + from_date['day']
+        from_date = f"{from_date['year']}-{from_date['month']}-{from_date['day']}"
 
         to_date = anime['aired']['prop']['to']
         if to_date:
-            to_date = to_date['year'] + '-' + to_date['month'] + '-' + to_date['day']
+            to_date = f"{to_date['year']}-{to_date['month']}-{to_date['day']}"
 
         embed = Embed()
         embed.set_author(name=title, url=anime['url'])
