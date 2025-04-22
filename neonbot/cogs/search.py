@@ -289,7 +289,7 @@ class Search(commands.Cog):
         """Searches for anime information."""
 
         jikan = AioJikan()
-        results = (await jikan.search(search_type="anime", query=keyword))['results']
+        results = (await jikan.search(search_type="anime", query=keyword))['data']
 
         if not results:
             await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed("Anime not found."),
@@ -360,7 +360,7 @@ class Search(commands.Cog):
         """Lists upcoming anime."""
 
         jikan = AioJikan()
-        result = (await jikan.season_later())['anime']
+        result = (await jikan.season_later())['data']
         await jikan.close()
 
         embeds = []
