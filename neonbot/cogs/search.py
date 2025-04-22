@@ -296,8 +296,7 @@ class Search(commands.Cog):
                                                                                        ephemeral=True)
             return
 
-        anime = await jikan.anime(results[0]['mal_id'])
-        await jikan.close()
+        anime = results[0]
 
         if anime['title_english'] and not anime['title_japanese']:
             title = anime['title_english']
@@ -308,7 +307,7 @@ class Search(commands.Cog):
 
         embed = Embed()
         embed.set_author(name=title, url=anime['url'])
-        embed.set_thumbnail(url=anime['image_url'])
+        embed.set_thumbnail(url=anime['images']['jpg']['image_url'])
         embed.set_footer(
             text="Powered by MyAnimeList",
             icon_url=ICONS['myanimelist'],
@@ -323,7 +322,7 @@ class Search(commands.Cog):
         embed.add_field("Episodes", anime['episodes'])
         embed.add_field("Rank", anime['rank'])
         embed.add_field("Status", anime['status'])
-        embed.add_field("Aired", anime['aired']['string'])
+        embed.add_field("Aired", anime['aired']['prop']['string'])
         embed.add_field("Genres", ", ".join([genre['name'] for genre in anime['genres']]))
 
         await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
@@ -360,7 +359,7 @@ class Search(commands.Cog):
         """Lists upcoming anime."""
 
         jikan = AioJikan()
-        result = (await jikan.season_later())['data']
+        result = (await jikan.seasons())['data']
         await jikan.close()
 
         embeds = []
