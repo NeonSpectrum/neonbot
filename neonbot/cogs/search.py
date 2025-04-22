@@ -335,7 +335,7 @@ class Search(commands.Cog):
         """Lists top anime."""
 
         jikan = AioJikan()
-        result = (await jikan.top(type="anime"))['top']
+        result = (await jikan.top(type="anime"))['data']
         await jikan.close()
 
         embeds = []
