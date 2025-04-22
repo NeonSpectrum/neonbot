@@ -56,5 +56,5 @@ class Guild(Document):
             music=Music(volume=100, repeat=Repeat.OFF.value, shuffle=False, autoplay=False),
             exchange_gift=ExchangeGift(members=[]),
             chatgpt=ChatGPT(chats=[]),
-            panel=Panel()
+            panel=Panel(servers={})
         ).create()
