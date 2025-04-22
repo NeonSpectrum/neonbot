@@ -322,7 +322,7 @@ class Search(commands.Cog):
         embed.add_field("Episodes", anime['episodes'])
         embed.add_field("Rank", anime['rank'])
         embed.add_field("Status", anime['status'])
-        embed.add_field("Aired", anime['aired']['prop']['string'])
+        embed.add_field("Aired", f'{anime['aired']['from']} - {anime['aired']['to']}')
         embed.add_field("Genres", ", ".join([genre['name'] for genre in anime['genres']]))
 
         await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
@@ -359,7 +359,7 @@ class Search(commands.Cog):
         """Lists upcoming anime."""
 
         jikan = AioJikan()
-        result = (await jikan.seasons())['data']
+        result = (await jikan.seasons(extension='upcoming'))['data']
         await jikan.close()
 
         embeds = []
