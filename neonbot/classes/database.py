@@ -64,6 +64,9 @@ class Database:
 
             guild = await self.db.guilds.find_one({'_id': guild_id})
 
+            if not guild:
+                return
+
             if 'ptero' in guild:
                 await self.db.guilds.update_one({'_id': guild_id}, {
                     '$unset': {
