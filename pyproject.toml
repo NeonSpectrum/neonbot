@@ -1,6 +1,6 @@
 [project]
 name = "neonbot"
-version = "0.1.0"
+version = "2.3.1"
 description = ""
 authors = [
     {name = "NeonSpectrum",email = "youngskymann@gmail.com"}
