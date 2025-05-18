@@ -1,15 +1,20 @@
+import re
+from typing import Optional, cast
+
 import discord
 from discord import app_commands
-from discord.app_commands.models import Choice
 from discord.ext import commands
 from i18n import t
 
 from neonbot import bot
 from neonbot.classes.embed import Embed, PaginationEmbed
-from neonbot.classes.player_handler import PlayerHandler
-from neonbot.enums import PlayType, Repeat
-from neonbot.utils.constants import ICONS
-from neonbot.utils.date import format_seconds
+from neonbot.classes.player import Player
+from neonbot.classes.spotify import Spotify
+from neonbot.classes.youtube import Youtube
+from neonbot.enums import Repeat, PlayerState
+from neonbot.utils import log
+from neonbot.utils.constants import ICONS, YOUTUBE_REGEX, SPOTIFY_REGEX
+from neonbot.utils.functions import format_seconds
 
 
 async def in_voice(interaction: discord.Interaction) -> bool:
@@ -17,47 +22,77 @@ async def in_voice(interaction: discord.Interaction) -> bool:
         return True
 
     if not interaction.user.voice:
-        await interaction.response.send_message(embed=Embed("You need to be in the channel."), ephemeral=True)
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed("You need to be in the channel."), ephemeral=True)
+        return False
+    return True
+
+
+async def has_player(interaction: discord.Interaction) -> bool:
+    player = await Player.get_instance(interaction)
+
+    if not player.connection:
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed("No active player."),
+                                                                                   ephemeral=True)
         return False
     return True
 
 
 class Music(commands.Cog):
     @app_commands.command(name='play')
-    @app_commands.rename(play_type='type')
-    @app_commands.describe(
-        play_type='Select type...',
-        value='Enter keyword or url...'
-    )
-    @app_commands.choices(play_type=[
-        Choice(name='search', value=1),
-        Choice(name='youtube', value=2),
-        Choice(name='spotify', value=3),
-    ])
+    @app_commands.describe(value='Enter keyword or url...')
     @app_commands.check(in_voice)
     @app_commands.guild_only()
     async def play(
-            self,
-            interaction: discord.Interaction,
-            play_type: PlayType,
-            value: str
+        self,
+        interaction: discord.Interaction,
+        value: str,
+        play_now: Optional[bool] = False
     ):
-        """Searches the url or the keyword and add it to queue."""
+        """Searches the url or the keyword and add it to queue. This will queue the first search."""
 
-        player_handler = PlayerHandler(interaction)
-        player = await player_handler.get_player()
+        player = await Player.get_instance(interaction)
+        last_index = len(player.queue) - 1
 
-        await interaction.response.defer()
+        if re.search(YOUTUBE_REGEX, value):
+            await Youtube(interaction).search_url(value)
+        elif re.search(SPOTIFY_REGEX, value):
+            await Spotify(interaction).search_url(value)
+        else:
+            await Youtube(interaction).search_keyword_first(value)
 
-        if play_type == PlayType.SEARCH:
-            await player_handler.search_keyword(value)
-        elif play_type == PlayType.YOUTUBE:
-            await player_handler.search_youtube(value)
-        elif play_type == PlayType.SPOTIFY:
-            await player_handler.search_spotify(value)
+        await player.connect(interaction.user.voice.channel)
 
-        if len(player.queue) > 0:
-            await player.connect()
+        if player.state == PlayerState.STOPPED:
+            play_now = True
+
+        if player.connection.is_playing():
+            if play_now:
+                player.jump(last_index + 1)
+        else:
+            await player.play()
+
+    @app_commands.command(name='playsearch')
+    @app_commands.describe(value='Enter keyword...')
+    @app_commands.check(in_voice)
+    @app_commands.guild_only()
+    async def playsearch(
+        self,
+        interaction: discord.Interaction,
+        value: str,
+        play_now: Optional[bool] = False
+    ):
+        """Searches the keyword, choose from the list, add it to queue."""
+
+        player = await Player.get_instance(interaction)
+        last_index = len(player.queue) - 1
+
+        await Youtube(interaction).search_keyword(value)
+
+        if play_now and player.connection and player.connection.is_playing():
+            player.jump(last_index + 1)
+        elif len(player.queue) > 0:
+            await player.connect(interaction.user.voice.channel)
             await player.play()
 
     @app_commands.command(name='nowplaying')
@@ -66,10 +101,11 @@ class Music(commands.Cog):
     async def nowplaying(self, interaction: discord.Interaction) -> None:
         """Displays in brief description of the current playing."""
 
-        player = await PlayerHandler(interaction).get_player()
+        player = await Player.get_instance(interaction)
 
         if not player.connection or not player.connection.is_playing():
-            await interaction.response.send_message(embed=Embed(t('music.no_song_playing')), ephemeral=True)
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed(t('music.no_song_playing')), ephemeral=True)
             return
 
         now_playing = player.now_playing
@@ -92,7 +128,7 @@ class Music(commands.Cog):
         embed.set_footer(
             text=" | ".join(footer), icon_url=now_playing['requested'].display_avatar
         )
-        await interaction.response.send_message(embed=embed)
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
 
     @app_commands.command(name='playlist')
     @app_commands.check(in_voice)
@@ -100,19 +136,20 @@ class Music(commands.Cog):
     async def playlist(self, interaction: discord.Interaction) -> None:
         """List down all songs in the player's queue."""
 
-        player = await PlayerHandler(interaction).get_player()
+        player = await Player.get_instance(interaction)
         queue = player.queue
         embeds = []
         duration = 0
 
         if not queue:
-            await interaction.response.send_message(embed=Embed(t('music.empty_playlist')), ephemeral=True)
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed(t('music.empty_playlist')), ephemeral=True)
             return
 
         for i in range(0, len(player.queue), 10):
             temp = []
             for index, song in enumerate(player.queue[i: i + 10], i):
-                is_current = player.track_list[player.current_queue] == index
+                is_current = player.track_list[player.current_track] == index
                 title = f"`{'*' if is_current else ''}{index + 1}.` [{song['title']}]({song['url']})"
                 description = f"""\
 {f"~~{title}~~" if "removed" in song else title}
@@ -126,8 +163,7 @@ class Music(commands.Cog):
         footer = [
             t('music.songs', count=len(player.queue)),
             format_seconds(duration),
-            t('music.volume_footer', volume=player.volume),
-            t('music.shuffle_footer', shuffle='on' if player.is_shuffle else 'off'),
+            t('music.shuffle_footer', shuffle='on' if player.shuffle else 'off'),
             t('music.repeat_footer', repeat=Repeat(player.repeat).name.lower()),
         ]
 
@@ -140,20 +176,90 @@ class Music(commands.Cog):
         )
         await pagination.build()
 
-    @app_commands.command(name='volume')
+    @app_commands.command(name='jump')
     @app_commands.check(in_voice)
+    @app_commands.check(has_player)
     @app_commands.guild_only()
-    async def volume(self, interaction: discord.Interaction, volume: app_commands.Range[int, 1, 100]) -> None:
-        """Sets or gets player's volume."""
+    async def jump(self, interaction: discord.Interaction, index: int) -> None:
+        """Skips the current song."""
 
-        player = await PlayerHandler(interaction).get_player()
+        player = await Player.get_instance(interaction)
 
-        if volume < 1 or volume > 100:
-            await interaction.response.send_message(embed=Embed(t('music.volume_rules')), ephemeral=True)
+        if index > len(player.queue) or index < 0:
+            await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed("Invalid index."),
+                                                                                       ephemeral=True)
             return
 
-        await player.set_volume(volume)
-        await interaction.response.send_message(embed=Embed(t('music.volume_changed', volume=volume)))
+        player.jump(index - 1)
+        track = player.get_track(index - 1)
+
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed(t('music.jumped_to', index=index, title=track['title'], url=track['url']))
+        )
+
+    @app_commands.command(name='removesong')
+    @app_commands.check(in_voice)
+    @app_commands.check(has_player)
+    @app_commands.guild_only()
+    async def removesong(self, interaction: discord.Interaction, index: int) -> None:
+        """Removes a specific song."""
+
+        player = await Player.get_instance(interaction)
+
+        if index > len(player.queue) or index < 0:
+            await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed("Invalid index."),
+                                                                                       ephemeral=True)
+            return
+
+        track = player.get_track(index - 1)
+        await player.remove_song(index - 1)
+
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed(t('music.removed_song', index=index, title=track['title'], url=track['url']))
+        )
+
+    @app_commands.command(name='reset')
+    @app_commands.check(in_voice)
+    @app_commands.check(has_player)
+    @app_commands.guild_only()
+    async def reset(self, interaction: discord.Interaction) -> None:
+        """Resets the current player and disconnect to voice channel."""
+
+        player = await Player.get_instance(interaction)
+        await player.reset()
+        player.remove_instance()
+
+        msg = "Player reset."
+        log.cmd(interaction, msg)
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed(msg))
+
+    @app_commands.command(name='stop')
+    @app_commands.check(in_voice)
+    @app_commands.check(has_player)
+    @app_commands.guild_only()
+    async def stop(self, interaction: discord.Interaction) -> None:
+        """Stops the current player and reset the queue from the start."""
+
+        player = await Player.get_instance(interaction)
+        await player.stop()
+
+        msg = "Player stopped."
+        log.cmd(interaction, msg)
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed(msg))
+
+    @app_commands.command(name='reconnect')
+    @app_commands.check(has_player)
+    @app_commands.guild_only()
+    async def reconnect(self, interaction: discord.Interaction) -> None:
+        """Stops the current player and reset the queue from the start."""
+
+        player = await Player.get_instance(interaction)
+        await player.disconnect(force=True)
+        await player.play()
+
+        msg = "Player reconnected."
+        log.cmd(interaction, msg)
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed(msg))
 
 
 # noinspection PyShadowingNames

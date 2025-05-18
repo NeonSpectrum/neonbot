@@ -3,6 +3,13 @@ LOG_FORMAT = (
     "%(asctime)s [%(levelname)s] [%(module)s.%(funcName)s:%(lineno)d]: %(message)s"
 )
 
+YOUTUBE_TMP_DIR = "./tmp/youtube_dl"
+YOUTUBE_DOWNLOADS_DIR = "./tmp/youtube_dl/downloads"
+YOUTUBE_CACHE_DIR = "./tmp/youtube_dl/cache"
+PLAYER_CACHE_DIR = "./tmp/players"
+
+PLAYER_CACHE_PATH = "./tmp/players/%s.json"
+
 PERMISSIONS = 8
 
 PAGINATION_EMOJI = ["⏮", "◀", "▶", "⏭", "🗑"]
@@ -33,11 +40,18 @@ ICONS = {
     "azlyrics": "https://images.azlyrics.com/az_logo_tr.png",
     "semaphone": "https://semaphore.co/images/pages/index/semaphore-icon.png",
     "myanimelist": "https://i.imgur.com/XMQsLF5.png",
-    "googletranslate": "https://ssl.gstatic.com/translate/favicon.ico"
+    "googletranslate": "https://upload.wikimedia.org/wikipedia/commons/d/db/Google_Translate_Icon.png",
+    "openai": "https://i.imgur.com/TAeEnLT.png",
+    "green": "https://i.imgur.com/Vk1wdHH.png",
+    "red": "https://i.imgur.com/gnfYVjW.png"
 }
 
-FFMPEG_OPTIONS = (
+FFMPEG_BEFORE_OPTIONS = (
     "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -err_detect ignore_err"
+)
+
+FFMPEG_OPTIONS = (
+    "-vn"
 )
 
 YOUTUBE_REGEX = r"^(http(s)?:\/\/)?(((w){3}|music).)?youtu(be|.be)?(\.com)?\/.+"

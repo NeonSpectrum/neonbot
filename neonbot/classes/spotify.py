@@ -1,30 +1,64 @@
+import asyncio
 from time import time
-from typing import Optional
+from typing import Optional, Tuple
 from urllib.parse import urlparse
 
-from aiohttp import ClientSession, ClientTimeout
+import discord
 from envparse import env
+from i18n import t
 
-from ..utils.exceptions import ApiError
+from .embed import Embed
+from .player import Player
+from .with_interaction import WithInteraction
+from .ytdl import Ytdl
+from .. import bot
+from ..utils import log
+from ..utils.exceptions import ApiError, YtdlError
 
 
-class Spotify:
+class Spotify(WithInteraction):
     CREDENTIALS = {
         'token': None,
         'expiration': 0
     }
     BASE_URL = "https://api.spotify.com/v1"
 
-    def __init__(self) -> None:
-        self.session = ClientSession(timeout=ClientTimeout(total=10))
+    def __init__(self, interaction: discord.Interaction) -> None:
+        super().__init__(interaction)
         self.client_id = env.str("SPOTIFY_CLIENT_ID")
         self.client_secret = env.str("SPOTIFY_CLIENT_SECRET")
+
+        self.id = None
+        self.type = None
+
+    @property
+    def url_prefix(self) -> Optional[str]:
+        if self.is_album:
+            return '/albums'
+        elif self.is_playlist:
+            return '/playlists'
+        elif self.is_track:
+            return '/tracks'
+
+        return None
+
+    @property
+    def is_playlist(self) -> bool:
+        return self.type == "playlist"
+
+    @property
+    def is_album(self) -> bool:
+        return self.type == "album"
+
+    @property
+    def is_track(self) -> bool:
+        return self.type == "track"
 
     async def get_token(self) -> Optional[str]:
         if Spotify.CREDENTIALS['expiration'] and time() < Spotify.CREDENTIALS['expiration']:
             return Spotify.CREDENTIALS['token']
 
-        res = await self.session.post(
+        res = await bot.session.post(
             f"https://{self.client_id}:{self.client_secret}@accounts.spotify.com/api/token",
             params={"grant_type": "client_credentials"},
             headers={
@@ -62,28 +96,25 @@ class Spotify:
 
         return dict(id=url_id, type=url_type)
 
-    async def get_track(self, track_id: str) -> dict:
-        res = await self.request("/tracks/" + track_id)
-        return await res.json()
+    async def get_track(self) -> dict:
+        return await self.request(self.url_prefix + '/' + self.id)
 
-    async def get_playlist(self, playlist_id: str, url_type: str) -> list:
+    async def get_playlist(self) -> Tuple[list, dict]:
         playlist = []
 
-        if url_type == "album":
+        if self.is_album:
             limit = 50
-            url_prefix = "/albums"
         else:
             limit = 100
-            url_prefix = "/playlists"
 
         offset = 0
+        playlist_info = await self.get_playlist_info()
 
         while True:
-            res = await self.request(
-                url_prefix + "/" + playlist_id + '/tracks',
+            data = await self.request(
+                self.url_prefix + "/" + self.id + '/tracks',
                 params={"offset": offset, "limit": limit}
             )
-            data = await res.json()
 
             if 'items' not in data:
                 break
@@ -95,41 +126,117 @@ class Spotify:
 
             offset += limit
 
-        return playlist
-
-    async def get_album(self, playlist_id: str) -> list:
-        playlist = []
-
-        limit = 100
-        offset = 0
-
-        while True:
-            res = await self.request(
-                "/albums/" + playlist_id + '/tracks',
-                params={"offset": offset, "limit": limit}
-            )
-            data = await res.json()
-
-            if 'items' not in data:
-                break
-
-            playlist += data['items']
-
-            if data['next'] is None:
-                break
-
-            offset += limit
-
-        return playlist
+        return playlist, playlist_info
 
     async def request(self, url: str, params: dict = None):
         token = await self.get_token()
 
-        return await self.session.get(
+        res = await bot.session.get(
             Spotify.BASE_URL + url,
             headers={"Authorization": f"Bearer {token}"},
             params=params
         )
 
+        return await res.json()
 
-spotify = Spotify()
+    async def search_url(self, url: str) -> None:
+        url = self.parse_url(url)
+
+        if not url:
+            await self.send_message(embed=Embed(t('music.invalid_spotify_url')), ephemeral=True)
+            return
+
+        player = await Player.get_instance(self.interaction)
+
+        playlist = []
+        playlist_info = None
+
+        self.id = url['id']
+        self.type = url['type']
+
+        if self.is_playlist or self.is_album:
+            await self.send_message(embed=Embed(t('music.converting_to_youtube_playlist')))
+            playlist, playlist_info = await self.get_playlist()
+        elif self.is_track:
+            await self.send_message(embed=Embed(t('music.converting_to_youtube_track')))
+            playlist.append(await self.get_track())
+        else:
+            await self.send_message(embed=Embed(t('music.invalid_spotify_type')))
+            return
+
+        if len(playlist) == 0:
+            await self.send_message(embed=Embed(t('music.youtube_no_song')))
+            return
+
+        data = await self.process_playlist(playlist)
+
+        if len(data) == 0:
+            await self.send_message(embed=Embed(t('music.youtube_failed_to_find_similar')))
+            return
+
+        if self.is_playlist or self.is_album:
+            embed = Embed(
+                t('music.added_multiple_to_queue', count=len(data)) + ' ' +
+                t('music.added_failed', count=len(playlist) - len(data))
+            )
+            embed.set_author(playlist_info.get('title'), playlist_info.get('url'))
+            embed.set_image(playlist_info.get('thumbnail'))
+            embed.set_footer('Uploaded by: ' + playlist_info.get('uploader'))
+        else:
+            embed = Embed(
+                t('music.added_to_queue', queue=len(player.queue) + 1, title=data[0]['title'], url=data[0]['url'])
+            )
+
+        await self.send_message(embed=embed)
+        player.add_to_queue(data, requested=self.interaction.user)
+
+    async def get_playlist_info(self):
+        uploader = None
+
+        data = await self.request(
+            self.url_prefix + '/' + self.id,
+            params={
+                'fields': 'name,external_urls,images,owner'
+            }
+        )
+
+        try:
+            if self.is_playlist:
+                uploader = data.get('owner')['display_name']
+            elif self.is_album:
+                uploader = ', '.join(map(lambda artist: artist['name'], data.get('artists', [])))
+
+            return dict(
+                title=data.get('name'),
+                url=data.get('external_urls')['spotify'],
+                thumbnail=data.get('images')[0]['url'] if len(data.get('images')) > 0 else None,
+                uploader=uploader,
+            )
+        except TypeError:
+            log.error('Cannot parse playlist info: ' + str(data))
+
+            return None
+
+    async def process_playlist(self, playlist):
+        async def search(item):
+            ytdl_one = Ytdl.create({"default_search": "ytsearch1"})
+
+            track = item['track'] if self.is_playlist else item
+
+            try:
+                ytdl_info = await ytdl_one.extract_info(
+                    f"{' '.join(artist['name'] for artist in track['artists'])} {track['name']} lyric",
+                )
+            except YtdlError:
+                return None
+
+            ytdl_list = ytdl_info.get_list()
+
+            if len(ytdl_list) == 0:
+                return None
+
+            return ytdl_list[0]
+
+        data = await asyncio.gather(*[search(item) for item in playlist])
+
+        return list(filter(None, data))

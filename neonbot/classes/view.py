@@ -1,5 +1,5 @@
 import inspect
-from typing import Optional
+from typing import Optional, cast
 
 import discord
 
@@ -15,9 +15,11 @@ class Button(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         if inspect.iscoroutinefunction(self._callback):
             await self._callback(self, interaction)
+        else:
+            self._callback(self, interaction)
 
-        if not interaction.response.is_done():
-            await interaction.response.defer()
+        if not cast(discord.InteractionResponse, interaction.response).is_done():
+            await cast(discord.InteractionResponse, interaction.response).defer()
 
 
 class View(discord.ui.View):

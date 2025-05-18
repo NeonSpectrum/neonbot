@@ -1,52 +1,65 @@
 {
-  "player_connected": "Connected to %{channel}",
-  "repeat_changed": "Repeat changed to %{mode}",
-  "shuffle_changed": "Shuffle changed to %{mode}",
-  "volume_changed": "Volume changed to %{volume}%",
-  "player_paused": "Player paused.",
-  "player_error": "Error while playing the song.",
-  "now_playing": {
-    "title": "Now playing %{title}",
-    "index": "Now playing #%{index}"
-  },
-  "finished_playing": {
-    "title": "Finished playing %{title}",
-    "index": "Finished playing %{index}"
-  },
-  "volume_footer": "Volume: %{volume}%",
-  "shuffle_footer": "Shuffle: %{shuffle}",
-  "repeat_footer": "Repeat: %{repeat}",
-  "no_song_playing": "No song playing.",
-  "nowplaying": {
-    "uploader": "Uploader",
-    "upload_date": "Upload Date",
-    "duration": "Duration",
-    "views": "Views",
-    "description": "Description"
-  },
-  "songs": {
-    "zero": "%{count} songs",
-    "one": "%{count} song",
-    "many": "%{count} songs"
-  },
-  "empty_playlist": "Empty Playlist.",
-  "player_queue": "Player Queue",
-  "volume_rules": "Volume must be 1 - 100.",
-  "no_songs_available": "No songs available.",
-  "added_to_queue": "Added to #%{queue} [%{title}](%{url})",
-  "added_multiple_to_queue": {
-    "zero": "Added %{count} songs to queue.",
-    "one": "Added %{count} song to queue.",
-    "many": "Added %{count} songs to queue."
-  },
-  "added_failed": {
-    "zero": "",
-    "many": "%{count} failed to load."
-  },
-  "song_failed_to_load": "Song failed to load.",
-  "invalid_spotify_url": "Invalid spotify url.",
-  "converting_to_youtube_playlist": "Converting to YouTube playlist. Please wait...",
-  "converting_to_youtube_track": "Converting to YouTube track. Please wait...",
-  "youtube_no_song": "There's no song in the url. Please make sure it is public.",
-  "youtube_failed_to_find_similar": "Failed to find similar song to YouTube."
+    "player_connected": "Connected to %{channel}",
+    "repeat_changed": "%{user} changed repeat to **%{mode}**.",
+    "shuffle_changed": "%{user} changed shuffle to **%{mode}**.",
+    "autoplay_changed": "%{user} changed autoplay to **%{mode}**.",
+    "volume_changed": "Volume changed to %{volume}%.",
+    "player_paused": "%{user} changed player state to **paused**.",
+    "player_resumed": "%{user} changed player state to **playing**.",
+    "player_controls_pressed": "%{user} pressed **%{action}**.",
+    "player_error": "Error while playing the song.",
+    "now_playing": {
+        "title": "Now Playing %{title}",
+        "index": "Now Playing #%{index}"
+    },
+    "finished_playing": {
+        "title": "Finished Playing %{title}",
+        "index": "Finished Playing #%{index}"
+    },
+    "volume_footer": "Volume: %{volume}%",
+    "shuffle_footer": "Shuffle: %{shuffle}",
+    "repeat_footer": "Repeat: %{repeat}",
+    "autoplay_footer": "Autoplay: %{autoplay}",
+    "no_song_playing": "No song playing.",
+    "nowplaying": {
+        "uploader": "Uploader",
+        "upload_date": "Upload Date",
+        "duration": "Duration",
+        "views": "Views",
+        "description": "Description"
+    },
+    "songs": {
+        "zero": "%{count} songs",
+        "one": "%{count} song",
+        "many": "%{count} songs"
+    },
+    "empty_playlist": "Empty Playlist.",
+    "player_queue": "Player Queue",
+    "volume_rules": "Volume must be 1 - 100.",
+    "no_songs_available": "No songs available.",
+    "added_to_queue": "Added to #%{queue}: [%{title}](%{url})",
+    "added_multiple_to_queue": {
+        "zero": "Added %{count} songs to queue.",
+        "one": "Added %{count} song to queue.",
+        "many": "Added %{count} songs to queue."
+    },
+    "added_failed": {
+        "zero": "",
+        "many": "%{count} failed to load."
+    },
+    "song_failed_to_load": "Song failed to load.",
+    "invalid_spotify_url": "Invalid spotify url.",
+    "invalid_spotify_type": "Invalid spotify type. Only albums, playlists, and tracks are allowed.",
+    "invalid_youtube_url": "Invalid youtube url.",
+    "fetching_youtube_url": "Fetching YouTube URL. Please wait...",
+    "searching": "Searching...",
+    "converting_to_youtube_playlist": "Converting to YouTube playlist. Please wait...",
+    "converting_to_youtube_track": "Converting to YouTube track. Please wait...",
+    "youtube_no_song": "There's no song in the url. Please make sure it is public.",
+    "youtube_failed_to_find_similar": "Failed to find similar song to YouTube.",
+    "jumped_to": "Jumped to #%{index}: [%{title}](%{url})",
+    "removed_song": "Removed song #%{index}: [%{title}](%{url})",
+    "cannot_interact": "Cannot interact. You're not in the current voice channel.",
+    "autoplay_disabled_for_quota": "Autoplay is currently unavailable due to quota restrictions.",
+    "no_related_video_found": "No related video found."
 }

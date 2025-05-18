@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 import discord
 
@@ -11,7 +11,7 @@ from ..utils.constants import CHOICES_EMOJI, PAGINATION_EMOJI
 class Embed(discord.Embed):
     def __init__(self, description: Any = None, **kwargs: Any) -> None:
         if description is not None:
-            super().__init__(description=description and str(description), **kwargs)
+            super().__init__(description=description and str(description).strip(), **kwargs)
         else:
             super().__init__(**kwargs)
         self.color = 0xE91E63
@@ -20,18 +20,22 @@ class Embed(discord.Embed):
         super().add_field(name=name, value=value, inline=inline)
         return self
 
+    def set_description(self, description: str) -> Embed:
+        self.description = description
+        return self
+
     def set_author(
-            self,
-            name: str,
-            url: str = None,
-            *,
-            icon_url: str = None,
+        self,
+        name: str,
+        url: str = None,
+        *,
+        icon_url: str = None,
     ) -> Embed:
         super().set_author(name=name, url=url, icon_url=icon_url)
         return self
 
     def set_footer(
-            self, text: str = None, *, icon_url: str = None
+        self, text: str = None, *, icon_url: str = None
     ) -> Embed:
         super().set_footer(text=text, icon_url=icon_url)
         return self
@@ -56,11 +60,11 @@ class PaginationEmbed:
     """
 
     def __init__(
-            self,
-            interaction: discord.Interaction,
-            embeds=None,
-            authorized_users: Optional[list] = None,
-            timeout: Optional[int] = 60,
+        self,
+        interaction: discord.Interaction,
+        embeds=None,
+        authorized_users: Optional[list] = None,
+        timeout: Optional[int] = 60,
     ) -> None:
         if embeds is None:
             embeds = []
@@ -81,14 +85,14 @@ class PaginationEmbed:
     async def send(self) -> None:
         embed = self.embed.copy()
         embed.description = self.embeds[self.index].description
-        buttons = None
+        buttons = discord.utils.MISSING
 
         if len(self.embeds) > 1:
             embed.description += f"\n\n**Page {self.index + 1}/{len(self.embeds)}**"
             buttons = self.get_buttons()
 
-        if not self.interaction.response.is_done():
-            await self.interaction.response.send_message(embed=embed, view=buttons)
+        if not cast(discord.InteractionResponse, self.interaction.response).is_done():
+            await cast(discord.InteractionResponse, self.interaction.response).send_message(embed=embed, view=buttons)
         else:
             await self.interaction.edit_original_response(embed=embed, view=buttons)
 
@@ -142,10 +146,8 @@ class EmbedChoices:
         return self
 
     async def send_message(self, *args, **kwargs):
-        if self.interaction.response.is_done():
-            await self.interaction.followup.send(*args, **kwargs)
-        else:
-            await self.interaction.response.send_message(*args, **kwargs)
+        from neonbot import bot
+        await bot.send_response(self.interaction, *args, **kwargs)
 
     async def send_choices(self) -> None:
         embed = Embed(title=f"Choose 1-{len(self.entries)} below.")
@@ -171,14 +173,12 @@ class EmbedChoices:
 
             button.view.stop()
 
-        buttons = [
-            Button(label=1),
-            Button(label=2),
-            Button(label=3),
-            Button(label=4),
-            Button(label=5),
-            Button(emoji=CHOICES_EMOJI[-1]),
-        ]
+        buttons = []
+
+        for index in range(1, len(self.entries) + 1):
+            buttons.append(Button(label=index))
+
+        buttons.append(Button(emoji=CHOICES_EMOJI[-1]))
 
         return View.create_button(buttons, callback, interaction=self.interaction, timeout=self.timeout,
                                   delete_on_timeout=True)

@@ -1,2 +1,2 @@
-from .play_type import PlayType
+from .player_state import PlayerState
 from .repeat import Repeat
