@@ -27,21 +27,18 @@ def get_command_string(interaction: discord.Interaction):
     if interaction.command.name[0].isupper():
         try:
             users = list(interaction.data['resolved']['users'].values())
-            params = [f"{user['username']}#{user['discriminator']}" for user in users]
+            params = [f'{user["username"]}#{user["discriminator"]}' for user in users]
         except IndexError:
             pass
     else:
-        params = [
-            f'{key}="{value}"'
-            for key, value in interaction.namespace.__dict__.items()
-        ]
+        params = [f'{key}="{value}"' for key, value in interaction.namespace.__dict__.items()]
 
-    return f"{interaction.command.name} {' '.join(params)}"
+    return f'{interaction.command.name} {" ".join(params)}'
 
 
 def format_seconds(secs: Union[int, float]) -> str:
-    formatted = str(timedelta(seconds=secs)).split(".")[0]
-    if formatted.startswith("0:"):
+    formatted = str(timedelta(seconds=secs)).split('.')[0]
+    if formatted.startswith('0:'):
         return formatted[2:]
     return formatted
 
@@ -59,9 +56,9 @@ def format_uptime(milliseconds: int) -> str:
 
 
 def get_log_prefix() -> str:
-    tz = pytz.timezone(env.str('TZ', default="Asia/Manila"))
+    tz = pytz.timezone(env.str('TZ', default='Asia/Manila'))
     now = datetime.now(tz)
-    return f"[{now.strftime('%I:%M:%S %p')}] :bust_in_silhouette:"
+    return f'[{now.strftime("%I:%M:%S %p")}] :bust_in_silhouette:'
 
 
 def split_long_message(text: str):
@@ -75,19 +72,21 @@ def split_long_message(text: str):
     for line in lines:
         if len(message) + len(line) + 1 > 2000:
             messages.append(message)
-            message = line + "\n"
+            message = line + '\n'
         else:
-            message += line + "\n"
+            message += line + '\n'
 
     if message:
         messages.append(message)
 
     return messages
 
+
 def md_to_text(md):
     html = markdown.markdown(md)
     soup = BeautifulSoup(html, features='html.parser')
     return soup.get_text()
+
 
 def remove_ansi(text):
     ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')

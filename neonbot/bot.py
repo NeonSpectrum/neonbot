@@ -18,8 +18,8 @@ from envparse import env
 
 from . import __version__
 from .classes.database import Database
-from .models.guild import Guild
-from .models.setting import Setting
+from .models.guild import GuildModel
+from .models.setting import SettingModel
 from .utils import log
 from .utils.constants import PERMISSIONS
 from .utils.context_menu import load_context_menu
@@ -28,17 +28,20 @@ from .views.ExchangeGiftView import ExchangeGiftView
 
 class NeonBot(commands.Bot):
     def __init__(self):
-        self.default_prefix = env.str("DEFAULT_PREFIX", default=".")
-        self.user_agent = f"NeonBot v{__version__}"
+        self.default_prefix = env.str('DEFAULT_PREFIX', default='.')
+        self.user_agent = f'NeonBot v{__version__}'
         self.loop = asyncio.get_event_loop()
-        super().__init__(intents=discord.Intents.all(), command_prefix=self.default_prefix,
-                         owner_ids=set(env.list("OWNER_IDS", default=[], subcast=int)))
+        super().__init__(
+            intents=discord.Intents.all(),
+            command_prefix=self.default_prefix,
+            owner_ids=set(env.list('OWNER_IDS', default=[], subcast=int)),
+        )
 
         self.db = Database(self)
         self.app_info: Optional[discord.AppInfo] = None
         self.owner_guilds = env.list('OWNER_GUILD_IDS', default=[], subcast=int)
         self.session: Optional[ClientSession] = None
-        self.setting: Optional[Setting] = None
+        self.setting: Optional[SettingModel] = None
         self.scheduler: Optional[AsyncIOScheduler] = None
         self.is_listeners_done = False
         self.is_player_cache_loaded = False
@@ -50,16 +53,14 @@ class NeonBot(commands.Bot):
 
         return (
             discord.Status[status],
-            discord.Activity(
-                name=activity_name, type=discord.ActivityType[activity_type]
-            ),
+            discord.Activity(name=activity_name, type=discord.ActivityType[activity_type]),
         )
 
     async def setup_hook(self):
         self.loop.add_signal_handler(signal.SIGTERM, lambda: asyncio.create_task(self.close()))
 
         await self.db.initialize()
-        self.setting = await Setting.get_instance()
+        self.setting = await SettingModel.get_instance()
         self.status, self.activity = self.get_presence()
         self.session = ClientSession(timeout=ClientTimeout(total=30))
         self.scheduler = AsyncIOScheduler()
@@ -81,7 +82,7 @@ class NeonBot(commands.Bot):
 
     async def sync_command(self, guild: Optional[discord.Guild] = None):
         await self.tree.sync(guild=guild)
-        log.info(f"Command synced to: {guild or 'Global'}")
+        log.info(f'Command synced to: {guild or "Global"}')
 
     def start_listeners(self):
         if self.is_listeners_done:
@@ -90,7 +91,7 @@ class NeonBot(commands.Bot):
         from .classes.panel import Panel
 
         for guild in self.guilds:
-            server = Guild.get_instance(guild.id)
+            server = GuildModel.get_instance(guild.id)
 
             if server and not server.exchange_gift.finish and server.exchange_gift.message_id:
                 self.add_view(ExchangeGiftView(), message_id=server.exchange_gift.message_id)
@@ -113,20 +114,20 @@ class NeonBot(commands.Bot):
         self.is_player_cache_loaded = True
 
     async def add_cogs(self):
-        files = sorted(glob(f"neonbot{sep}cogs{sep}[!_]*.py"))
-        extensions = [re.split(r"[{0}.]".format(re.escape(sep)), file)[-2] for file in files]
+        files = sorted(glob(f'neonbot{sep}cogs{sep}[!_]*.py'))
+        extensions = [re.split(r'[{0}.]'.format(re.escape(sep)), file)[-2] for file in files]
         start_time = time()
         process = psutil.Process(os.getpid())
 
         print(file=sys.stderr)
 
         for extension in extensions:
-            log.info(f"Loading {extension} cog... [{(process.memory_info().rss / 1024000):.2f} MB]")
-            await self.load_extension("neonbot.cogs." + extension)
+            log.info(f'Loading {extension} cog... [{(process.memory_info().rss / 1024000):.2f} MB]')
+            await self.load_extension('neonbot.cogs.' + extension)
 
         print(file=sys.stderr)
 
-        log.info(f"Loaded {len(extensions)} cogs after {(time() - start_time):.2f}s\n")
+        log.info(f'Loaded {len(extensions)} cogs after {(time() - start_time):.2f}s\n')
 
     async def fetch_app_info(self) -> None:
         if not self.app_info:
@@ -136,27 +137,26 @@ class NeonBot(commands.Bot):
         url = oauth_url(
             self.app_info.id,
             permissions=discord.Permissions(permissions=PERMISSIONS),
-            scopes=('bot', 'applications.commands')
+            scopes=('bot', 'applications.commands'),
         )
-        await message.channel.send(f"Bot invite link: {url}")
-        log.info(f"Sent an invite link to: {message.author}")
+        await message.channel.send(f'Bot invite link: {url}')
+        log.info(f'Sent an invite link to: {message.author}')
 
     async def update_presence(self):
-        setting = await Setting.get_instance()
+        setting = await SettingModel.get_instance()
 
         await self.change_presence(
-            activity=discord.Activity(
-                name=setting.activity_name,
-                type=discord.ActivityType[setting.activity_type]
-            ),
-            status=getattr(discord.Status, setting.status)
+            activity=discord.Activity(name=setting.activity_name, type=discord.ActivityType[setting.activity_type]),
+            status=getattr(discord.Status, setting.status),
         )
 
     async def send_response(self, interaction: discord.Interaction, *args, **kwargs):
         if not cast(discord.InteractionResponse, interaction.response).is_done():
             await cast(discord.InteractionResponse, interaction.response).send_message(*args, **kwargs)
-        elif cast(discord.InteractionResponse,
-                  interaction.response).type == discord.InteractionResponseType.deferred_message_update:
+        elif (
+            cast(discord.InteractionResponse, interaction.response).type
+            == discord.InteractionResponseType.deferred_message_update
+        ):
             await interaction.followup.send(*args, **kwargs)
         else:
             if 'view' not in kwargs:
@@ -177,10 +177,7 @@ class NeonBot(commands.Bot):
             pass
 
     async def delete_message(self, *messages: Union[discord.Message, None]) -> None:
-        await asyncio.gather(
-            *[message.delete() for message in messages if message is not None],
-            return_exceptions=True
-        )
+        await asyncio.gather(*[message.delete() for message in messages if message is not None], return_exceptions=True)
 
     async def send_to_owner(self, *args: Any, **kwargs: Any) -> None:
         await self.get_user(self.app_info.owner.id).send(*args, **kwargs)

@@ -1,6 +1,6 @@
-from typing import List, Optional, Dict
+from typing import Optional, Dict
 
-from pydantic import BaseModel, RootModel
+from pydantic import BaseModel
 
 
 class PanelServer(BaseModel):
@@ -8,5 +8,5 @@ class PanelServer(BaseModel):
     message_id: Optional[int] = None
 
 
-class Panel(BaseModel):
+class PanelModel(BaseModel):
     servers: Dict[str, PanelServer]

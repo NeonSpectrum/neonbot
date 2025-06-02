@@ -10,7 +10,6 @@ from typing import Union, List, Optional, Dict
 import discord
 from discord.ext import commands, tasks
 from discord.utils import MISSING
-from envparse import env
 from i18n import t
 
 from neonbot import bot
@@ -19,7 +18,7 @@ from neonbot.classes.player_controls import PlayerControls
 from neonbot.classes.ytdl import Ytdl
 from neonbot.classes.ytmusic import YTMusic
 from neonbot.enums import Repeat, PlayerState
-from neonbot.models.guild import Guild
+from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.constants import FFMPEG_BEFORE_OPTIONS, FFMPEG_OPTIONS, ICONS, PLAYER_CACHE_PATH
 from neonbot.utils.exceptions import YtdlError, PlayerError, ApiError
@@ -32,7 +31,7 @@ class Player:
     def __init__(self, ctx: commands.Context):
         self.ctx = ctx
         self.loop = asyncio.get_event_loop()
-        self.settings = Guild.get_instance(ctx.guild.id)
+        self.settings = GuildModel.get_instance(ctx.guild.id)
         self.player_controls = PlayerControls(self)
 
         self.queue = []
@@ -110,10 +109,7 @@ class Player:
     @property
     def now_playing(self) -> Union[dict, None]:
         try:
-            return {
-                **self.queue[self.track_list[self.current_track]],
-                'index': self.track_list[self.current_track] + 1
-            }
+            return {**self.queue[self.track_list[self.current_track]], 'index': self.track_list[self.current_track] + 1}
         except IndexError:
             return None
 
@@ -133,7 +129,7 @@ class Player:
 
         await self.reset()
 
-        msg = "Player reset due to inactivity."
+        msg = 'Player reset due to inactivity.'
         log.cmd(self.ctx, msg)
         await self.channel.send(embed=Embed(msg))
 
@@ -222,7 +218,7 @@ class Player:
             source = discord.FFmpegOpusAudio(
                 self.now_playing['stream'],
                 before_options=None if not self.now_playing['is_live'] else FFMPEG_BEFORE_OPTIONS,
-                options=FFMPEG_OPTIONS
+                options=FFMPEG_OPTIONS,
             )
             self.connection.play(source, after=lambda e: self.loop.create_task(self.after(error=e)))
             self.state = PlayerState.PLAYING
@@ -352,8 +348,7 @@ class Player:
 
     async def process_autoplay(self) -> None:
         related_video_id = await YTMusic().get_related_video(
-            self.now_playing,
-            playlist=list(map(lambda track: track['id'], self.queue))
+            self.now_playing, playlist=list(map(lambda track: track['id'], self.queue))
         )
 
         if not related_video_id:
@@ -371,8 +366,9 @@ class Player:
         if not self.now_playing:
             return
 
-        log.cmd(self.ctx, t('music.now_playing.title', title=self.now_playing['title']),
-                user=self.now_playing['requested'])
+        log.cmd(
+            self.ctx, t('music.now_playing.title', title=self.now_playing['title']), user=self.now_playing['requested']
+        )
 
         await self.clear_messages()
         self.player_controls.initialize()
@@ -394,7 +390,7 @@ class Player:
         message = await self.channel.send(
             embed=self.get_finished_embed() if detailed else self.get_simplified_finished_message(),
             view=self.player_controls.get() if detailed else None,
-            silent=True
+            silent=True,
         )
 
         # Will replace by simplified after
@@ -417,13 +413,13 @@ class Player:
             await bot.edit_message(
                 self.messages['playing'],
                 embed=self.get_playing_embed() if embed else MISSING,
-                view=self.player_controls.get()
+                view=self.player_controls.get(),
             )
         elif self.messages['finished']:
             await bot.edit_message(
                 self.messages['finished'],
                 embed=self.get_finished_embed() if embed else MISSING,
-                view=self.player_controls.get()
+                view=self.player_controls.get(),
             )
 
     def get_footer(self, now_playing):
@@ -450,9 +446,7 @@ class Player:
     def get_track_embed(self, track):
         footer = self.get_footer(track)
         embed = Embed(title=track['title'], url=track['url'])
-        embed.set_footer(
-            text=' | '.join(footer), icon_url=track['requested'].display_avatar
-        )
+        embed.set_footer(text=' | '.join(footer), icon_url=track['requested'].display_avatar)
 
         return embed
 
@@ -462,7 +456,7 @@ class Player:
 
         formatted_title = f'[{title}]({url})' if url else title
 
-        return Embed(f"{t('music.finished_playing.index', index=self.last_track['index'])}: {formatted_title}")
+        return Embed(f'{t("music.finished_playing.index", index=self.last_track["index"])}: {formatted_title}')
 
     @staticmethod
     def has_cache(guild_id):
@@ -474,7 +468,8 @@ class Player:
         file = PLAYER_CACHE_PATH % guild_id
 
         try:
-            with open(file, "r") as f:
+            with open(file, 'r') as f:
+
                 def map_queue(track):
                     track['requested'] = bot.get_user(track['requested'])
                     return track
@@ -483,7 +478,7 @@ class Player:
                 channel = bot.get_channel(cache['channel_id'])
 
                 if not channel:
-                    raise PlayerError('Can\'t find channel.')
+                    raise PlayerError("Can't find channel.")
 
                 origin = await channel.send(embed=Embed('Picking up where you left off...'))
 
@@ -511,7 +506,8 @@ class Player:
 
         file = PLAYER_CACHE_PATH % self.ctx.guild.id
 
-        with open(file, "w") as f:
+        with open(file, 'w') as f:
+
             def map_queue(track):
                 if hasattr(track['requested'], 'id'):
                     track['requested'] = track['requested'].id
@@ -519,15 +515,19 @@ class Player:
                 return track
 
             # noinspection PyTypeChecker
-            json.dump({
-                'voice_channel_id': self.last_voice_channel.id,
-                'channel_id': self.ctx.channel.id,
-                'queue': list(map(map_queue, self.queue)),
-                'current_track': self.current_track,
-                'track_list': self.track_list,
-                'shuffled_list': self.shuffled_list,
-                'state': self.state.value,
-            }, f, indent=4)
+            json.dump(
+                {
+                    'voice_channel_id': self.last_voice_channel.id,
+                    'channel_id': self.ctx.channel.id,
+                    'queue': list(map(map_queue, self.queue)),
+                    'current_track': self.current_track,
+                    'track_list': self.track_list,
+                    'shuffled_list': self.shuffled_list,
+                    'state': self.state.value,
+                },
+                f,
+                indent=4,
+            )
 
     def delete_cache(self):
         file = PLAYER_CACHE_PATH % self.ctx.guild.id

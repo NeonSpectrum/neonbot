@@ -10,6 +10,7 @@ from neonbot.utils import log
 
 genai.configure(api_key=env.str('GEMINI_API_KEY'))
 
+
 class GeminiChat:
     def __init__(self, message):
         self.model = genai.GenerativeModel('gemini-1.5-flash')
@@ -56,7 +57,7 @@ class GeminiChat:
         return self
 
     def log(self):
-        log.info(f"Gemini Chat\nQuestion: {self.prompt}\nAnswer: {self.get_response()}")
+        log.info(f'Gemini Chat\nQuestion: {self.prompt}\nAnswer: {self.get_response()}')
 
     def get_response(self):
         return self.response.text if self.response else None

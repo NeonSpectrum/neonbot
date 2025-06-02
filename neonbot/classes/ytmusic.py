@@ -8,6 +8,7 @@ from neonbot import bot
 
 ytmusic = YTMusic()
 
+
 class YTMusic:
     def __init__(self):
         self.loop = bot.loop

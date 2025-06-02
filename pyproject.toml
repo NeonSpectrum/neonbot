@@ -43,3 +43,14 @@ package-mode = false
 
 [tool.poetry.requires-plugins]
 poetry-plugin-export = ">=1.8"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.11.12"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+docstring-code-format = true

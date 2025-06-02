@@ -17,16 +17,13 @@ from ..utils.exceptions import ApiError, YtdlError
 
 
 class Spotify(WithInteraction):
-    CREDENTIALS = {
-        'token': None,
-        'expiration': 0
-    }
-    BASE_URL = "https://api.spotify.com/v1"
+    CREDENTIALS = {'token': None, 'expiration': 0}
+    BASE_URL = 'https://api.spotify.com/v1'
 
     def __init__(self, interaction: discord.Interaction) -> None:
         super().__init__(interaction)
-        self.client_id = env.str("SPOTIFY_CLIENT_ID")
-        self.client_secret = env.str("SPOTIFY_CLIENT_SECRET")
+        self.client_id = env.str('SPOTIFY_CLIENT_ID')
+        self.client_secret = env.str('SPOTIFY_CLIENT_SECRET')
 
         self.id = None
         self.type = None
@@ -44,26 +41,26 @@ class Spotify(WithInteraction):
 
     @property
     def is_playlist(self) -> bool:
-        return self.type == "playlist"
+        return self.type == 'playlist'
 
     @property
     def is_album(self) -> bool:
-        return self.type == "album"
+        return self.type == 'album'
 
     @property
     def is_track(self) -> bool:
-        return self.type == "track"
+        return self.type == 'track'
 
     async def get_token(self) -> Optional[str]:
         if Spotify.CREDENTIALS['expiration'] and time() < Spotify.CREDENTIALS['expiration']:
             return Spotify.CREDENTIALS['token']
 
         res = await bot.session.post(
-            f"https://{self.client_id}:{self.client_secret}@accounts.spotify.com/api/token",
-            params={"grant_type": "client_credentials"},
+            f'https://{self.client_id}:{self.client_secret}@accounts.spotify.com/api/token',
+            params={'grant_type': 'client_credentials'},
             headers={
-                "Accept": "application/json",
-                "Content-Type": "application/x-www-form-urlencoded",
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
             },
         )
         data = await res.json()
@@ -85,10 +82,10 @@ class Spotify(WithInteraction):
         url_id = None
 
         try:
-            if hostname == "open.spotify.com" or "open.spotify.com" in path:
-                url_type, url_id = path.split("/")[-2:]
-            elif scheme == "spotify":
-                url_type, url_id = path.split(":")
+            if hostname == 'open.spotify.com' or 'open.spotify.com' in path:
+                url_type, url_id = path.split('/')[-2:]
+            elif scheme == 'spotify':
+                url_type, url_id = path.split(':')
             if not url_type or not url_id:
                 raise ValueError
         except ValueError:
@@ -112,8 +109,7 @@ class Spotify(WithInteraction):
 
         while True:
             data = await self.request(
-                self.url_prefix + "/" + self.id + '/tracks',
-                params={"offset": offset, "limit": limit}
+                self.url_prefix + '/' + self.id + '/tracks', params={'offset': offset, 'limit': limit}
             )
 
             if 'items' not in data:
@@ -131,11 +127,7 @@ class Spotify(WithInteraction):
     async def request(self, url: str, params: dict = None):
         token = await self.get_token()
 
-        res = await bot.session.get(
-            Spotify.BASE_URL + url,
-            headers={"Authorization": f"Bearer {token}"},
-            params=params
-        )
+        res = await bot.session.get(Spotify.BASE_URL + url, headers={'Authorization': f'Bearer {token}'}, params=params)
 
         return await res.json()
 
@@ -176,8 +168,9 @@ class Spotify(WithInteraction):
 
         if self.is_playlist or self.is_album:
             embed = Embed(
-                t('music.added_multiple_to_queue', count=len(data)) + ' ' +
-                t('music.added_failed', count=len(playlist) - len(data))
+                t('music.added_multiple_to_queue', count=len(data))
+                + ' '
+                + t('music.added_failed', count=len(playlist) - len(data))
             )
             embed.set_author(playlist_info.get('title'), playlist_info.get('url'))
             embed.set_image(playlist_info.get('thumbnail'))
@@ -193,12 +186,7 @@ class Spotify(WithInteraction):
     async def get_playlist_info(self):
         uploader = None
 
-        data = await self.request(
-            self.url_prefix + '/' + self.id,
-            params={
-                'fields': 'name,external_urls,images,owner'
-            }
-        )
+        data = await self.request(self.url_prefix + '/' + self.id, params={'fields': 'name,external_urls,images,owner'})
 
         try:
             if self.is_playlist:
@@ -219,13 +207,13 @@ class Spotify(WithInteraction):
 
     async def process_playlist(self, playlist):
         async def search(item):
-            ytdl_one = Ytdl.create({"default_search": "ytsearch1"})
+            ytdl_one = Ytdl.create({'default_search': 'ytsearch1'})
 
             track = item['track'] if self.is_playlist else item
 
             try:
                 ytdl_info = await ytdl_one.extract_info(
-                    f"{' '.join(artist['name'] for artist in track['artists'])} {track['name']} lyric",
+                    f'{" ".join(artist["name"] for artist in track["artists"])} {track["name"]} lyric',
                 )
             except YtdlError:
                 return None

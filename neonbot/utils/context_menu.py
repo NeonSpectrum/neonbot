@@ -20,8 +20,8 @@ def load_context_menu(bot):
         await member.add_roles(member_role)
 
         await cast(discord.InteractionResponse, interaction.response).send_message(
-            embed=Embed(f'{member.mention} added to {member_role.mention} role.'),
-                                                ephemeral=True)
+            embed=Embed(f'{member.mention} added to {member_role.mention} role.'), ephemeral=True
+        )
 
     @bot.tree.context_menu(name='Profile')
     async def profile(interaction: discord.Interaction, member: discord.Member):
@@ -34,12 +34,12 @@ def load_context_menu(bot):
         embed.set_author(str(member), icon_url=member.display_avatar.url)
         embed.set_footer(str(member.id))
         embed.set_thumbnail(member.display_avatar.url)
-        embed.add_field("Created", format_dt(member.created_at, 'F'), inline=False)
-        embed.add_field("Joined", format_dt(member.joined_at, 'F'), inline=True)
+        embed.add_field('Created', format_dt(member.created_at, 'F'), inline=False)
+        embed.add_field('Joined', format_dt(member.joined_at, 'F'), inline=True)
         if member.premium_since:
-            embed.add_field("Server Booster since", format_dt(member.premium_since, 'F'), inline=False)
-        embed.add_field("Roles", ' '.join([role.mention for role in roles]) if len(roles) > 0 else 'None', inline=False)
-        embed.add_field("Badges", '\n'.join(flags) if len(flags) > 0 else 'None', inline=False)
+            embed.add_field('Server Booster since', format_dt(member.premium_since, 'F'), inline=False)
+        embed.add_field('Roles', ' '.join([role.mention for role in roles]) if len(roles) > 0 else 'None', inline=False)
+        embed.add_field('Badges', '\n'.join(flags) if len(flags) > 0 else 'None', inline=False)
 
         if user.banner:
             embed.set_image(user.banner.url)

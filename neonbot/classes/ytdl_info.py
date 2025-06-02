@@ -1,7 +1,6 @@
 from datetime import datetime
 from os import path
 
-from envparse import env
 
 from neonbot.utils.constants import YOUTUBE_DOWNLOADS_DIR
 from neonbot.utils.functions import format_seconds
@@ -16,14 +15,14 @@ class YtdlInfo:
         return self.result.get('_type') == 'playlist'
 
     def is_downloaded(self, entry):
-        return entry.get('id') and path.exists(f"{YOUTUBE_DOWNLOADS_DIR}/{entry.get('id')}")
+        return entry.get('id') and path.exists(f'{YOUTUBE_DOWNLOADS_DIR}/{entry.get("id")}')
 
     def get_playlist_info(self):
         return dict(
             title=self.result.get('title'),
             url=self.result.get('webpage_url'),
             thumbnail=self.result.get('thumbnails')[-1]['url'] if len(self.result.get('thumbnails', [])) > 0 else None,
-            uploader=self.result.get('uploader')
+            uploader=self.result.get('uploader'),
         )
 
     def get_list(self):
@@ -50,27 +49,26 @@ class YtdlInfo:
 
         return self.format_simple_result(self.result)
 
-
     def format_description(self, description: str) -> str:
         if not description:
             return description
 
-        description_arr = description.split("\n")[:15]
-        while len("\n".join(description_arr)) > 1000:
+        description_arr = description.split('\n')[:15]
+        while len('\n'.join(description_arr)) > 1000:
             description_arr.pop()
-        if len(description.split("\n")) != len(description_arr):
-            description_arr.append("...")
-        return "\n".join(description_arr)
+        if len(description.split('\n')) != len(description_arr):
+            description_arr.append('...')
+        return '\n'.join(description_arr)
 
     def format_simple_result(self, entry: dict) -> dict:
         return dict(
             _type='url',
             ie_key='Youtube',
             id=entry.get('id'),
-            title=entry.get("title", "*Not Available*"),
-            duration=entry.get("duration"),
+            title=entry.get('title', '*Not Available*'),
+            duration=entry.get('duration'),
             url='https://www.youtube.com/watch?v=' + entry.get('id'),
-            is_live=entry.get('live_status') == 'is_live' or entry.get('is_live', False)
+            is_live=entry.get('live_status') == 'is_live' or entry.get('is_live', False),
         )
 
     def format_detailed_result(self, entry: dict) -> dict:
@@ -80,13 +78,13 @@ class YtdlInfo:
             description=self.format_description(entry.get('description')),
             uploader=entry.get('uploader'),
             duration=entry.get('duration'),
-            formatted_duration=format_seconds(entry.get('duration')) if entry.get('duration') else "N/A",
+            formatted_duration=format_seconds(entry.get('duration')) if entry.get('duration') else 'N/A',
             thumbnail=entry.get('thumbnail'),
-            stream=entry.get('url') if entry.get('is_live') else f"{YOUTUBE_DOWNLOADS_DIR}/{entry.get('id')}",
+            stream=entry.get('url') if entry.get('is_live') else f'{YOUTUBE_DOWNLOADS_DIR}/{entry.get("id")}',
             url='https://www.youtube.com/watch?v=' + entry.get('id'),
             is_live=entry.get('is_live'),
-            view_count=f"{entry.get('view_count'):,}" if entry.get('view_count') else "N/A",
-            upload_date=datetime.strptime(entry.get('upload_date'), "%Y%m%d").strftime(
-                "%b %d, %Y"
-            ) if entry.get('upload_date') else None,
+            view_count=f'{entry.get("view_count"):,}' if entry.get('view_count') else 'N/A',
+            upload_date=datetime.strptime(entry.get('upload_date'), '%Y%m%d').strftime('%b %d, %Y')
+            if entry.get('upload_date')
+            else None,
         )

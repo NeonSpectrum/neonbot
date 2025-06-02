@@ -34,9 +34,7 @@ class Embed(discord.Embed):
         super().set_author(name=name, url=url, icon_url=icon_url)
         return self
 
-    def set_footer(
-        self, text: str = None, *, icon_url: str = None
-    ) -> Embed:
+    def set_footer(self, text: str = None, *, icon_url: str = None) -> Embed:
         super().set_footer(text=text, icon_url=icon_url)
         return self
 
@@ -88,7 +86,7 @@ class PaginationEmbed:
         buttons = discord.utils.MISSING
 
         if len(self.embeds) > 1:
-            embed.description += f"\n\n**Page {self.index + 1}/{len(self.embeds)}**"
+            embed.description += f'\n\n**Page {self.index + 1}/{len(self.embeds)}**'
             buttons = self.get_buttons()
 
         if not cast(discord.InteractionResponse, self.interaction.response).is_done():
@@ -110,10 +108,7 @@ class PaginationEmbed:
             self.execute_command(index)
             await self.send()
 
-        buttons = [
-            Button(emoji=emoji)
-            for emoji in PAGINATION_EMOJI
-        ]
+        buttons = [Button(emoji=emoji) for emoji in PAGINATION_EMOJI]
 
         return View.create_button(buttons, callback, interaction=self.interaction, timeout=self.timeout)
 
@@ -139,7 +134,7 @@ class EmbedChoices:
         self.value = -1
 
         if not self.entries:
-            await self.send_message(embed=Embed("Empty choices."), ephemeral=True)
+            await self.send_message(embed=Embed('Empty choices.'), ephemeral=True)
         else:
             await self.send_choices()
 
@@ -147,13 +142,14 @@ class EmbedChoices:
 
     async def send_message(self, *args, **kwargs):
         from neonbot import bot
+
         await bot.send_response(self.interaction, *args, **kwargs)
 
     async def send_choices(self) -> None:
-        embed = Embed(title=f"Choose 1-{len(self.entries)} below.")
+        embed = Embed(title=f'Choose 1-{len(self.entries)} below.')
 
         for index, entry in enumerate(self.entries, start=1):
-            embed.add_field(f"{index}. {entry['title']}", entry['url'], inline=False)
+            embed.add_field(f'{index}. {entry["title"]}', entry['url'], inline=False)
 
         buttons = self.get_buttons()
 
@@ -180,5 +176,6 @@ class EmbedChoices:
 
         buttons.append(Button(emoji=CHOICES_EMOJI[-1]))
 
-        return View.create_button(buttons, callback, interaction=self.interaction, timeout=self.timeout,
-                                  delete_on_timeout=True)
+        return View.create_button(
+            buttons, callback, interaction=self.interaction, timeout=self.timeout, delete_on_timeout=True
+        )

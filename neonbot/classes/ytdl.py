@@ -20,23 +20,21 @@ class Ytdl:
             extra_params = {}
         self.loop = bot.loop
         self.ytdl_opts = {
-            "default_search": "ytsearch5",
-            "format": "bestaudio/best",
-            "quiet": True,
-            "no_warnings": True,
-            "nocheckcertificate": True,
-            "ignoreerrors": False,
-            "extract_flat": "in_playlist",
+            'default_search': 'ytsearch5',
+            'format': 'bestaudio/best',
+            'quiet': True,
+            'no_warnings': True,
+            'nocheckcertificate': True,
+            'ignoreerrors': False,
+            'extract_flat': 'in_playlist',
             # "geo_bypass": True,
             # "geo_bypass_country": "PH",
-            "source_address": "0.0.0.0",
-            "outtmpl": YOUTUBE_DOWNLOADS_DIR + "/%(id)s",
-            "cachedir": YOUTUBE_CACHE_DIR,
-            "compat_opts": {
-                "no-youtube-unavailable-videos": True
-            },
-            "cookiefile": env.str("YTDL_COOKIES", default=None),
-            "external_downloader": "aria2c",
+            'source_address': '0.0.0.0',
+            'outtmpl': YOUTUBE_DOWNLOADS_DIR + '/%(id)s',
+            'cachedir': YOUTUBE_CACHE_DIR,
+            'compat_opts': {'no-youtube-unavailable-videos': True},
+            'cookiefile': env.str('YTDL_COOKIES', default=None),
+            'external_downloader': 'aria2c',
             **extra_params,
         }
 
@@ -50,9 +48,7 @@ class Ytdl:
                     with ThreadPoolExecutor(max_workers=1) as executor:
                         result = await self.loop.run_in_executor(
                             executor,
-                            functools.partial(
-                                ytdl.extract_info, keyword, download, process=True
-                            ),
+                            functools.partial(ytdl.extract_info, keyword, download, process=True),
                         )
 
                     return YtdlInfo(result)

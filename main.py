@@ -27,5 +27,5 @@ def main() -> None:
     bot.run(log_level=logging.getLevelName(env.str('LOG_LEVEL', default='ERROR')))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

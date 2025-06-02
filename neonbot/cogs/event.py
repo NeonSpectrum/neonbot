@@ -16,7 +16,7 @@ from neonbot.classes.gemini import GeminiChat
 from neonbot.classes.player import Player
 from neonbot.classes.voice_events import VoiceEvents
 from neonbot.enums import PlayerState
-from neonbot.models.guild import Guild
+from neonbot.models.guild import GuildModel
 from neonbot.utils import log, exceptions
 from neonbot.utils.functions import format_seconds, get_log_prefix, md_to_text, remove_ansi
 from neonbot.utils.functions import get_command_string
@@ -27,7 +27,7 @@ class Event(commands.Cog):
     @bot.event
     async def on_connect() -> None:
         await bot.fetch_app_info()
-        log.info(f"Logged in as {bot.user}\n")
+        log.info(f'Logged in as {bot.user}\n')
 
     @staticmethod
     @bot.event
@@ -38,7 +38,7 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_ready() -> None:
-        log.info("Ready!\n")
+        log.info('Ready!\n')
         bot.set_ready()
         bot.start_listeners()
         bot.load_player_cache()
@@ -53,12 +53,12 @@ class Event(commands.Cog):
         content = message.content
 
         if ctx.channel.type == discord.ChannelType.private:
-            if message.content.lower() == "invite":
+            if message.content.lower() == 'invite':
                 return await bot.send_invite_link(message)
 
-            log.info(f"DM from {ctx.author}: {message.content}")
+            log.info(f'DM from {ctx.author}: {message.content}')
             await bot.send_to_owner(
-                embed=Embed(title=f"DM from {ctx.author}", description=message.content),
+                embed=Embed(title=f'DM from {ctx.author}', description=message.content),
                 sender=ctx.author.id,
             )
             return
@@ -83,7 +83,9 @@ class Event(commands.Cog):
 
                 if len(response) > 2000:
                     response = md_to_text(response)
-                    await ctx.reply(file=discord.File(BytesIO(response.encode()), filename=gemini_chat.get_prompt() + '.txt'))
+                    await ctx.reply(
+                        file=discord.File(BytesIO(response.encode()), filename=gemini_chat.get_prompt() + '.txt')
+                    )
                 else:
                     await ctx.reply(gemini_chat.get_response())
 
@@ -99,41 +101,39 @@ class Event(commands.Cog):
         if interaction.type != discord.InteractionType.application_command:
             return
 
-        log.cmd(interaction, get_command_string(interaction), guild=interaction.guild or "N/A")
+        log.cmd(interaction, get_command_string(interaction), guild=interaction.guild or 'N/A')
 
     @staticmethod
     @bot.event
     async def on_app_command_error(interaction: discord.Interaction, error: AppCommandError) -> None:
-        error = getattr(error, "original", error)
+        error = getattr(error, 'original', error)
         ignored = discord.NotFound, commands.BadArgument, commands.CheckFailure, discord.app_commands.CheckFailure
         send_msg = (
             exceptions.YtdlError,
             discord.app_commands.AppCommandError,
             discord.app_commands.CommandInvokeError,
-            yt_dlp.utils.YoutubeDLError
+            yt_dlp.utils.YoutubeDLError,
         )
 
-        tb = traceback.format_exception(
-            error, value=error, tb=error.__traceback__
-        )
+        tb = traceback.format_exception(error, value=error, tb=error.__traceback__)
 
-        tb_msg = "\n".join(tb)[:1000] + "..."
+        tb_msg = '\n'.join(tb)[:1000] + '...'
 
         if type(error) in ignored:
             return
 
-        log.cmd(interaction, f"Command error: {error}")
+        log.cmd(interaction, f'Command error: {error}')
 
         if isinstance(error, send_msg):
             embed = Embed(remove_ansi(error))
         else:
-            embed = Embed("There was an error executing the command. Please contact the administrator.")
+            embed = Embed('There was an error executing the command. Please contact the administrator.')
 
         await bot.send_response(interaction, embed=embed, ephemeral=True)
 
         embed = Embed(
-            title="Traceback Exception",
-            description=f"Command: ```{get_command_string(interaction)}``````py\n{tb_msg}```",
+            title='Traceback Exception',
+            description=f'Command: ```{get_command_string(interaction)}``````py\n{tb_msg}```',
         )
 
         await bot.send_to_owner(embed=embed)
@@ -143,9 +143,9 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_guild_join(guild):
-        log.info(f"Executing init for {guild}...")
-        await Guild.create_default_collection(guild.id)
-        await Guild.create_instance(guild.id)
+        log.info(f'Executing init for {guild}...')
+        await GuildModel.create_default_collection(guild.id)
+        await GuildModel.create_instance(guild.id)
         await bot.sync_command(guild)
 
     @staticmethod
@@ -157,11 +157,7 @@ class Event(commands.Cog):
             return
 
         if player and player.connection:
-            voice_members = [
-                member
-                for member in player.connection.channel.members
-                if not member.bot
-            ]
+            voice_members = [member for member in player.connection.channel.members if not member.bot]
 
             if any(voice_members):
                 player.reset_timeout.cancel()
@@ -173,7 +169,7 @@ class Event(commands.Cog):
                 if not player.reset_timeout.is_running():
                     await player.reset_timeout.start()
 
-        server = Guild.get_instance(member.guild.id)
+        server = GuildModel.get_instance(member.guild.id)
 
         connect_channel = bot.get_channel(int(server.channel_log.connect or -1))
         deafen_channel = bot.get_channel(int(server.channel_log.deafen or -1))
@@ -210,13 +206,13 @@ class Event(commands.Cog):
         if after.bot:
             return
 
-        server = Guild.get_instance(after.guild.id)
+        server = GuildModel.get_instance(after.guild.id)
         status_log_channel = bot.get_channel(int(server.channel_log.status or -1))
         activity_log_channel = bot.get_channel(int(server.channel_log.activity or -1))
 
         if before.status != after.status:
             embed = Embed()
-            embed.description = f"**{before.mention}** is now **{after.status}**."
+            embed.description = f'**{before.mention}** is now **{after.status}**.'
 
             if status_log_channel:
                 embed.description = get_log_prefix() + embed.description
@@ -225,9 +221,7 @@ class Event(commands.Cog):
             before_activity = before.activities and before.activities[-1]
             after_activity = after.activities and after.activities[-1]
 
-            def get_image(
-                activity: Union[discord.Spotify, discord.Game, discord.Activity]
-            ) -> Optional[str]:
+            def get_image(activity: Union[discord.Spotify, discord.Game, discord.Activity]) -> Optional[str]:
                 if isinstance(activity, discord.Spotify):
                     return activity.album_cover_url
                 elif isinstance(activity, discord.Activity):
@@ -236,46 +230,56 @@ class Event(commands.Cog):
 
             embed = Embed(timestamp=datetime.now())
             embed.set_author(name=str(after), icon_url=after.display_avatar.url)
-            embed.description = f"**{before.mention}** is"
+            embed.description = f'**{before.mention}** is'
 
             if isinstance(after_activity, discord.Spotify):
-                if getattr(before_activity, "title", None) == after_activity.title:
+                if getattr(before_activity, 'title', None) == after_activity.title:
                     return
 
                 embed.set_thumbnail(get_image(after_activity))
-                embed.add_field("Title", after_activity.title)
-                embed.add_field("Artist", after_activity.artist)
+                embed.add_field('Title', after_activity.title)
+                embed.add_field('Artist', after_activity.artist)
             elif isinstance(after_activity, (discord.Activity, discord.Game)):
-                if getattr(before_activity, "name", None) == after_activity.name:
+                if getattr(before_activity, 'name', None) == after_activity.name:
                     return
 
                 embed.set_thumbnail(get_image(after_activity))
-                if getattr(after_activity, "details", None):
-                    embed.add_field("Details", escape_markdown(after_activity.details))
+                if getattr(after_activity, 'details', None):
+                    embed.add_field('Details', escape_markdown(after_activity.details))
 
-            if not after_activity and before_activity and before_activity.name == 'Custom Status' or \
-                not before_activity and after_activity and after_activity.name == 'Custom Status':
+            if (
+                not after_activity
+                and before_activity
+                and before_activity.name == 'Custom Status'
+                or not before_activity
+                and after_activity
+                and after_activity.name == 'Custom Status'
+            ):
                 return
 
-            if isinstance(before_activity, discord.CustomActivity) and \
-                isinstance(after_activity, discord.CustomActivity) and \
-                before_activity.name != after_activity.name:
-                embed.description += f" changed custom status from **{before_activity.name}** to **{after_activity.name}**."
+            if (
+                isinstance(before_activity, discord.CustomActivity)
+                and isinstance(after_activity, discord.CustomActivity)
+                and before_activity.name != after_activity.name
+            ):
+                embed.description += (
+                    f' changed custom status from **{before_activity.name}** to **{after_activity.name}**.'
+                )
             elif before_activity and not after_activity:
                 embed.set_thumbnail(get_image(before_activity))
-                embed.description += f" done {before_activity.type.name} **{before_activity.name}**."
+                embed.description += f' done {before_activity.type.name} **{before_activity.name}**.'
                 if hasattr(before_activity, 'start') and before_activity.start:
                     embed.add_field(
-                        name="Time Elapsed",
+                        name='Time Elapsed',
                         value=format_seconds(
                             datetime.now(tz=timezone.utc).timestamp() - before_activity.start.timestamp()
                         ),
                     )
             else:
-                embed.description += f" now {after_activity.type.name} **{after_activity.name}**."
+                embed.description += f' now {after_activity.type.name} **{after_activity.name}**.'
 
             if activity_log_channel:
-                embed.description = ":bust_in_silhouette:" + embed.description
+                embed.description = ':bust_in_silhouette:' + embed.description
                 await activity_log_channel.send(embed=embed)
 
 

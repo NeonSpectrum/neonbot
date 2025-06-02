@@ -31,9 +31,9 @@ class Youtube(WithInteraction):
 
         info = data[choice]
 
-        await self.send_message(embed=Embed(
-            t('music.added_to_queue', queue=len(player.queue) + 1, title=info['title'], url=info['url'])
-        ))
+        await self.send_message(
+            embed=Embed(t('music.added_to_queue', queue=len(player.queue) + 1, title=info['title'], url=info['url']))
+        )
 
         player.add_to_queue(info, requested=self.interaction.user)
 
@@ -55,9 +55,9 @@ class Youtube(WithInteraction):
             await self.send_message(embed=Embed(t('music.no_songs_available')))
             return
 
-        await self.send_message(embed=Embed(
-            t('music.added_to_queue', queue=len(player.queue) + 1, title=data['title'], url=data['url'])
-        ))
+        await self.send_message(
+            embed=Embed(t('music.added_to_queue', queue=len(player.queue) + 1, title=data['title'], url=data['url']))
+        )
 
         player.add_to_queue(data, requested=self.interaction.user)
 

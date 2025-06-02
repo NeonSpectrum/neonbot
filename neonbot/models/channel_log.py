@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class ChannelLog(BaseModel):
+class ChannelLogModel(BaseModel):
     connect: Optional[int] = None
     mute: Optional[int] = None
     deafen: Optional[int] = None

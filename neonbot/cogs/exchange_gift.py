@@ -11,9 +11,12 @@ from ..views.ExchangeGiftView import ExchangeGiftView
 
 
 class ExchangeGiftCog(commands.Cog):
-    exchangegift = app_commands.Group(name='exchangegift', description="Exchange gift commands",
-                                      guild_ids=bot.owner_guilds,
-                                      default_permissions=discord.Permissions(administrator=True))
+    exchangegift = app_commands.Group(
+        name='exchangegift',
+        description='Exchange gift commands',
+        guild_ids=bot.owner_guilds,
+        default_permissions=discord.Permissions(administrator=True),
+    )
 
     @exchangegift.command(name='start')
     async def exchangegift_start(self, interaction: discord.Interaction, discussion_id: str):
@@ -24,14 +27,14 @@ class ExchangeGiftCog(commands.Cog):
         exchange_gift_message = await interaction.channel.fetch_message(exchange_gift.message_id)
 
         if not exchange_gift_message:
-            message = await interaction.channel.send('@everyone', embed=embed,
-                                                     view=ExchangeGiftView(
-                                                         bot.get_channel(int(discussion_id)).jump_url))
+            message = await interaction.channel.send(
+                '@everyone', embed=embed, view=ExchangeGiftView(bot.get_channel(int(discussion_id)).jump_url)
+            )
             await exchange_gift.set_message_id(message.id)
         else:
-            await exchange_gift_message.edit(content='@everyone', embed=embed,
-                                             view=ExchangeGiftView(
-                                                 bot.get_channel(int(discussion_id)).jump_url))
+            await exchange_gift_message.edit(
+                content='@everyone', embed=embed, view=ExchangeGiftView(bot.get_channel(int(discussion_id)).jump_url)
+            )
 
         await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed('Done!'), ephemeral=True)
 
@@ -54,7 +57,8 @@ class ExchangeGiftCog(commands.Cog):
     async def exchangegift_shuffle(self, interaction: discord.Interaction):
         await ExchangeGift(interaction).shuffle()
         await cast(discord.InteractionResponse, interaction.response).send_message(
-            embed=Embed(f'Exchange gift has been shuffled.'))
+            embed=Embed('Exchange gift has been shuffled.')
+        )
 
     @exchangegift.command(name='send')
     @app_commands.default_permissions(administrator=True)
@@ -72,7 +76,7 @@ class ExchangeGiftCog(commands.Cog):
                 'There are some users without wishlist.\
                 Pleae add wishlist first before proceeding, so everyone can have a basis on what gift to buy.'
             )
-            embed.add_field('Users:', "\n".join(members))
+            embed.add_field('Users:', '\n'.join(members))
 
             await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
             return
@@ -87,8 +91,10 @@ class ExchangeGiftCog(commands.Cog):
             chosen_member = exchange_gift.get(member.chosen)
 
             embed = exchange_gift.create_embed_template()
-            embed.set_description('You have picked this person as your gift recipient for the event! '
-                                  'Please refer to the following details for more information, and remember to refrain from sharing this to others!')
+            embed.set_description(
+                'You have picked this person as your gift recipient for the event! '
+                'Please refer to the following details for more information, and remember to refrain from sharing this to others!'
+            )
             embed.add_field('Username', str(chosen_user))
             embed.add_field('Nickname', chosen_user.nick)
             embed.add_field('Budget', exchange_gift.budget, inline=False)
@@ -101,10 +107,10 @@ class ExchangeGiftCog(commands.Cog):
                 failed.append(user)
 
         embed = exchange_gift.create_embed_template()
-        embed.add_field('Sent successfully:', "\n".join(map(lambda u: u.mention, success)))
+        embed.add_field('Sent successfully:', '\n'.join(map(lambda u: u.mention, success)))
 
         if len(failed) > 0:
-            embed.add_field('Sent failed:', "\n".join(map(lambda u: u.mention, failed)))
+            embed.add_field('Sent failed:', '\n'.join(map(lambda u: u.mention, failed)))
 
         await interaction.followup.send(embed=embed)
 
@@ -112,7 +118,8 @@ class ExchangeGiftCog(commands.Cog):
     async def exchangegift_setbudget(self, interaction: discord.Interaction, budget: int):
         await ExchangeGift(interaction).set_budget(budget)
         await cast(discord.InteractionResponse, interaction.response).send_message(
-            embed=Embed(f'Budget has been set to `{budget}`.'))
+            embed=Embed(f'Budget has been set to `{budget}`.')
+        )
 
 
 # noinspection PyShadowingNames

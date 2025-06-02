@@ -12,7 +12,7 @@ from .. import bot
 from ..classes.embed import Embed
 from ..classes.player import Player
 from ..classes.select_choices import SelectChoices
-from ..models.guild import Guild
+from ..models.guild import GuildModel
 from ..utils.constants import ICONS
 
 
@@ -28,46 +28,48 @@ def stdout_io() -> Generator[StringIO, None, None]:
 class Administration(commands.Cog):
     """Administration commands that handles the management of the bot"""
 
-    server = app_commands.Group(name='server', description="Configure the settings of the bot for this server.",
-                                default_permissions=discord.Permissions(administrator=True),
-                                guild_only=True)
+    server = app_commands.Group(
+        name='server',
+        description='Configure the settings of the bot for this server.',
+        default_permissions=discord.Permissions(administrator=True),
+        guild_only=True,
+    )
 
-    settings = app_commands.Group(name='bot', description="Configure the settings of the bot globally.",
-                                  default_permissions=discord.Permissions(administrator=True),
-                                  guild_ids=bot.owner_guilds, guild_only=True)
+    settings = app_commands.Group(
+        name='bot',
+        description='Configure the settings of the bot globally.',
+        default_permissions=discord.Permissions(administrator=True),
+        guild_ids=bot.owner_guilds,
+        guild_only=True,
+    )
 
     @commands.command()
     @commands.is_owner()
     async def eval(self, ctx: commands.Context, *, code: str) -> None:
         """Evaluates a line/s of python code. *BOT_OWNER"""
 
-        variables = {
-            "bot": bot,
-            "ctx": ctx,
-            "player": Player.get_instance_from_guild(ctx.guild),
-            "Embed": Embed
-        }
+        variables = {'bot': bot, 'ctx': ctx, 'player': Player.get_instance_from_guild(ctx.guild), 'Embed': Embed}
 
-        if code.startswith("```") and code.endswith("```"):
-            code = "\n".join(code.splitlines()[1:-1])
+        if code.startswith('```') and code.endswith('```'):
+            code = '\n'.join(code.splitlines()[1:-1])
 
         try:
-            lines = "\n".join([f"  {i}" for i in code.splitlines()])
+            lines = '\n'.join([f'  {i}' for i in code.splitlines()])
 
             with stdout_io() as s:
-                exec(f"async def x():\n{lines}\n", variables)
-                await eval("x()", variables)
+                exec(f'async def x():\n{lines}\n', variables)
+                await eval('x()', variables)
             output = s.getvalue()
         except Exception as e:
             output = str(e)
-            await ctx.message.add_reaction("❌")
+            await ctx.message.add_reaction('❌')
         else:
-            await ctx.message.add_reaction("👌")
+            await ctx.message.add_reaction('👌')
 
         if output:
-            msg_array = [output[i: i + 1900] for i in range(0, len(output), 1900)]
+            msg_array = [output[i : i + 1900] for i in range(0, len(output), 1900)]
 
-            messages = ["```py\n" + msg.strip("\n") + "```" for msg in msg_array]
+            messages = ['```py\n' + msg.strip('\n') + '```' for msg in msg_array]
             for message in messages:
                 await ctx.send(message)
 
@@ -98,13 +100,14 @@ class Administration(commands.Cog):
     async def prefix(self, interaction: discord.Interaction, prefix: str) -> None:
         """Sets the prefix of the current server. *ADMINISTRATOR"""
 
-        server = Guild.get_instance(interaction.guild.id)
+        server = GuildModel.get_instance(interaction.guild.id)
         server.prefix = prefix
 
         await server.save_changes()
 
         await cast(discord.InteractionResponse, interaction.response).send_message(
-            embed=Embed(f"Prefix is now set to `{server.prefix}`."))
+            embed=Embed(f'Prefix is now set to `{server.prefix}`.')
+        )
 
     @settings.command(name='set-status')
     async def set_status(self, interaction: discord.Interaction, status: discord.Status) -> None:
@@ -119,7 +122,8 @@ class Administration(commands.Cog):
         await bot.update_presence()
 
         await cast(discord.InteractionResponse, interaction.response).send_message(
-            embed=Embed(f"Status is now set to {bot.settings.get('status')}."))
+            embed=Embed(f'Status is now set to {bot.settings.get("status")}.')
+        )
 
     @settings.command(name='set-presence')
     async def set_presence(
@@ -140,27 +144,28 @@ class Administration(commands.Cog):
 
         # noinspection PyUnresolvedReferences
         await cast(discord.InteractionResponse, interaction.response).send_message(
-            embed=Embed(
-                f"Presence is now set to **{presence_type.name} {name}**."
-            )
+            embed=Embed(f'Presence is now set to **{presence_type.name} {name}**.')
         )
 
     @server.command(name='set-logs')
     async def set_logs(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
         """Sets the log channel. *ADMINISTRATOR"""
 
-        guild = Guild.get_instance(interaction.guild_id)
-        select = SelectChoices('Select log type...', [
-            'connect',
-            'mute',
-            'deafen',
-            'server_deafen',
-            'server_mute',
-            'status',
-            'activity',
-            'stream',
-            'video',
-        ])
+        guild = GuildModel.get_instance(interaction.guild_id)
+        select = SelectChoices(
+            'Select log type...',
+            [
+                'connect',
+                'mute',
+                'deafen',
+                'server_deafen',
+                'server_mute',
+                'status',
+                'activity',
+                'stream',
+                'video',
+            ],
+        )
 
         async def callback(_):
             for value in select.values:
@@ -170,7 +175,7 @@ class Administration(commands.Cog):
 
             await interaction.edit_original_response(
                 embed=Embed(f'Log channel type `{", ".join(select.values)}` has been set to {channel.mention}'),
-                view=None
+                view=None,
             )
 
         select.callback = callback
@@ -184,7 +189,7 @@ class Administration(commands.Cog):
     async def get_logs(self, interaction: discord.Interaction):
         """Gets the log channels. *ADMINISTRATOR"""
 
-        guild = Guild.get_instance(interaction.guild_id)
+        guild = GuildModel.get_instance(interaction.guild_id)
 
         embed = Embed()
         embed.set_author('Log Channels', icon_url=bot.user.display_avatar)
@@ -199,13 +204,14 @@ class Administration(commands.Cog):
     async def set_chatgpt(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
         """Sets the chatgpt channel. *ADMINISTRATOR"""
 
-        guild = Guild.get_instance(interaction.guild_id)
+        guild = GuildModel.get_instance(interaction.guild_id)
         guild.chatgpt.channel_id = channel.id if enable else None
         await guild.save_changes()
 
         if guild.chatgpt.channel_id:
             await cast(discord.InteractionResponse, interaction.response).send_message(
-                embed=Embed(f"ChatGPT is now set to {channel.mention}."))
+                embed=Embed(f'ChatGPT is now set to {channel.mention}.')
+            )
 
             embed = Embed()
             embed.set_author('OpenAI - ChatGPT', url='https://chat.openai.com', icon_url=ICONS['openai'])
@@ -214,21 +220,21 @@ class Administration(commands.Cog):
             await channel.send(embed=embed)
         else:
             await cast(discord.InteractionResponse, interaction.response).send_message(
-                embed=Embed("ChatGPT is now disabled."))
+                embed=Embed('ChatGPT is now disabled.')
+            )
 
-    
     @app_commands.command(name='sync')
     @app_commands.allowed_installs(guilds=False, users=True)
     @app_commands.allowed_contexts(guilds=False, dms=True, private_channels=False)
     async def sync(self, interaction: discord.Interaction):
         if not bot.is_owner(interaction.user):
-            await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed(f"No permission."))
+            await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed('No permission.'))
             return
 
         await bot.sync_command()
         await asyncio.gather(*[self.bot(guild) for guild in guilds])
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed(f"Commands Synced!"))
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed('Commands Synced!'))
 
 
 # noinspection PyShadowingNames

@@ -6,23 +6,23 @@ from beanie import Document
 from beanie.odm.queries.find import FindOne
 
 from neonbot.enums import Repeat
-from neonbot.models.channel_log import ChannelLog
-from neonbot.models.chatgpt import ChatGPT
-from neonbot.models.exchange_gift import ExchangeGift
-from neonbot.models.music import Music
-from neonbot.models.panel import Panel
+from neonbot.models.channel_log import ChannelLogModel
+from neonbot.models.chatgpt import ChatGPTModel
+from neonbot.models.exchange_gift import ExchangeGiftModel
+from neonbot.models.music import MusicModel
+from neonbot.models.panel import PanelModel
 
 guilds = {}
 
 
-class Guild(Document):
+class GuildModel(Document):
     id: int
     prefix: str
-    channel_log: ChannelLog
-    music: Music
-    exchange_gift: Optional[ExchangeGift] = None
-    chatgpt: Optional[ChatGPT] = None
-    panel: Optional[Panel] = None
+    channel_log: ChannelLogModel
+    music: MusicModel
+    exchange_gift: Optional[ExchangeGiftModel] = None
+    chatgpt: Optional[ChatGPTModel] = None
+    panel: Optional[PanelModel] = None
 
     class Settings:
         name = 'guilds'
@@ -30,31 +30,31 @@ class Guild(Document):
         use_state_management = True
 
     async def refresh(self) -> None:
-        guilds[self.id] = await Guild.find_one(Guild.id == self.id)
+        guilds[self.id] = await GuildModel.find_one(GuildModel.id == self.id)
 
     @staticmethod
     async def create_instance(guild_id: int) -> None:
-        guilds[guild_id] = await Guild.find_one(Guild.id == guild_id)
+        guilds[guild_id] = await GuildModel.find_one(GuildModel.id == guild_id)
 
     @staticmethod
-    def get_instance(guild_id: int) -> Optional[Guild]:
+    def get_instance(guild_id: int) -> Optional[GuildModel]:
         return guilds[guild_id]
 
     @staticmethod
-    def get_model(guild_id: int) -> FindOne[Guild]:
-        return Guild.find_one(Guild.id == guild_id)
+    def get_model(guild_id: int) -> FindOne[GuildModel]:
+        return GuildModel.find_one(GuildModel.id == guild_id)
 
     @staticmethod
     async def create_default_collection(guild_id: int):
-        if await Guild.find_one(Guild.id == guild_id):
+        if await GuildModel.find_one(GuildModel.id == guild_id):
             return
 
-        await Guild(
+        await GuildModel(
             id=guild_id,
             prefix='.',
-            channel_log=ChannelLog(),
-            music=Music(volume=100, repeat=Repeat.OFF.value, shuffle=False, autoplay=False),
-            exchange_gift=ExchangeGift(members=[]),
-            chatgpt=ChatGPT(chats=[]),
-            panel=Panel(servers={})
+            channel_log=ChannelLogModel(),
+            music=MusicModel(volume=100, repeat=Repeat.OFF.value, shuffle=False, autoplay=False),
+            exchange_gift=ExchangeGiftModel(members=[]),
+            chatgpt=ChatGPTModel(chats=[]),
+            panel=PanelModel(servers={}),
         ).create()

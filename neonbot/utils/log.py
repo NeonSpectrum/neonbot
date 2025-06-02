@@ -13,19 +13,15 @@ class Log(logging.Logger):
         self._log: Callable
         super().__init__(*args, **kwargs)
 
-        self.formatter = logging.Formatter(LOG_FORMAT, "%Y-%m-%d %I:%M:%S %p")
+        self.formatter = logging.Formatter(LOG_FORMAT, '%Y-%m-%d %I:%M:%S %p')
 
-        self.setLevel(
-            logging.DEBUG
-            if self.name.startswith("neonbot")
-            else logging.ERROR
-        )
+        self.setLevel(logging.DEBUG if self.name.startswith('neonbot') else logging.ERROR)
 
         self.set_file_handler()
         self.set_console_handler()
 
     def set_file_handler(self) -> None:
-        file = logging.FileHandler(filename="debug.log", encoding="utf-8", mode="a")
+        file = logging.FileHandler(filename='debug.log', encoding='utf-8', mode='a')
         file.setFormatter(self.formatter)
         self.addHandler(file)
 
@@ -60,5 +56,5 @@ class Log(logging.Logger):
     Channel: {channel}
     User: {user}
     Message: {str(msg)}""",
-            ()
+            (),
         )

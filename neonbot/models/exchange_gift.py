@@ -9,7 +9,7 @@ class ExchangeGiftMember(BaseModel):
     chosen: Optional[int] = None
 
 
-class ExchangeGift(BaseModel):
+class ExchangeGiftModel(BaseModel):
     message_id: Optional[int] = None
     members: List[ExchangeGiftMember]
     budget: Optional[int] = None
