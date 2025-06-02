@@ -1,12 +1,12 @@
 import asyncio
 import os
 import re
+import signal
 import sys
 from glob import glob
 from os import sep
-import signal
 from time import time
-from typing import Optional, Tuple, Union, Any, Type, cast
+from typing import Any, Optional, Tuple, Type, Union, cast
 
 import discord
 import psutil

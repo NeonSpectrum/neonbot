@@ -1,9 +1,9 @@
 import discord
+import tiktoken
 from discord.utils import find
 from envparse import env
-import tiktoken
 
-from neonbot.models.chatgpt import Message, Chat
+from neonbot.models.chatgpt import Chat, Message
 from neonbot.models.guild import GuildModel
 
 

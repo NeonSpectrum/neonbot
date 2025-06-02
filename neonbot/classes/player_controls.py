@@ -3,11 +3,11 @@ from typing import TYPE_CHECKING
 import discord
 from i18n import t
 
-from .embed import Embed
-from .view import View, Button
 from .. import bot
-from ..enums import Repeat, PlayerState
+from ..enums import PlayerState, Repeat
 from ..utils import log
+from .embed import Embed
+from .view import Button, View
 
 if TYPE_CHECKING:
     from .player import Player

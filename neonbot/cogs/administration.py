@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 import sys
 from io import StringIO
@@ -232,7 +233,10 @@ class Administration(commands.Cog):
             return
 
         await bot.sync_command()
-        await asyncio.gather(*[self.bot(guild) for guild in guilds])
+
+        guilds = [guild async for guild in self.fetch_guilds()]
+
+        await asyncio.gather(*[self.bot.sync_command(guild) for guild in guilds])
 
         await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed('Commands Synced!'))
 

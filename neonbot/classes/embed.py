@@ -4,8 +4,8 @@ from typing import Any, Optional, cast
 
 import discord
 
-from .view import View, Button
 from ..utils.constants import CHOICES_EMOJI, PAGINATION_EMOJI
+from .view import Button, View
 
 
 class Embed(discord.Embed):

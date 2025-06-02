@@ -4,14 +4,14 @@ import asyncio
 import functools
 from concurrent.futures import ThreadPoolExecutor
 
-from envparse import env
 import yt_dlp
+from envparse import env
 
-from .ytdl_info import YtdlInfo
 from .. import bot
 from ..utils import log
-from ..utils.constants import YOUTUBE_DOWNLOADS_DIR, YOUTUBE_CACHE_DIR
+from ..utils.constants import YOUTUBE_CACHE_DIR, YOUTUBE_DOWNLOADS_DIR
 from ..utils.exceptions import YtdlError
+from .ytdl_info import YtdlInfo
 
 
 class Ytdl:

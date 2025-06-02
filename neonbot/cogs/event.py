@@ -1,7 +1,7 @@
 import traceback
 from datetime import datetime, timezone
 from io import BytesIO
-from typing import Union, Optional
+from typing import Optional, Union
 
 import discord
 import yt_dlp.utils
@@ -17,9 +17,8 @@ from neonbot.classes.player import Player
 from neonbot.classes.voice_events import VoiceEvents
 from neonbot.enums import PlayerState
 from neonbot.models.guild import GuildModel
-from neonbot.utils import log, exceptions
-from neonbot.utils.functions import format_seconds, get_log_prefix, md_to_text, remove_ansi
-from neonbot.utils.functions import get_command_string
+from neonbot.utils import exceptions, log
+from neonbot.utils.functions import format_seconds, get_command_string, get_log_prefix, md_to_text, remove_ansi
 
 
 class Event(commands.Cog):

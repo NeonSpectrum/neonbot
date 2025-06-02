@@ -7,13 +7,13 @@ import discord
 from envparse import env
 from i18n import t
 
+from .. import bot
+from ..utils import log
+from ..utils.exceptions import ApiError, YtdlError
 from .embed import Embed
 from .player import Player
 from .with_interaction import WithInteraction
 from .ytdl import Ytdl
-from .. import bot
-from ..utils import log
-from ..utils.exceptions import ApiError, YtdlError
 
 
 class Spotify(WithInteraction):

@@ -1,13 +1,13 @@
 import asyncio
 import re
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from typing import Union
-import pytz
 
 import discord
-from envparse import env
 import markdown
+import pytz
 from bs4 import BeautifulSoup
+from envparse import env
 
 
 async def shell_exec(command: str) -> str:
