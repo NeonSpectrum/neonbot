@@ -24,6 +24,9 @@ def load_context_menu(bot):
         )
 
     @bot.tree.context_menu(name='Profile')
+    @app_commands.command(name='profile')
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def profile(interaction: discord.Interaction, member: discord.Member):
         user = await bot.fetch_user(member.id)
         roles = member.roles[1:]
