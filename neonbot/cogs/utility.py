@@ -130,21 +130,19 @@ class Utility(commands.Cog):
             embed = await generate_profile_member_embed(user)
         else:
             embed = await generate_profile_user_embed(user)
-        await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed, ephemeral=True)
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
 
     @app_commands.command(name='avatar')
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def avatar(self, interaction: discord.Interaction, user: Union[discord.User, discord.Member]) -> None:
-        await cast(discord.InteractionResponse, interaction.response).send_message(
-            user.display_avatar.url, ephemeral=True
-        )
+        await cast(discord.InteractionResponse, interaction.response).send_message(user.display_avatar.url)
 
     @app_commands.command(name='banner')
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def banner(self, interaction: discord.Interaction, user: Union[discord.User, discord.Member]) -> None:
-        await cast(discord.InteractionResponse, interaction.response).send_message(user.banner.url, ephemeral=True)
+        await cast(discord.InteractionResponse, interaction.response).send_message(user.banner.url)
 
 
 # noinspection PyShadowingNames
