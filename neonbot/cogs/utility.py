@@ -126,7 +126,7 @@ class Utility(commands.Cog):
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def profile(self, interaction: discord.Interaction, user: discord.User) -> None:
-        embed = await generate_profile_embed(user)
+        embed = await generate_profile_embed(bot, user)
         await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed, ephemeral=True)
 
 
