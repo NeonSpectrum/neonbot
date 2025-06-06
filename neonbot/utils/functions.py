@@ -127,7 +127,6 @@ async def generate_profile_user_embed(user: discord.User):
     embed.set_footer(str(user.id))
     embed.set_thumbnail(user.display_avatar.url)
     embed.add_field('Created', format_dt(user.created_at, 'F'), inline=False)
-    embed.add_field('Joined', format_dt(user.joined_at, 'F'), inline=True)
     embed.add_field('Badges', '\n'.join(flags) if len(flags) > 0 else 'None', inline=False)
 
     if user.banner:
