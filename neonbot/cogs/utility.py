@@ -132,6 +132,14 @@ class Utility(commands.Cog):
             embed = await generate_profile_user_embed(user)
         await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed, ephemeral=True)
 
+    @app_commands.command(name='avatar')
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def avatar(self, interaction: discord.Interaction, user: Union[discord.User, discord.Member]) -> None:
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            user.display_avatar.url, ephemeral=True
+        )
+
 
 # noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:
