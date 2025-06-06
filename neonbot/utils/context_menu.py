@@ -3,12 +3,11 @@ from typing import cast
 import discord
 from discord import app_commands
 
-from neonbot import bot
 from neonbot.classes.embed import Embed
 from neonbot.utils.functions import generate_profile_embed
 
 
-def load_context_menu():
+def load_context_menu(bot):
     @bot.tree.context_menu(name='Add to Member')
     @app_commands.guilds(discord.Object(id=1008661677446807713))
     @app_commands.default_permissions(administrator=True)
