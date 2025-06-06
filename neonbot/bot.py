@@ -67,7 +67,7 @@ class NeonBot(commands.Bot):
         self.scheduler.start()
 
         await self.add_cogs()
-        load_context_menu(self)
+        load_context_menu()
 
         guilds = [guild async for guild in self.fetch_guilds()]
 
