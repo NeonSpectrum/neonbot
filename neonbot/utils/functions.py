@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from discord.utils import format_dt
 from envparse import env
 
+from neonbot import bot
 from neonbot.classes.embed import Embed
 
 
@@ -97,6 +98,8 @@ def remove_ansi(text):
 
 
 async def generate_profile_member_embed(member: discord.Member):
+    user = await bot.fetch_user(member.id)
+
     roles = member.roles[1:]
     # noinspection PyUnresolvedReferences
     flags = [flag.name.title().replace('_', ' ') for flag in member.public_flags.all()]
@@ -112,13 +115,15 @@ async def generate_profile_member_embed(member: discord.Member):
     embed.add_field('Roles', ' '.join([role.mention for role in roles]) if len(roles) > 0 else 'None', inline=False)
     embed.add_field('Badges', '\n'.join(flags) if len(flags) > 0 else 'None', inline=False)
 
-    if member.banner:
-        embed.set_image(member.banner.url)
+    if user.banner:
+        embed.set_image(user.banner.url)
 
     return embed
 
 
 async def generate_profile_user_embed(user: discord.User):
+    user = await bot.fetch_user(user.id)
+
     # noinspection PyUnresolvedReferences
     flags = [flag.name.title().replace('_', ' ') for flag in user.public_flags.all()]
 

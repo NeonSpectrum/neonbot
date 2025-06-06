@@ -142,6 +142,7 @@ class Utility(commands.Cog):
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def banner(self, interaction: discord.Interaction, user: Union[discord.User, discord.Member]) -> None:
+        user = await bot.fetch_user(user.id)
         await cast(discord.InteractionResponse, interaction.response).send_message(user.banner.url)
 
 
