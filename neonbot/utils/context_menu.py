@@ -4,7 +4,7 @@ import discord
 from discord import app_commands
 
 from neonbot.classes.embed import Embed
-from neonbot.utils.functions import generate_profile_embed
+from neonbot.utils.functions import generate_profile_member_embed
 
 
 def load_context_menu(bot):
@@ -24,5 +24,5 @@ def load_context_menu(bot):
 
     @bot.tree.context_menu(name='Profile')
     async def profile(interaction: discord.Interaction, member: discord.Member):
-        embed = await generate_profile_embed(member)
+        embed = await generate_profile_member_embed(member)
         await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed, ephemeral=True)
