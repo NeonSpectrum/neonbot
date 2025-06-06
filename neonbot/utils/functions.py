@@ -107,13 +107,15 @@ async def generate_profile_member_embed(member: discord.Member):
     embed = Embed(member.mention, timestamp=datetime.now())
     embed.set_author(str(member), icon_url=member.display_avatar.url)
     embed.set_footer(str(member.id))
-    embed.set_thumbnail(member.display_avatar.url)
     embed.add_field('Created', format_dt(member.created_at, 'F'), inline=False)
     embed.add_field('Joined', format_dt(member.joined_at, 'F'), inline=True)
     if member.premium_since:
         embed.add_field('Server Booster since', format_dt(member.premium_since, 'F'), inline=False)
     embed.add_field('Roles', ' '.join([role.mention for role in roles]) if len(roles) > 0 else 'None', inline=False)
     embed.add_field('Badges', '\n'.join(flags) if len(flags) > 0 else 'None', inline=False)
+
+    if user.display_avatar:
+        embed.set_thumbnail(member.display_avatar.url)
 
     if user.banner:
         embed.set_image(user.banner.url)
@@ -130,9 +132,11 @@ async def generate_profile_user_embed(user: discord.User):
     embed = Embed(user.mention, timestamp=datetime.now())
     embed.set_author(str(user), icon_url=user.display_avatar.url)
     embed.set_footer(str(user.id))
-    embed.set_thumbnail(user.display_avatar.url)
     embed.add_field('Created', format_dt(user.created_at, 'F'), inline=False)
     embed.add_field('Badges', '\n'.join(flags) if len(flags) > 0 else 'None', inline=False)
+
+    if user.display_avatar:
+        embed.set_thumbnail(user.display_avatar.url)
 
     if user.banner:
         embed.set_image(user.banner.url)

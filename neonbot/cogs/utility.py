@@ -136,6 +136,12 @@ class Utility(commands.Cog):
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def avatar(self, interaction: discord.Interaction, user: Union[discord.User, discord.Member]) -> None:
+        if not user.display_avatar:
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed('Avatar not found.'), ephemeral=True
+            )
+            return
+
         await cast(discord.InteractionResponse, interaction.response).send_message(user.display_avatar.url)
 
     @app_commands.command(name='banner')
@@ -143,6 +149,13 @@ class Utility(commands.Cog):
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def banner(self, interaction: discord.Interaction, user: Union[discord.User, discord.Member]) -> None:
         user = await bot.fetch_user(user.id)
+
+        if not user.banner:
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed('Banner not found.'), ephemeral=True
+            )
+            return
+
         await cast(discord.InteractionResponse, interaction.response).send_message(user.banner.url)
 
 
