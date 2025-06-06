@@ -24,5 +24,5 @@ def load_context_menu(bot):
 
     @bot.tree.context_menu(name='Profile')
     async def profile(interaction: discord.Interaction, member: discord.Member):
-        embed = await generate_profile_member_embed(member)
+        embed = await generate_profile_member_embed(interaction, member)
         await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed, ephemeral=True)
