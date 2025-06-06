@@ -125,29 +125,37 @@ class Utility(commands.Cog):
     @app_commands.command(name='profile')
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    async def profile(self, interaction: discord.Interaction, user: Union[discord.User, discord.Member]) -> None:
+    async def profile(
+        self, interaction: discord.Interaction, user: Union[discord.User, discord.Member], ephemeral: bool = False
+    ) -> None:
         if isinstance(user, discord.Member):
             embed = await generate_profile_member_embed(interaction, user)
         else:
             embed = await generate_profile_user_embed(interaction, user)
-        await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
+        await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed, ephemeral=ephemeral)
 
     @app_commands.command(name='avatar')
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    async def avatar(self, interaction: discord.Interaction, user: Union[discord.User, discord.Member]) -> None:
+    async def avatar(
+        self, interaction: discord.Interaction, user: Union[discord.User, discord.Member], ephemeral: bool = False
+    ) -> None:
         if not user.display_avatar:
             await cast(discord.InteractionResponse, interaction.response).send_message(
                 embed=Embed('Avatar not found.'), ephemeral=True
             )
             return
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(user.display_avatar.url)
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            user.display_avatar.url, ephemeral=ephemeral
+        )
 
     @app_commands.command(name='banner')
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    async def banner(self, interaction: discord.Interaction, user: Union[discord.User, discord.Member]) -> None:
+    async def banner(
+        self, interaction: discord.Interaction, user: Union[discord.User, discord.Member], ephemeral: bool = False
+    ) -> None:
         user = await bot.fetch_user(user.id)
 
         if not user.banner:
@@ -156,7 +164,7 @@ class Utility(commands.Cog):
             )
             return
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(user.banner.url)
+        await cast(discord.InteractionResponse, interaction.response).send_message(user.banner.url, ephemeral=ephemeral)
 
 
 # noinspection PyShadowingNames
