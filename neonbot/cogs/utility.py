@@ -2,7 +2,7 @@ import os
 import random
 from datetime import datetime
 from time import time
-from typing import cast
+from typing import Union, cast
 
 import discord
 import psutil
@@ -16,7 +16,7 @@ from neonbot import __author__, __title__, __version__, bot
 from neonbot.classes.embed import Embed
 from neonbot.classes.gemini import GeminiChat
 from neonbot.utils.constants import ICONS
-from neonbot.utils.functions import format_seconds, generate_profile_embed
+from neonbot.utils.functions import format_seconds, generate_profile_member_embed, generate_profile_user_embed
 
 
 class Utility(commands.Cog):
@@ -125,8 +125,11 @@ class Utility(commands.Cog):
     @app_commands.command(name='profile')
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    async def profile(self, interaction: discord.Interaction, user: discord.User) -> None:
-        embed = await generate_profile_embed(bot, user)
+    async def profile(self, interaction: discord.Interaction, user: Union[discord.User, discord.Member]) -> None:
+        if isinstance(user, discord.Member):
+            embed = await generate_profile_member_embed(bot, user)
+        else:
+            embed = await generate_profile_user_embed(bot, user)
         await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed, ephemeral=True)
 
 

@@ -96,8 +96,7 @@ def remove_ansi(text):
     return ansi_escape.sub('', text)
 
 
-async def generate_profile_embed(bot, member):
-    user = await bot.fetch_user(member.id)
+async def generate_profile_member_embed(member: discord.Member):
     roles = member.roles[1:]
     # noinspection PyUnresolvedReferences
     flags = [flag.name.title().replace('_', ' ') for flag in member.public_flags.all()]
@@ -111,6 +110,24 @@ async def generate_profile_embed(bot, member):
     if member.premium_since:
         embed.add_field('Server Booster since', format_dt(member.premium_since, 'F'), inline=False)
     embed.add_field('Roles', ' '.join([role.mention for role in roles]) if len(roles) > 0 else 'None', inline=False)
+    embed.add_field('Badges', '\n'.join(flags) if len(flags) > 0 else 'None', inline=False)
+
+    if member.banner:
+        embed.set_image(member.banner.url)
+
+    return embed
+
+
+async def generate_profile_user_embed(user: discord.User):
+    # noinspection PyUnresolvedReferences
+    flags = [flag.name.title().replace('_', ' ') for flag in user.public_flags.all()]
+
+    embed = Embed(user.mention, timestamp=datetime.now())
+    embed.set_author(str(user), icon_url=user.display_avatar.url)
+    embed.set_footer(str(user.id))
+    embed.set_thumbnail(user.display_avatar.url)
+    embed.add_field('Created', format_dt(user.created_at, 'F'), inline=False)
+    embed.add_field('Joined', format_dt(user.joined_at, 'F'), inline=True)
     embed.add_field('Badges', '\n'.join(flags) if len(flags) > 0 else 'None', inline=False)
 
     if user.banner:
