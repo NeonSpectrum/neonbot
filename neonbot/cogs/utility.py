@@ -140,6 +140,12 @@ class Utility(commands.Cog):
             user.display_avatar.url, ephemeral=True
         )
 
+    @app_commands.command(name='banner')
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def banner(self, interaction: discord.Interaction, user: Union[discord.User, discord.Member]) -> None:
+        await cast(discord.InteractionResponse, interaction.response).send_message(user.banner.url, ephemeral=True)
+
 
 # noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:
