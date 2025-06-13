@@ -16,10 +16,10 @@ from jikanpy import AioJikan
 from neonbot import bot
 from neonbot.classes.chatgpt.chatgpt import ChatGPT
 from neonbot.classes.embed import Embed, EmbedChoices, PaginationEmbed
+from neonbot.classes.google import get_google_access_token
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
 from neonbot.utils.exceptions import ApiError
-from neonbot.utils.functions import shell_exec
 
 
 class Search(commands.Cog):
@@ -379,7 +379,7 @@ class Search(commands.Cog):
     async def translate(self, interaction: discord.Interaction, lang: str, sentence: str) -> None:
         """Translates sentence based on language code given."""
 
-        google_token = await shell_exec('gcloud auth application-default print-access-token')
+        google_token = await get_google_access_token()
 
         query = {'q': sentence, 'format': 'text', 'target': lang}
 

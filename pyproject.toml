@@ -30,7 +30,8 @@ dependencies = [
     "ytmusicapi (>=1.10.3,<2.0.0)",
     "apscheduler (>=3.11.0,<4.0.0)",
     "discord-py[voice] (>=2.5.2,<3.0.0)",
-    "jikanpy-v4 (>=1.0.2,<2.0.0)"
+    "jikanpy-v4 (>=1.0.2,<2.0.0)",
+    "google-auth (>=2.40.3,<3.0.0)"
 ]
 
 
