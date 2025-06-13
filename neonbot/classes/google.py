@@ -13,7 +13,7 @@ async def get_google_access_token():
 
     def get_credentials(creds=None):
         if creds is None:
-            creds, _ = google.auth.default()
+            creds, _ = google.auth.default(scopes=['https://www.googleapis.com/auth/cloud-platform'])
         req = google.auth.transport.requests.Request()
         creds.refresh(req)
         return creds
