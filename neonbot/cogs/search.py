@@ -406,7 +406,7 @@ class Search(commands.Cog):
 
         embed = Embed()
         embed.set_author(name='Google Translate', icon_url=ICONS['googletranslate'])
-        embed.add_field(f'**{self.lang_list[source_lang]}**', sentence)
+        embed.add_field(f'**{self.lang_list[source_lang]}**', sentence, inline=False)
         embed.add_field(f'**{self.lang_list[target_lang]}**', translated_text)
 
         await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
