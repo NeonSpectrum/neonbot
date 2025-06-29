@@ -29,6 +29,15 @@ async def in_voice(interaction: discord.Interaction) -> bool:
     return True
 
 
+async has_permission(interaction: discord.Interaction) -> bool:
+    if not interaction.channel.permission_for(bot.user).send_messages:
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed('I don\'t have permission to send message on this channel.'), ephemeral=True
+        )
+        return False
+    return True
+
+
 async def has_player(interaction: discord.Interaction) -> bool:
     player = await Player.get_instance(interaction)
 
@@ -44,6 +53,7 @@ class Music(commands.Cog):
     @app_commands.command(name='play')
     @app_commands.describe(value='Enter keyword or url...')
     @app_commands.check(in_voice)
+    @app_commands.check(has_permission)
     @app_commands.guild_only()
     async def play(self, interaction: discord.Interaction, value: str, play_now: Optional[bool] = False):
         """Searches the url or the keyword and add it to queue. This will queue the first search."""
@@ -72,6 +82,7 @@ class Music(commands.Cog):
     @app_commands.command(name='playsearch')
     @app_commands.describe(value='Enter keyword...')
     @app_commands.check(in_voice)
+    @app_commands.check(has_permission)
     @app_commands.guild_only()
     async def playsearch(self, interaction: discord.Interaction, value: str, play_now: Optional[bool] = False):
         """Searches the keyword, choose from the list, add it to queue."""
