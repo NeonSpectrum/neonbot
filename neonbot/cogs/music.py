@@ -30,7 +30,7 @@ async def in_voice(interaction: discord.Interaction) -> bool:
 
 
 async def has_permission(interaction: discord.Interaction) -> bool:
-    if not interaction.channel.permissions_for(bot.user).send_messages:
+    if not interaction.channel.permissions_for(interaction.guild.me).send_messages:
         await cast(discord.InteractionResponse, interaction.response).send_message(
             embed=Embed('I don\'t have permission to send message on this channel.'), ephemeral=True
         )
