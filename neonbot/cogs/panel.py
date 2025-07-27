@@ -38,7 +38,6 @@ class PanelCog(commands.Cog):
             return
 
         server.panel.servers[server_id] = PanelServer(channel_id=interaction.channel_id)
-
         await server.save_changes()
 
         Panel.start_listener(interaction.guild.id)
@@ -63,6 +62,7 @@ class PanelCog(commands.Cog):
             await bot.delete_message(await bot.get_channel(panel.channel_id).fetch_message(panel.message_id))
 
         server.panel.servers[server_id] = PanelServer()
+        await server.save_changes()
 
         await cast(discord.InteractionResponse, interaction.response).send_message(
             embed=Embed(f'Removed monitor for `{server_id}` on {interaction.channel.mention}'), ephemeral=True
