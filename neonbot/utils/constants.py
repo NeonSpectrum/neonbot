@@ -49,6 +49,7 @@ FFMPEG_BEFORE_OPTIONS = '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max
 FFMPEG_OPTIONS = '-vn'
 
 YOUTUBE_REGEX = r'^(http(s)?:\/\/)?(((w){3}|music).)?youtu(be|.be)?(\.com)?\/.+'
+YOUTUBE_PLAYLIST_REGEX = r'(?:https?://)?(?:www\.)?(?:youtube\.com/playlist\?list=|youtu\.be/playlist\?list=|youtube\.com/watch\?v=[^&]+&list=)([a-zA-Z0-9_-]+)'
 SPOTIFY_REGEX = r'^(spotify:|https:\/\/[a-z]+\.spotify\.com\/)'
 
 IGNORED_DELETEONCMD = ['eval', 'prune']

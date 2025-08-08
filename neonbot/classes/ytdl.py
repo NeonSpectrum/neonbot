@@ -28,7 +28,6 @@ class Ytdl:
             'no_warnings': True,
             'nocheckcertificate': True,
             'ignoreerrors': False,
-            'extract_flat': 'in_playlist',
             # "geo_bypass": True,
             # "geo_bypass_country": "PH",
             'source_address': '0.0.0.0',

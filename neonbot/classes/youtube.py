@@ -7,7 +7,7 @@ from neonbot.classes.embed import Embed
 from neonbot.classes.player import Player
 from neonbot.classes.with_interaction import WithInteraction
 from neonbot.classes.ytdl import Ytdl
-from neonbot.utils.constants import YOUTUBE_REGEX
+from neonbot.utils.constants import YOUTUBE_PLAYLIST_REGEX, YOUTUBE_REGEX
 from neonbot.utils.exceptions import YtdlError
 
 
@@ -20,9 +20,9 @@ class Youtube(WithInteraction):
         try:
             url = 'https://music.youtube.com/search?q=' + urllib.parse.quote_plus(keyword) + '#songs'
             ytdl_info = await Ytdl({'playlistend': 1}).extract_info(url)
-            data = ytdl_info.get_track()
+            data = ytdl_info.get_list()[0]
 
-        except YtdlError:
+        except (YtdlError, IndexError):
             await self.send_message(embed=Embed(t('music.no_songs_available')))
             return
 
@@ -41,8 +41,16 @@ class Youtube(WithInteraction):
 
         await self.send_message(embed=Embed(t('music.fetching_youtube_url')))
 
+        is_playlist_url = re.search(YOUTUBE_PLAYLIST_REGEX, url)
+
         try:
-            ytdl_info = await Ytdl().extract_info(url)
+            ytdl_info = await Ytdl(
+                {
+                    'extract_flat': 'in_playlist',
+                }
+                if is_playlist_url
+                else None
+            ).extract_info(url)
         except YtdlError:
             await self.send_message(embed=Embed(t('music.no_songs_available')))
             return

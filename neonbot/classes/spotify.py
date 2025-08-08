@@ -207,13 +207,17 @@ class Spotify(WithInteraction):
             return None
 
     async def process_playlist(self, playlist):
+        is_single_track = len(playlist) == 1
+
         async def search(item):
             track = item['track'] if self.is_playlist else item
 
             try:
                 keyword = f'{" ".join(artist["name"] for artist in track["artists"])} {track["name"]}'
                 url = 'https://music.youtube.com/search?q=' + urllib.parse.quote_plus(keyword) + '#songs'
-                ytdl_info = await Ytdl().extract_info(url)
+                ytdl_info = await Ytdl({'extract_flat': 'in_playlist'} if not is_single_track else None).extract_info(
+                    url
+                )
             except YtdlError:
                 return None
 
