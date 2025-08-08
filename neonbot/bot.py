@@ -16,14 +16,14 @@ from discord.ext import commands
 from discord.utils import oauth_url
 from envparse import env
 
-from . import __version__
-from .classes.database import Database
-from .models.guild import GuildModel
-from .models.setting import SettingModel
-from .utils import log
-from .utils.constants import PERMISSIONS
-from .utils.context_menu import load_context_menu
-from .views.ExchangeGiftView import ExchangeGiftView
+from neonbot import __version__
+from neonbot.classes.database import Database
+from neonbot.models.guild import GuildModel
+from neonbot.models.setting import SettingModel
+from neonbot.utils import log
+from neonbot.utils.constants import PERMISSIONS
+from neonbot.utils.context_menu import load_context_menu
+from neonbot.views.ExchangeGiftView import ExchangeGiftView
 
 
 class NeonBot(commands.Bot):
@@ -88,7 +88,7 @@ class NeonBot(commands.Bot):
         if self.is_listeners_done:
             return
 
-        from .classes.panel import Panel
+        from neonbot.classes.panel import Panel
 
         for guild in self.guilds:
             server = GuildModel.get_instance(guild.id)
@@ -104,7 +104,7 @@ class NeonBot(commands.Bot):
         if not env.bool('LOAD_PLAYER_CACHE', default=False) or self.is_player_cache_loaded:
             return
 
-        from .classes.player import Player
+        from neonbot.classes.player import Player
 
         for guild in self.guilds:
             if Player.has_cache(guild.id):
@@ -183,7 +183,7 @@ class NeonBot(commands.Bot):
         await self.get_user(self.app_info.owner.id).send(*args, **kwargs)
 
     async def close(self) -> None:
-        from .classes.player import Player
+        from neonbot.classes.player import Player
 
         if self.scheduler:
             log.info('Stopping scheduler...')

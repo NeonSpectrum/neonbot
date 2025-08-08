@@ -4,10 +4,10 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from .. import bot
-from ..classes.embed import Embed
-from ..classes.exchange_gift import ExchangeGift
-from ..views.ExchangeGiftView import ExchangeGiftView
+from neonbot import bot
+from neonbot.classes.embed import Embed
+from neonbot.classes.exchange_gift import ExchangeGift
+from neonbot.views.ExchangeGiftView import ExchangeGiftView
 
 
 class ExchangeGiftCog(commands.Cog):

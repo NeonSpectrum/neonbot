@@ -20,14 +20,12 @@ class Youtube(WithInteraction):
         await self.send_message(embed=Embed(t('music.searching')))
 
         try:
-            start_time = time()
             video_id = await YTMusic().search(keyword)
-            log.info(f'YTMusic.search finished after {(time() - start_time):.2f}s')
 
             if not video_id:
                 raise YtdlError()
 
-            ytdl_info = await Ytdl().extract_info('https://music.youtube.com/watch?v=' + str(video_id))
+            ytdl_info = await Ytdl().extract_info('https://www.youtube.com/watch?v=' + str(video_id))
             data = ytdl_info.get_track()
 
         except (YtdlError, IndexError):
@@ -49,16 +47,8 @@ class Youtube(WithInteraction):
 
         await self.send_message(embed=Embed(t('music.fetching_youtube_url')))
 
-        is_playlist_url = re.search(YOUTUBE_PLAYLIST_REGEX, url)
-
         try:
-            ytdl_info = await Ytdl(
-                {
-                    'extract_flat': 'in_playlist',
-                }
-                if is_playlist_url
-                else None
-            ).extract_info(url)
+            ytdl_info = await Ytdl().extract_info(url)
         except YtdlError:
             await self.send_message(embed=Embed(t('music.no_songs_available')))
             return

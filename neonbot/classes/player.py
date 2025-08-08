@@ -356,7 +356,7 @@ class Player:
             await self.ctx.channel.send(embed=Embed(t('music.no_related_video_found')))
             raise ApiError('No related video found.')
 
-        ytdl_info = await Ytdl().extract_info('https://music.youtube.com/watch?v=' + str(related_video_id))
+        ytdl_info = await Ytdl().extract_info('https://www.youtube.com/watch?v=' + str(related_video_id))
         data = ytdl_info.get_track()
 
         if data:

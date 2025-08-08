@@ -1,5 +1,4 @@
 import asyncio
-import urllib.parse
 from time import time
 from typing import Optional, Tuple
 from urllib.parse import urlparse
@@ -8,13 +7,14 @@ import discord
 from envparse import env
 from i18n import t
 
-from .. import bot
-from ..utils import log
-from ..utils.exceptions import ApiError, YtdlError
-from .embed import Embed
-from .player import Player
-from .with_interaction import WithInteraction
-from .ytdl import Ytdl
+from neonbot import bot
+from neonbot.classes.embed import Embed
+from neonbot.classes.player import Player
+from neonbot.classes.with_interaction import WithInteraction
+from neonbot.classes.ytdl import Ytdl
+from neonbot.classes.ytmusic import YTMusic
+from neonbot.utils import log
+from neonbot.utils.exceptions import ApiError, YtdlError
 
 
 class Spotify(WithInteraction):
@@ -207,17 +207,17 @@ class Spotify(WithInteraction):
             return None
 
     async def process_playlist(self, playlist):
-        is_single_track = len(playlist) == 1
-
         async def search(item):
             track = item['track'] if self.is_playlist else item
 
             try:
                 keyword = f'{" ".join(artist["name"] for artist in track["artists"])} {track["name"]}'
-                url = 'https://music.youtube.com/search?q=' + urllib.parse.quote_plus(keyword) + '#songs'
-                ytdl_info = await Ytdl({'extract_flat': 'in_playlist'} if not is_single_track else None).extract_info(
-                    url
-                )
+                video_id = await YTMusic().search(keyword)
+
+                if not video_id:
+                    raise YtdlError()
+
+                ytdl_info = await Ytdl().extract_info('https://www.youtube.com/watch?v=' + str(video_id))
             except YtdlError:
                 return None
 

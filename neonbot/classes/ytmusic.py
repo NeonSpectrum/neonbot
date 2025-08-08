@@ -1,10 +1,12 @@
 import functools
 from concurrent.futures import ThreadPoolExecutor
+from time import time
 from typing import Optional
 
 from ytmusicapi import YTMusic
 
 from neonbot import bot
+from neonbot.utils import log
 
 ytmusic = YTMusic()
 
@@ -15,10 +17,12 @@ class YTMusic:
 
     async def search(self, keyword) -> Optional[int]:
         with ThreadPoolExecutor(max_workers=1) as executor:
+            start_time = time()
             results: list[dict] = await self.loop.run_in_executor(
                 executor,
                 functools.partial(ytmusic.search, keyword, limit=1, filter='songs'),
             )
+            log.info(f'ytmusic.search finished after {(time() - start_time):.2f}s')
 
         return results[0].get('videoId') if len(results) > 0 else None
 

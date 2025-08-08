@@ -3,14 +3,14 @@ from typing import TYPE_CHECKING
 import discord
 from i18n import t
 
-from .. import bot
-from ..enums import PlayerState, Repeat
-from ..utils import log
-from .embed import Embed
-from .view import Button, View
+from neonbot import bot
+from neonbot.classes.embed import Embed
+from neonbot.classes.view import Button, View
+from neonbot.enums import PlayerState, Repeat
+from neonbot.utils import log
 
 if TYPE_CHECKING:
-    from .player import Player
+    from neonbot.player import Player
 
 
 class PlayerControls:

@@ -9,12 +9,12 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import View
 
-from .. import bot
-from ..classes.embed import Embed
-from ..classes.player import Player
-from ..classes.select_choices import SelectChoices
-from ..models.guild import GuildModel
-from ..utils.constants import ICONS
+from neonbot import bot
+from neonbot.classes.embed import Embed
+from neonbot.classes.player import Player
+from neonbot.classes.select_choices import SelectChoices
+from neonbot.models.guild import GuildModel
+from neonbot.utils.constants import ICONS
 
 
 @contextlib.contextmanager

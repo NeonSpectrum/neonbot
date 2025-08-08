@@ -1,2 +1,2 @@
-from .player_state import PlayerState
-from .repeat import Repeat
+from neonbot.player_state import PlayerState
+from neonbot.repeat import Repeat
