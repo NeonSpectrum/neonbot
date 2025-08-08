@@ -19,7 +19,7 @@ class Youtube(WithInteraction):
 
         try:
             url = 'https://music.youtube.com/search?q=' + urllib.parse.quote_plus(keyword) + '#songs'
-            ytdl_info = await Ytdl().extract_info(url)
+            ytdl_info = await Ytdl({'playlistend': 1}).extract_info(url)
             data = ytdl_info.get_track()
 
         except YtdlError:

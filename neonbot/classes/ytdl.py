@@ -22,7 +22,7 @@ class Ytdl:
             extra_params = {}
         self.loop = bot.loop
         self.ytdl_opts = {
-            'default_search': 'youtube:music:search_url',
+            'default_search': 'ytsearch1',
             'format': 'bestaudio/best',
             'quiet': True,
             'no_warnings': True,
@@ -36,7 +36,6 @@ class Ytdl:
             'cachedir': YOUTUBE_CACHE_DIR,
             'compat_opts': {'no-youtube-unavailable-videos': True},
             'cookiefile': env.str('YTDL_COOKIES', default=None),
-            'external_downloader': 'aria2c',
             **extra_params,
         }
 
