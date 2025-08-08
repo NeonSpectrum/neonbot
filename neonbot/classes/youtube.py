@@ -18,7 +18,8 @@ class Youtube(WithInteraction):
         await self.send_message(embed=Embed(t('music.searching')))
 
         try:
-            track = await YTMusic().search(keyword)
+            ytdl_info = await YTMusic().search(keyword)
+            track = ytdl_info.get_track()
 
             if not track.get('id'):
                 raise YtdlError()
