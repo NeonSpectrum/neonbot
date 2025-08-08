@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+from concurrent.futures import ThreadPoolExecutor
 
 import i18n
 from dotenv import load_dotenv
@@ -24,7 +25,8 @@ def main() -> None:
     # Clear debug.log on startup
     open('./debug.log', 'w').close()
 
-    bot.run(log_level=logging.getLevelName(env.str('LOG_LEVEL', default='ERROR')))
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        bot.run(log_level=logging.getLevelName(env.str('LOG_LEVEL', default='ERROR')), executor=executor)
 
 
 if __name__ == '__main__':

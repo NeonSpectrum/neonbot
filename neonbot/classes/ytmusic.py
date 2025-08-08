@@ -16,22 +16,20 @@ class YTMusic:
         self.loop = bot.loop
 
     async def search(self, keyword) -> Optional[int]:
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            start_time = time()
-            results: list[dict] = await self.loop.run_in_executor(
-                executor,
-                functools.partial(ytmusic.search, keyword, limit=1, filter='songs'),
-            )
-            log.info(f'ytmusic.search finished after {(time() - start_time):.2f}s')
+        start_time = time()
+        results: list[dict] = await self.loop.run_in_executor(
+            bot.executor,
+            functools.partial(ytmusic.search, keyword, limit=1, filter='songs'),
+        )
+        log.info(f'ytmusic.search finished after {(time() - start_time):.2f}s')
 
         return results[0].get('videoId') if len(results) > 0 else None
 
     async def get_related_video(self, track: dict, playlist: list = None) -> Optional[int]:
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            result = await bot.loop.run_in_executor(
-                executor,
-                functools.partial(ytmusic.get_watch_playlist, track['id'], limit=1),
-            )
+        result = await bot.loop.run_in_executor(
+            bot.executor,
+            functools.partial(ytmusic.get_watch_playlist, track['id'], limit=1),
+        )
         tracks = result.get('tracks', [])
 
         for track in tracks[1:]:

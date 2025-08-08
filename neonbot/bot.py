@@ -31,6 +31,7 @@ class NeonBot(commands.Bot):
         self.default_prefix = env.str('DEFAULT_PREFIX', default='.')
         self.user_agent = f'NeonBot v{__version__}'
         self.loop = asyncio.get_event_loop()
+        self.executor = None
         super().__init__(
             intents=discord.Intents.all(),
             command_prefix=self.default_prefix,
@@ -206,6 +207,8 @@ class NeonBot(commands.Bot):
         await super().start(*args, **kwargs)
 
     def run(self, *args, **kwargs):
+        self.executor = kwargs['executor']
+        del kwargs['executor']
         super().run(env.str('TOKEN'), *args, **kwargs)
 
     def _handle_ready(self) -> None:
