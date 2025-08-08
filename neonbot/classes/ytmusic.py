@@ -31,7 +31,7 @@ class YTMusic:
                 'id': result.get('videoId'),
                 'title': result.get('title'),
                 'duration': result.get('duration_seconds'),
-                'original_url': 'https://music.youtube.com/watch?v=' + result.get('videoId'),
+                'original_url': 'https://www.youtube.com/watch?v=' + result.get('videoId'),
             }
         )
 
