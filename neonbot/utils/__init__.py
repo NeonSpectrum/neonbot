@@ -1,3 +1,3 @@
-from neonbot.log import Log
+from neonbot.utils.log import Log
 
 log = Log('neonbot')

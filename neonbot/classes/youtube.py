@@ -1,5 +1,4 @@
 import re
-from time import time
 
 from i18n import t
 
@@ -8,8 +7,7 @@ from neonbot.classes.player import Player
 from neonbot.classes.with_interaction import WithInteraction
 from neonbot.classes.ytdl import Ytdl
 from neonbot.classes.ytmusic import YTMusic
-from neonbot.utils import log
-from neonbot.utils.constants import YOUTUBE_PLAYLIST_REGEX, YOUTUBE_REGEX
+from neonbot.utils.constants import YOUTUBE_REGEX
 from neonbot.utils.exceptions import YtdlError
 
 
