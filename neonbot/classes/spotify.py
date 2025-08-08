@@ -214,23 +214,14 @@ class Spotify(WithInteraction):
             try:
                 keyword = f'{" ".join(artist["name"] for artist in track["artists"])} {track["name"]}'
 
-                video_id = await YTMusic().search(keyword)
+                track = await YTMusic().search(keyword)
 
-                if not video_id:
+                if not track.get('id'):
                     raise YtdlError()
-
-                ytdl_info = await Ytdl({'extract_flat': True}).extract_info(
-                    'https://www.youtube.com/watch?v=' + str(video_id)
-                )
             except YtdlError:
                 return None
 
-            ytdl_list = ytdl_info.get_list()
-
-            if len(ytdl_list) == 0:
-                return None
-
-            return ytdl_list[0]
+            return track
 
         data = await asyncio.gather(*[search(item) for item in playlist])
 

@@ -6,6 +6,7 @@ from typing import Optional
 from ytmusicapi import YTMusic
 
 from neonbot import bot
+from neonbot.classes.ytdl_info import YtdlInfo
 from neonbot.utils import log
 
 ytmusic = YTMusic()
@@ -23,7 +24,16 @@ class YTMusic:
         )
         log.info(f'ytmusic.search finished after {(time() - start_time):.2f}s')
 
-        return results[0].get('videoId') if len(results) > 0 else None
+        result = results[0]
+
+        return YtdlInfo(
+            {
+                'id': result.get('videoId'),
+                'title': result.get('title'),
+                'duration': result.get('duration_seconds'),
+                'original_url': 'https://music.youtube.com/watch?v=' + result.get('videoId'),
+            }
+        )
 
     async def get_related_video(self, track: dict, playlist: list = None) -> Optional[int]:
         result = await bot.loop.run_in_executor(
