@@ -216,7 +216,7 @@ class Spotify(WithInteraction):
 
                 ytdl_info = await YTMusic().search(keyword)
 
-                track = ytdl_info.format_simple_result()
+                track = ytdl_info.get_track()
 
                 if not track.get('id'):
                     raise YtdlError()
