@@ -1,4 +1,5 @@
 import asyncio
+import urllib.parse
 from time import time
 from typing import Optional, Tuple
 from urllib.parse import urlparse
@@ -212,12 +213,8 @@ class Spotify(WithInteraction):
 
             try:
                 keyword = f'{" ".join(artist["name"] for artist in track["artists"])} {track["name"]}'
-                video_id = await YTMusic().search(keyword)
-
-                if not video_id:
-                    raise YtdlError()
-
-                ytdl_info = await Ytdl().extract_info('https://www.youtube.com/watch?v=' + str(video_id))
+                url = 'https://music.youtube.com/search?q=' + urllib.parse.quote_plus(keyword) + '#songs'
+                ytdl_info = await Ytdl({'extract_flat': True}).extract_info(url)
             except YtdlError:
                 return None
 
