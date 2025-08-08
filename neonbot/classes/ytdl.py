@@ -10,11 +10,11 @@ from time import time
 import yt_dlp
 from envparse import env
 
-from .. import bot
-from ..utils import log
-from ..utils.constants import YOUTUBE_CACHE_DIR, YOUTUBE_DOWNLOADS_DIR
-from ..utils.exceptions import YtdlError
-from .ytdl_info import YtdlInfo
+from neonbot import bot
+from neonbot.classes.ytdl_info import YtdlInfo
+from neonbot.utils import log
+from neonbot.utils.constants import YOUTUBE_CACHE_DIR
+from neonbot.utils.exceptions import YtdlError
 
 
 class Ytdl:

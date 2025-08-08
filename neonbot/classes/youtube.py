@@ -1,5 +1,5 @@
 import re
-import urllib.parse
+from time import time
 
 from i18n import t
 
@@ -7,6 +7,8 @@ from neonbot.classes.embed import Embed
 from neonbot.classes.player import Player
 from neonbot.classes.with_interaction import WithInteraction
 from neonbot.classes.ytdl import Ytdl
+from neonbot.classes.ytmusic import YTMusic
+from neonbot.utils import log
 from neonbot.utils.constants import YOUTUBE_PLAYLIST_REGEX, YOUTUBE_REGEX
 from neonbot.utils.exceptions import YtdlError
 
@@ -18,8 +20,14 @@ class Youtube(WithInteraction):
         await self.send_message(embed=Embed(t('music.searching')))
 
         try:
-            url = 'https://music.youtube.com/search?q=' + urllib.parse.quote_plus(keyword) + '#songs'
-            ytdl_info = await Ytdl({'playlistend': 1}).extract_info(url)
+            start_time = time()
+            video_id = await YTMusic().search(keyword)
+            log.info(f'extract_info finished after {(time() - start_time):.2f}s')
+
+            if not video_id:
+                raise YtdlError()
+
+            ytdl_info = await Ytdl().extract_info(str(video_id))
             data = ytdl_info.get_list()[0]
 
         except (YtdlError, IndexError):
