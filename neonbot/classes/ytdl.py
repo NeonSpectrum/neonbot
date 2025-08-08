@@ -22,7 +22,7 @@ class Ytdl:
             extra_params = {}
         self.loop = bot.loop
         self.ytdl_opts = {
-            'default_search': 'ytsearch5',
+            'default_search': 'youtube:music:search_url',
             'format': 'bestaudio/best',
             'quiet': True,
             'no_warnings': True,
@@ -50,7 +50,7 @@ class Ytdl:
                     with ThreadPoolExecutor(max_workers=1) as executor:
                         result = await self.loop.run_in_executor(
                             executor,
-                            functools.partial(ytdl.extract_info, keyword, download, process=True),
+                            functools.partial(ytdl.extract_info, keyword, download),
                         )
 
                     return YtdlInfo(result)

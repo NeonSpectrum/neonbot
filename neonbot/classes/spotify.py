@@ -1,4 +1,5 @@
 import asyncio
+import urllib.parse
 from time import time
 from typing import Optional, Tuple
 from urllib.parse import urlparse
@@ -14,7 +15,6 @@ from .embed import Embed
 from .player import Player
 from .with_interaction import WithInteraction
 from .ytdl import Ytdl
-from .ytmusic import YTMusic
 
 
 class Spotify(WithInteraction):
@@ -211,14 +211,9 @@ class Spotify(WithInteraction):
             track = item['track'] if self.is_playlist else item
 
             try:
-                track_id = await YTMusic().search(
-                    f'{" ".join(artist["name"] for artist in track["artists"])} {track["name"]}'
-                )
-
-                if not track_id:
-                    return None
-
-                ytdl_info = await Ytdl().extract_info(track_id)
+                keyword = f'{" ".join(artist["name"] for artist in track["artists"])} {track["name"]}'
+                url = 'https://music.youtube.com/search?q=' + urllib.parse.quote_plus(keyword) + '#songs'
+                ytdl_info = await Ytdl().extract_info(url)
             except YtdlError:
                 return None
 

@@ -32,7 +32,7 @@ async def in_voice(interaction: discord.Interaction) -> bool:
 async def has_permission(interaction: discord.Interaction) -> bool:
     if not interaction.channel.permissions_for(interaction.guild.me).send_messages:
         await cast(discord.InteractionResponse, interaction.response).send_message(
-            embed=Embed('I don\'t have permission to send message on this channel.'), ephemeral=True
+            embed=Embed("I don't have permission to send message on this channel."), ephemeral=True
         )
         return False
     return True
@@ -66,7 +66,7 @@ class Music(commands.Cog):
         elif re.search(SPOTIFY_REGEX, value):
             await Spotify(interaction).search_url(value)
         else:
-            await Youtube(interaction).search_keyword_first(value)
+            await Youtube(interaction).search_keyword(value)
 
         await player.connect(interaction.user.voice.channel)
 
@@ -77,25 +77,6 @@ class Music(commands.Cog):
             if play_now:
                 player.jump(last_index + 1)
         else:
-            await player.play()
-
-    @app_commands.command(name='playsearch')
-    @app_commands.describe(value='Enter keyword...')
-    @app_commands.check(in_voice)
-    @app_commands.check(has_permission)
-    @app_commands.guild_only()
-    async def playsearch(self, interaction: discord.Interaction, value: str, play_now: Optional[bool] = False):
-        """Searches the keyword, choose from the list, add it to queue."""
-
-        player = await Player.get_instance(interaction)
-        last_index = len(player.queue) - 1
-
-        await Youtube(interaction).search_keyword(value)
-
-        if play_now and player.connection and player.connection.is_playing():
-            player.jump(last_index + 1)
-        elif len(player.queue) > 0:
-            await player.connect(interaction.user.voice.channel)
             await player.play()
 
     @app_commands.command(name='nowplaying')

@@ -1,12 +1,12 @@
 import re
+import urllib.parse
 
 from i18n import t
 
-from neonbot.classes.embed import Embed, EmbedChoices
+from neonbot.classes.embed import Embed
 from neonbot.classes.player import Player
 from neonbot.classes.with_interaction import WithInteraction
 from neonbot.classes.ytdl import Ytdl
-from neonbot.classes.ytmusic import YTMusic
 from neonbot.utils.constants import YOUTUBE_REGEX
 from neonbot.utils.exceptions import YtdlError
 
@@ -18,37 +18,8 @@ class Youtube(WithInteraction):
         await self.send_message(embed=Embed(t('music.searching')))
 
         try:
-            ytdl_info = await Ytdl().extract_info(keyword)
-        except YtdlError:
-            await self.send_message(embed=Embed(t('music.no_songs_available')))
-            return
-
-        data = ytdl_info.get_list()
-        choice = (await EmbedChoices(self.interaction, data).build()).value
-
-        if choice < 0:
-            return
-
-        info = data[choice]
-
-        await self.send_message(
-            embed=Embed(t('music.added_to_queue', queue=len(player.queue) + 1, title=info['title'], url=info['url']))
-        )
-
-        player.add_to_queue(info, requested=self.interaction.user)
-
-    async def search_keyword_first(self, keyword: str):
-        player = await Player.get_instance(self.interaction)
-
-        await self.send_message(embed=Embed(t('music.searching')))
-
-        try:
-            video_id = await YTMusic().search(keyword)
-
-            if not video_id:
-                raise YtdlError()
-
-            ytdl_info = await Ytdl().extract_info(str(video_id))
+            url = 'https://music.youtube.com/search?q=' + urllib.parse.quote_plus(keyword) + '#songs'
+            ytdl_info = await Ytdl().extract_info(url)
             data = ytdl_info.get_track()
 
         except YtdlError:
