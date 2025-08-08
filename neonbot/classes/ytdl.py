@@ -66,28 +66,6 @@ class Ytdl:
                 except:
                     raise YtdlError()
 
-    async def process_entry(self, info: dict) -> YtdlInfo:
-        tries = 0
-        max_retries = 5
-
-        with yt_dlp.YoutubeDL(self.ytdl_opts) as ytdl:
-            while tries <= max_retries:
-                try:
-                    with ThreadPoolExecutor(max_workers=1) as executor:
-                        result = await self.loop.run_in_executor(
-                            executor,
-                            functools.partial(ytdl.process_ie_result, info, download=not info.get('is_live')),
-                        )
-                    return YtdlInfo(result)
-                except yt_dlp.utils.DownloadError as error:
-                    tries += 1
-                    log.warn(f'Download failed. Retrying...[{tries}]')
-                    if tries > max_retries:
-                        raise YtdlError(error)
-                    await asyncio.sleep(1)
-                except yt_dlp.utils.YoutubeDLError as error:
-                    raise YtdlError(error)
-
     @staticmethod
     def prepare_filename(*args, **kwargs):
         return Ytdl().ytdl.prepare_filename(*args, **kwargs)

@@ -14,6 +14,7 @@ from .embed import Embed
 from .player import Player
 from .with_interaction import WithInteraction
 from .ytdl import Ytdl
+from .ytmusic import YTMusic
 
 
 class Spotify(WithInteraction):
@@ -207,14 +208,17 @@ class Spotify(WithInteraction):
 
     async def process_playlist(self, playlist):
         async def search(item):
-            ytdl_one = Ytdl.create({'default_search': 'ytsearch1'})
-
             track = item['track'] if self.is_playlist else item
 
             try:
-                ytdl_info = await ytdl_one.extract_info(
-                    f'{" ".join(artist["name"] for artist in track["artists"])} {track["name"]} lyric',
+                track_id = await YTMusic().search(
+                    f'{" ".join(artist["name"] for artist in track["artists"])} {track["name"]}'
                 )
+
+                if not track_id:
+                    return None
+
+                ytdl_info = await Ytdl().extract_info(track_id)
             except YtdlError:
                 return None
 
