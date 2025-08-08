@@ -214,7 +214,9 @@ class Spotify(WithInteraction):
             try:
                 keyword = f'{" ".join(artist["name"] for artist in track["artists"])} {track["name"]}'
 
-                track = await YTMusic().search(keyword)
+                ytdl_info = await YTMusic().search(keyword)
+
+                track = ytdl_info.format_simple_result()
 
                 if not track.get('id'):
                     raise YtdlError()

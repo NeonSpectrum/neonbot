@@ -16,7 +16,7 @@ class YTMusic:
     def __init__(self):
         self.loop = bot.loop
 
-    async def search(self, keyword) -> Optional[int]:
+    async def search(self, keyword) -> YtdlInfo:
         start_time = time()
         results: list[dict] = await self.loop.run_in_executor(
             bot.executor,
