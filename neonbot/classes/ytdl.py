@@ -46,7 +46,7 @@ class Ytdl:
         with yt_dlp.YoutubeDL(self.ytdl_opts) as ytdl:
             while tries <= max_retries:
                 try:
-                    with ThreadPoolExecutor(max_workers=1) as executor:
+                    with ThreadPoolExecutor() as executor:
                         result = await self.loop.run_in_executor(
                             executor,
                             functools.partial(ytdl.extract_info, keyword, download),
