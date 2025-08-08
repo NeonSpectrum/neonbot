@@ -44,9 +44,9 @@ ICONS = {
     'red': 'https://i.imgur.com/gnfYVjW.png',
 }
 
-FFMPEG_BEFORE_OPTIONS = '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -loglevel fatal'
+FFMPEG_BEFORE_OPTIONS = '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5'
 
-FFMPEG_OPTIONS = '-vn'
+FFMPEG_OPTIONS = '-vn -loglevel quiet'
 
 YOUTUBE_REGEX = r'^(http(s)?:\/\/)?(((w){3}|music).)?youtu(be|.be)?(\.com)?\/.+'
 YOUTUBE_PLAYLIST_REGEX = r'(?:https?://)?(?:www\.)?(?:youtube\.com/playlist\?list=|youtu\.be/playlist\?list=|youtube\.com/watch\?v=[^&]+&list=)([a-zA-Z0-9_-]+)'
