@@ -25,7 +25,7 @@ def main() -> None:
     # Clear debug.log on startup
     open('./debug.log', 'w').close()
 
-    with ThreadPoolExecutor(max_workers=1) as executor:
+    with ThreadPoolExecutor() as executor:
         bot.run(log_level=logging.getLevelName(env.str('LOG_LEVEL', default='ERROR')), executor=executor)
 
 

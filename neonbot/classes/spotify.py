@@ -213,8 +213,15 @@ class Spotify(WithInteraction):
 
             try:
                 keyword = f'{" ".join(artist["name"] for artist in track["artists"])} {track["name"]}'
-                url = 'https://music.youtube.com/search?q=' + urllib.parse.quote_plus(keyword) + '#songs'
-                ytdl_info = await Ytdl({'extract_flat': True}).extract_info(url)
+
+                video_id = await YTMusic().search(keyword)
+
+                if not video_id:
+                    raise YtdlError()
+
+                ytdl_info = await Ytdl({'extract_flat': True}).extract_info(
+                    'https://www.youtube.com/watch?v=' + str(video_id)
+                )
             except YtdlError:
                 return None
 
