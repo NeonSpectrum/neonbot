@@ -44,7 +44,7 @@ ICONS = {
     'red': 'https://i.imgur.com/gnfYVjW.png',
 }
 
-FFMPEG_BEFORE_OPTIONS = '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -err_detect ignore_err'
+FFMPEG_BEFORE_OPTIONS = '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -loglevel fatal'
 
 FFMPEG_OPTIONS = '-vn'
 
