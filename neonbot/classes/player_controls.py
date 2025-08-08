@@ -10,7 +10,7 @@ from neonbot.enums import PlayerState, Repeat
 from neonbot.utils import log
 
 if TYPE_CHECKING:
-    from neonbot.player import Player
+    from neonbot.classes.player import Player
 
 
 class PlayerControls:

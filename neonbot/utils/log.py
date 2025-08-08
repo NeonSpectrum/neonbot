@@ -5,7 +5,7 @@ from typing import Any, Callable, Optional, Union
 import discord
 from discord.ext import commands
 
-from neonbot.constants import LOG_FORMAT
+from neonbot.utils.constants import LOG_FORMAT
 
 
 class Log(logging.Logger):
