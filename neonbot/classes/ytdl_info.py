@@ -68,7 +68,7 @@ class YtdlInfo:
             id=entry.get('id'),
             title=entry.get('title', '*Not Available*'),
             duration=entry.get('duration'),
-            url='https://www.youtube.com/watch?v=' + entry.get('id'),
+            url=entry.get('original_url'),
             is_live=entry.get('live_status') == 'is_live' or entry.get('is_live', False),
         )
 
@@ -82,7 +82,7 @@ class YtdlInfo:
             formatted_duration=format_seconds(entry.get('duration')) if entry.get('duration') else 'N/A',
             thumbnail=entry.get('thumbnail'),
             stream=entry.get('url'),
-            url='https://www.youtube.com/watch?v=' + entry.get('id'),
+            url=entry.get('original_url'),
             is_live=entry.get('is_live'),
             view_count=f'{entry.get("view_count"):,}' if entry.get('view_count') else 'N/A',
             upload_date=datetime.strptime(entry.get('upload_date'), '%Y%m%d').strftime('%b %d, %Y')
