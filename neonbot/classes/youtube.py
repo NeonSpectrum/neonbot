@@ -22,13 +22,13 @@ class Youtube(WithInteraction):
         try:
             start_time = time()
             video_id = await YTMusic().search(keyword)
-            log.info(f'extract_info finished after {(time() - start_time):.2f}s')
+            log.info(f'YTMusic.search finished after {(time() - start_time):.2f}s')
 
             if not video_id:
                 raise YtdlError()
 
-            ytdl_info = await Ytdl().extract_info(str(video_id))
-            data = ytdl_info.get_list()[0]
+            ytdl_info = await Ytdl().extract_info('https://music.youtube.com/watch?v=' + str(video_id))
+            data = ytdl_info.get_track()
 
         except (YtdlError, IndexError):
             await self.send_message(embed=Embed(t('music.no_songs_available')))
