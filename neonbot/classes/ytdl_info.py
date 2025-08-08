@@ -32,10 +32,11 @@ class YtdlInfo:
             if not entry:
                 continue
 
-            if self.is_downloaded(entry):
-                data.append(self.format_detailed_result(entry))
-            else:
-                data.append(self.format_simple_result(entry))
+            # if self.is_downloaded(entry):
+            #     data.append(self.format_detailed_result(entry))
+            # else:
+            #     data.append(self.format_simple_result(entry))
+            data.append(self.format_detailed_result(entry))
 
         return data
 
@@ -43,10 +44,11 @@ class YtdlInfo:
         if not self.result:
             return None
 
-        if self.is_downloaded(self.result):
-            return self.format_detailed_result(self.result)
+        # if self.is_downloaded(self.result):
+        #     return self.format_detailed_result(self.result)
 
-        return self.format_simple_result(self.result)
+        # return self.format_simple_result(self.result)
+        return self.format_detailed_result(self.result)
 
     def format_description(self, description: str) -> str:
         if not description:
@@ -79,7 +81,7 @@ class YtdlInfo:
             duration=entry.get('duration'),
             formatted_duration=format_seconds(entry.get('duration')) if entry.get('duration') else 'N/A',
             thumbnail=entry.get('thumbnail'),
-            stream=entry.get('url') if entry.get('is_live') else f'{YOUTUBE_DOWNLOADS_DIR}/{entry.get("id")}',
+            stream=entry.get('url'),
             url='https://www.youtube.com/watch?v=' + entry.get('id'),
             is_live=entry.get('is_live'),
             view_count=f'{entry.get("view_count"):,}' if entry.get('view_count') else 'N/A',

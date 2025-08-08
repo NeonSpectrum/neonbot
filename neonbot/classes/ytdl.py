@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import datetime
 import functools
+import urllib.parse
 from concurrent.futures import ThreadPoolExecutor
 
 import yt_dlp
@@ -65,6 +67,21 @@ class Ytdl:
                     raise YtdlError(error)
                 except:
                     raise YtdlError()
+
+    @staticmethod
+    def is_expired(stream_url: str) -> bool:
+        parsed_url = urllib.parse.urlparse(stream_url)
+        query_params = urllib.parse.parse_qs(parsed_url.query)
+
+        if 'expire' in query_params:
+            expiry_timestamp = int(query_params['expire'][0])
+
+            expiry_datetime = datetime.datetime.fromtimestamp(expiry_timestamp)
+            current_datetime = datetime.datetime.now()
+
+            return current_datetime >= expiry_datetime
+
+        return False
 
     @staticmethod
     def prepare_filename(*args, **kwargs):
