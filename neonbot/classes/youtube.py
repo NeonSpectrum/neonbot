@@ -86,7 +86,7 @@ class Youtube(WithInteraction):
 
         return new_data, error
 
-    def remove_extra_query(url):
+    def remove_extra_query(self, url):
         parsed_url = urlparse(url)
         query_params = parse_qs(parsed_url.query)
         video_id = query_params.get('v', [None])[0]
