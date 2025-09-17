@@ -1,6 +1,7 @@
 import re
 
 from i18n import t
+from urllib.parse import parse_qs, urlencode, urlparse
 
 from neonbot.classes.embed import Embed
 from neonbot.classes.player import Player
@@ -46,6 +47,9 @@ class Youtube(WithInteraction):
 
         await self.send_message(embed=Embed(t('music.fetching_youtube_url')))
 
+        if 'v=' in url and 'list=' in url:
+            url = remove_extra_query(url)
+
         try:
             ytdl_info = await Ytdl().extract_info(url)
         except YtdlError:
@@ -81,3 +85,17 @@ class Youtube(WithInteraction):
                 new_data.append(entry)
 
         return new_data, error
+
+    def remove_extra_query(url):
+        parsed_url = urlparse(url)
+        query_params = parse_qs(parsed_url.query)
+        video_id = query_params.get('v', [None])[0]
+
+        if video_id:
+            new_query = urlencode({'v': video_id})
+        else:
+            new_query = ''
+
+        reconstructed_url = parsed_url._replace(query=new_query)
+
+        return reconstructed_url.geturl()
