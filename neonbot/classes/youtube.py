@@ -48,7 +48,7 @@ class Youtube(WithInteraction):
         await self.send_message(embed=Embed(t('music.fetching_youtube_url')))
 
         if 'v=' in url and 'list=' in url:
-            url = remove_extra_query(url)
+            url = self.remove_extra_query(url)
 
         try:
             ytdl_info = await Ytdl().extract_info(url)
