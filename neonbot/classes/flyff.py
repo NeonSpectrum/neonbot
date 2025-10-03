@@ -9,6 +9,7 @@ from neonbot.classes.embed import Embed
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
+from neonbot.utils.functions import check_ip_online
 
 
 class Flyff:
@@ -51,10 +52,11 @@ class Flyff:
     async def start_monitor(guild_id):
         server = GuildModel.get_instance(guild_id)
         flyff = Flyff(guild_id)
+        status = await check_ip_online(Flyff.IP_ADDRESS)
 
         embed = Embed(timestamp=datetime.now())
         embed.set_author('Emerald Flyff', icon_url=ICONS['emeraldflyff'])
-        embed.set_thumbnail(ICONS['green'])
+        embed.set_thumbnail(ICONS['green'] if status else ICONS['red'])
 
         timers = []
         interval_count = None
@@ -67,7 +69,7 @@ class Flyff:
 
             timers.append(f'- {name}: <t:{spawn_time}:t> <t:{spawn_time}:R>')
 
-        embed.add_field('Timer', '\n'.join(timers))
+        embed.add_field('Timer', '\n'.join(timers), inline=False)
         embed.add_field('Next World Boss', 'Clockworks' if interval_count % 2 == 0 else 'Karvan')
 
         channel = bot.get_channel(server.flyff.channel_id)

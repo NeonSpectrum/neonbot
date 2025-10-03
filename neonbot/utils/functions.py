@@ -141,3 +141,23 @@ async def generate_profile_user_embed(interaction: discord.Interaction, user: di
         embed.set_image(user.banner.url)
 
     return embed
+
+
+async def check_ip_online(ip_address: str, count: int = 1, timeout: int = 5) -> bool:
+    command = ['ping', '-c', str(count), '-W', str(timeout), ip_address]
+
+    try:
+        process = await asyncio.create_subprocess_exec(
+            *command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+
+        returncode = await process.wait()
+
+        return returncode == 0
+
+    except FileNotFoundError:
+        return False
+    except Exception as e:
+        return False
