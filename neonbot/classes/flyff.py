@@ -83,27 +83,31 @@ class Flyff:
         embed.add_field('Timer', '\n'.join(timers), inline=False)
 
         status_channel = bot.get_channel(server.flyff.status_channel_id)
-        message_id = server.flyff.message_id
-        server = GuildModel.get_instance(status_channel.guild.id)
 
-        try:
-            message = await status_channel.fetch_message(message_id) if message_id else None
-        except discord.NotFound:
-            message = None
+        if status_channel:
+            message_id = server.flyff.message_id
+            server = GuildModel.get_instance(status_channel.guild.id)
 
-        try:
-            if not message:
-                message = await status_channel.send(embed=embed)
-                server.flyff.message_id = message.id
-                await server.save_changes()
-            else:
-                await message.edit(embed=embed)
-        except discord.HTTPException as error:
-            log.error(error)
+            try:
+                message = await status_channel.fetch_message(message_id) if message_id else None
+            except discord.NotFound:
+                message = None
+
+            try:
+                if not message:
+                    message = await status_channel.send(embed=embed)
+                    server.flyff.message_id = message.id
+                    await server.save_changes()
+                else:
+                    await message.edit(embed=embed)
+            except discord.HTTPException as error:
+                log.error(error)
 
         alert_channel = bot.get_channel(server.flyff.alert_channel_id)
-        for announcement in announcements:
-            await alert_channel.send(embed=announcement)
+
+        if alert_channel:
+            for announcement in announcements:
+                await alert_channel.send(embed=announcement)
 
 
     @staticmethod
