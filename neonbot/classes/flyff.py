@@ -49,7 +49,7 @@ class Flyff:
         if func(passed_intervals_count):
             next_spawn_time += timedelta(minutes=interval)
 
-        return int(next_spawn_time.timestamp())
+        return int(next_spawn_time.timestamp()), passed_intervals_count
 
     @staticmethod
     async def start_monitor(guild_id):
@@ -66,7 +66,7 @@ class Flyff:
         announcements = []
 
         for name, timer in server.flyff.timers.items():
-            spawn_time = flyff.calculate_next_spawn(
+            spawn_time, interval_count = flyff.calculate_next_spawn(
                 timer.initial_interval, timer.interval,
                 lambda count: (name == 'Karvan' and count % 2 == 0)
                               or (name == 'Clockworks' and count % 2 == 1)
@@ -74,12 +74,15 @@ class Flyff:
 
             timers.append(f'- {name}: <t:{spawn_time}:t> <t:{spawn_time}:R>')
 
-            current_utc_time = datetime.now(timezone.utc)
-            five_minutes = current_utc_time - timedelta(minutes=5)
-            utc_timestamp = datetime.fromtimestamp(spawn_time).astimezone(timezone.utc)
+            current_time = datetime.now(timezone.utc)
+            spawn_time = datetime.fromtimestamp(spawn_time)
 
-            if utc_timestamp == five_minutes:
+            if abs(current_time - spawn_time) <= timedelta(minutes=5) \
+                and server.flyff.timer[name].current_interval_count != interval_count:
                 announcements.append(Embed(f'@everyone World Boss `{name}` will spawn in 5 minutes.'))
+
+                server.flyff.timer[name].current_interval_count = interval_count
+                await server.save_changes()
 
         embed.add_field('Timer', '\n'.join(timers), inline=False)
 
