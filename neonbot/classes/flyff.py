@@ -45,7 +45,7 @@ class Flyff:
         else:
             next_spawn_time = last_passed_spawn_time + timedelta(minutes=interval)
 
-        return int(next_spawn_time.timestamp())
+        return int(next_spawn_time.timestamp()), passed_intervals_count
 
     @staticmethod
     async def start_monitor(guild_id):
@@ -57,12 +57,18 @@ class Flyff:
         embed.set_thumbnail(ICONS['green'])
 
         timers = []
+        interval_count = None
 
         for name, timer in server.flyff.timers.items():
-            spawn_time = flyff.calculate_next_spawn(timer.initial_interval, timer.interval)
-            timers.append(f'- {name}: <t:{spawn_time}:R>')
+            spawn_time, new_interval_count = flyff.calculate_next_spawn(timer.initial_interval, timer.interval)
+
+            if not interval_count:
+                interval_count = new_interval_count
+
+            timers.append(f'- {name}: <t:{spawn_time}:t> <t:{spawn_time}:R>')
 
         embed.add_field('Timer', '\n'.join(timers))
+        embed.add_field('Next World Boss', 'Clockworks' if interval_count % 2 == 0 else 'Karvan')
 
         channel = bot.get_channel(server.flyff.channel_id)
         message_id = server.flyff.message_id
