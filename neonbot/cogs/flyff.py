@@ -75,7 +75,7 @@ class FlyffCog(commands.Cog):
             )
             return
 
-        del server.flyff.timers[name]
+        server.flyff.timers.pop(name)
         await server.save_changes()
 
         await cast(discord.InteractionResponse, interaction.response).send_message(
