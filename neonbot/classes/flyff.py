@@ -66,10 +66,11 @@ class Flyff:
         interval_count = None
 
         for name, timer in server.flyff.timers.items():
-            is_karvan = interval_count % 2 != 0
             additional_interval = False
 
             if interval_count:
+                is_karvan = interval_count % 2 != 0
+
                 if name == 'Karvan' and not is_karvan:
                     additional_interval = True
                 elif name == 'Clockworks' and is_karvan:
