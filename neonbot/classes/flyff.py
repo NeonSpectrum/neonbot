@@ -30,7 +30,7 @@ class Flyff:
             next_alarm = initial_alarm_time
         else:
             time_elapsed = now - initial_alarm_time
-            intervals_passed = time_elapsed.total_seconds() // interval
+            intervals_passed = time_elapsed.total_seconds()
             next_alarm = initial_alarm_time + timedelta(seconds=(intervals_passed + 1) * interval)
 
         return next_alarm

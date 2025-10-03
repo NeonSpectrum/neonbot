@@ -34,7 +34,7 @@ class FlyffCog(commands.Cog):
         )
 
     @flyff.command(name='set_world_start')
-    async def add_timer(self, interaction: discord.Interaction, time: str) -> None:
+    async def set_world_start(self, interaction: discord.Interaction, time: str) -> None:
         server = GuildModel.get_instance(interaction.guild.id)
 
         server.flyff.world_start_time = time
@@ -75,7 +75,7 @@ class FlyffCog(commands.Cog):
             )
             return
 
-        del server.flyff.timers[name]
+        server.flyff.timers = server.flyff.timers.pop(name)
         await server.save_changes()
 
         await cast(discord.InteractionResponse, interaction.response).send_message(
