@@ -10,6 +10,6 @@ class FlyffTimer(BaseModel):
 class FlyffModel(BaseModel):
     channel_id: int = None
     message_id: int = None
-    world_start_time: int = None
+    world_start_time: str = None
     started: bool = False
     timers: Dict[str, FlyffTimer]

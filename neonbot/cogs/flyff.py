@@ -33,6 +33,17 @@ class FlyffCog(commands.Cog):
             embed=Embed(f'Started monitor on {interaction.channel.mention}'), ephemeral=True
         )
 
+    @flyff.command(name='set_world_start')
+    async def add_timer(self, interaction: discord.Interaction, time: str) -> None:
+        server = GuildModel.get_instance(interaction.guild.id)
+
+        server.flyff.world_start_time = time
+        await server.save_changes()
+
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed(f'Set world start to `{time}`'), ephemeral=True
+        )
+
     @flyff.command(name='add_timer')
     async def add_timer(self, interaction: discord.Interaction, name: str, initial_interval: str,
                         interval: str) -> None:

@@ -23,12 +23,12 @@ class Flyff:
         interval = Duration(interval).to_seconds()
 
         server = GuildModel.get_instance(self.guild_id)
-        server.flyff.timers.append(FlyffTimer(name=name, initial_interval=initial_interval, interval=interval))
+        server.flyff.timers[name] = FlyffTimer(initial_interval=initial_interval, interval=interval)
         await server.save_changes()
 
     async def remove_timer(self, name):
         server = GuildModel.get_instance(self.guild_id)
-        server.flyff.timers = [timer for timer in server.flyff.timers if timer.name != name]
+        del server.flyff.timers[name]
         await server.save_changes()
 
     def calculate_next_spawn(self, initial_interval, interval):
