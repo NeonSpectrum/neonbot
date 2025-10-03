@@ -1,12 +1,10 @@
 from datetime import datetime, timedelta
 
 import discord
-from durations_nlp import Duration
 from envparse import env
 
 from neonbot import bot
 from neonbot.classes.embed import Embed
-from neonbot.models.flyff import FlyffTimer
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
@@ -17,19 +15,6 @@ class Flyff:
 
     def __init__(self, guild_id: int):
         self.guild_id = guild_id
-
-    async def add_timer(self, name, initial_interval, interval):
-        initial_interval = Duration(initial_interval).to_seconds()
-        interval = Duration(interval).to_seconds()
-
-        server = GuildModel.get_instance(self.guild_id)
-        server.flyff.timers[name] = FlyffTimer(initial_interval=initial_interval, interval=interval)
-        await server.save_changes()
-
-    async def remove_timer(self, name):
-        server = GuildModel.get_instance(self.guild_id)
-        del server.flyff.timers[name]
-        await server.save_changes()
 
     def calculate_next_spawn(self, initial_interval, interval):
         server = GuildModel.get_instance(self.guild_id)
