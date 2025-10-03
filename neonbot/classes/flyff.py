@@ -63,6 +63,7 @@ class Flyff:
         embed.set_thumbnail(ICONS['green'] if status else ICONS['red'])
 
         timers = []
+        announcements = []
 
         for name, timer in server.flyff.timers.items():
             spawn_time = flyff.calculate_next_spawn(
@@ -73,26 +74,37 @@ class Flyff:
 
             timers.append(f'- {name}: <t:{spawn_time}:t> <t:{spawn_time}:R>')
 
+            current_time = datetime.now()
+            duration = current_time - spawn_time
+
+            if duration <= timedelta(minutes=5):
+                announcements.append(Embed(f'World Boss `{name}` will spawn in 5 minutes.'))
+
         embed.add_field('Timer', '\n'.join(timers), inline=False)
 
-        channel = bot.get_channel(server.flyff.channel_id)
+        status_channel = bot.get_channel(server.flyff.status_channel_id)
         message_id = server.flyff.message_id
-        server = GuildModel.get_instance(channel.guild.id)
+        server = GuildModel.get_instance(status_channel.guild.id)
 
         try:
-            message = await channel.fetch_message(message_id) if message_id else None
+            message = await status_channel.fetch_message(message_id) if message_id else None
         except discord.NotFound:
             message = None
 
         try:
             if not message:
-                message = await channel.send(embed=embed)
+                message = await status_channel.send(embed=embed)
                 server.flyff.message_id = message.id
                 await server.save_changes()
             else:
                 await message.edit(embed=embed)
         except discord.HTTPException as error:
             log.error(error)
+
+        alert_channel = bot.get_channel(server.flyff.alert_channel_id)
+        for announcement in announcements:
+            await alert_channel.send(embed=announcement)
+
 
     @staticmethod
     def start_listener(guild_id: int):
