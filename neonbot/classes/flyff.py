@@ -22,7 +22,7 @@ class Flyff:
         world_start_time = server.flyff.world_start_time
 
         current_time = datetime.now()
-        start_time = datetime.strptime(world_start_time, '%Y-%m-%d %H:%M:%S')
+        start_time = datetime.strptime(world_start_time, '%Y-%m-%d %I:%M %p')
 
         initial_interval = initial_interval / 60
         interval = interval / 60
@@ -45,7 +45,7 @@ class Flyff:
         else:
             next_spawn_time = last_passed_spawn_time + timedelta(minutes=interval)
 
-        return next_spawn_time
+        return next_spawn_time.timestamp()
 
     @staticmethod
     async def start_monitor(guild_id):
@@ -59,7 +59,8 @@ class Flyff:
         timers = []
 
         for name, timer in server.flyff.timers.items():
-            timers.append(f'- {name}: `{flyff.calculate_next_spawn(timer.initial_interval, timer.interval)}`')
+            spawn_time = flyff.calculate_next_spawn(timer.initial_interval, timer.interval)
+            timers.append(f'- {name}: `<t:{spawn_time}:R>`')
 
         embed.add_field('Timer', '\n'.join(timers))
 
