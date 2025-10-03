@@ -143,21 +143,20 @@ async def generate_profile_user_embed(interaction: discord.Interaction, user: di
     return embed
 
 
-async def check_ip_online(ip_address: str, count: int = 1, timeout: int = 5) -> bool:
-    command = ['ping', '-c', str(count), '-W', str(timeout), ip_address]
-
+async def check_ip_online_socket(host: str, port: int, timeout: float = 5.0) -> bool:
     try:
-        process = await asyncio.create_subprocess_exec(
-            *command,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+        reader, writer = await asyncio.wait_for(
+            asyncio.open_connection(host, port),
+            timeout=timeout
         )
 
-        returncode = await process.wait()
+        writer.close()
+        await writer.wait_closed()
 
-        return returncode == 0
+        return True
 
-    except FileNotFoundError:
+    except (asyncio.TimeoutError, ConnectionRefusedError, OSError):
         return False
     except Exception as e:
+        print(f"An unexpected error occurred while checking {host}:{port}: {e}")
         return False

@@ -9,7 +9,7 @@ from neonbot.classes.embed import Embed
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
-from neonbot.utils.functions import check_ip_online
+from neonbot.utils.functions import check_ip_online_socket
 
 
 class Flyff:
@@ -52,7 +52,8 @@ class Flyff:
     async def start_monitor(guild_id):
         server = GuildModel.get_instance(guild_id)
         flyff = Flyff(guild_id)
-        status = await check_ip_online(Flyff.IP_ADDRESS)
+        ip, port = Flyff.IP_ADDRESS.split(':')
+        status = await check_ip_online_socket(ip, port)
 
         embed = Embed(timestamp=datetime.now())
         embed.set_author('Emerald Flyff', icon_url=ICONS['emeraldflyff'])
