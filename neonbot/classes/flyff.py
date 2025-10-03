@@ -50,17 +50,21 @@ class Flyff:
 
         return next_alarm
 
-
     @staticmethod
     async def start_monitor(guild_id):
         server = GuildModel.get_instance(guild_id)
         flyff = Flyff(guild_id)
 
         embed = Embed(timestamp=datetime.now())
+        embed.set_author('Emerald Flyff', icon_url=ICONS['emeraldflyff'])
         embed.set_thumbnail(ICONS['green'])
 
+        timers = []
+
         for name, timer in server.flyff.timers.items():
-            embed.add_field(name, flyff.calculate_next_spawn(timer.initial_interval, timer.interval))
+            timers.append(f'- {name}: `{flyff.calculate_next_spawn(timer.initial_interval, timer.interval)}`')
+
+        embed.add_field('Timer', '\n'.join(timers))
 
         channel = bot.get_channel(server.flyff.channel_id)
         message_id = server.flyff.message_id

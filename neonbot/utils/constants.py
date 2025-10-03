@@ -42,6 +42,7 @@ ICONS = {
     'openai': 'https://i.imgur.com/TAeEnLT.png',
     'green': 'https://i.imgur.com/Vk1wdHH.png',
     'red': 'https://i.imgur.com/gnfYVjW.png',
+    'emeraldflyff': 'https://i.imgur.com/JT3DlyW.png'
 }
 
 FFMPEG_BEFORE_OPTIONS = '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5'
