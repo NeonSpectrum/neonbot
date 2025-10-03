@@ -66,33 +66,3 @@ class Database:
 
             if not guild:
                 continue
-
-            if 'ptero' in guild:
-                await self.db.guilds.update_one(
-                    {'_id': guild_id},
-                    {
-                        '$unset': {
-                            'ptero': 1,
-                        }
-                    },
-                )
-
-            if 'panel' not in guild:
-                await self.db.guilds.update_one(
-                    {'_id': guild_id},
-                    {
-                        '$set': {
-                            'panel.servers': {},
-                        }
-                    },
-                )
-
-            if 'autoplay' not in guild['music']:
-                await self.db.guilds.update_one(
-                    {'_id': guild_id},
-                    {
-                        '$set': {
-                            'music.autoplay': False,
-                        }
-                    },
-                )

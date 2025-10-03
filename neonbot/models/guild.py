@@ -23,6 +23,7 @@ class GuildModel(Document):
     exchange_gift: Optional[ExchangeGiftModel] = None
     chatgpt: Optional[ChatGPTModel] = None
     panel: Optional[PanelModel] = None
+    flyff: Optional[FlyffModel] = None
 
     class Settings:
         name = 'guilds'
@@ -57,4 +58,5 @@ class GuildModel(Document):
             exchange_gift=ExchangeGiftModel(members=[]),
             chatgpt=ChatGPTModel(chats=[]),
             panel=PanelModel(servers={}),
+            flyff=FlyffModel()
         ).create()
