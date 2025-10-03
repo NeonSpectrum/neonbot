@@ -18,7 +18,7 @@ class Flyff:
     def __init__(self, guild_id: int):
         self.guild_id = guild_id
 
-    def calculate_next_spawn(self, initial_interval, interval):
+    def calculate_next_spawn(self, initial_interval, interval, add_additional_interval=False):
         server = GuildModel.get_instance(self.guild_id)
         world_start_time = server.flyff.world_start_time
 
@@ -46,6 +46,9 @@ class Flyff:
         else:
             next_spawn_time = last_passed_spawn_time + timedelta(minutes=interval)
 
+        if add_additional_interval:
+            next_spawn_time += timedelta(minutes=interval)
+
         return int(next_spawn_time.timestamp()), passed_intervals_count
 
     @staticmethod
@@ -63,7 +66,18 @@ class Flyff:
         interval_count = None
 
         for name, timer in server.flyff.timers.items():
-            spawn_time, new_interval_count = flyff.calculate_next_spawn(timer.initial_interval, timer.interval)
+            is_karvan = interval_count % 2 != 0
+            additional_interval = False
+
+            if interval_count:
+                if name == 'Karvan' and not is_karvan:
+                    additional_interval = True
+                elif name == 'Clockworks' and is_karvan:
+                    additional_interval = True
+
+            spawn_time, new_interval_count = flyff.calculate_next_spawn(
+                timer.initial_interval, timer.interval, additional_interval
+            )
 
             if not interval_count:
                 interval_count = new_interval_count
@@ -71,7 +85,6 @@ class Flyff:
             timers.append(f'- {name}: <t:{spawn_time}:t> <t:{spawn_time}:R>')
 
         embed.add_field('Timer', '\n'.join(timers), inline=False)
-        embed.add_field('Next World Boss', 'Clockworks' if interval_count % 2 == 0 else 'Karvan')
 
         channel = bot.get_channel(server.flyff.channel_id)
         message_id = server.flyff.message_id
