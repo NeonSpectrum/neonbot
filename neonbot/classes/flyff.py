@@ -93,7 +93,7 @@ class Flyff:
         if bot.scheduler.get_job('flyff-' + str(guild_id)):
             return
 
-        servers = {k: v for k, v in server.flyff.timers.items() if v.channel_id}
+        servers = {k: v for k, v in server.flyff.timers.items() if 'channel_id' in v and v.channel_id}
 
         if len(servers) > 0:
             next_run_time = datetime.now() + timedelta(seconds=5 * len(bot.scheduler.get_jobs()))
