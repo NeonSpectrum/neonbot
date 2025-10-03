@@ -26,6 +26,12 @@ class FlyffCog(commands.Cog):
     async def start(self, interaction: discord.Interaction, option: str) -> None:
         server = GuildModel.get_instance(interaction.guild.id)
 
+        if not server.flyff.world_start_time:
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed('Set world start time first.'), ephemeral=True
+            )
+            return
+
         if option == 'status':
             server.flyff.status_channel_id = interaction.channel_id
         elif option == 'alert':
