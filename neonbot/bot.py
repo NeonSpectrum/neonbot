@@ -18,6 +18,7 @@ from envparse import env
 
 from neonbot import __version__
 from neonbot.classes.database import Database
+from neonbot.classes.flyff import Flyff
 from neonbot.models.guild import GuildModel
 from neonbot.models.setting import SettingModel
 from neonbot.utils import log
@@ -98,6 +99,7 @@ class NeonBot(commands.Bot):
                 self.add_view(ExchangeGiftView(), message_id=server.exchange_gift.message_id)
 
             Panel.start_listener(guild.id)
+            Flyff.start_listener(guild.id)
 
         self.is_listeners_done = True
 
