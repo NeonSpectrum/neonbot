@@ -59,5 +59,5 @@ class GuildModel(Document):
             exchange_gift=ExchangeGiftModel(members=[]),
             chatgpt=ChatGPTModel(chats=[]),
             panel=PanelModel(servers={}),
-            flyff=FlyffModel()
+            flyff=FlyffModel(timers={})
         ).create()
