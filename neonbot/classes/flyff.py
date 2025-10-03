@@ -67,6 +67,7 @@ class Flyff:
 
         for name, timer in server.flyff.timers.items():
             additional_interval = False
+            print(interval_count)
 
             if interval_count:
                 is_karvan = interval_count % 2 != 0
