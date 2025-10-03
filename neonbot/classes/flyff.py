@@ -75,7 +75,7 @@ class Flyff:
             timers.append(f'- {name}: <t:{spawn_time}:t> <t:{spawn_time}:R>')
 
             current_time = datetime.now(timezone.utc)
-            spawn_time = datetime.fromtimestamp(spawn_time)
+            spawn_time = datetime.fromtimestamp(spawn_time).astimezone(timezone.utc)
 
             if abs(current_time - spawn_time) <= timedelta(minutes=5) \
                 and server.flyff.timer[name].current_interval_count != interval_count:
