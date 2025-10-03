@@ -1,3 +1,4 @@
+import math
 from datetime import datetime, timedelta
 
 import discord
@@ -20,20 +21,31 @@ class Flyff:
         server = GuildModel.get_instance(self.guild_id)
         world_start_time = server.flyff.world_start_time
 
-        now = datetime.now()
+        current_time = datetime.now()
+        start_time = datetime.strptime(world_start_time, '%Y-%m-%d %H:%M:%S')
 
-        start_datetime = datetime.strptime(world_start_time, '%Y-%m-%d %I:%M %p')
+        initial_interval = initial_interval / 60
+        interval = interval / 60
 
-        initial_alarm_time = start_datetime + timedelta(seconds=initial_interval)
+        first_spawn_time = start_time + timedelta(minutes=initial_interval)
 
-        if now < initial_alarm_time:
-            next_alarm = initial_alarm_time
+        if current_time <= first_spawn_time:
+            return first_spawn_time
+
+        time_since_first_spawn = current_time - first_spawn_time
+
+        passed_intervals_count = math.floor(
+            time_since_first_spawn.total_seconds() / (interval * 60)
+        )
+
+        last_passed_spawn_time = first_spawn_time + timedelta(minutes=passed_intervals_count * interval)
+
+        if current_time == last_passed_spawn_time:
+            next_spawn_time = last_passed_spawn_time + timedelta(minutes=interval)
         else:
-            time_elapsed = now - initial_alarm_time
-            intervals_passed = time_elapsed.total_seconds()
-            next_alarm = initial_alarm_time + timedelta(seconds=(intervals_passed + 1) * interval)
+            next_spawn_time = last_passed_spawn_time + timedelta(minutes=interval)
 
-        return next_alarm
+        return next_spawn_time
 
     @staticmethod
     async def start_monitor(guild_id):
