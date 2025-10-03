@@ -96,7 +96,7 @@ class Flyff:
             try:
                 if not message:
                     message = await status_channel.send(embed=embed)
-                    server.flyff.message_id = message.id
+                    server.flyff.status_message_id = message.id
                     await server.save_changes()
                 else:
                     await message.edit(embed=embed)
