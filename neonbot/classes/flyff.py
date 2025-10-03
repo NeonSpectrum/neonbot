@@ -45,7 +45,7 @@ class Flyff:
         else:
             next_spawn_time = last_passed_spawn_time + timedelta(minutes=interval)
 
-        return next_spawn_time.timestamp()
+        return int(next_spawn_time.timestamp())
 
     @staticmethod
     async def start_monitor(guild_id):
