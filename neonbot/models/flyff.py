@@ -6,7 +6,7 @@ from pydantic import BaseModel
 class FlyffTimer(BaseModel):
     initial_interval: int
     interval: int
-    current_interval: Optional[int] = 0
+    current_interval_count: Optional[int] = 0
 
 class FlyffModel(BaseModel):
     status_channel_id: Optional[int] = None
