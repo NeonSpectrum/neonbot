@@ -5,7 +5,6 @@ from discord import app_commands
 from discord.ext import commands
 from durations_nlp import Duration
 
-from neonbot import bot
 from neonbot.classes.embed import Embed
 from neonbot.classes.flyff import Flyff
 from neonbot.models.flyff import FlyffTimer
@@ -16,7 +15,6 @@ class FlyffCog(commands.Cog):
     flyff = app_commands.Group(
         name='flyff',
         description='Flyff commands',
-        guild_ids=bot.owner_guilds,
         default_permissions=discord.Permissions(administrator=True),
     )
 
