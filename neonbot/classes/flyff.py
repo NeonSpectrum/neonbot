@@ -76,7 +76,7 @@ class Flyff:
 
             current_utc_time = datetime.now(timezone.utc)
             five_minutes_ago = current_utc_time - timedelta(minutes=5)
-            utc_timestamp = datetime.fromtimestamp(spawn_time)
+            utc_timestamp = datetime.fromtimestamp(spawn_time).astimezone(timezone.utc)
 
             if five_minutes_ago < utc_timestamp <= current_utc_time:
                 announcements.append(Embed(f'@everyone World Boss `{name}` will spawn in 5 minutes.'))
