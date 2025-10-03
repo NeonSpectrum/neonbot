@@ -1,25 +1,18 @@
-import os
-import random
-from datetime import datetime
-from time import time
-from typing import Union, cast
+from typing import cast
 
 import discord
-import psutil
 from discord import app_commands
 from discord.ext import commands
-from discord.utils import format_dt
-from envparse import env
-from yt_dlp import version as ytdl_version
+from durations_nlp import Duration
 
-from neonbot import __author__, __title__, __version__, bot
+from neonbot import bot
 from neonbot.classes.embed import Embed
-from neonbot.classes.gemini import GeminiChat
-from neonbot.utils.constants import ICONS
-from neonbot.utils.functions import format_seconds, generate_profile_member_embed, generate_profile_user_embed
+from neonbot.classes.flyff import Flyff
+from neonbot.models.flyff import FlyffTimer
+from neonbot.models.guild import GuildModel
 
 
-class Flyff(commands.Cog):
+class FlyffCog(commands.Cog):
     flyff = app_commands.Group(
         name='flyff',
         description='Flyff commands',
@@ -27,34 +20,41 @@ class Flyff(commands.Cog):
         default_permissions=discord.Permissions(administrator=True),
     )
 
-    @panel.command(name='startmonitor')
-    async def startmonitor(self, interaction: discord.Interaction, server_id: str) -> None:
+    @flyff.command(name='start')
+    async def start(self, interaction: discord.Interaction) -> None:
         server = GuildModel.get_instance(interaction.guild.id)
 
-        details = await Panel(server_id).get_server_details()
-
-        if not details:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
-                embed=Embed('Invalid server id.'), ephemeral=True
-            )
-            return
-
-        if server_id in server.panel.servers:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
-                embed=Embed('Server id already exists.'), ephemeral=True
-            )
-            return
-
-        server.panel.servers[server_id] = PanelServer(channel_id=interaction.channel_id)
+        server.flyff.channel_id = interaction.channel_id
         await server.save_changes()
 
-        Panel.start_listener(interaction.guild.id)
+        Flyff.start_listener(interaction.guild.id)
 
         await cast(discord.InteractionResponse, interaction.response).send_message(
-            embed=Embed(f'Started monitor for `{server_id}` on {interaction.channel.mention}'), ephemeral=True
+            embed=Embed(f'Started monitor on {interaction.channel.mention}'), ephemeral=True
         )
 
-    @panel.command(name='delete_timer')
+    @flyff.command(name='add_timer')
+    async def add_timer(self, interaction: discord.Interaction, name: str, initial_interval: str,
+                        interval: str) -> None:
+        server = GuildModel.get_instance(interaction.guild.id)
+
+        if name in server.flyff.timers:
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed('Name already in timer list.'), ephemeral=True
+            )
+            return
+
+        initial_interval = Duration(initial_interval).to_seconds()
+        interval = Duration(interval).to_seconds()
+
+        server.flyff.timers[name] = FlyffTimer(initial_interval=initial_interval, interval=interval)
+        await server.save_changes()
+
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed(f'Added `{name}` timer'), ephemeral=True
+        )
+
+    @flyff.command(name='delete_timer')
     async def delete_timer(self, interaction: discord.Interaction, name: str) -> None:
         server = GuildModel.get_instance(interaction.guild.id)
 
@@ -64,43 +64,14 @@ class Flyff(commands.Cog):
             )
             return
 
-        timers = server.flyff.timers
         server.flyff.timers[name] = FlyffTimer()
         await server.save_changes()
 
         await cast(discord.InteractionResponse, interaction.response).send_message(
-            embed=Embed(f'Removed monitor for `{server_id}` on {interaction.channel.mention}'), ephemeral=True
+            embed=Embed(f'Removed `{name}` timer on {interaction.channel.mention}'), ephemeral=True
         )
-
-    @startmonitor.autocomplete('server_id')
-    async def startmonitor_autocomplete(self, interaction: discord.Interaction, current: str):
-        panel = GuildModel.get_instance(interaction.guild.id).panel
-        servers = [
-            {'id': server['attributes']['identifier'], 'name': server['attributes']['name']}
-            for server in (await Panel.get_server_list())['data']
-        ]
-
-        return [
-            app_commands.Choice(name=server['name'], value=server['id'])
-            for server in servers
-            if server['id'] not in panel.servers and ((current and current in server['name']) or not current)
-        ]
-
-    @deletemonitor.autocomplete('server_id')
-    async def deletemonitor_autocomplete(self, interaction: discord.Interaction, current: str):
-        panel = GuildModel.get_instance(interaction.guild.id).panel
-        servers = [
-            {'id': server['attributes']['identifier'], 'name': server['attributes']['name']}
-            for server in (await Panel.get_server_list())['data']
-        ]
-
-        return [
-            app_commands.Choice(name=server['name'], value=server['id'])
-            for server in servers
-            if server['id'] in panel.servers and ((current and current in server['name']) or not current)
-        ]
 
 
 # noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(Utility())
+    await bot.add_cog(FlyffCog())

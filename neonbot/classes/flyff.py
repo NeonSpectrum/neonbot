@@ -1,42 +1,38 @@
-import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 import discord
-import validators
-from aiohttp import ContentTypeError
-from discord.utils import find
-from envparse import env
 from durations_nlp import Duration
+from envparse import env
 
 from neonbot import bot
 from neonbot.classes.embed import Embed
+from neonbot.models.flyff import FlyffTimer
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
-from neonbot.utils.exceptions import ApiError
-from neonbot.utils.functions import format_uptime
 
 
 class Flyff:
     IP_ADDRESS = env.str('FLYFF_IP_ADDRESS')
 
-    def __init__(self, server_id: str):
-        self.server_id = server_id
+    def __init__(self, guild_id: int):
+        self.guild_id = guild_id
 
     async def add_timer(self, name, initial_interval, interval):
         initial_interval = Duration(initial_interval).to_seconds()
         interval = Duration(interval).to_seconds()
 
-        server = GuildModel.get_instance(guild_id)
+        server = GuildModel.get_instance(self.guild_id)
         server.flyff.timers.append(FlyffTimer(name=name, initial_interval=initial_interval, interval=interval))
         await server.save_changes()
 
     async def remove_timer(self, name):
-        server = GuildModel.get_instance(guild_id)
+        server = GuildModel.get_instance(self.guild_id)
         server.flyff.timers = [timer for timer in server.flyff.timers if timer.name != name]
         await server.save_changes()
 
-    async def calculate_next_spawn(self, initial_interval, interval):
+    def calculate_next_spawn(self, initial_interval, interval):
+        server = GuildModel.get_instance(self.guild_id)
         world_start_time = server.flyff.world_start_time
 
         now = datetime.now()
@@ -50,7 +46,7 @@ class Flyff:
 
         initial_alarm_time = start_datetime + timedelta(seconds=initial_interval)
 
-        if now < initial_alarm_time
+        if now < initial_alarm_time:
             next_alarm = initial_alarm_time
         else:
             time_elapsed = now - initial_alarm_time
@@ -63,12 +59,13 @@ class Flyff:
     @staticmethod
     async def start_monitor(guild_id):
         server = GuildModel.get_instance(guild_id)
+        flyff = Flyff(guild_id)
 
         embed = Embed(timestamp=datetime.now())
         embed.set_thumbnail(ICONS['green'])
 
         for name, timer in server.flyff.timers.items():
-            embed.add_field(name, self.calculate_next_spawn(initial_interval, interval))
+            embed.add_field(name, flyff.calculate_next_spawn(timer.initial_interval, timer.interval))
 
         channel = bot.get_channel(server.flyff.channel_id)
         message_id = server.flyff.message_id
@@ -82,7 +79,7 @@ class Flyff:
         try:
             if not message:
                 message = await channel.send(embed=embed)
-                server.panel.servers[server_id].message_id = message.id
+                server.flyff.message_id = message.id
                 await server.save_changes()
             else:
                 await message.edit(embed=embed)

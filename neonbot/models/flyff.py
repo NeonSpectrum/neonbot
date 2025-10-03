@@ -1,8 +1,9 @@
+from typing import Dict
+
 from pydantic import BaseModel
 
 
 class FlyffTimer(BaseModel):
-    next_timer: int
     initial_interval: int
     interval: int
 
