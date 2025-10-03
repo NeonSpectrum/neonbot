@@ -37,12 +37,7 @@ class Flyff:
 
         now = datetime.now()
 
-        start_time_obj = datetime.strptime(world_start_time, '%I:%M %p').time()
-
-        start_datetime = datetime.combine(now.date(), start_time_obj)
-
-        if start_datetime < now:
-            start_datetime += timedelta(days=1)
+        start_datetime = datetime.strptime(world_start_time, '%Y-%m-%d %I:%M %p')
 
         initial_alarm_time = start_datetime + timedelta(seconds=initial_interval)
 
