@@ -85,7 +85,7 @@ class Flyff:
         status_channel = bot.get_channel(server.flyff.status_channel_id)
 
         if status_channel:
-            message_id = server.flyff.message_id
+            message_id = server.flyff.status_message_id
             server = GuildModel.get_instance(status_channel.guild.id)
 
             try:
