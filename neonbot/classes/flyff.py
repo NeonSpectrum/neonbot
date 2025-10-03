@@ -1,5 +1,5 @@
 import math
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import discord
 from envparse import env
@@ -74,11 +74,12 @@ class Flyff:
 
             timers.append(f'- {name}: <t:{spawn_time}:t> <t:{spawn_time}:R>')
 
-            current_time = datetime.now()
-            duration = current_time - datetime.fromtimestamp(spawn_time)
+            current_utc_time = datetime.now(timezone.utc)
+            five_minutes_ago = current_utc_time - timedelta(minutes=5)
+            utc_timestamp = datetime.fromtimestamp(spawn_time)
 
-            if duration <= timedelta(minutes=5):
-                announcements.append(Embed(f'World Boss `{name}` will spawn in 5 minutes.'))
+            if five_minutes_ago < utc_timestamp <= current_utc_time:
+                announcements.append(Embed(f'@everyone World Boss `{name}` will spawn in 5 minutes.'))
 
         embed.add_field('Timer', '\n'.join(timers), inline=False)
 
