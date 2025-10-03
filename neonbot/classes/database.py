@@ -66,3 +66,13 @@ class Database:
 
             if not guild:
                 continue
+
+            if 'flyff' not in guild:
+                await self.db.guilds.update_one(
+                    {'_id': guild_id},
+                    {
+                        '$set': {
+                            'flyff.timers': {},
+                        }
+                    },
+                )
