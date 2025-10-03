@@ -9,6 +9,7 @@ from neonbot.enums import Repeat
 from neonbot.models.channel_log import ChannelLogModel
 from neonbot.models.chatgpt import ChatGPTModel
 from neonbot.models.exchange_gift import ExchangeGiftModel
+from neonbot.models.flyff import FlyffModel
 from neonbot.models.music import MusicModel
 from neonbot.models.panel import PanelModel
 
