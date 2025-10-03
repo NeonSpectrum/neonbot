@@ -60,7 +60,7 @@ class Flyff:
 
         for name, timer in server.flyff.timers.items():
             spawn_time = flyff.calculate_next_spawn(timer.initial_interval, timer.interval)
-            timers.append(f'- {name}: `<t:{spawn_time}:R>`')
+            timers.append(f'- {name}: <t:{spawn_time}:R>')
 
         embed.add_field('Timer', '\n'.join(timers))
 
