@@ -18,7 +18,7 @@ class Flyff:
     def __init__(self, guild_id: int):
         self.guild_id = guild_id
 
-    def calculate_next_spawn(self, initial_interval, interval, add_additional_interval=False):
+    def calculate_next_spawn(self, initial_interval, interval, func):
         server = GuildModel.get_instance(self.guild_id)
         world_start_time = server.flyff.world_start_time
 
@@ -46,10 +46,10 @@ class Flyff:
         else:
             next_spawn_time = last_passed_spawn_time + timedelta(minutes=interval)
 
-        if add_additional_interval:
+        if func(passed_intervals_count):
             next_spawn_time += timedelta(minutes=interval)
 
-        return int(next_spawn_time.timestamp()), passed_intervals_count
+        return int(next_spawn_time.timestamp())
 
     @staticmethod
     async def start_monitor(guild_id):
@@ -63,26 +63,13 @@ class Flyff:
         embed.set_thumbnail(ICONS['green'] if status else ICONS['red'])
 
         timers = []
-        interval_count = None
 
         for name, timer in server.flyff.timers.items():
-            additional_interval = False
-            print(interval_count)
-
-            if interval_count:
-                is_karvan = interval_count % 2 != 0
-
-                if name == 'Karvan' and not is_karvan:
-                    additional_interval = True
-                elif name == 'Clockworks' and is_karvan:
-                    additional_interval = True
-
-            spawn_time, new_interval_count = flyff.calculate_next_spawn(
-                timer.initial_interval, timer.interval, additional_interval
+            spawn_time = flyff.calculate_next_spawn(
+                timer.initial_interval, timer.interval,
+                lambda count: (name == 'Karvan' and count % 2 == 0)
+                              or (name == 'Clockworks' and count % 2 == 1)
             )
-
-            if not interval_count:
-                interval_count = new_interval_count
 
             timers.append(f'- {name}: <t:{spawn_time}:t> <t:{spawn_time}:R>')
 
