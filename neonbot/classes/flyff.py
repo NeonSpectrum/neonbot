@@ -75,7 +75,7 @@ class Flyff:
             timers.append(f'- {name}: <t:{spawn_time}:t> <t:{spawn_time}:R>')
 
             current_time = datetime.now()
-            duration = current_time - spawn_time
+            duration = current_time - datetime.fromtimestamp(spawn_time)
 
             if duration <= timedelta(minutes=5):
                 announcements.append(Embed(f'World Boss `{name}` will spawn in 5 minutes.'))

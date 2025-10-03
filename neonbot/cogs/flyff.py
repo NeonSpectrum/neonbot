@@ -21,10 +21,18 @@ class FlyffCog(commands.Cog):
     )
 
     @flyff.command(name='start')
-    async def start(self, interaction: discord.Interaction) -> None:
+    @app_commands.choices(option=[
+        app_commands.Choice(name="Status", value="status"),
+        app_commands.Choice(name="Alert", value="alert"),
+    ])
+    async def start(self, interaction: discord.Interaction, option: str) -> None:
         server = GuildModel.get_instance(interaction.guild.id)
 
-        server.flyff.channel_id = interaction.channel_id
+        if option == 'status':
+            server.flyff.status_channel_id = interaction.channel_id
+        elif option == 'alert':
+            server.flyff.alert_channel_id = interaction.channel_id
+
         await server.save_changes()
 
         Flyff.start_listener(interaction.guild.id)
