@@ -18,7 +18,6 @@ from envparse import env
 
 from neonbot import __version__
 from neonbot.classes.database import Database
-from neonbot.classes.flyff import Flyff
 from neonbot.models.guild import GuildModel
 from neonbot.models.setting import SettingModel
 from neonbot.utils import log
@@ -91,6 +90,7 @@ class NeonBot(commands.Bot):
             return
 
         from neonbot.classes.panel import Panel
+        from neonbot.classes.flyff import Flyff
 
         for guild in self.guilds:
             server = GuildModel.get_instance(guild.id)
