@@ -150,7 +150,7 @@ class Flyff:
 
         scheduled_times = []
         for time_str in times:
-            dt_object = self.convert_to_utc(time_str)
+            dt_object = datetime.strptime(time_str, "%I:%M %p")
             scheduled_times.append(dt_object.time())
 
         scheduled_times.sort()
