@@ -17,7 +17,7 @@ class FlyffTimer(BaseModel):
 
 class FlyffModel(Document):
     world_start_time: Optional[str] = None
-    status_channels: Dict[str, str] = {}
+    status_channels: Dict[int, Optional[int]] = {}
     alert_channels: List[FlyffAlertChannel] = []
     timers: Dict[str, FlyffTimer]
 

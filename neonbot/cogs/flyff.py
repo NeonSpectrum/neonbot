@@ -31,7 +31,7 @@ class FlyffCog(commands.Cog):
             return
 
         if option == 'status':
-            bot.flyff_settings.status_channels[interaction.channel_id] = None
+            bot.flyff_settings.status_channels[interaction.channel_id] = 0
         elif option == 'alert':
             bot.flyff_settings.alert_channels.append(FlyffAlertChannel(channel_id=interaction.channel_id))
 
