@@ -48,7 +48,7 @@ class Flyff:
 
         return int(next_spawn_time.timestamp())
 
-    async def refresh_status(self):
+    async def refresh_status(self, channel_id=None):
         ip, port = Flyff.IP_ADDRESS.split(':')
         status = await check_ip_online_socket(ip, port)
 
@@ -69,21 +69,26 @@ class Flyff:
 
         embed.add_field('Timer', '\n'.join(timers), inline=False)
 
-        status_channel = bot.get_channel(bot.flyff_settings.status_channel_id)
+        status_channels = [bot.get_channel(channel_id) for channel_id in bot.flyff_settings.status_channels]
 
-        if status_channel:
+        for channel in status_channels:
+            if channel_id and channel.id != channel_id:
+                continue
+
             message_id = bot.flyff_settings.status_message_id
-            server = GuildModel.get_instance(status_channel.guild.id)
+            server = GuildModel.get_instance(channel.guild.id)
 
             try:
-                message = await status_channel.fetch_message(message_id) if message_id else None
+                message = await channel.fetch_message(message_id) if message_id else None
             except discord.NotFound:
                 message = None
 
             try:
                 if not message:
-                    message = await status_channel.send(embed=embed)
-                    server.flyff.status_message_id = message.id
+                    message = await channel.send(embed=embed)
+                    for value in bot.flyff_settings.status_channels:
+                        if value.channel_id == channel.id:
+                            value.message = message.id
                     await server.save_changes()
                 else:
                     await message.edit(embed=embed)
