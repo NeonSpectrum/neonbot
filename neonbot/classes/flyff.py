@@ -68,7 +68,7 @@ class Flyff:
 
         embed.add_field('Timer', '\n'.join(timers), inline=False)
 
-        for channel_id, message_id in bot.flyff_settings.status_channels.items:
+        for channel_id, message_id in bot.flyff_settings.status_channels.items():
             if only_channel_id and only_channel_id != channel_id:
                 continue
 
