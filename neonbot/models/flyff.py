@@ -20,6 +20,7 @@ class FlyffModel(Document):
     status_channels: Dict[int, Optional[int]] = {}
     alert_channels: List[FlyffAlertChannel] = []
     timers: Dict[str, FlyffTimer]
+    last_alert_message: Optional[str] = ''
 
     class Settings:
         name = 'flyff'

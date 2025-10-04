@@ -13,7 +13,6 @@ from neonbot.utils.functions import check_ip_online_socket
 
 class Flyff:
     IP_ADDRESS = env.str('FLYFF_IP_ADDRESS')
-    LAST_ALERT_MESSAGE = None
 
     def calculate_next_spawn(self, initial_interval, interval, func):
         world_start_time = bot.flyff_settings.world_start_time
@@ -111,10 +110,11 @@ class Flyff:
         alert_channels = [bot.get_channel(alert.channel_id) for alert in bot.flyff_settings.alert_channels]
 
         for channel in alert_channels:
-            if alert_message != Flyff.LAST_ALERT_MESSAGE:
+            if alert_message != bot.flyff_settings.last_alert_message:
                 await channel.send('@everyone', embed=Embed(alert_message))
 
-        Flyff.LAST_ALERT_MESSAGE = alert_message
+        bot.flyff_settings.last_alert_message = alert_message
+        await bot.flyff_settings.save_changes()
 
     @staticmethod
     async def start_status_monitor():
