@@ -8,11 +8,6 @@ from pydantic import BaseModel
 from neonbot.utils import log
 
 
-class FlyffStatusChannel(BaseModel):
-    channel_id: int
-    message_id: Optional[int] = None
-
-
 class FlyffAlertChannel(BaseModel):
     channel_id: int
 
@@ -20,10 +15,9 @@ class FlyffTimer(BaseModel):
     initial_interval: int
     interval: int
 
-
 class FlyffModel(Document):
     world_start_time: Optional[str] = None
-    status_channels: List[FlyffStatusChannel] = []
+    status_channels: Dict[str, str] = {}
     alert_channels: List[FlyffAlertChannel] = []
     timers: Dict[str, FlyffTimer]
 
@@ -48,7 +42,7 @@ class FlyffModel(Document):
     async def create_default_collection():
         await FlyffModel(
             world_start_time=None,
-            status_channels=[],
+            status_channels={},
             alert_channels=[],
             timers={}
         ).create()
