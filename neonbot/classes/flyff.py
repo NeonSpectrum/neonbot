@@ -109,7 +109,7 @@ class Flyff:
             elif abs(current_time - spawn_time) <= timedelta(minutes=5):
                 alert_message = f'World Boss `{name}` will spawn in 5 minutes.'
 
-        alert_channels = [bot.get_channel(channel_id) for channel_id in bot.flyff_settings.alert_channels]
+        alert_channels = [bot.get_channel(alert.channel_id) for alert in bot.flyff_settings.alert_channels]
 
         for channel in alert_channels:
             if alert_message != Flyff.LAST_ALERT_MESSAGE:
