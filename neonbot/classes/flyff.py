@@ -159,7 +159,7 @@ class Flyff:
 
         for scheduled_time_obj in scheduled_times:
             if scheduled_time_obj > current_time_obj:
-                return datetime.combine(current_date, scheduled_time_obj)
+                return self.convert_to_utc(datetime.combine(current_date, scheduled_time_obj))
 
         next_day_time_obj = scheduled_times[0]
 
