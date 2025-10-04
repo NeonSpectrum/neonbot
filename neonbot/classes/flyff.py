@@ -69,7 +69,7 @@ class Flyff:
 
         embed.add_field('Timer', '\n'.join(timers), inline=False)
 
-        status_channels = [bot.get_channel(channel_id) for channel_id in bot.flyff_settings.status_channels]
+        status_channels = [bot.get_channel(status.channel_id) for status in bot.flyff_settings.status_channels]
 
         for channel in status_channels:
             if channel_id and channel.id != channel_id:
