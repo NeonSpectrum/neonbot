@@ -104,9 +104,9 @@ class Flyff:
             spawn_time = datetime.fromtimestamp(spawn_time).astimezone(timezone.utc)
 
             if abs(current_time - spawn_time) <= timedelta():
-                alert_message = f'World Boss **{name}** will spawn now.'
+                alert_message = f'World Boss **{name}** will spawn **now**.'
             elif abs(current_time - spawn_time) <= timedelta(minutes=5):
-                alert_message = f'World Boss **{name}** will spawn in 5 minutes.'
+                alert_message = f'World Boss **{name}** will spawn in **5 minutes**.'
 
         alert_channels = [bot.get_channel(alert.channel_id) for alert in bot.flyff_settings.alert_channels]
 
