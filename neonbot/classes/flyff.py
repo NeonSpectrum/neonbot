@@ -78,10 +78,10 @@ class Flyff:
             spawn_time = datetime.fromtimestamp(spawn_time).astimezone(timezone.utc)
 
             if abs(current_time - spawn_time) <= timedelta(minutes=5) \
-                and server.flyff.timer[name].current_interval_count != interval_count:
+                and server.flyff.timers[name].current_interval_count != interval_count:
                 announcements.append(Embed(f'@everyone World Boss `{name}` will spawn in 5 minutes.'))
 
-                server.flyff.timer[name].current_interval_count = interval_count
+                server.flyff.timers[name].current_interval_count = interval_count
                 await server.save_changes()
 
         embed.add_field('Timer', '\n'.join(timers), inline=False)
