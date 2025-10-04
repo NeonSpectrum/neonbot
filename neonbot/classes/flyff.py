@@ -68,7 +68,7 @@ class Flyff:
             timers.append(f'- {name}: <t:{spawn_time}:t> <t:{spawn_time}:R>')
 
         for name, timers in bot.flyff_settings.fixed_timers.items():
-            next_time = self.get_next_nearest_time(timers)
+            next_time = self.get_next_nearest_time(timers).timestamp()
 
             events.append(f'- {name}: <t:{next_time}:t> <t:{next_time}:R>')
 
@@ -165,7 +165,7 @@ class Flyff:
 
         next_day_date = current_date + timedelta(days=1)
 
-        return datetime.combine(next_day_date, next_day_time_obj).timestamp()
+        return datetime.combine(next_day_date, next_day_time_obj).astimezone(timezone.utc)
 
     @staticmethod
     async def start_status_monitor():
