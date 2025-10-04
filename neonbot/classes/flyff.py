@@ -68,7 +68,7 @@ class Flyff:
             timers.append(f'- {name}: <t:{spawn_time}:t> <t:{spawn_time}:R>')
 
         for name, time_list in bot.flyff_settings.fixed_timers.items():
-            next_time = self.get_next_nearest_time(time_list).timestamp()
+            next_time = int(self.get_next_nearest_time(time_list).timestamp())
 
             events.append(f'- {name}: <t:{next_time}:t> <t:{next_time}:R>')
 
