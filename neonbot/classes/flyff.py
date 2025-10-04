@@ -104,7 +104,7 @@ class Flyff:
             current_time = datetime.now(timezone.utc)
             spawn_time = datetime.fromtimestamp(spawn_time).astimezone(timezone.utc)
 
-            if abs(current_time - spawn_time) <= timedelta(seconds=5):
+            if abs(current_time - spawn_time) <= timedelta():
                 alert_message = f'World Boss `{name}` will spawn now.'
             elif abs(current_time - spawn_time) <= timedelta(minutes=5):
                 alert_message = f'World Boss `{name}` will spawn in 5 minutes.'
