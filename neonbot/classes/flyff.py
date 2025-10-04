@@ -24,7 +24,7 @@ class Flyff:
         world_start_time = self.server.flyff.world_start_time
 
         current_time = datetime.now()
-        start_time = datetime.strptime(world_start_time, '%Y-%m-%d %I:%M %p')
+        start_time = datetime.strptime(world_start_time, '%Y-%m-%d %I:%M:%S %p')
 
         initial_interval = initial_interval / 60
         interval = interval / 60
