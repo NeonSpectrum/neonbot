@@ -76,7 +76,7 @@ class Flyff:
 
             if abs(current_time - spawn_time) <= timedelta(minutes=5) \
                 and self.server.flyff.timers[name].current_interval_count != interval_count:
-                self.announcements.append(Embed(f'@everyone World Boss `{name}` will spawn in 5 minutes.'))
+                self.announcements.append(Embed(f'World Boss `{name}` will spawn in 5 minutes.'))
 
                 self.server.flyff.timers[name].current_interval_count = interval_count
                 await self.server.save_changes()
@@ -109,7 +109,7 @@ class Flyff:
 
         if alert_channel:
             for announcement in self.announcements:
-                await alert_channel.send(embed=announcement)
+                await alert_channel.send('@everyone', embed=announcement)
 
     @staticmethod
     async def start_monitor(guild_id):
