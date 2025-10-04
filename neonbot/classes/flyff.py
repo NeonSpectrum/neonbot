@@ -17,10 +17,11 @@ class Flyff:
 
     def __init__(self, guild_id: int):
         self.guild_id = guild_id
+        self.server = GuildModel.get_instance(guild_id)
+        self.announcements = []
 
     def calculate_next_spawn(self, initial_interval, interval, func):
-        server = GuildModel.get_instance(self.guild_id)
-        world_start_time = server.flyff.world_start_time
+        world_start_time = self.server.flyff.world_start_time
 
         current_time = datetime.now()
         start_time = datetime.strptime(world_start_time, '%Y-%m-%d %I:%M %p')
@@ -51,10 +52,7 @@ class Flyff:
 
         return int(next_spawn_time.timestamp()), passed_intervals_count
 
-    @staticmethod
-    async def start_monitor(guild_id):
-        server = GuildModel.get_instance(guild_id)
-        flyff = Flyff(guild_id)
+    async def refresh_status(self):
         ip, port = Flyff.IP_ADDRESS.split(':')
         status = await check_ip_online_socket(ip, port)
 
@@ -63,10 +61,9 @@ class Flyff:
         embed.set_thumbnail(ICONS['green'] if status else ICONS['red'])
 
         timers = []
-        announcements = []
 
-        for name, timer in server.flyff.timers.items():
-            spawn_time, interval_count = flyff.calculate_next_spawn(
+        for name, timer in self.server.flyff.timers.items():
+            spawn_time, interval_count = self.calculate_next_spawn(
                 timer.initial_interval, timer.interval,
                 lambda count: (name == 'Karvan' and count % 2 == 0)
                               or (name == 'Clockworks' and count % 2 == 1)
@@ -78,18 +75,18 @@ class Flyff:
             spawn_time = datetime.fromtimestamp(spawn_time).astimezone(timezone.utc)
 
             if abs(current_time - spawn_time) <= timedelta(minutes=5) \
-                and server.flyff.timers[name].current_interval_count != interval_count:
-                announcements.append(Embed(f'@everyone World Boss `{name}` will spawn in 5 minutes.'))
+                and self.server.flyff.timers[name].current_interval_count != interval_count:
+                self.announcements.append(Embed(f'@everyone World Boss `{name}` will spawn in 5 minutes.'))
 
-                server.flyff.timers[name].current_interval_count = interval_count
-                await server.save_changes()
+                self.server.flyff.timers[name].current_interval_count = interval_count
+                await self.server.save_changes()
 
         embed.add_field('Timer', '\n'.join(timers), inline=False)
 
-        status_channel = bot.get_channel(server.flyff.status_channel_id)
+        status_channel = bot.get_channel(self.server.flyff.status_channel_id)
 
         if status_channel:
-            message_id = server.flyff.status_message_id
+            message_id = self.server.flyff.status_message_id
             server = GuildModel.get_instance(status_channel.guild.id)
 
             try:
@@ -107,11 +104,19 @@ class Flyff:
             except discord.HTTPException as error:
                 log.error(error)
 
-        alert_channel = bot.get_channel(server.flyff.alert_channel_id)
+    async def execute_announcements(self):
+        alert_channel = bot.get_channel(self.server.flyff.alert_channel_id)
 
         if alert_channel:
-            for announcement in announcements:
+            for announcement in self.announcements:
                 await alert_channel.send(embed=announcement)
+
+    @staticmethod
+    async def start_monitor(guild_id):
+        flyff = Flyff(guild_id)
+
+        await flyff.refresh_status()
+        await flyff.execute_announcements()
 
 
     @staticmethod
