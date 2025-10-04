@@ -93,6 +93,40 @@ class FlyffCog(commands.Cog):
             embed=Embed(f'Removed `{name}` timer on {interaction.channel.mention}'), ephemeral=True
         )
 
+    @flyff.command(name='add_fixed_timer')
+    async def add_fixed_timer(self, interaction: discord.Interaction, name: str, start_time: str) -> None:
+        bot.flyff_settings = await FlyffModel.get_instance()
+
+        if name in bot.flyff_settings.fixed_timers:
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed('Name already in fixed timer list.'), ephemeral=True
+            )
+            return
+
+        bot.flyff_settings.fixed_timers[name] = start_time.split(',')
+        await bot.flyff_settings.save_changes()
+
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed(f'Added `{name}` fixed timer'), ephemeral=True
+        )
+
+    @flyff.command(name='delete_fixed_timer')
+    async def delete_fixed_timer(self, interaction: discord.Interaction, name: str) -> None:
+        bot.flyff_settings = await FlyffModel.get_instance()
+
+        if name not in bot.flyff_settings.fixed_timers:
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed('Name not in fixed timer list.'), ephemeral=True
+            )
+            return
+
+        del bot.flyff_settings.fixed_timers[name]
+        await bot.flyff_settings.save_changes()
+
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed(f'Removed `{name}` fixed timer on {interaction.channel.mention}'), ephemeral=True
+        )
+
 
 # noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:

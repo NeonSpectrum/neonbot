@@ -107,6 +107,17 @@ class Flyff:
             elif abs(current_time - spawn_time) <= timedelta(minutes=5):
                 alert_message = f'**{name}** will spawn in **5 minutes**.'
 
+        for name, timer in bot.flyff_settings.fixed_timers.items():
+            current_time = datetime.now(timezone.utc)
+
+            for time in timer.start_time:
+                spawn_time = self.convert_to_utc(time)
+
+                if abs(current_time - spawn_time) <= timedelta(seconds=5):
+                    alert_message = f'**{name}** will start **soon**!'
+                elif abs(current_time - spawn_time) <= timedelta(minutes=5):
+                    alert_message = f'**{name}** will start in **5 minutes**.'
+
         if not alert_message:
             return
 
@@ -118,6 +129,13 @@ class Flyff:
 
         bot.flyff_settings.last_alert_message = alert_message
         await bot.flyff_settings.save_changes()
+
+    def convert_to_utc(self, time_str):
+        gmt_plus_8 = timezone(timedelta(hours=8))
+        current_date = datetime.now().date()
+        naive_dt = datetime.combine(current_date, datetime.strptime(time_str, '%I:%M %p').time())
+        dt_gmt_plus_8 = naive_dt.replace(tzinfo=gmt_plus_8)
+        return dt_gmt_plus_8.astimezone(timezone.utc)
 
     @staticmethod
     async def start_status_monitor():

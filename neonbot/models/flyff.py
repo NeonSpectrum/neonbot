@@ -19,7 +19,8 @@ class FlyffModel(Document):
     world_start_time: Optional[str] = None
     status_channels: Dict[int, Optional[int]] = {}
     alert_channels: List[FlyffAlertChannel] = []
-    timers: Dict[str, FlyffTimer]
+    timers: Dict[str, FlyffTimer] = {}
+    fixed_timers: Dict[str, List] = {}
     last_alert_message: Optional[str] = ''
 
     class Settings:
@@ -45,5 +46,6 @@ class FlyffModel(Document):
             world_start_time=None,
             status_channels={},
             alert_channels=[],
-            timers={}
+            timers={},
+            fixed_timers={}
         ).create()
