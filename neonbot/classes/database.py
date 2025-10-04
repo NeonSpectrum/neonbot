@@ -36,7 +36,7 @@ class Database:
         log.info('Connecting to Database...')
         client = MotorClient(mongo_url, db_port, username=db_username, password=db_password)
         self.db = client.get_database(db_name)
-        await init_beanie(database=self.db, document_models=[GuildModel, SettingModel])
+        await init_beanie(database=self.db, document_models=[GuildModel, SettingModel, FlyffModel])
         log.info(f'MongoDB connection established in {(time() - start_time):.2f}s')
 
         await SettingModel.initialize()
