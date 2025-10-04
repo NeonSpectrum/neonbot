@@ -67,14 +67,10 @@ class Flyff:
 
             timers.append(f'- {name}: <t:{spawn_time}:t> <t:{spawn_time}:R>')
 
-        for name, timer in bot.flyff_settings.fixed_timers.items():
-            spawn_time = self.calculate_next_spawn(
-                timer.initial_interval, timer.interval,
-                lambda count: (name == 'Karvan' and count % 2 == 0)
-                              or (name == 'Clockworks' and count % 2 == 1)
-            )
+        for name, timers in bot.flyff_settings.fixed_timers.items():
+            next_time = self.get_next_nearest_time(timers)
 
-            events.append(f'- {name}: <t:{spawn_time}:t> <t:{spawn_time}:R>')
+            events.append(f'- {name}: <t:{next_time}:t> <t:{next_time}:R>')
 
         embed.add_field('Boss Timer', '\n'.join(timers), inline=False)
         embed.add_field('Event', '\n'.join(events), inline=False)
@@ -119,10 +115,10 @@ class Flyff:
             elif abs(current_time - spawn_time) <= timedelta(minutes=5):
                 alert_message = f'**{name}** will spawn in **5 minutes**.'
 
-        for name, timer in bot.flyff_settings.fixed_timers.items():
+        for name, timers in bot.flyff_settings.fixed_timers.items():
             current_time = datetime.now(timezone.utc)
 
-            next_time = self.get_next_nearest_time(timer.start_time)
+            next_time = self.get_next_nearest_time(timers)
 
             if abs(current_time - next_time) <= timedelta(seconds=5):
                 alert_message = f'**{name}** will start **soon**!'
