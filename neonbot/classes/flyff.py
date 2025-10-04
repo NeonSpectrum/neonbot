@@ -1,5 +1,6 @@
 import math
 from datetime import datetime, timedelta, timezone
+from typing import List
 
 import discord
 from envparse import env
@@ -55,6 +56,7 @@ class Flyff:
         embed.set_thumbnail(ICONS['green'] if status else ICONS['red'])
 
         timers = []
+        events = []
 
         for name, timer in bot.flyff_settings.timers.items():
             spawn_time = self.calculate_next_spawn(
@@ -65,7 +67,17 @@ class Flyff:
 
             timers.append(f'- {name}: <t:{spawn_time}:t> <t:{spawn_time}:R>')
 
-        embed.add_field('Timer', '\n'.join(timers), inline=False)
+        for name, timer in bot.flyff_settings.fixed_timers.items():
+            spawn_time = self.calculate_next_spawn(
+                timer.initial_interval, timer.interval,
+                lambda count: (name == 'Karvan' and count % 2 == 0)
+                              or (name == 'Clockworks' and count % 2 == 1)
+            )
+
+            events.append(f'- {name}: <t:{spawn_time}:t> <t:{spawn_time}:R>')
+
+        embed.add_field('Boss Timer', '\n'.join(timers), inline=False)
+        embed.add_field('Event', '\n'.join(events), inline=False)
 
         for channel_id, message_id in bot.flyff_settings.status_channels.items():
             if only_channel_id and only_channel_id != channel_id:
@@ -110,13 +122,12 @@ class Flyff:
         for name, timer in bot.flyff_settings.fixed_timers.items():
             current_time = datetime.now(timezone.utc)
 
-            for time in timer.start_time:
-                spawn_time = self.convert_to_utc(time)
+            next_time = self.get_next_nearest_time(timer.start_time)
 
-                if abs(current_time - spawn_time) <= timedelta(seconds=5):
-                    alert_message = f'**{name}** will start **soon**!'
-                elif abs(current_time - spawn_time) <= timedelta(minutes=5):
-                    alert_message = f'**{name}** will start in **5 minutes**.'
+            if abs(current_time - next_time) <= timedelta(seconds=5):
+                alert_message = f'**{name}** will start **soon**!'
+            elif abs(current_time - next_time) <= timedelta(minutes=5):
+                alert_message = f'**{name}** will start in **5 minutes**.'
 
         if not alert_message:
             return
@@ -136,6 +147,29 @@ class Flyff:
         naive_dt = datetime.combine(current_date, datetime.strptime(time_str, '%I:%M %p').time())
         dt_gmt_plus_8 = naive_dt.replace(tzinfo=gmt_plus_8)
         return dt_gmt_plus_8.astimezone(timezone.utc)
+
+    def get_next_nearest_time(self, times: List[str]):
+        current_datetime = datetime.now(timezone.utc)
+        current_date = current_datetime.date()
+
+        scheduled_times = []
+        for time_str in times:
+            dt_object = self.convert_to_utc(time_str)
+            scheduled_times.append(dt_object.time())
+
+        scheduled_times.sort()
+
+        current_time_obj = current_datetime.time()
+
+        for scheduled_time_obj in scheduled_times:
+            if scheduled_time_obj > current_time_obj:
+                return datetime.combine(current_date, scheduled_time_obj)
+
+        next_day_time_obj = scheduled_times[0]
+
+        next_day_date = current_date + timedelta(days=1)
+
+        return datetime.combine(next_day_date, next_day_time_obj).timestamp()
 
     @staticmethod
     async def start_status_monitor():
