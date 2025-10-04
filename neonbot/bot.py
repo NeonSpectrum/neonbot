@@ -95,6 +95,8 @@ class NeonBot(commands.Bot):
         from neonbot.classes.panel import Panel
         from neonbot.classes.flyff import Flyff
 
+        Flyff.start_listener()
+
         for guild in self.guilds:
             server = GuildModel.get_instance(guild.id)
 
@@ -102,7 +104,6 @@ class NeonBot(commands.Bot):
                 self.add_view(ExchangeGiftView(), message_id=server.exchange_gift.message_id)
 
             Panel.start_listener(guild.id)
-            Flyff.start_listener(guild.id)
 
         self.is_listeners_done = True
 

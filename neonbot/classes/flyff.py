@@ -127,7 +127,7 @@ class Flyff:
         await flyff.check_next_alert()
 
     @staticmethod
-    def start_listener(guild_id: int):
+    def start_listener():
         if bot.scheduler.get_job('flyff-monitor'):
             return
 
@@ -137,12 +137,12 @@ class Flyff:
             trigger='interval',
             minutes=1,
         )
-        log.info(f'Auto started job flyff-{guild_id}')
+        log.info(f'Auto started job flyff-status-monitor')
 
         bot.scheduler.add_job(
             id='flyff-alert-monitor',
-            func=Flyff.start_status_monitor,
+            func=Flyff.start_alert_monitor(),
             trigger='interval',
-            minutes=1,
+            seconds=5,
         )
-        log.info(f'Auto started job flyff-{guild_id}')
+        log.info(f'Auto started job flyff-alert-monitor')
