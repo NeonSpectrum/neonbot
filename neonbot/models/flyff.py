@@ -30,6 +30,7 @@ class FlyffModel(Document):
     class Settings:
         name = 'flyff'
         use_cache = True
+        use_state_management = True
 
     @staticmethod
     async def get_instance() -> Optional[FlyffModel]:
