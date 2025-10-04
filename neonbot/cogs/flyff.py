@@ -5,10 +5,10 @@ from discord import app_commands
 from discord.ext import commands
 from durations_nlp import Duration
 
+from neonbot import bot
 from neonbot.classes.embed import Embed
 from neonbot.classes.flyff import Flyff
-from neonbot.models.flyff import FlyffTimer
-from neonbot.models.guild import GuildModel
+from neonbot.models.flyff import FlyffTimer, FlyffModel, FlyffStatusChannel, FlyffAlertChannel
 
 
 class FlyffCog(commands.Cog):
@@ -24,20 +24,18 @@ class FlyffCog(commands.Cog):
         app_commands.Choice(name="Alert", value="alert"),
     ])
     async def start(self, interaction: discord.Interaction, option: str) -> None:
-        server = GuildModel.get_instance(interaction.guild.id)
-
-        if not server.flyff.world_start_time:
+        if not bot.flyff_settings.world_start_time:
             await cast(discord.InteractionResponse, interaction.response).send_message(
                 embed=Embed('Set world start time first.'), ephemeral=True
             )
             return
 
         if option == 'status':
-            server.flyff.status_channel_id = interaction.channel_id
+            bot.flyff_settings.status_channels.append(FlyffStatusChannel(channel_id=interaction.channel_id))
         elif option == 'alert':
-            server.flyff.alert_channel_id = interaction.channel_id
+            bot.flyff_settings.alert_channels.append(FlyffAlertChannel(channel_id=interaction.channel_id))
 
-        await server.save_changes()
+        await bot.flyff_settings.save_changes()
 
         Flyff.start_listener(interaction.guild.id)
 
@@ -47,10 +45,10 @@ class FlyffCog(commands.Cog):
 
     @flyff.command(name='set_world_start')
     async def set_world_start(self, interaction: discord.Interaction, time: str) -> None:
-        server = GuildModel.get_instance(interaction.guild.id)
+        bot.flyff_settings = await FlyffModel.get_instance()
 
-        server.flyff.world_start_time = time
-        await server.save_changes()
+        bot.flyff_settings.world_start_time = time
+        await bot.flyff_settings.save_changes()
 
         await cast(discord.InteractionResponse, interaction.response).send_message(
             embed=Embed(f'Set world start to `{time}`'), ephemeral=True
@@ -59,9 +57,9 @@ class FlyffCog(commands.Cog):
     @flyff.command(name='add_timer')
     async def add_timer(self, interaction: discord.Interaction, name: str, initial_interval: str,
                         interval: str) -> None:
-        server = GuildModel.get_instance(interaction.guild.id)
+        bot.flyff_settings = await FlyffModel.get_instance()
 
-        if name in server.flyff.timers:
+        if name in bot.flyff_settings.timers:
             await cast(discord.InteractionResponse, interaction.response).send_message(
                 embed=Embed('Name already in timer list.'), ephemeral=True
             )
@@ -70,8 +68,8 @@ class FlyffCog(commands.Cog):
         initial_interval = Duration(initial_interval).to_seconds()
         interval = Duration(interval).to_seconds()
 
-        server.flyff.timers[name] = FlyffTimer(initial_interval=initial_interval, interval=interval)
-        await server.save_changes()
+        bot.flyff_settings.timers[name] = FlyffTimer(initial_interval=initial_interval, interval=interval)
+        await bot.flyff_settings.save_changes()
 
         await cast(discord.InteractionResponse, interaction.response).send_message(
             embed=Embed(f'Added `{name}` timer'), ephemeral=True
@@ -79,16 +77,16 @@ class FlyffCog(commands.Cog):
 
     @flyff.command(name='delete_timer')
     async def delete_timer(self, interaction: discord.Interaction, name: str) -> None:
-        server = GuildModel.get_instance(interaction.guild.id)
+        bot.flyff_settings = await FlyffModel.get_instance()
 
-        if name not in server.flyff.timers:
+        if name not in bot.flyff_settings.timers:
             await cast(discord.InteractionResponse, interaction.response).send_message(
                 embed=Embed('Name not in timer list.'), ephemeral=True
             )
             return
 
-        del server.flyff.timers[name]
-        await server.save_changes()
+        del bot.flyff_settings.timers[name]
+        await bot.flyff_settings.save_changes()
 
         await cast(discord.InteractionResponse, interaction.response).send_message(
             embed=Embed(f'Removed `{name}` timer on {interaction.channel.mention}'), ephemeral=True

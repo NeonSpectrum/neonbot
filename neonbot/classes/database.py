@@ -11,6 +11,7 @@ from envparse import env
 from motor.motor_asyncio import AsyncIOMotorClient as MotorClient
 
 from neonbot.classes.chatgpt.chatgpt import ChatGPT
+from neonbot.models.flyff import FlyffModel
 from neonbot.models.guild import GuildModel
 from neonbot.models.setting import SettingModel
 from neonbot.utils import log
@@ -39,6 +40,7 @@ class Database:
         log.info(f'MongoDB connection established in {(time() - start_time):.2f}s')
 
         await SettingModel.initialize()
+        await FlyffModel.initialize()
 
         return self
 
@@ -66,13 +68,3 @@ class Database:
 
             if not guild:
                 continue
-
-            if 'flyff' not in guild:
-                await self.db.guilds.update_one(
-                    {'_id': guild_id},
-                    {
-                        '$set': {
-                            'flyff.timers': {},
-                        }
-                    },
-                )

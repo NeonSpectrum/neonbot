@@ -18,6 +18,7 @@ from envparse import env
 
 from neonbot import __version__
 from neonbot.classes.database import Database
+from neonbot.models.flyff import FlyffModel
 from neonbot.models.guild import GuildModel
 from neonbot.models.setting import SettingModel
 from neonbot.utils import log
@@ -43,6 +44,7 @@ class NeonBot(commands.Bot):
         self.owner_guilds = env.list('OWNER_GUILD_IDS', default=[], subcast=int)
         self.session: Optional[ClientSession] = None
         self.setting: Optional[SettingModel] = None
+        self.flyff_settings: Optional[FlyffModel] = None
         self.scheduler: Optional[AsyncIOScheduler] = None
         self.is_listeners_done = False
         self.is_player_cache_loaded = False
@@ -62,6 +64,7 @@ class NeonBot(commands.Bot):
 
         await self.db.initialize()
         self.setting = await SettingModel.get_instance()
+        self.flyff_settings = await FlyffModel.get_instance()
         self.status, self.activity = self.get_presence()
         self.session = ClientSession(timeout=ClientTimeout(total=30))
         self.scheduler = AsyncIOScheduler()
