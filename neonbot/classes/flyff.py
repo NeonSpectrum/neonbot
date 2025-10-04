@@ -6,7 +6,6 @@ from envparse import env
 
 from neonbot import bot
 from neonbot.classes.embed import Embed
-from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
 from neonbot.utils.functions import check_ip_online_socket
@@ -69,17 +68,14 @@ class Flyff:
 
         embed.add_field('Timer', '\n'.join(timers), inline=False)
 
-        status_channels = [bot.get_channel(status.channel_id) for status in bot.flyff_settings.status_channels]
-
-        for channel in status_channels:
-            if channel_id and channel.id != channel_id:
+        for status_channel in bot.flyff_settings.status_channels:
+            if channel_id and status_channel.channel.id != channel_id:
                 continue
 
-            message_id = bot.flyff_settings.status_message_id
-            server = GuildModel.get_instance(channel.guild.id)
+            channel = bot.get_channel(status_channel.channel_id)
 
             try:
-                message = await channel.fetch_message(message_id) if message_id else None
+                message = await channel.fetch_message(status_channel.message_id) if status_channel.message_id else None
             except discord.NotFound:
                 message = None
 
@@ -89,7 +85,7 @@ class Flyff:
                     for value in bot.flyff_settings.status_channels:
                         if value.channel_id == channel.id:
                             value.message = message.id
-                    await server.save_changes()
+                    await bot.flyff_settings.save_changes()
                 else:
                     await message.edit(embed=embed)
             except discord.HTTPException as error:
@@ -136,11 +132,14 @@ class Flyff:
         if bot.scheduler.get_job('flyff-monitor'):
             return
 
+        next_run_time = datetime.now() + timedelta(seconds=5 * len(bot.scheduler.get_jobs()))
+
         bot.scheduler.add_job(
             id='flyff-status-monitor',
             func=Flyff.start_status_monitor,
             trigger='interval',
             minutes=1,
+            next_run_time=next_run_time
         )
         log.info(f'Auto started job flyff-status-monitor')
 
@@ -149,5 +148,6 @@ class Flyff:
             func=Flyff.start_alert_monitor,
             trigger='interval',
             seconds=5,
+            next_run_time=next_run_time
         )
         log.info(f'Auto started job flyff-alert-monitor')
