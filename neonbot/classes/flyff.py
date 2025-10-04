@@ -141,7 +141,7 @@ class Flyff:
 
         bot.scheduler.add_job(
             id='flyff-alert-monitor',
-            func=Flyff.start_alert_monitor(),
+            func=Flyff.start_alert_monitor,
             trigger='interval',
             seconds=5,
         )
