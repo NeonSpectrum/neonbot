@@ -137,15 +137,15 @@ class Flyff:
         bot.flyff_settings.last_alert_message = alert_message
         await bot.flyff_settings.save_changes()
 
-    def convert_to_utc(self, time_str):
+    def convert_to_utc(self, time):
         gmt_plus_8 = timezone(timedelta(hours=8))
         current_date = datetime.now().date()
-        naive_dt = datetime.combine(current_date, datetime.strptime(time_str, '%I:%M %p').time())
+        naive_dt = datetime.combine(current_date, time.time())
         dt_gmt_plus_8 = naive_dt.replace(tzinfo=gmt_plus_8)
         return dt_gmt_plus_8.astimezone(timezone.utc)
 
     def get_next_nearest_time(self, times: List[str]):
-        current_datetime = datetime.now(timezone.utc)
+        current_datetime = datetime.now()
         current_date = current_datetime.date()
 
         scheduled_times = []
@@ -165,7 +165,7 @@ class Flyff:
 
         next_day_date = current_date + timedelta(days=1)
 
-        return datetime.combine(next_day_date, next_day_time_obj).astimezone(timezone.utc)
+        return self.convert_to_utc(datetime.combine(next_day_date, next_day_time_obj))
 
     @staticmethod
     async def start_status_monitor():
