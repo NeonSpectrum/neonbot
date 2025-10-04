@@ -8,7 +8,7 @@ from durations_nlp import Duration
 from neonbot import bot
 from neonbot.classes.embed import Embed
 from neonbot.classes.flyff import Flyff
-from neonbot.models.flyff import FlyffTimer, FlyffModel, FlyffStatusChannel, FlyffAlertChannel
+from neonbot.models.flyff import FlyffTimer, FlyffModel, FlyffAlertChannel
 
 
 class FlyffCog(commands.Cog):
@@ -31,7 +31,7 @@ class FlyffCog(commands.Cog):
             return
 
         if option == 'status':
-            bot.flyff_settings.status_channels.append(FlyffStatusChannel(channel_id=interaction.channel_id))
+            bot.flyff_settings.status_channels[interaction.channel_id] = None
         elif option == 'alert':
             bot.flyff_settings.alert_channels.append(FlyffAlertChannel(channel_id=interaction.channel_id))
 
