@@ -7,7 +7,6 @@ from durations_nlp import Duration
 
 from neonbot import bot
 from neonbot.classes.embed import Embed
-from neonbot.classes.flyff import Flyff
 from neonbot.models.flyff import FlyffTimer, FlyffModel, FlyffStatusChannel, FlyffAlertChannel
 
 
@@ -36,8 +35,6 @@ class FlyffCog(commands.Cog):
             bot.flyff_settings.alert_channels.append(FlyffAlertChannel(channel_id=interaction.channel_id))
 
         await bot.flyff_settings.save_changes()
-
-        Flyff.start_listener(interaction.guild.id)
 
         await cast(discord.InteractionResponse, interaction.response).send_message(
             embed=Embed(f'Started monitor on {interaction.channel.mention}'), ephemeral=True

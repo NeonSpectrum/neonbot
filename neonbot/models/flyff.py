@@ -9,12 +9,12 @@ from neonbot.utils import log
 
 
 class FlyffStatusChannel(BaseModel):
-    channel_id: str
-    message_id: Optional[str]
+    channel_id: int
+    message_id: Optional[int]
 
 
 class FlyffAlertChannel(BaseModel):
-    channel_id: str
+    channel_id: int
 
 class FlyffTimer(BaseModel):
     initial_interval: int
