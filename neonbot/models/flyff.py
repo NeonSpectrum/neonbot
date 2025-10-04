@@ -10,7 +10,7 @@ from neonbot.utils import log
 
 class FlyffStatusChannel(BaseModel):
     channel_id: int
-    message_id: Optional[int]
+    message_id: Optional[int] = None
 
 
 class FlyffAlertChannel(BaseModel):
