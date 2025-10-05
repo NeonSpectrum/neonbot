@@ -22,6 +22,7 @@ class FlyffModel(Document):
     timers: Dict[str, FlyffTimer] = {}
     fixed_timers: Dict[str, List] = {}
     last_alert_message: Optional[str] = ''
+    webhooks: Dict[str, str] = []
 
     class Settings:
         name = 'flyff'

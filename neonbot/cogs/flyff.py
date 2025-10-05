@@ -127,6 +127,40 @@ class FlyffCog(commands.Cog):
             embed=Embed(f'Removed `{name}` fixed timer on {interaction.channel.mention}'), ephemeral=True
         )
 
+    @flyff.command(name='add_webhook')
+    async def add_webhook(self, interaction: discord.Interaction, name: str, url: str) -> None:
+        bot.flyff_settings = await FlyffModel.get_instance()
+
+        if name in bot.flyff_settings.webhooks:
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed('Webhook name already in the list.'), ephemeral=True
+            )
+            return
+
+        bot.flyff_settings.webhooks[name] = url
+        await bot.flyff_settings.save_changes()
+
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed(f'Added `{name}` fixed timer'), ephemeral=True
+        )
+
+    @flyff.command(name='delete_webhook')
+    async def delete_webhook(self, interaction: discord.Interaction, name: str) -> None:
+        bot.flyff_settings = await FlyffModel.get_instance()
+
+        if name not in bot.flyff_settings.webhooks:
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed('Webhook name is not in list.'), ephemeral=True
+            )
+            return
+
+        del bot.flyff_settings.webhooks[name]
+        await bot.flyff_settings.save_changes()
+
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed(f'Removed `{name}` webhook'), ephemeral=True
+        )
+
 
 # noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:

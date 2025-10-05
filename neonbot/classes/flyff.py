@@ -1,3 +1,4 @@
+import asyncio
 import math
 from datetime import datetime, timedelta, timezone
 from typing import List
@@ -129,11 +130,16 @@ class Flyff:
             return
 
         alert_channels = [bot.get_channel(alert.channel_id) for alert in bot.flyff_settings.alert_channels]
+        tasks = []
 
         for channel in alert_channels:
             if alert_message != bot.flyff_settings.last_alert_message:
-                await channel.send('@everyone', embed=Embed(alert_message))
+                tasks.append(channel.send('@everyone', embed=Embed(alert_message)))
 
+        for webhook_url in bot.flyff_settings.webhooks:
+            tasks.append(self.trigger_webhook(webhook_url, alert_message))
+
+        await asyncio.gather(*tasks)
         bot.flyff_settings.last_alert_message = alert_message
         await bot.flyff_settings.save_changes()
 
@@ -166,6 +172,14 @@ class Flyff:
         next_day_date = current_date + timedelta(days=1)
 
         return self.convert_to_utc(datetime.combine(next_day_date, next_day_time_obj))
+
+    async def trigger_webhook(self, url, message):
+        try:
+            await bot.session.post(url, json={
+                "message": message
+            })
+        except Exception as e:
+            log.error(f"An unexpected error occurred: {e}")
 
     @staticmethod
     async def start_status_monitor():
