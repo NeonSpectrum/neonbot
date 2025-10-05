@@ -15,6 +15,7 @@ from neonbot.utils.functions import check_ip_online_socket
 
 class Flyff:
     IP_ADDRESS = env.str('FLYFF_IP_ADDRESS')
+    RESET_TIME = "06:00 PM"
 
     def calculate_next_spawn(self, initial_interval, interval, func):
         world_start_time = bot.flyff_settings.world_start_time
@@ -53,7 +54,7 @@ class Flyff:
         status = await check_ip_online_socket(ip, port)
         server_start_time = datetime.strptime(bot.flyff_settings.world_start_time, '%Y-%m-%d %I:%M:%S %p')
         server_start_time = int(server_start_time.timestamp())
-        next_reset_time = int(self.get_next_reset_time(['06:00 PM']).timestamp())
+        next_reset_time = int(self.get_next_reset_time(Flyff.RESET_TIME).timestamp())
 
         embed = Embed(timestamp=datetime.now())
         embed.set_author('Emerald Flyff', icon_url=ICONS['emeraldflyff'])
