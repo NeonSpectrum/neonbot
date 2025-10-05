@@ -53,7 +53,7 @@ class Flyff:
         status = await check_ip_online_socket(ip, port)
         server_start_time = datetime.strptime(bot.flyff_settings.world_start_time, '%Y-%m-%d %I:%M:%S %p')
         server_start_time = int(server_start_time.timestamp())
-        next_reset_time = int(self.get_next_nearest_time(['06:00 PM']).timestamp())
+        next_reset_time = int(self.get_next_reset_time(['06:00 PM']).timestamp())
 
         embed = Embed(timestamp=datetime.now())
         embed.set_author('Emerald Flyff', icon_url=ICONS['emeraldflyff'])
@@ -179,6 +179,18 @@ class Flyff:
         next_day_date = current_date + timedelta(days=1)
 
         return self.convert_to_utc(datetime.combine(next_day_date, next_day_time_obj))
+
+    def get_next_reset_time(self, time_str):
+        now = datetime.now()
+        time = datetime.strptime(time_str, "%I:%M %p").time()
+
+        if now.time() >= time:
+            tomorrow = now.date() + timedelta(days=1)
+            next_time = datetime.combine(tomorrow, time)
+        else:
+            next_time = datetime.combine(now.date(), time)
+
+        return next_time
 
     async def trigger_webhook(self, url, message):
         try:
