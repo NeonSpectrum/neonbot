@@ -134,7 +134,7 @@ class Flyff:
             elif abs(current_time - next_time) <= timedelta(minutes=5):
                 alert_message = f'**{name}** will start in **5 minutes**.'
 
-        if not alert_message:
+        if not alert_message or alert_message == bot.flyff_settings.last_alert_message:
             return
 
         alert_channels = [bot.get_channel(alert.channel_id) for alert in bot.flyff_settings.alert_channels]
