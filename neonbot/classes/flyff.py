@@ -77,7 +77,7 @@ class Flyff:
             events.append(f'- {name}: <t:{next_time}:t> <t:{next_time}:R>')
 
         embed.add_field('Server', '\n'.join([
-            f'- Server start time: <t:{server_start_time}>',
+            f'- Start time: <t:{server_start_time}>',
             f'- Next Reset: <t:{next_reset_time}:t> <t:{next_reset_time}:R>'
         ]), inline=False)
         embed.add_field('Boss Timer', '\n'.join(timers), inline=False)
