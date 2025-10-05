@@ -51,6 +51,9 @@ class Flyff:
     async def refresh_status(self, only_channel_id=None):
         ip, port = Flyff.IP_ADDRESS.split(':')
         status = await check_ip_online_socket(ip, port)
+        server_start_time = datetime.strptime(bot.flyff_settings.world_start_time, '%Y-%m-%d %I:%M:%S %p')
+        server_start_time = int(server_start_time.timestamp())
+        next_reset_time = int(self.get_next_nearest_time(['06:00 PM']).timestamp())
 
         embed = Embed(timestamp=datetime.now())
         embed.set_author('Emerald Flyff', icon_url=ICONS['emeraldflyff'])
@@ -73,6 +76,10 @@ class Flyff:
 
             events.append(f'- {name}: <t:{next_time}:t> <t:{next_time}:R>')
 
+        embed.add_field('Server', '\n'.join([
+            f'- Server start time: <t:{server_start_time}>'
+            f'- Next Reset: <t:{next_reset_time}:t> <t:{next_reset_time}:R>'
+        ]), inline=False)
         embed.add_field('Boss Timer', '\n'.join(timers), inline=False)
         embed.add_field('Event', '\n'.join(events), inline=False)
 
