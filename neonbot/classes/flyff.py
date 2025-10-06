@@ -141,7 +141,7 @@ class Flyff:
 
         for channel in alert_channels:
             if alert_message != bot.flyff_settings.last_alert_message:
-                tasks.append(channel.send('@everyone', embed=Embed(alert_message)))
+                tasks.append(channel.send(f'@everyone {alert_message}'))
 
         for _, webhook_url in bot.flyff_settings.webhooks.items():
             tasks.append(self.trigger_webhook(webhook_url, alert_message))
