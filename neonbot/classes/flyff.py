@@ -30,7 +30,7 @@ class Flyff:
         first_spawn_time = start_time + timedelta(minutes=initial_interval)
 
         if current_time <= first_spawn_time:
-            if func(0):
+            if func(1):
                 first_spawn_time += timedelta(minutes=interval)
             return int(first_spawn_time.timestamp())
 
