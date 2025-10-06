@@ -6,6 +6,7 @@ from typing import Union, cast
 
 import discord
 import psutil
+from dateutil.parser import parse
 from discord import app_commands
 from discord.ext import commands
 from discord.utils import format_dt
@@ -172,20 +173,11 @@ class Utility(commands.Cog):
     async def timestamp(
         self, interaction: discord.Interaction, date_string: str
     ) -> None:
-        formats_to_try = [
-            '%Y-%m-%d',  # e.g., '2025-10-06'
-            '%Y-%m-%d %I:%M:%S %p',  # e.g., '2025-10-06 00:00:00 AM'
-            '%Y-%m-%d %H:%M:%S',  # e.g., '2025-10-06 00:00:00'
-        ]
-
-        for fmt in formats_to_try:
-            try:
-                timestamp = int(datetime.strptime(date_string, fmt).timestamp())
-                await cast(discord.InteractionResponse, interaction.response).send_message(f'<t:{timestamp}>')
-            except ValueError:
-                continue
-
-        await cast(discord.InteractionResponse, interaction.response).send_message('Format not supported.',
+        try:
+            timestamp = int(parse(date_string).timestamp())
+            await cast(discord.InteractionResponse, interaction.response).send_message(f'<t:{timestamp}>')
+        except ValueError:
+            await cast(discord.InteractionResponse, interaction.response).send_message('Format not supported.',
                                                                                    ephemeral=True)
 
 

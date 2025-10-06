@@ -32,7 +32,8 @@ dependencies = [
     "discord-py[voice] (>=2.5.2,<3.0.0)",
     "jikanpy-v4 (>=1.0.2,<2.0.0)",
     "google-auth (>=2.40.3,<3.0.0)",
-    "durations-nlp (>=1.0.1,<2.0.0)"
+    "durations-nlp (>=1.0.1,<2.0.0)",
+    "python-dateutil (>=2.9.0.post0,<3.0.0)"
 ]
 
 
