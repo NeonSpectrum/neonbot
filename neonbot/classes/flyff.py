@@ -57,7 +57,7 @@ class Flyff:
 
         embed = Embed(timestamp=datetime.now())
         embed.set_author('Emerald Flyff', icon_url=ICONS['emeraldflyff'])
-        embed.set_thumbnail(ICONS['green'] if self.status else ICONS['red'])
+        embed.set_thumbnail(ICONS['green'] if bot.flyff_settings.status else ICONS['red'])
 
         timers = []
         events = []
