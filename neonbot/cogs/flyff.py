@@ -8,7 +8,7 @@ from durations_nlp import Duration
 from neonbot import bot
 from neonbot.classes.embed import Embed
 from neonbot.classes.flyff import Flyff
-from neonbot.models.flyff import FlyffTimer, FlyffModel, FlyffAlertChannel
+from neonbot.models.flyff import FlyffTimer, FlyffModel, FlyffAlertChannel, FlyffPingChannel
 
 
 class FlyffCog(commands.Cog):
@@ -22,6 +22,7 @@ class FlyffCog(commands.Cog):
     @app_commands.choices(option=[
         app_commands.Choice(name="Status", value="status"),
         app_commands.Choice(name="Alert", value="alert"),
+        app_commands.Choice(name="Ping", value="ping"),
     ])
     async def start(self, interaction: discord.Interaction, option: str) -> None:
         if not bot.flyff_settings.world_start_time:
@@ -34,6 +35,8 @@ class FlyffCog(commands.Cog):
             bot.flyff_settings.status_channels[interaction.channel_id] = 0
         elif option == 'alert':
             bot.flyff_settings.alert_channels.append(FlyffAlertChannel(channel_id=interaction.channel_id))
+        elif option == 'ping':
+            bot.flyff_settings.ping_channels.append(FlyffPingChannel(channel_id=interaction.channel_id))
 
         await bot.flyff_settings.save_changes()
 

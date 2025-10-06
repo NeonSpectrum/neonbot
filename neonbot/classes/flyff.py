@@ -50,15 +50,13 @@ class Flyff:
         return int(next_spawn_time.timestamp())
 
     async def refresh_status(self, only_channel_id=None):
-        ip, port = Flyff.IP_ADDRESS.split(':')
-        status = await check_ip_online_socket(ip, port)
         server_start_time = datetime.strptime(bot.flyff_settings.world_start_time, '%Y-%m-%d %I:%M:%S %p')
         server_start_time = int(server_start_time.timestamp())
         next_reset_time = int(self.get_next_reset_time(Flyff.RESET_TIME).timestamp())
 
         embed = Embed(timestamp=datetime.now())
         embed.set_author('Emerald Flyff', icon_url=ICONS['emeraldflyff'])
-        embed.set_thumbnail(ICONS['green'] if status else ICONS['red'])
+        embed.set_thumbnail(ICONS['green'] if self.status else ICONS['red'])
 
         timers = []
         events = []
@@ -212,6 +210,33 @@ class Flyff:
         await flyff.check_next_alert()
 
     @staticmethod
+    async def start_ping_monitor():
+        old_status = bot.flyff_settings.status
+        ip, port = Flyff.IP_ADDRESS.split(':')
+        status = await check_ip_online_socket(ip, port, 30)
+
+        embed = None
+
+        if not old_status and status:
+            embed = Embed(f'`{datetime.now().strftime('%Y-%m-%d %I:%M:%S %p')}` Server up!')
+        elif old_status and not status:
+            embed = Embed(f'`{datetime.now().strftime('%Y-%m-%d %I:%M:%S %p')}` Server went down.')
+
+        if not embed:
+            return
+
+        ping_channels = [bot.get_channel(ping.channel_id) for ping in bot.flyff_settings.ping_channels]
+        tasks = []
+
+        for channel in ping_channels:
+            tasks.append(channel.send(embed=embed))
+
+        await asyncio.gather(*tasks)
+
+        bot.flyff_settings.status = status
+        await bot.flyff_settings.save_changes()
+
+    @staticmethod
     def start_listener():
         if bot.scheduler.get_job('flyff-monitor'):
             return
@@ -235,3 +260,12 @@ class Flyff:
             next_run_time=next_run_time
         )
         log.info(f'Auto started job flyff-alert-monitor')
+
+        bot.scheduler.add_job(
+            id='flyff-ping-monitor',
+            func=Flyff.start_ping_monitor,
+            trigger='interval',
+            seconds=5,
+            next_run_time=next_run_time
+        )
+        log.info(f'Auto started job flyff-ping-monitor')

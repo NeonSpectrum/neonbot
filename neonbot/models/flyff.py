@@ -11,6 +11,10 @@ from neonbot.utils import log
 class FlyffAlertChannel(BaseModel):
     channel_id: int
 
+
+class FlyffPingChannel(BaseModel):
+    channel_id: int
+
 class FlyffTimer(BaseModel):
     initial_interval: int
     interval: int
@@ -19,10 +23,12 @@ class FlyffModel(Document):
     world_start_time: Optional[str] = None
     status_channels: Dict[int, Optional[int]] = {}
     alert_channels: List[FlyffAlertChannel] = []
+    ping_channels: List[FlyffPingChannel] = []
     timers: Dict[str, FlyffTimer] = {}
     fixed_timers: Dict[str, List] = {}
     last_alert_message: Optional[str] = ''
     webhooks: Dict[str, str] = []
+    status: bool = False
 
     class Settings:
         name = 'flyff'
@@ -47,6 +53,10 @@ class FlyffModel(Document):
             world_start_time=None,
             status_channels={},
             alert_channels=[],
+            ping_channels=[],
             timers={},
-            fixed_timers={}
+            fixed_timers={},
+            last_alert_message='',
+            webhooks=[],
+            status=False
         ).create()
