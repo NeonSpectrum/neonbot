@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import List
 
 import discord
+from aiohttp import ClientTimeout
 from envparse import env
 
 from neonbot import bot
@@ -195,7 +196,9 @@ class Flyff:
         try:
             await bot.session.post(url, json={
                 "message": message
-            })
+            }, timeout=ClientTimeout(total=2))
+        except asyncio.exceptions.TimeoutError as e:
+            pass
         except Exception as e:
             log.error(f"An unexpected error occurred: {e}")
 
