@@ -166,6 +166,28 @@ class Utility(commands.Cog):
 
         await cast(discord.InteractionResponse, interaction.response).send_message(user.banner.url, ephemeral=ephemeral)
 
+    @app_commands.command(name='timestamp')
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def timestamp(
+        self, interaction: discord.Interaction, date_string: str
+    ) -> None:
+        formats_to_try = [
+            '%Y-%m-%d',  # e.g., '2025-10-06'
+            '%Y-%m-%d %I:%M:%S %p',  # e.g., '2025-10-06 00:00:00 AM'
+            '%Y-%m-%d %H:%M:%S',  # e.g., '2025-10-06 00:00:00'
+        ]
+
+        for fmt in formats_to_try:
+            try:
+                timestamp = int(datetime.strptime(date_string, fmt).timestamp())
+                await cast(discord.InteractionResponse, interaction.response).send_message(f'<t:{timestamp}>')
+            except ValueError:
+                continue
+
+        await cast(discord.InteractionResponse, interaction.response).send_message('Format not supported.',
+                                                                                   ephemeral=True)
+
 
 # noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:
