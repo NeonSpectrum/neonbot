@@ -17,6 +17,7 @@ from neonbot.utils.functions import check_ip_online_socket
 class Flyff:
     IP_ADDRESS = env.str('FLYFF_IP_ADDRESS')
     RESET_TIME = "06:00 PM"
+    DOWNTIME_COUNT = 0
 
     def calculate_next_spawn(self, initial_interval, interval, func):
         world_start_time = bot.flyff_settings.world_start_time
@@ -53,10 +54,7 @@ class Flyff:
         return int(next_spawn_time.timestamp())
 
     async def refresh_status(self, only_channel_id=None):
-        server_start_time = datetime.strptime(bot.flyff_settings.world_start_time, '%Y-%m-%d %I:%M:%S %p')
-        server_start_time = int(server_start_time.timestamp())
-        next_reset_time = int(self.get_next_reset_time(Flyff.RESET_TIME).timestamp())
-
+        world_start_time = bot.flyff_settings.world_start_time
         embed = Embed(timestamp=datetime.now())
         embed.set_author('Emerald Flyff', icon_url=ICONS['emeraldflyff'])
         embed.set_thumbnail(ICONS['green'] if bot.flyff_settings.status else ICONS['red'])
@@ -64,26 +62,32 @@ class Flyff:
         timers = []
         events = []
 
-        for name, timer in bot.flyff_settings.timers.items():
-            spawn_time = self.calculate_next_spawn(
-                timer.initial_interval, timer.interval,
-                lambda count: (name == 'Karvan' and count % 2 == 0)
-                              or (name == 'Clockworks' and count % 2 == 1)
-            )
+        if world_start_time:
+            server_start_time = datetime.strptime(world_start_time, '%Y-%m-%d %I:%M:%S %p')
+            server_start_time = int(server_start_time.timestamp())
+            next_reset_time = int(self.get_next_reset_time(Flyff.RESET_TIME).timestamp())
+            for name, timer in bot.flyff_settings.timers.items():
+                spawn_time = self.calculate_next_spawn(
+                    timer.initial_interval, timer.interval,
+                    lambda count: (name == 'Karvan' and count % 2 == 0)
+                                  or (name == 'Clockworks' and count % 2 == 1)
+                )
 
-            timers.append(f'- {name}: <t:{spawn_time}:t> <t:{spawn_time}:R>')
+                timers.append(f'- {name}: <t:{spawn_time}:t> <t:{spawn_time}:R>')
 
-        for name, time_list in bot.flyff_settings.fixed_timers.items():
-            next_time = int(self.get_next_nearest_time(time_list).timestamp())
+            for name, time_list in bot.flyff_settings.fixed_timers.items():
+                next_time = int(self.get_next_nearest_time(time_list).timestamp())
 
-            events.append(f'- {name}: <t:{next_time}:t> <t:{next_time}:R>')
+                events.append(f'- {name}: <t:{next_time}:t> <t:{next_time}:R>')
 
-        embed.add_field('Server', '\n'.join([
-            f'- Start time: <t:{server_start_time}>',
-            f'- Next Reset: <t:{next_reset_time}:t> <t:{next_reset_time}:R>'
-        ]), inline=False)
-        embed.add_field('Boss Timer', '\n'.join(timers), inline=False)
-        embed.add_field('Event', '\n'.join(events), inline=False)
+            embed.add_field('Server', '\n'.join([
+                f'- Start time: <t:{server_start_time}>',
+                f'- Next Reset: <t:{next_reset_time}:t> <t:{next_reset_time}:R>'
+            ]), inline=False)
+            embed.add_field('Boss Timer', '\n'.join(timers), inline=False)
+            embed.add_field('Event', '\n'.join(events), inline=False)
+        else:
+            embed.add_field('Server', '```OFFLINE```', inline=False)
 
         for channel_id, message_id in bot.flyff_settings.status_channels.items():
             if only_channel_id and only_channel_id != channel_id:
@@ -226,6 +230,13 @@ class Flyff:
             embed = Embed(f'`{datetime.now().strftime('%Y-%m-%d %I:%M:%S %p')}` Server up!')
         elif old_status and not status:
             embed = Embed(f'`{datetime.now().strftime('%Y-%m-%d %I:%M:%S %p')}` Server went down.')
+
+        if not status and bot.flyff_settings.world_start_time:
+            Flyff.DOWNTIME_COUNT += 1
+
+            if Flyff.DOWNTIME_COUNT >= 10:
+                bot.flyff_settings.world_start_time = None
+                await bot.flyff_settings.save_changes()
 
         if not embed:
             return
