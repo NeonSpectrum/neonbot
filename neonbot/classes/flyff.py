@@ -16,7 +16,7 @@ from neonbot.utils.functions import check_ip_online_socket
 
 class Flyff:
     IP_ADDRESS = env.str('FLYFF_IP_ADDRESS')
-    RESET_TIME = "06:00 PM"
+    RESET_TIME = '06:00 PM'
     DOWNTIME_COUNT = 0
 
     def calculate_next_spawn(self, initial_interval, interval, func):
@@ -37,9 +37,7 @@ class Flyff:
 
         time_since_first_spawn = current_time - first_spawn_time
 
-        passed_intervals_count = math.floor(
-            time_since_first_spawn.total_seconds() / (interval * 60)
-        )
+        passed_intervals_count = math.floor(time_since_first_spawn.total_seconds() / (interval * 60))
 
         last_passed_spawn_time = first_spawn_time + timedelta(minutes=passed_intervals_count * interval)
 
@@ -68,9 +66,9 @@ class Flyff:
             next_reset_time = int(self.get_next_reset_time(Flyff.RESET_TIME).timestamp())
             for name, timer in bot.flyff_settings.timers.items():
                 spawn_time = self.calculate_next_spawn(
-                    timer.initial_interval, timer.interval,
-                    lambda count: (name == 'Karvan' and count % 2 == 0)
-                                  or (name == 'Clockworks' and count % 2 == 1)
+                    timer.initial_interval,
+                    timer.interval,
+                    lambda count: (name == 'Karvan' and count % 2 == 0) or (name == 'Clockworks' and count % 2 == 1),
                 )
 
                 timers.append(f'- {name}: <t:{spawn_time}:t> <t:{spawn_time}:R>')
@@ -80,10 +78,16 @@ class Flyff:
 
                 events.append(f'- {name}: <t:{next_time}:t> <t:{next_time}:R>')
 
-            embed.add_field('Server', '\n'.join([
-                f'- Start time: <t:{server_start_time}>',
-                f'- Next Reset: <t:{next_reset_time}:t> <t:{next_reset_time}:R>'
-            ]), inline=False)
+            embed.add_field(
+                'Server',
+                '\n'.join(
+                    [
+                        f'- Start time: <t:{server_start_time}>',
+                        f'- Next Reset: <t:{next_reset_time}:t> <t:{next_reset_time}:R>',
+                    ]
+                ),
+                inline=False,
+            )
             embed.add_field('Boss Timer', '\n'.join(timers), inline=False)
             embed.add_field('Event', '\n'.join(events), inline=False)
         else:
@@ -112,13 +116,16 @@ class Flyff:
                 log.error(error)
 
     async def check_next_alert(self):
+        if not bot.flyff_settings.world_start_time:
+            return
+
         alert_message = None
 
         for name, timer in bot.flyff_settings.timers.items():
             spawn_time = self.calculate_next_spawn(
-                timer.initial_interval, timer.interval,
-                lambda count: (name == 'Karvan' and count % 2 == 0)
-                              or (name == 'Clockworks' and count % 2 == 1)
+                timer.initial_interval,
+                timer.interval,
+                lambda count: (name == 'Karvan' and count % 2 == 0) or (name == 'Clockworks' and count % 2 == 1),
             )
 
             current_time = datetime.now(timezone.utc)
@@ -169,7 +176,7 @@ class Flyff:
 
         scheduled_times = []
         for time_str in times:
-            dt_object = datetime.strptime(time_str, "%I:%M %p")
+            dt_object = datetime.strptime(time_str, '%I:%M %p')
             scheduled_times.append(dt_object.time())
 
         scheduled_times.sort()
@@ -188,7 +195,7 @@ class Flyff:
 
     def get_next_reset_time(self, time_str):
         now = datetime.now()
-        time = datetime.strptime(time_str, "%I:%M %p").time()
+        time = datetime.strptime(time_str, '%I:%M %p').time()
 
         if now.time() >= time:
             tomorrow = now.date() + timedelta(days=1)
@@ -200,13 +207,11 @@ class Flyff:
 
     async def trigger_webhook(self, url, message):
         try:
-            await bot.session.post(url, json={
-                "message": message
-            }, timeout=ClientTimeout(total=2))
+            await bot.session.post(url, json={'message': message}, timeout=ClientTimeout(total=2))
         except asyncio.exceptions.TimeoutError as e:
             pass
         except Exception as e:
-            log.error(f"An unexpected error occurred: {e}")
+            log.error(f'An unexpected error occurred: {e}')
 
     @staticmethod
     async def start_status_monitor():
@@ -227,9 +232,9 @@ class Flyff:
         embed = None
 
         if not old_status and status:
-            embed = Embed(f'`{datetime.now().strftime('%Y-%m-%d %I:%M:%S %p')}` Server up!')
+            embed = Embed(f'`{datetime.now().strftime("%Y-%m-%d %I:%M:%S %p")}` Server up!')
         elif old_status and not status:
-            embed = Embed(f'`{datetime.now().strftime('%Y-%m-%d %I:%M:%S %p')}` Server went down.')
+            embed = Embed(f'`{datetime.now().strftime("%Y-%m-%d %I:%M:%S %p")}` Server went down.')
 
         if not status and bot.flyff_settings.world_start_time:
             Flyff.DOWNTIME_COUNT += 1
@@ -264,7 +269,7 @@ class Flyff:
             func=Flyff.start_status_monitor,
             trigger='interval',
             minutes=1,
-            next_run_time=next_run_time
+            next_run_time=next_run_time,
         )
         log.info(f'Auto started job flyff-status-monitor')
 
@@ -273,7 +278,7 @@ class Flyff:
             func=Flyff.start_alert_monitor,
             trigger='interval',
             seconds=5,
-            next_run_time=next_run_time
+            next_run_time=next_run_time,
         )
         log.info(f'Auto started job flyff-alert-monitor')
 
@@ -282,6 +287,6 @@ class Flyff:
             func=Flyff.start_ping_monitor,
             trigger='interval',
             seconds=5,
-            next_run_time=next_run_time
+            next_run_time=next_run_time,
         )
         log.info(f'Auto started job flyff-ping-monitor')
