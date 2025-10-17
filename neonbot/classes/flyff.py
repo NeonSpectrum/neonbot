@@ -71,7 +71,7 @@ class Flyff:
                     lambda count: (name == 'Karvan' and count % 2 == 0) or (name == 'Clockworks' and count % 2 == 1),
                 )
 
-                timers.append(f'- {name}: <t:{spawn_time}:t> <t:{spawn_time}:R>')
+                timers.append(f'- {name}: <t:{spawn_time}:T> <t:{spawn_time}:R>')
 
             for name, time_list in bot.flyff_settings.fixed_timers.items():
                 next_time = int(self.get_next_nearest_time(time_list).timestamp())
