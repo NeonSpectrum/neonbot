@@ -8,7 +8,7 @@ from durations_nlp import Duration
 from neonbot import bot
 from neonbot.classes.embed import Embed
 from neonbot.classes.flyff import Flyff
-from neonbot.models.flyff import FlyffTimer, FlyffModel, FlyffAlertChannel, FlyffPingChannel
+from neonbot.models.flyff import FlyffAlertChannel, FlyffModel, FlyffPingChannel, FlyffTimer
 
 
 class FlyffCog(commands.Cog):
@@ -19,11 +19,13 @@ class FlyffCog(commands.Cog):
     )
 
     @flyff.command(name='start')
-    @app_commands.choices(option=[
-        app_commands.Choice(name="Status", value="status"),
-        app_commands.Choice(name="Alert", value="alert"),
-        app_commands.Choice(name="Ping", value="ping"),
-    ])
+    @app_commands.choices(
+        option=[
+            app_commands.Choice(name='Status', value='status'),
+            app_commands.Choice(name='Alert', value='alert'),
+            app_commands.Choice(name='Ping', value='ping'),
+        ]
+    )
     async def start(self, interaction: discord.Interaction, option: str) -> None:
         if not bot.flyff_settings.world_start_time:
             await cast(discord.InteractionResponse, interaction.response).send_message(
@@ -54,13 +56,17 @@ class FlyffCog(commands.Cog):
         bot.flyff_settings.world_start_time = time
         await bot.flyff_settings.save_changes()
 
+        flyff = Flyff()
+        await flyff.refresh_status()
+
         await cast(discord.InteractionResponse, interaction.response).send_message(
             embed=Embed(f'Set world start to `{time}`'), ephemeral=True
         )
 
     @flyff.command(name='add_timer')
-    async def add_timer(self, interaction: discord.Interaction, name: str, initial_interval: str,
-                        interval: str) -> None:
+    async def add_timer(
+        self, interaction: discord.Interaction, name: str, initial_interval: str, interval: str
+    ) -> None:
         bot.flyff_settings = await FlyffModel.get_instance()
 
         if name in bot.flyff_settings.timers:
