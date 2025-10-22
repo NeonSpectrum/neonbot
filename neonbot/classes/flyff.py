@@ -82,7 +82,7 @@ class Flyff:
                 'Server',
                 '\n'.join(
                     [
-                        f'- Start time: <t:{server_start_time}>',
+                        f'- Start time: <t:{server_start_time}:D> <t:{server_start_time}:T>',
                         f'- Next Reset: <t:{next_reset_time}:t> <t:{next_reset_time}:R>',
                     ]
                 ),
