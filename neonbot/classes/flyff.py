@@ -179,17 +179,19 @@ class Flyff:
             dt_object = datetime.strptime(time_str, '%I:%M %p')
             scheduled_times.append(dt_object.time())
 
+        scheduled_times.sort()
+
         current_time_obj = current_datetime.time()
 
         for scheduled_time_obj in scheduled_times:
             if scheduled_time_obj > current_time_obj:
-                return self.convert_to_utc(datetime.combine(current_date, scheduled_time_obj))
+                return datetime.combine(current_date, scheduled_time_obj)
 
         next_day_time_obj = scheduled_times[0]
 
         next_day_date = current_date + timedelta(days=1)
 
-        return self.convert_to_utc(datetime.combine(next_day_date, next_day_time_obj))
+        return datetime.combine(next_day_date, next_day_time_obj)
 
     def get_next_reset_time(self, time_str):
         now = datetime.now()
