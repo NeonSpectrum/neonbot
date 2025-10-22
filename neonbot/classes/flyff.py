@@ -179,8 +179,6 @@ class Flyff:
             dt_object = datetime.strptime(time_str, '%I:%M %p')
             scheduled_times.append(dt_object.time())
 
-        scheduled_times.sort()
-
         current_time_obj = current_datetime.time()
 
         for scheduled_time_obj in scheduled_times:
