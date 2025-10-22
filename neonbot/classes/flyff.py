@@ -128,7 +128,7 @@ class Flyff:
                 lambda count: (name == 'Karvan' and count % 2 == 0) or (name == 'Clockworks' and count % 2 == 1),
             )
 
-            current_time = datetime.now()
+            current_time = datetime.now().replace(tzinfo=None)
             spawn_time = datetime.fromtimestamp(spawn_time)
 
             if abs(current_time - spawn_time) <= timedelta(seconds=5):
