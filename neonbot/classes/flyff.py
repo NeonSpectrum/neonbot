@@ -1,6 +1,6 @@
 import asyncio
 import math
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import List
 
 import discord
@@ -128,8 +128,8 @@ class Flyff:
                 lambda count: (name == 'Karvan' and count % 2 == 0) or (name == 'Clockworks' and count % 2 == 1),
             )
 
-            current_time = datetime.now(timezone.utc)
-            spawn_time = datetime.fromtimestamp(spawn_time).astimezone(timezone.utc)
+            current_time = datetime.now()
+            spawn_time = datetime.fromtimestamp(spawn_time)
 
             if abs(current_time - spawn_time) <= timedelta(seconds=5):
                 alert_message = f'**{name}** will spawn **soon**!'
@@ -137,7 +137,7 @@ class Flyff:
                 alert_message = f'**{name}** will spawn in **5 minutes**.'
 
         for name, time_list in bot.flyff_settings.fixed_timers.items():
-            current_time = datetime.now(timezone.utc)
+            current_time = datetime.now()
 
             next_time = self.get_next_nearest_time(time_list)
 
@@ -162,13 +162,6 @@ class Flyff:
         await asyncio.gather(*tasks)
         bot.flyff_settings.last_alert_message = alert_message
         await bot.flyff_settings.save_changes()
-
-    def convert_to_utc(self, time):
-        gmt_plus_8 = timezone(timedelta(hours=8))
-        current_date = datetime.now().date()
-        naive_dt = datetime.combine(current_date, time.time())
-        dt_gmt_plus_8 = naive_dt.replace(tzinfo=gmt_plus_8)
-        return dt_gmt_plus_8.astimezone(timezone.utc)
 
     def get_next_nearest_time(self, times: List[str]):
         current_datetime = datetime.now()
