@@ -12,7 +12,7 @@ from envparse import env
 from neonbot import bot
 from neonbot.classes.ytdl_info import YtdlInfo
 from neonbot.utils import log
-from neonbot.utils.constants import YOUTUBE_CACHE_DIR
+from neonbot.utils.constants import YOUTUBE_CACHE_DIR, YOUTUBE_DOWNLOADS_DIR
 from neonbot.utils.exceptions import YtdlError
 
 
@@ -32,7 +32,7 @@ class Ytdl:
             # "geo_bypass": True,
             # "geo_bypass_country": "PH",
             'source_address': '0.0.0.0',
-            # 'outtmpl': YOUTUBE_DOWNLOADS_DIR + '/%(id)s',
+            'outtmpl': YOUTUBE_DOWNLOADS_DIR + '/%(id)s',
             'skip_download': True,
             'cachedir': YOUTUBE_CACHE_DIR,
             'compat_opts': {'no-youtube-unavailable-videos': True},
@@ -84,10 +84,6 @@ class Ytdl:
             return current_datetime >= expiry_datetime
 
         return False
-
-    @staticmethod
-    def prepare_filename(*args, **kwargs):
-        return Ytdl().ytdl.prepare_filename(*args, **kwargs)
 
     @classmethod
     def create(cls, extra_params) -> Ytdl:
