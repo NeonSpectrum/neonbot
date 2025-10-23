@@ -73,6 +73,7 @@ class YtdlInfo:
         )
 
     def format_detailed_result(self, entry: dict) -> dict:
+        print(entry.get('url'))
         return dict(
             id=entry.get('id'),
             title=entry.get('title'),
