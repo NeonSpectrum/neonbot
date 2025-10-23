@@ -33,7 +33,7 @@ class Ytdl:
             # "geo_bypass_country": "PH",
             'source_address': '0.0.0.0',
             'outtmpl': YOUTUBE_DOWNLOADS_DIR + '/%(id)s',
-            'skip_download': False,
+            'skip_download': env.bool('YTDL_DOWNLOAD', default=False),
             'cachedir': YOUTUBE_CACHE_DIR,
             'compat_opts': {'no-youtube-unavailable-videos': True},
             'proxy': env.str('YTDL_PROXY', default=None) or None,
