@@ -6,7 +6,7 @@ authors = [
     {name = "NeonSpectrum",email = "youngskymann@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.9,<4.0"
+requires-python = ">=3.10,<4.0"
 dependencies = [
     "environs (>=14.1.1,<15.0.0)",
     "motor (>=3.7.0,<4.0.0)",
