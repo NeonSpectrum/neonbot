@@ -38,7 +38,7 @@ class Ytdl:
             'cachedir': YOUTUBE_CACHE_DIR,
             'compat_opts': {'no-youtube-unavailable-videos': True},
             'cookiefile': env.str('YTDL_COOKIES', default=None),
-            'extractor_args': {'youtube': {'player_js_version': 'actual'}},
+            'extractor_args': {'youtube': {'player_js_version': ['actual']}},
             **extra_params,
         }
 
