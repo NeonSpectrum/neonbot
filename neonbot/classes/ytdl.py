@@ -25,7 +25,7 @@ class Ytdl:
             'default_search': 'ytsearch1',
             'format': 'bestaudio/best',
             # 'quiet': True,
-            # 'no_warnings': True,
+            'no_warnings': True,
             'nocheckcertificate': True,
             'ignoreerrors': False,
             'extract_flat': 'in_playlist',
