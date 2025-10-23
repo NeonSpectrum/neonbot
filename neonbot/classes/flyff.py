@@ -111,7 +111,7 @@ class Flyff:
                     bot.flyff_settings.status_channels[channel_id] = message.id
                     await bot.flyff_settings.save_changes()
                 else:
-                    await message.edit(embed=embed)
+                    await bot.edit_message(message, embed=embed)
             except discord.HTTPException as error:
                 log.error(error)
 
