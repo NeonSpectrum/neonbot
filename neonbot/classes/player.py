@@ -213,13 +213,13 @@ class Player:
 
         try:
             if not self.now_playing.get('stream') or Ytdl.is_expired(self.now_playing['stream']):
-                ytdl_info = await Ytdl().extract_info(self.now_playing['url'], download=self.download)
+                ytdl_info = await Ytdl().extract_info(self.now_playing['url'])
                 info = ytdl_info.get_track()
                 self.now_playing = {'index': self.track_list[self.current_track] + 1, **self.now_playing, **info}
 
             source = discord.FFmpegOpusAudio(
                 self.now_playing['stream'],
-                before_options=None if not self.now_playing['is_live'] else FFMPEG_BEFORE_OPTIONS,
+                before_options=None if self.download else FFMPEG_BEFORE_OPTIONS,
                 # before_options=FFMPEG_BEFORE_OPTIONS,
                 options=FFMPEG_OPTIONS,
             )

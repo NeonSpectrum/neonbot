@@ -1,7 +1,7 @@
 import re
+from urllib.parse import parse_qs, urlencode, urlparse
 
 from i18n import t
-from urllib.parse import parse_qs, urlencode, urlparse
 
 from neonbot.classes.embed import Embed
 from neonbot.classes.player import Player
@@ -51,7 +51,7 @@ class Youtube(WithInteraction):
             url = self.remove_extra_query(url)
 
         try:
-            ytdl_info = await Ytdl().extract_info(url)
+            ytdl_info = await Ytdl({'skip_download': 'list=' in url}).extract_info(url)
         except YtdlError:
             await self.send_message(embed=Embed(t('music.no_songs_available')))
             return
