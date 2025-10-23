@@ -80,8 +80,8 @@ class YtdlInfo:
         stream = None
         file = f'{YOUTUBE_DOWNLOADS_DIR}/{entry.get("id")}'
 
-        if self.download and isfile(file):
-            stream = file
+        if self.download:
+            stream = file if isfile(file) else None
         elif 'videoplayback' in entry.get('url', ''):
             stream = entry.get('url')
 
