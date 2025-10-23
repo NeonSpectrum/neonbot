@@ -24,9 +24,9 @@ class Ytdl:
         self.ytdl_opts = {
             'default_search': 'ytsearch1',
             # 'format': 'bestaudio/best',
-            'format': '96',
-            'quiet': True,
-            'no_warnings': True,
+            'format': '91/92/93/94/95/96',
+            # 'quiet': True,
+            # 'no_warnings': True,
             'nocheckcertificate': True,
             'ignoreerrors': False,
             'extract_flat': 'in_playlist',
