@@ -23,10 +23,9 @@ class Ytdl:
         self.loop = bot.loop
         self.ytdl_opts = {
             'default_search': 'ytsearch1',
-            # 'format': 'bestaudio/best',
-            'format': '91/92/93/94/95/96',
-            # 'quiet': True,
-            # 'no_warnings': True,
+            'format': 'bestaudio/best',
+            'quiet': True,
+            'no_warnings': True,
             'nocheckcertificate': True,
             'ignoreerrors': False,
             'extract_flat': 'in_playlist',
@@ -37,8 +36,8 @@ class Ytdl:
             'skip_download': True,
             'cachedir': YOUTUBE_CACHE_DIR,
             'compat_opts': {'no-youtube-unavailable-videos': True},
-            'cookiefile': env.str('YTDL_COOKIES', default=None),
-            'extractor_args': {'youtube': {'player_js_version': ['actual']}},
+            'proxy': env.str('YTDL_PROXY', default=None) or None,
+            'cookiefile': env.str('YTDL_COOKIES', default=None) or None,
             **extra_params,
         }
 
