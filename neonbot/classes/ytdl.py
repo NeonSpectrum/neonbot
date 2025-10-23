@@ -38,7 +38,7 @@ class Ytdl:
             'compat_opts': {'no-youtube-unavailable-videos': True},
             'proxy': env.str('YTDL_PROXY', default=None) or None,
             'cookiefile': env.str('YTDL_COOKIES', default=None) or None,
-            'extractor_args': {'youtube': {'player_client': ['default', '-web', '-web_safari', '-android_sdkless']}},
+            'extractor_args': {'youtube': {'player_client': ['default', '-web', '-web_safari', '-tv']}},
             **extra_params,
         }
 
