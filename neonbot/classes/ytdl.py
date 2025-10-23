@@ -33,7 +33,7 @@ class Ytdl:
             # "geo_bypass_country": "PH",
             'source_address': '0.0.0.0',
             'outtmpl': YOUTUBE_DOWNLOADS_DIR + '/%(id)s',
-            'skip_download': env.bool('YTDL_DOWNLOAD', default=False),
+            'skip_download': not env.bool('YTDL_DOWNLOAD', default=False),
             'cachedir': YOUTUBE_CACHE_DIR,
             'compat_opts': {'no-youtube-unavailable-videos': True},
             'proxy': env.str('YTDL_PROXY', default=None) or None,
@@ -52,7 +52,7 @@ class Ytdl:
                     start_time = time()
                     result = await self.loop.run_in_executor(
                         bot.executor,
-                        functools.partial(ytdl.extract_info, keyword, download=True),
+                        functools.partial(ytdl.extract_info, keyword, download),
                     )
                     log.info(f'extract_info finished after {(time() - start_time):.2f}s')
 
