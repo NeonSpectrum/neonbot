@@ -52,7 +52,7 @@ class Ytdl:
                     start_time = time()
                     result = await self.loop.run_in_executor(
                         bot.executor,
-                        functools.partial(ytdl.extract_info, keyword, download),
+                        functools.partial(ytdl.extract_info, keyword, download=True),
                     )
                     log.info(f'extract_info finished after {(time() - start_time):.2f}s')
 
