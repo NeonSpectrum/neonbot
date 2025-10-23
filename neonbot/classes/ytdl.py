@@ -42,7 +42,7 @@ class Ytdl:
             **extra_params,
         }
 
-    async def extract_info(self, keyword: str, download: bool = True) -> YtdlInfo:
+    async def extract_info(self, keyword: str, download: bool = False) -> YtdlInfo:
         tries = 0
         max_retries = 5
 
