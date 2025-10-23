@@ -1,5 +1,6 @@
 from datetime import datetime
 from os import path
+from os.path import isfile
 
 from envparse import env
 
@@ -77,9 +78,10 @@ class YtdlInfo:
 
     def format_detailed_result(self, entry: dict) -> dict:
         stream = None
+        file = f'{YOUTUBE_DOWNLOADS_DIR}/{entry.get("id")}'
 
-        if self.download:
-            stream = f'{YOUTUBE_DOWNLOADS_DIR}/{entry.get("id")}'
+        if self.download and isfile(file):
+            stream = file
         elif 'videoplayback' in entry.get('url', ''):
             stream = entry.get('url')
 
