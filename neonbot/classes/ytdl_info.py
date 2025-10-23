@@ -1,6 +1,5 @@
 from datetime import datetime
 from os import path
-from os.path import isfile
 
 from envparse import env
 
@@ -81,7 +80,7 @@ class YtdlInfo:
         file = f'{YOUTUBE_DOWNLOADS_DIR}/{entry.get("id")}'
 
         if self.download:
-            stream = file if isfile(file) else None
+            stream = file if path.exists(file) else None
         elif 'videoplayback' in entry.get('url', ''):
             stream = entry.get('url')
 
