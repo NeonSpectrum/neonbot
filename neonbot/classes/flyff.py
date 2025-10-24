@@ -68,10 +68,7 @@ class Flyff:
                 spawn_time = self.calculate_next_spawn(
                     timer.initial_interval,
                     timer.interval,
-                    lambda count: (name == 'The Void' and count % 2 == 0)
-                    or (name == 'Karvan' and count % 2 == 1)
-                    or (name == 'Iblis' and count % 2 == 0)
-                    or (name == 'Guan Yu' and count % 2 == 1),
+                    lambda count: self.get_interval_counter(name, count),
                 )
 
                 timers.append(f'- {name}: <t:{spawn_time}:T> <t:{spawn_time}:R>')
@@ -128,7 +125,7 @@ class Flyff:
             spawn_time = self.calculate_next_spawn(
                 timer.initial_interval,
                 timer.interval,
-                lambda count: (name == 'The Void' and count % 2 == 0) or (name == 'Karvan' and count % 2 == 1),
+                lambda count: self.get_interval_counter(name, count),
             )
 
             current_time = datetime.now().replace(tzinfo=None)
@@ -165,6 +162,14 @@ class Flyff:
         await asyncio.gather(*tasks)
         bot.flyff_settings.last_alert_message = alert_message
         await bot.flyff_settings.save_changes()
+
+    def get_interval_counter(self, name, count):
+        return (
+            (name == 'The Void' and count % 2 == 0)
+            or (name == 'Karvan' and count % 2 == 1)
+            or (name == 'Iblis' and count % 2 == 0)
+            or (name == 'Guan Yu' and count % 2 == 1)
+        )
 
     def get_next_nearest_time(self, times: List[str]):
         current_datetime = datetime.now()
