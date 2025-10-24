@@ -1,5 +1,5 @@
 import traceback
-from datetime import datetime, timezone
+from datetime import datetime
 from io import BytesIO
 from typing import Optional, Union
 
@@ -271,7 +271,7 @@ class Event(commands.Cog):
                     embed.add_field(
                         name='Time Elapsed',
                         value=format_seconds(
-                            datetime.now(tz=timezone.utc).timestamp() - before_activity.start.timestamp()
+                            datetime.now().timestamp() - before_activity.start.timestamp()
                         ),
                     )
             else:

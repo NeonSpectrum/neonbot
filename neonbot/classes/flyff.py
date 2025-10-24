@@ -1,6 +1,6 @@
 import asyncio
 import math
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import List
 
 import discord
@@ -82,7 +82,7 @@ class Flyff:
                 'Server',
                 '\n'.join(
                     [
-                        f'- Start time: <t:{server_start_time}>',
+                        f'- Start time: <t:{server_start_time}:D> <t:{server_start_time}:T>',
                         f'- Next Reset: <t:{next_reset_time}:t> <t:{next_reset_time}:R>',
                     ]
                 ),
@@ -111,7 +111,7 @@ class Flyff:
                     bot.flyff_settings.status_channels[channel_id] = message.id
                     await bot.flyff_settings.save_changes()
                 else:
-                    await message.edit(embed=embed)
+                    await bot.edit_message(message, embed=embed)
             except discord.HTTPException as error:
                 log.error(error)
 
@@ -128,8 +128,8 @@ class Flyff:
                 lambda count: (name == 'The Void' and count % 2 == 0) or (name == 'Karvan' and count % 2 == 1),
             )
 
-            current_time = datetime.now(timezone.utc)
-            spawn_time = datetime.fromtimestamp(spawn_time).astimezone(timezone.utc)
+            current_time = datetime.now().replace(tzinfo=None)
+            spawn_time = datetime.fromtimestamp(spawn_time)
 
             if abs(current_time - spawn_time) <= timedelta(seconds=5):
                 alert_message = f'**{name}** will spawn **soon**!'
@@ -137,7 +137,7 @@ class Flyff:
                 alert_message = f'**{name}** will spawn in **5 minutes**.'
 
         for name, time_list in bot.flyff_settings.fixed_timers.items():
-            current_time = datetime.now(timezone.utc)
+            current_time = datetime.now()
 
             next_time = self.get_next_nearest_time(time_list)
 
@@ -163,13 +163,6 @@ class Flyff:
         bot.flyff_settings.last_alert_message = alert_message
         await bot.flyff_settings.save_changes()
 
-    def convert_to_utc(self, time):
-        gmt_plus_8 = timezone(timedelta(hours=8))
-        current_date = datetime.now().date()
-        naive_dt = datetime.combine(current_date, time.time())
-        dt_gmt_plus_8 = naive_dt.replace(tzinfo=gmt_plus_8)
-        return dt_gmt_plus_8.astimezone(timezone.utc)
-
     def get_next_nearest_time(self, times: List[str]):
         current_datetime = datetime.now()
         current_date = current_datetime.date()
@@ -185,13 +178,13 @@ class Flyff:
 
         for scheduled_time_obj in scheduled_times:
             if scheduled_time_obj > current_time_obj:
-                return self.convert_to_utc(datetime.combine(current_date, scheduled_time_obj))
+                return datetime.combine(current_date, scheduled_time_obj)
 
         next_day_time_obj = scheduled_times[0]
 
         next_day_date = current_date + timedelta(days=1)
 
-        return self.convert_to_utc(datetime.combine(next_day_date, next_day_time_obj))
+        return datetime.combine(next_day_date, next_day_time_obj)
 
     def get_next_reset_time(self, time_str):
         now = datetime.now()

@@ -1,6 +1,8 @@
 from datetime import datetime
 from os import path
 
+from envparse import env
+
 from neonbot.utils.constants import YOUTUBE_DOWNLOADS_DIR
 from neonbot.utils.functions import format_seconds
 
@@ -8,6 +10,7 @@ from neonbot.utils.functions import format_seconds
 class YtdlInfo:
     def __init__(self, result):
         self.result = result
+        self.download = env.bool('YTDL_DOWNLOAD', default=False),
 
     @property
     def is_playlist(self):
@@ -73,6 +76,14 @@ class YtdlInfo:
         )
 
     def format_detailed_result(self, entry: dict) -> dict:
+        stream = None
+        file = f'{YOUTUBE_DOWNLOADS_DIR}/{entry.get("id")}'
+
+        if self.download:
+            stream = file if path.exists(file) else None
+        elif 'videoplayback' in entry.get('url', ''):
+            stream = entry.get('url')
+
         return dict(
             id=entry.get('id'),
             title=entry.get('title'),
@@ -81,7 +92,7 @@ class YtdlInfo:
             duration=entry.get('duration'),
             formatted_duration=format_seconds(entry.get('duration')) if entry.get('duration') else 'N/A',
             thumbnail=entry.get('thumbnail'),
-            stream=entry.get('url') if 'videoplayback' in entry.get('url', '') else None,
+            stream=stream,
             url=entry.get('original_url', entry.get('url')),
             is_live=entry.get('is_live'),
             view_count=f'{entry.get("view_count"):,}' if entry.get('view_count') else 'N/A',

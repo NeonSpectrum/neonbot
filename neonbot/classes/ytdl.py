@@ -12,7 +12,7 @@ from envparse import env
 from neonbot import bot
 from neonbot.classes.ytdl_info import YtdlInfo
 from neonbot.utils import log
-from neonbot.utils.constants import YOUTUBE_CACHE_DIR
+from neonbot.utils.constants import YOUTUBE_CACHE_DIR, YOUTUBE_DOWNLOADS_DIR
 from neonbot.utils.exceptions import YtdlError
 
 
@@ -24,7 +24,7 @@ class Ytdl:
         self.ytdl_opts = {
             'default_search': 'ytsearch1',
             'format': 'bestaudio/best',
-            'quiet': True,
+            # 'quiet': True,
             'no_warnings': True,
             'nocheckcertificate': True,
             'ignoreerrors': False,
@@ -32,15 +32,17 @@ class Ytdl:
             # "geo_bypass": True,
             # "geo_bypass_country": "PH",
             'source_address': '0.0.0.0',
-            # 'outtmpl': YOUTUBE_DOWNLOADS_DIR + '/%(id)s',
-            'skip_download': True,
+            'outtmpl': YOUTUBE_DOWNLOADS_DIR + '/%(id)s',
+            'skip_download': not env.bool('YTDL_DOWNLOAD', default=False),
             'cachedir': YOUTUBE_CACHE_DIR,
             'compat_opts': {'no-youtube-unavailable-videos': True},
-            'cookiefile': env.str('YTDL_COOKIES', default=None),
+            'proxy': env.str('YTDL_PROXY', default=None) or None,
+            'cookiefile': env.str('YTDL_COOKIES', default=None) or None,
+            'extractor_args': {'youtube': {'player_client': ['default', '-web', '-web_safari', '-tv']}},
             **extra_params,
         }
 
-    async def extract_info(self, keyword: str, download: bool = False) -> YtdlInfo:
+    async def extract_info(self, keyword: str, download: bool = True) -> YtdlInfo:
         tries = 0
         max_retries = 5
 
@@ -83,10 +85,6 @@ class Ytdl:
             return current_datetime >= expiry_datetime
 
         return False
-
-    @staticmethod
-    def prepare_filename(*args, **kwargs):
-        return Ytdl().ytdl.prepare_filename(*args, **kwargs)
 
     @classmethod
     def create(cls, extra_params) -> Ytdl:
