@@ -68,7 +68,7 @@ class Flyff:
                 spawn_time = self.calculate_next_spawn(
                     timer.initial_interval,
                     timer.interval,
-                    lambda count: (name == 'Karvan' and count % 2 == 0) or (name == 'Clockworks' and count % 2 == 1),
+                    lambda count: (name == 'The Void' and count % 2 == 0) or (name == 'Karvan' and count % 2 == 1),
                 )
 
                 timers.append(f'- {name}: <t:{spawn_time}:T> <t:{spawn_time}:R>')
