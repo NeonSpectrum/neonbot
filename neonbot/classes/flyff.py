@@ -169,10 +169,6 @@ class Flyff:
                 return count % 2 == 0
             case 'Karvan':
                 return count % 2 == 1
-            case 'Iblis':
-                return count % 2 == 0
-            case 'Guan Yu':
-                return count % 2 == 1
             case _:
                 return False
 
