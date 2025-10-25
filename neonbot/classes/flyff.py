@@ -167,8 +167,8 @@ class Flyff:
         return (
             (name == 'The Void' and count % 2 == 0)
             or (name == 'Karvan' and count % 2 == 1)
-            or (name == 'Iblis' and count % 2 == 0)
-            or (name == 'Guan Yu' and count % 2 == 1)
+            or (name == 'Guan Yu' and count % 2 == 0)
+            or (name == 'Iblis' and count % 2 == 1)
         )
 
     def get_next_nearest_time(self, times: List[str]):
