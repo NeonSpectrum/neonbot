@@ -241,7 +241,7 @@ class Flyff:
         if not status and bot.flyff_settings.world_start_time:
             Flyff.DOWNTIME_COUNT += 1
 
-            if Flyff.DOWNTIME_COUNT >= 10:
+            if Flyff.DOWNTIME_COUNT >= 2:
                 bot.flyff_settings.world_start_time = None
                 await bot.flyff_settings.save_changes()
 
