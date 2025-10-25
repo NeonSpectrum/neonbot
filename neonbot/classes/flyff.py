@@ -229,7 +229,7 @@ class Flyff:
     async def start_ping_monitor():
         old_status = bot.flyff_settings.status
         ip, port = Flyff.IP_ADDRESS.split(':')
-        status = await check_ip_online_socket(ip, port, 30)
+        status = await check_ip_online_socket(ip, port, 5)
 
         embed = None
 
@@ -241,7 +241,7 @@ class Flyff:
         if not status and bot.flyff_settings.world_start_time:
             Flyff.DOWNTIME_COUNT += 1
 
-            if Flyff.DOWNTIME_COUNT >= 2:
+            if Flyff.DOWNTIME_COUNT >= 12:
                 bot.flyff_settings.world_start_time = None
                 await bot.flyff_settings.save_changes()
 
