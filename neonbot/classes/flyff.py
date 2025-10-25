@@ -164,12 +164,17 @@ class Flyff:
         await bot.flyff_settings.save_changes()
 
     def get_interval_counter(self, name, count):
-        return (
-            (name == 'The Void' and count % 2 == 0)
-            or (name == 'Karvan' and count % 2 == 1)
-            or (name == 'Guan Yu' and count % 2 == 0)
-            or (name == 'Iblis' and count % 2 == 1)
-        )
+        match name:
+            case 'The Void':
+                return count % 2 == 0
+            case 'Karvan':
+                return count % 2 == 1
+            case 'Iblis':
+                return count % 2 == 0
+            case 'Guan Yu':
+                return count % 2 == 1
+            case _:
+                return False
 
     def get_next_nearest_time(self, times: List[str]):
         current_datetime = datetime.now()
