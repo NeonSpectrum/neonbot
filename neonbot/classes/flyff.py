@@ -117,7 +117,7 @@ class Flyff:
                 log.error(error)
 
         for webhook_channel in bot.flyff_settings.webhook_channels:
-            webhook = Webhook.from_url(webhook_channel.url)
+            webhook = Webhook.from_url(webhook_channel.url, session=bot.session)
 
             try:
                 message = await webhook.fetch_message(
