@@ -9,8 +9,8 @@ from neonbot.utils import log
 
 
 class FlyffWebhookChannel(BaseModel):
-    url: Optional[str]
-    message_id: Optional[int]
+    url: str
+    message_id: Optional[int] = None
 
 class FlyffAlertChannel(BaseModel):
     channel_id: int
