@@ -136,23 +136,6 @@ class FlyffCog(commands.Cog):
             embed=Embed(f'Removed `{name}` fixed timer on {interaction.channel.mention}'), ephemeral=True
         )
 
-    @flyff.command(name='add_webhook')
-    async def add_webhook(self, interaction: discord.Interaction, name: str, url: str) -> None:
-        bot.flyff_settings = await FlyffModel.get_instance()
-
-        if name in bot.flyff_settings.webhooks:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
-                embed=Embed('Webhook name already in the list.'), ephemeral=True
-            )
-            return
-
-        bot.flyff_settings.webhooks[name] = url
-        await bot.flyff_settings.save_changes()
-
-        await cast(discord.InteractionResponse, interaction.response).send_message(
-            embed=Embed(f'Added `{name}` fixed timer'), ephemeral=True
-        )
-
     @flyff.command(name='add_webhook_tts')
     async def add_webhook_tts(self, interaction: discord.Interaction, name: str, url: str) -> None:
         bot.flyff_settings = await FlyffModel.get_instance()
