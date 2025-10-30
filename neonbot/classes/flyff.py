@@ -118,12 +118,12 @@ class Flyff:
 
         for webhook_channel in bot.flyff_settings.webhook_channels:
             webhook = Webhook.from_url(webhook_channel.url, session=bot.session)
+            message = None
 
             try:
-                message = await webhook.fetch_message(
-                    webhook_channel.message_id) if webhook_channel.message_id else None
-                message = await message.fetch()
-            except discord.NotFound:
+                if webhook_channel.message_id:
+                    message = await webhook.fetch_message(webhook_channel.message_id)
+            except (discord.NotFound, AttributeError):
                 message = None
 
             try:
