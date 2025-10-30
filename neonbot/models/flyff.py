@@ -9,7 +9,7 @@ from neonbot.utils import log
 
 
 class FlyffWebhookChannel(BaseModel):
-    url: str
+    url: Optional[str]
     message_id: Optional[int]
 
 class FlyffAlertChannel(BaseModel):
@@ -56,6 +56,7 @@ class FlyffModel(Document):
         await FlyffModel(
             world_start_time=None,
             status_channels={},
+            webhook_channels=[],
             alert_channels=[],
             ping_channels=[],
             timers={},
