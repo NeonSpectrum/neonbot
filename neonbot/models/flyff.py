@@ -8,9 +8,12 @@ from pydantic import BaseModel
 from neonbot.utils import log
 
 
+class FlyffWebhookChannel(BaseModel):
+    url: str
+    message_id: Optional[int]
+
 class FlyffAlertChannel(BaseModel):
     channel_id: int
-
 
 class FlyffPingChannel(BaseModel):
     channel_id: int
@@ -22,6 +25,7 @@ class FlyffTimer(BaseModel):
 class FlyffModel(Document):
     world_start_time: Optional[str] = None
     status_channels: Dict[int, Optional[int]] = {}
+    webhook_channels: List[FlyffWebhookChannel] = []
     alert_channels: List[FlyffAlertChannel] = []
     ping_channels: List[FlyffPingChannel] = []
     timers: Dict[str, FlyffTimer] = {}

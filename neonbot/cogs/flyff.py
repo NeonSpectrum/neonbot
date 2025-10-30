@@ -8,7 +8,7 @@ from durations_nlp import Duration
 from neonbot import bot
 from neonbot.classes.embed import Embed
 from neonbot.classes.flyff import Flyff
-from neonbot.models.flyff import FlyffAlertChannel, FlyffModel, FlyffPingChannel, FlyffTimer
+from neonbot.models.flyff import FlyffAlertChannel, FlyffModel, FlyffPingChannel, FlyffTimer, FlyffWebhookChannel
 
 
 class FlyffCog(commands.Cog):
@@ -153,8 +153,25 @@ class FlyffCog(commands.Cog):
             embed=Embed(f'Added `{name}` fixed timer'), ephemeral=True
         )
 
-    @flyff.command(name='delete_webhook')
-    async def delete_webhook(self, interaction: discord.Interaction, name: str) -> None:
+    @flyff.command(name='add_webhook_tts')
+    async def add_webhook_tts(self, interaction: discord.Interaction, name: str, url: str) -> None:
+        bot.flyff_settings = await FlyffModel.get_instance()
+
+        if name in bot.flyff_settings.webhooks:
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed('Webhook name already in the list.'), ephemeral=True
+            )
+            return
+
+        bot.flyff_settings.webhooks[name] = url
+        await bot.flyff_settings.save_changes()
+
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed(f'Added `{name}` fixed timer'), ephemeral=True
+        )
+
+    @flyff.command(name='delete_webhook_tts')
+    async def delete_webhook_tts(self, interaction: discord.Interaction, name: str) -> None:
         bot.flyff_settings = await FlyffModel.get_instance()
 
         if name not in bot.flyff_settings.webhooks:
@@ -168,6 +185,16 @@ class FlyffCog(commands.Cog):
 
         await cast(discord.InteractionResponse, interaction.response).send_message(
             embed=Embed(f'Removed `{name}` webhook'), ephemeral=True
+        )
+
+    @flyff.command(name='add_webhook')
+    async def add_webhook(self, interaction: discord.Interaction, url: str) -> None:
+        bot.flyff_settings = await FlyffModel.get_instance()
+        bot.flyff_settings.webhook_channels.append(FlyffWebhookChannel(url=url))
+        await bot.flyff_settings.save_changes()
+
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed(f'Added `{url}` webhook url'), ephemeral=True
         )
 
 

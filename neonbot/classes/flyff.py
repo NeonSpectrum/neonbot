@@ -5,6 +5,7 @@ from typing import List
 
 import discord
 from aiohttp import ClientTimeout
+from discord import Webhook
 from envparse import env
 
 from neonbot import bot
@@ -109,6 +110,27 @@ class Flyff:
                     message = await channel.send(embed=embed)
 
                     bot.flyff_settings.status_channels[channel_id] = message.id
+                    await bot.flyff_settings.save_changes()
+                else:
+                    await bot.edit_message(message, embed=embed)
+            except discord.HTTPException as error:
+                log.error(error)
+
+        for webhook_channel in bot.flyff_settings.webhook_channels:
+            webhook = Webhook.from_url(webhook_channel.url)
+
+            try:
+                message = await webhook.fetch_message(
+                    webhook_channel.message_id) if webhook_channel.message_id else None
+                message = await message.fetch()
+            except discord.NotFound:
+                message = None
+
+            try:
+                if not message:
+                    message = await webhook.send(embed=embed)
+                    message = await message.fetch()
+                    webhook_channel.message_id = message.id if message else None
                     await bot.flyff_settings.save_changes()
                 else:
                     await bot.edit_message(message, embed=embed)
