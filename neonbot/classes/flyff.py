@@ -128,7 +128,7 @@ class Flyff:
 
             try:
                 if not message:
-                    message = await webhook.send(embed=embed)
+                    message = await webhook.send(embed=embed, wait=True)
                     log.info(message)
                     webhook_channel.message_id = message.id if message else None
                     await bot.flyff_settings.save_changes()
