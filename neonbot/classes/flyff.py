@@ -10,6 +10,7 @@ from envparse import env
 
 from neonbot import bot
 from neonbot.classes.embed import Embed
+from neonbot.models.flyff import FlyffWebhookChannel
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
 from neonbot.utils.functions import check_ip_online_socket
@@ -52,7 +53,7 @@ class Flyff:
 
         return int(next_spawn_time.timestamp())
 
-    async def refresh_status(self, only_channel_id=None):
+    async def refresh_status(self):
         world_start_time = bot.flyff_settings.world_start_time
         embed = Embed(timestamp=datetime.now())
         embed.set_author('Emerald Flyff', icon_url=ICONS['emeraldflyff'])
@@ -94,48 +95,15 @@ class Flyff:
         else:
             embed.add_field('Server', '```OFFLINE```', inline=False)
 
+        tasks = []
+
         for channel_id, message_id in bot.flyff_settings.status_channels.items():
-            if only_channel_id and only_channel_id != channel_id:
-                continue
-
-            channel = bot.get_channel(channel_id)
-
-            try:
-                message = await channel.fetch_message(message_id) if message_id else None
-            except discord.NotFound:
-                message = None
-
-            try:
-                if not message:
-                    message = await channel.send(embed=embed)
-
-                    bot.flyff_settings.status_channels[channel_id] = message.id
-                    await bot.flyff_settings.save_changes()
-                else:
-                    await bot.edit_message(message, embed=embed)
-            except discord.HTTPException as error:
-                log.error(error)
+            tasks.append(self.send_status_channel(channel_id, message_id, embed))
 
         for webhook_channel in bot.flyff_settings.webhook_channels:
-            webhook = Webhook.from_url(webhook_channel.url, session=bot.session)
-            message = None
+            tasks.append(self.send_webhook_channel(webhook_channel, embed))
 
-            try:
-                if webhook_channel.message_id:
-                    message = await webhook.fetch_message(webhook_channel.message_id)
-            except (discord.NotFound, AttributeError):
-                message = None
-
-            try:
-                if not message:
-                    message = await webhook.send(embed=embed, wait=True)
-                    log.info(message)
-                    webhook_channel.message_id = message.id if message else None
-                    await bot.flyff_settings.save_changes()
-                else:
-                    await bot.edit_message(message, embed=embed)
-            except discord.HTTPException as error:
-                log.error(error)
+        await asyncio.gather(*tasks)
 
     async def check_next_alert(self):
         if not bot.flyff_settings.world_start_time:
@@ -236,6 +204,45 @@ class Flyff:
             pass
         except Exception as e:
             log.error(f'An unexpected error occurred: {e}')
+
+    async def send_status_channel(self, channel_id: int, message_id: int, embed: discord.Embed):
+        channel = bot.get_channel(channel_id)
+
+        try:
+            message = await channel.fetch_message(message_id) if message_id else None
+        except discord.NotFound:
+            message = None
+
+        try:
+            if not message:
+                message = await channel.send(embed=embed)
+
+                bot.flyff_settings.status_channels[channel_id] = message.id
+                await bot.flyff_settings.save_changes()
+            else:
+                await bot.edit_message(message, embed=embed)
+        except discord.HTTPException as error:
+            log.error(error)
+
+    async def send_webhook_channel(self, webhook_channel: FlyffWebhookChannel, embed: discord.Embed):
+        webhook = Webhook.from_url(webhook_channel.url, session=bot.session)
+        message = None
+
+        try:
+            if webhook_channel.message_id:
+                message = await webhook.fetch_message(webhook_channel.message_id)
+        except (discord.NotFound, AttributeError):
+            message = None
+
+        try:
+            if not message:
+                message = await webhook.send(embed=embed, wait=True)
+                webhook_channel.message_id = message.id if message else None
+                await bot.flyff_settings.save_changes()
+            else:
+                await bot.edit_message(message, embed=embed)
+        except discord.HTTPException as error:
+            log.error(error)
 
     @staticmethod
     async def start_status_monitor():
