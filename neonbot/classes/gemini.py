@@ -13,7 +13,7 @@ genai.configure(api_key=env.str('GEMINI_API_KEY'))
 
 class GeminiChat:
     def __init__(self, message):
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.model = genai.GenerativeModel('gemini-2.5-flash')
         self.response = None
         self.prompt = message.lstrip('? ')
 
