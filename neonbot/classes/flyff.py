@@ -231,7 +231,7 @@ class Flyff:
         try:
             if webhook_channel.message_id:
                 message = await webhook.fetch_message(webhook_channel.message_id)
-        except (discord.NotFound, AttributeError):
+        except discord.NotFound:
             message = None
 
         try:
