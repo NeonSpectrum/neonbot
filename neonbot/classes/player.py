@@ -254,7 +254,6 @@ class Player(DefaultPlayer):
         await self.disconnect(force=True, timeout=timeout)
         await self.clear_messages()
 
-        self.ctx = None
         self.current = None
         self.current_queue = -1
         self.last_track = None
