@@ -156,7 +156,7 @@ class Event(commands.Cog):
             return
 
         if player and player.ctx and player.ctx.voice_client:
-            voice_members = [member for member in player.ctx.channel.members if not member.bot]
+            voice_members = [member for member in player.vc.members if not member.bot]
 
             if any(voice_members):
                 player.reset_timeout.cancel()
@@ -164,7 +164,7 @@ class Event(commands.Cog):
                     await player.resume(requester=bot.user)
                     player.is_auto_paused = False
             else:
-                if player.connection.is_playing():
+                if not player.paused:
                     await player.pause(requester=bot.user)
                     player.is_auto_paused = True
                 if not player.reset_timeout.is_running():

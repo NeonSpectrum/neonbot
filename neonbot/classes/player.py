@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Union
 
 import discord
 import ytmusicapi.exceptions
+from discord import VoiceChannel
 from discord.ext import tasks
 from discord.ext.commands import Context
 from discord.utils import MISSING, find
@@ -33,6 +34,7 @@ class Player(DefaultPlayer):
         self.player_controls = PlayerControls(self)
 
         self.ctx: Optional[Context] = None
+        self.vc: Optional[VoiceChannel] = None
         self.current: Optional[AudioTrack] = None
         self.current_queue = -1
         self.last_track: Optional[AudioTrack] = None
@@ -105,7 +107,8 @@ class Player(DefaultPlayer):
         if self.ctx.guild.voice_client:
             return
 
-        await self.ctx.author.voice.channel.connect(timeout=3, reconnect=True, self_deaf=True, cls=LavalinkVoiceClient)
+        self.vc = self.ctx.author.voice.channel
+        await self.vc.connect(timeout=3, reconnect=True, self_deaf=True, cls=LavalinkVoiceClient)
 
         log.cmd(self.ctx, t('music.player_connected', channel=self.ctx.author.voice.channel))
 
