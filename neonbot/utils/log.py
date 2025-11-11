@@ -37,7 +37,7 @@ class Log(logging.Logger):
         *,
         guild: Optional[discord.Guild] = None,
         channel: Optional[Union[discord.TextChannel, discord.VoiceChannel]] = None,
-        user: Optional[Union[str, discord.User]] = None,
+        user: Optional[Union[str, int, discord.User]] = None,
     ) -> None:
         guild = guild or ctx.guild
         channel = channel or ctx.channel

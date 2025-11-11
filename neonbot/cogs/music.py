@@ -1,37 +1,41 @@
-import re
-from typing import Optional, cast
+from typing import cast, Union
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 from i18n import t
+from lavalink import listener, TrackEndEvent, TrackStartEvent
 
 from neonbot import bot
 from neonbot.classes.embed import Embed, PaginationEmbed
 from neonbot.classes.player import Player
-from neonbot.classes.spotify import Spotify
-from neonbot.classes.youtube import Youtube
-from neonbot.enums import PlayerState, Repeat
+from neonbot.enums import Repeat
 from neonbot.utils import log
-from neonbot.utils.constants import ICONS, SPOTIFY_REGEX, YOUTUBE_REGEX
-from neonbot.utils.functions import format_seconds
+from neonbot.utils.constants import ICONS
+from neonbot.utils.functions import format_milliseconds
 
 
-async def in_voice(interaction: discord.Interaction) -> bool:
-    if await bot.is_owner(interaction.user) and interaction.command.name == 'reset':
+async def in_voice(ctx: Union[commands.Context, discord.Interaction]) -> bool:
+    if isinstance(ctx, discord.Interaction):
+        ctx = await bot.get_context(ctx)
+
+    if await bot.is_owner(ctx.author) and ctx.command.name == 'reset':
         return True
 
-    if not interaction.user.voice:
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+    if not ctx.author.voice:
+        await ctx.send(
             embed=Embed('You need to be in the channel.'), ephemeral=True
         )
         return False
     return True
 
 
-async def has_permission(interaction: discord.Interaction) -> bool:
-    if not interaction.channel.permissions_for(interaction.guild.me).send_messages:
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+async def has_permission(ctx: Union[commands.Context, discord.Interaction]) -> bool:
+    if isinstance(ctx, discord.Interaction):
+        ctx = await bot.get_context(ctx)
+
+    if not ctx.channel.permissions_for(ctx.guild.me).send_messages:
+        await ctx.send(
             embed=Embed("I don't have permission to send message on this channel."), ephemeral=True
         )
         return False
@@ -39,9 +43,9 @@ async def has_permission(interaction: discord.Interaction) -> bool:
 
 
 async def has_player(interaction: discord.Interaction) -> bool:
-    player = await Player.get_instance(interaction)
+    player = bot.lavalink.player_manager.get(interaction.guild_id)
 
-    if not player.connection:
+    if not player:
         await cast(discord.InteractionResponse, interaction.response).send_message(
             embed=Embed('No active player.'), ephemeral=True
         )
@@ -50,33 +54,33 @@ async def has_player(interaction: discord.Interaction) -> bool:
 
 
 class Music(commands.Cog):
+    def __init__(self):
+        bot.lavalink.add_event_hooks(self)
+
+    @commands.command(name='play', aliases=['p'])
+    @commands.check(in_voice)
+    @commands.check(has_permission)
+    async def play(self, ctx, *, query: str):
+        await self.handle_play(ctx, query)
+
     @app_commands.command(name='play')
-    @app_commands.describe(value='Enter keyword or url...')
+    @app_commands.describe(query='Enter keyword or url...')
     @app_commands.check(in_voice)
     @app_commands.check(has_permission)
     @app_commands.guild_only()
-    async def play(self, interaction: discord.Interaction, value: str, play_now: Optional[bool] = False):
+    async def play_interaction(self, interaction, query: str):
+        await self.handle_play(interaction, query)
+
+    async def handle_play(self, ctx: Union[commands.Context, discord.Interaction], query: str):
         """Searches the url or the keyword and add it to queue. This will queue the first search."""
 
-        player = await Player.get_instance(interaction)
-        last_index = len(player.queue) - 1
+        player = bot.lavalink.player_manager.create(ctx.guild.id)
+        player.ctx = await bot.get_context(ctx) if isinstance(ctx, discord.Interaction) else ctx
 
-        if re.search(YOUTUBE_REGEX, value):
-            await Youtube(interaction).search_url(value)
-        elif re.search(SPOTIFY_REGEX, value):
-            await Spotify(interaction).search_url(value)
-        else:
-            await Youtube(interaction).search_keyword(value)
+        await player.search(query)
+        await player.connect()
 
-        await player.connect(interaction.user.voice.channel)
-
-        if player.state == PlayerState.STOPPED:
-            play_now = True
-
-        if player.connection.is_playing():
-            if play_now:
-                player.jump(last_index + 1)
-        else:
+        if not player.is_playing:
             await player.play()
 
     @app_commands.command(name='nowplaying')
@@ -85,32 +89,29 @@ class Music(commands.Cog):
     async def nowplaying(self, interaction: discord.Interaction) -> None:
         """Displays in brief description of the current playing."""
 
-        player = await Player.get_instance(interaction)
+        player = bot.lavalink.player_manager.get(interaction.guild_id)
 
-        if not player.connection or not player.connection.is_playing():
+        if not player.current:
             await cast(discord.InteractionResponse, interaction.response).send_message(
                 embed=Embed(t('music.no_song_playing')), ephemeral=True
             )
             return
 
-        now_playing = player.now_playing
+        now_playing = player.current
 
         footer = player.get_footer(now_playing)
         footer.pop(1)
 
         embed = Embed()
-        embed.add_field(t('music.nowplaying.uploader'), now_playing['uploader'])
-        embed.add_field(t('music.nowplaying.upload_date'), now_playing['upload_date'])
-        embed.add_field(t('music.nowplaying.duration'), now_playing['formatted_duration'])
-        embed.add_field(t('music.nowplaying.views'), now_playing['view_count'])
-        embed.add_field(t('music.nowplaying.description'), now_playing['description'], inline=False)
+        embed.add_field(t('music.nowplaying.uploader'), now_playing.author)
+        embed.add_field(t('music.nowplaying.duration'), format_milliseconds(now_playing.duration))
         embed.set_author(
-            name=now_playing['title'],
-            url=now_playing['url'],
-            icon_url=ICONS['music'],
+            name=now_playing.title,
+            url=now_playing.uri,
+            icon_url=ICONS.music,
         )
-        embed.set_thumbnail(url=now_playing['thumbnail'])
-        embed.set_footer(text=' | '.join(footer), icon_url=now_playing['requested'].display_avatar)
+        embed.set_thumbnail(url=now_playing.artwork_url)
+        embed.set_footer(text=' | '.join(footer), icon_url=bot.get_user(now_playing.requester).display_avatar)
         await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
 
     @app_commands.command(name='playlist')
@@ -119,36 +120,34 @@ class Music(commands.Cog):
     async def playlist(self, interaction: discord.Interaction) -> None:
         """List down all songs in the player's queue."""
 
-        player = await Player.get_instance(interaction)
-        queue = player.queue
+        player = bot.lavalink.player_manager.get(interaction.guild_id)
         embeds = []
         duration = 0
 
-        if not queue:
+        if len(player.track_list) == 0:
             await cast(discord.InteractionResponse, interaction.response).send_message(
                 embed=Embed(t('music.empty_playlist')), ephemeral=True
             )
             return
 
-        for i in range(0, len(player.queue), 10):
+        for i in range(0, len(player.playlist), 10):
             temp = []
-            for index, song in enumerate(player.queue[i : i + 10], i):
-                is_current = player.track_list[player.current_track] == index
-                title = f'`{"*" if is_current else ""}{index + 1}.` [{song["title"]}]({song["url"]})'
+            for _, track in enumerate(player.playlist[i: i + 10], i):
+                title = f'`{"*" if player.current.identifier == track.identifier else ""}{track.extra['index'] + 1}.` [{track["title"]}]({track["uri"]})'
                 description = f"""\
-{f'~~{title}~~' if 'removed' in song else title}
-- - - `{format_seconds(song.get('duration')) if song.get('duration') else 'N/A'}` `{song['requested']}`"""
+{title}
+- - - `{format_milliseconds(track.duration) if track.duration else 'N/A'}` `{bot.get_user(track.requester)}`"""
 
-                duration += song.get('duration') or 0
+                duration += track.duration or 0
 
                 temp.append(description)
             embeds.append(Embed('\n'.join(temp)))
 
         footer = [
-            t('music.songs', count=len(player.queue)),
-            format_seconds(duration),
+            t('music.songs', count=len(player.playlist)),
+            format_milliseconds(duration),
             t('music.shuffle_footer', shuffle='on' if player.shuffle else 'off'),
-            t('music.repeat_footer', repeat=Repeat(player.repeat).name.lower()),
+            t('music.repeat_footer', repeat=Repeat(player.loop).name.lower()),
         ]
 
         pagination = PaginationEmbed(interaction, embeds=embeds)
@@ -156,27 +155,28 @@ class Music(commands.Cog):
         pagination.embed.set_footer(text=' | '.join(footer), icon_url=bot.user.display_avatar)
         await pagination.build()
 
-    @app_commands.command(name='jump')
+    @app_commands.command(name='goto')
     @app_commands.check(in_voice)
     @app_commands.check(has_player)
     @app_commands.guild_only()
-    async def jump(self, interaction: discord.Interaction, index: int) -> None:
+    async def goto(self, interaction: discord.Interaction, index: int) -> None:
         """Skips the current song."""
 
-        player = await Player.get_instance(interaction)
+        player = bot.lavalink.player_manager.get(interaction.guild_id)
 
-        if index > len(player.queue) or index < 0:
+        try:
+            player.current_queue = index - 1
+            track = player.track_list[player.current_queue]
+
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed(t('music.jumped_to', index=index, title=track.title, url=track.uri))
+            )
+
+            await player.play(track)
+        except IndexError:
             await cast(discord.InteractionResponse, interaction.response).send_message(
                 embed=Embed('Invalid index.'), ephemeral=True
             )
-            return
-
-        player.jump(index - 1)
-        track = player.get_track(index - 1)
-
-        await cast(discord.InteractionResponse, interaction.response).send_message(
-            embed=Embed(t('music.jumped_to', index=index, title=track['title'], url=track['url']))
-        )
 
     @app_commands.command(name='removesong')
     @app_commands.check(in_voice)
@@ -185,20 +185,18 @@ class Music(commands.Cog):
     async def removesong(self, interaction: discord.Interaction, index: int) -> None:
         """Removes a specific song."""
 
-        player = await Player.get_instance(interaction)
+        player = bot.lavalink.player_manager.get(interaction.guild_id)
 
-        if index > len(player.queue) or index < 0:
+        try:
+            removed = player.remove(index)
+
+            await cast(discord.InteractionResponse, interaction.response).send_message(
+                embed=Embed(t('music.removed_song', index=index, title=removed.title, url=removed.uri))
+            )
+        except IndexError:
             await cast(discord.InteractionResponse, interaction.response).send_message(
                 embed=Embed('Invalid index.'), ephemeral=True
             )
-            return
-
-        track = player.get_track(index - 1)
-        await player.remove_song(index - 1)
-
-        await cast(discord.InteractionResponse, interaction.response).send_message(
-            embed=Embed(t('music.removed_song', index=index, title=track['title'], url=track['url']))
-        )
 
     @app_commands.command(name='reset')
     @app_commands.check(in_voice)
@@ -207,9 +205,8 @@ class Music(commands.Cog):
     async def reset(self, interaction: discord.Interaction) -> None:
         """Resets the current player and disconnect to voice channel."""
 
-        player = await Player.get_instance(interaction)
+        player = bot.lavalink.player_manager.get(interaction.guild_id)
         await player.reset()
-        player.remove_instance()
 
         msg = 'Player reset.'
         log.cmd(interaction, msg)
@@ -222,7 +219,7 @@ class Music(commands.Cog):
     async def stop(self, interaction: discord.Interaction) -> None:
         """Stops the current player and reset the queue from the start."""
 
-        player = await Player.get_instance(interaction)
+        player = bot.lavalink.player_manager.get(interaction.guild_id)
         await player.stop()
 
         msg = 'Player stopped.'
@@ -235,13 +232,23 @@ class Music(commands.Cog):
     async def reconnect(self, interaction: discord.Interaction) -> None:
         """Stops the current player and reset the queue from the start."""
 
-        player = await Player.get_instance(interaction)
+        player = bot.lavalink.player_manager.get(interaction.guild_id)
         await player.disconnect(force=True)
         await player.play()
 
         msg = 'Player reconnected.'
         log.cmd(interaction, msg)
         await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed(msg))
+
+    @listener(TrackStartEvent)
+    async def on_track_start(self, event: TrackStartEvent):
+        player = cast(Player, event.player)
+        await player.track_start_event(event)
+
+    @listener(TrackEndEvent)
+    async def on_track_end(self, event: TrackEndEvent):
+        player = cast(Player, event.player)
+        await player.track_end_event(event)
 
 
 # noinspection PyShadowingNames

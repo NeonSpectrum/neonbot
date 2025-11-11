@@ -17,7 +17,7 @@ from neonbot.utils.functions import check_ip_online_socket
 
 
 class Flyff:
-    IP_ADDRESS = env.str('FLYFF_IP_ADDRESS')
+    IP_ADDRESS = env.str('FLYFF_IP_ADDRESS', default=None)
     RESET_TIME = '06:00 PM'
     DOWNTIME_COUNT = 0
 
@@ -294,7 +294,7 @@ class Flyff:
 
     @staticmethod
     def start_listener():
-        if bot.scheduler.get_job('flyff-monitor'):
+        if not Flyff.IP_ADDRESS or bot.scheduler.get_job('flyff-monitor'):
             return
 
         next_run_time = datetime.now() + timedelta(seconds=5 * len(bot.scheduler.get_jobs()))

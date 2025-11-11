@@ -8,6 +8,7 @@ import yt_dlp.utils
 from discord.app_commands import AppCommandError
 from discord.ext import commands
 from discord.utils import escape_markdown
+from lavalink import listener, NodeConnectedEvent, Node
 
 from neonbot import bot
 from neonbot.classes.chatgpt.chatgpt import ChatGPT
@@ -15,7 +16,6 @@ from neonbot.classes.embed import Embed
 from neonbot.classes.gemini import GeminiChat
 from neonbot.classes.player import Player
 from neonbot.classes.voice_events import VoiceEvents
-from neonbot.enums import PlayerState
 from neonbot.models.guild import GuildModel
 from neonbot.utils import exceptions, log
 from neonbot.utils.functions import format_seconds, get_command_string, get_log_prefix, md_to_text, remove_ansi
@@ -40,7 +40,11 @@ class Event(commands.Cog):
         log.info('Ready!\n')
         bot.set_ready()
         bot.start_listeners()
-        bot.load_player_cache()
+
+    @staticmethod
+    @listener(NodeConnectedEvent)
+    async def on_node_connected(node: Node):
+        log.info(f"Lavalink node '{node.name}' is ready!")
 
     @staticmethod
     @bot.event
@@ -150,23 +154,18 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
-        player = Player.get_instance_from_guild(member.guild)
+        player: Player = bot.lavalink.player_manager.get(member.guild.id)
 
         if member.id == bot.user.id:
             return
 
-        if player and player.connection:
-            voice_members = [member for member in player.connection.channel.members if not member.bot]
+        if player.ctx.voice_client:
+            voice_members = [member for member in player.ctx.channel.members if not member.bot]
 
             if any(voice_members):
                 player.reset_timeout.cancel()
-                if player.state == PlayerState.AUTO_PAUSED:
-                    await player.resume(requester=bot.user)
-            else:
-                if player.connection.is_playing():
-                    await player.pause(requester=bot.user, auto=True)
-                if not player.reset_timeout.is_running():
-                    await player.reset_timeout.start()
+            elif not player.reset_timeout.is_running():
+                await player.reset_timeout.start()
 
         server = GuildModel.get_instance(member.guild.id)
 

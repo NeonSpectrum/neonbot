@@ -6,15 +6,17 @@ import sys
 from glob import glob
 from os import sep
 from time import time
-from typing import Any, Optional, Tuple, Type, Union, cast
+from typing import Any, Optional, Tuple, Type, Union, cast, TYPE_CHECKING
 
 import discord
+import lavalink
 import psutil
 from aiohttp import ClientSession, ClientTimeout
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from discord.ext import commands
 from discord.utils import oauth_url
 from envparse import env
+from lavalink import Client
 
 from neonbot import __version__
 from neonbot.classes.database import Database
@@ -25,6 +27,9 @@ from neonbot.utils import log
 from neonbot.utils.constants import PERMISSIONS
 from neonbot.utils.context_menu import load_context_menu
 from neonbot.views.ExchangeGiftView import ExchangeGiftView
+
+if TYPE_CHECKING:
+    from neonbot.classes.player import Player
 
 
 class NeonBot(commands.Bot):
@@ -48,6 +53,7 @@ class NeonBot(commands.Bot):
         self.scheduler: Optional[AsyncIOScheduler] = None
         self.is_listeners_done = False
         self.is_player_cache_loaded = False
+        self.lavalink: Optional[Client[Player]] = None
 
     def get_presence(self) -> Tuple[Type[discord.Status], discord.Activity]:
         activity_type = self.setting.activity_type
@@ -60,7 +66,7 @@ class NeonBot(commands.Bot):
         )
 
     async def setup_hook(self):
-        self.loop.add_signal_handler(signal.SIGTERM, lambda: asyncio.create_task(self.close()))
+        self.loop.add_signal_handler(signal.SIGTERM, asyncio.create_task, self.close())
 
         await self.db.initialize()
         self.setting = await SettingModel.get_instance()
@@ -69,6 +75,8 @@ class NeonBot(commands.Bot):
         self.session = ClientSession(timeout=ClientTimeout(total=30))
         self.scheduler = AsyncIOScheduler()
         self.scheduler.start()
+
+        self.initialize_lavalink()
 
         await self.add_cogs()
         load_context_menu(self)
@@ -107,18 +115,16 @@ class NeonBot(commands.Bot):
 
         self.is_listeners_done = True
 
-    def load_player_cache(self):
-        if not env.bool('LOAD_PLAYER_CACHE', default=False) or self.is_player_cache_loaded:
-            return
-
+    def initialize_lavalink(self):
         from neonbot.classes.player import Player
 
-        for guild in self.guilds:
-            if Player.has_cache(guild.id):
-                log.info(f'Loading player cache on {guild} ({guild.id})...')
-                self.loop.create_task(Player.load_cache(guild.id))
-
-        self.is_player_cache_loaded = True
+        self.lavalink: Optional[Client[Player]] = lavalink.Client(self.user.id, player=Player)
+        self.lavalink.add_node(
+            env.str('LAVALINK_HOST'),
+            env.str('LAVALINK_PORT'),
+            env.str('LAVALINK_PASSWORD'),
+            'asia'
+        )
 
     async def add_cogs(self):
         files = sorted(glob(f'neonbot{sep}cogs{sep}[!_]*.py'))
@@ -190,18 +196,17 @@ class NeonBot(commands.Bot):
         await self.get_user(self.app_info.owner.id).send(*args, **kwargs)
 
     async def close(self) -> None:
-        from neonbot.classes.player import Player
-
         if self.scheduler:
             log.info('Stopping scheduler...')
             self.scheduler.shutdown(wait=False)
 
         log.info('Saving all music...')
-        for player in Player.servers.values():
-            player.save_cache()
 
         log.info('Stopping all music...')
-        await asyncio.gather(*[player.reset(timeout=3, clear_cache=False) for player in Player.servers.values()])
+        await asyncio.gather(
+            *[player.reset(timeout=3) for player in self.lavalink.player_manager.values()]
+        )
+        await self.lavalink.close()
 
         log.info('Closing session...')
         await self.session.close()

@@ -46,6 +46,10 @@ def format_seconds(secs: Union[int, float]) -> str:
     return formatted
 
 
+def format_milliseconds(ms: Union[int, float]) -> str:
+    return format_seconds(ms / 1000)
+
+
 def format_uptime(milliseconds: int) -> str:
     td = str(timedelta(milliseconds=milliseconds)).split(':')
     msg = []

@@ -1,129 +1,94 @@
 from __future__ import annotations
 
 import asyncio
-import json
-import os
 import random
-from os import path
 from typing import Dict, List, Optional, Union
 
 import discord
-from discord.ext import commands, tasks
-from discord.utils import MISSING
-from envparse import env
+import ytmusicapi.exceptions
+from discord.ext import tasks
+from discord.ext.commands import Context
+from discord.utils import MISSING, find
 from i18n import t
+from lavalink import DefaultPlayer, LoadType, AudioTrack, DeferredAudioTrack, TrackEndEvent, TrackStartEvent
 
+from lib.lavalink_voice_client import LavalinkVoiceClient
 from neonbot import bot
 from neonbot.classes.embed import Embed
 from neonbot.classes.player_controls import PlayerControls
-from neonbot.classes.ytdl import Ytdl
 from neonbot.classes.ytmusic import YTMusic
-from neonbot.enums import PlayerState, Repeat
+from neonbot.enums import Repeat
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log
-from neonbot.utils.constants import FFMPEG_BEFORE_OPTIONS, FFMPEG_OPTIONS, ICONS, PLAYER_CACHE_PATH
-from neonbot.utils.exceptions import ApiError, PlayerError, YtdlError
-from neonbot.utils.functions import remove_ansi
+from neonbot.utils.constants import ICONS
+from neonbot.utils.exceptions import ApiError
+from neonbot.utils.functions import format_milliseconds
 
 
-class Player:
-    servers: dict[int, Player] = {}
+class Player(DefaultPlayer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    def __init__(self, ctx: commands.Context):
-        self.ctx = ctx
-        self.loop = asyncio.get_event_loop()
-        self.settings = GuildModel.get_instance(ctx.guild.id)
+        self.settings = GuildModel.get_instance(self.guild_id)
         self.player_controls = PlayerControls(self)
-        self.download = env.bool('YTDL_DOWNLOAD', default=False)
 
-        self.queue = []
-        self.current_track = 0
-        self.track_list = [0]
-        self.shuffled_list = []
+        self.ctx: Optional[Context] = None
+        self.current: Optional[AudioTrack] = None
+        self.current_queue = -1
+        self.last_track: Optional[AudioTrack] = None
+        self.track_list: List[AudioTrack] = []
+        self.shuffled_list: List[AudioTrack] = []
         self.messages: Dict[str, Optional[discord.Message]] = dict(
             playing=None,
             finished=None,
         )
-        self.last_track = None
-        self.last_voice_channel: Optional[discord.VoiceChannel] = None
-        self.state = PlayerState.NONE
-        self.jump_to_track = None
+        self.track_end_event_task = None
+
+        self.set_autoplay(self.autoplay)
+        self.set_shuffle(self.settings.music.shuffle)
+        self.set_loop(self.settings.music.repeat)
 
     @property
-    def channel(self):
-        return self.ctx.channel
-
-    @property
-    def connection(self) -> Optional[discord.VoiceClient]:
-        return self.ctx.voice_client
-
-    @staticmethod
-    async def get_instance(origin: Union[discord.Interaction, discord.Message]) -> Player:
-        guild_id = origin.guild.id
-
-        if guild_id not in Player.servers.keys():
-            ctx = await bot.get_context(origin)
-            Player.servers[guild_id] = Player(ctx)
-
-        return Player.servers[guild_id]
-
-    @staticmethod
-    def get_instance_from_guild(guild: discord.Guild) -> Optional[Player]:
-        return Player.servers.get(guild.id)
-
-    def remove_instance(self) -> None:
-        guild_id = self.ctx.guild.id
-
-        if guild_id in Player.servers.keys():
-            del Player.servers[guild_id]
-
-    @property
-    def repeat(self) -> int:
-        return self.settings.music.repeat
-
-    @property
-    def shuffle(self) -> bool:
-        return self.settings.music.shuffle
+    def playlist(self) -> List[AudioTrack]:
+        return self.shuffled_list if self.shuffle else self.track_list
 
     @property
     def autoplay(self) -> bool:
         return self.settings.music.autoplay
 
-    @repeat.setter
-    def repeat(self, value) -> None:
-        self.settings.music.repeat = value
-        self.loop.create_task(self.settings.save_changes())
-
-    @shuffle.setter
-    def shuffle(self, value) -> None:
-        self.settings.music.shuffle = value
-        self.loop.create_task(self.settings.save_changes())
+    @property
+    def is_last_track(self) -> bool:
+        return self.current_queue == len(self.playlist) - 1
 
     @autoplay.setter
     def autoplay(self, value) -> None:
         self.settings.music.autoplay = value
-        self.loop.create_task(self.settings.save_changes())
+        bot.loop.create_task(self.settings.save_changes())
 
-    @property
-    def is_last_track(self):
-        return self.track_list[self.current_track] == len(self.queue) - 1
+    def set_loop(self, value: int) -> None:
+        super().set_loop(value)
+        self.settings.music.repeat = value
+        bot.loop.create_task(self.settings.save_changes())
+        self.refresh_player_message(embed=True)
 
-    @property
-    def now_playing(self) -> Union[dict, None]:
-        try:
-            return {**self.queue[self.track_list[self.current_track]], 'index': self.track_list[self.current_track] + 1}
-        except IndexError:
-            return None
+    def set_shuffle(self, value: bool) -> None:
+        if value:
+            self.shuffled_list = random.sample(self.track_list, len(self.track_list))
+            if len(self.shuffled_list) > 0:
+                self.current_queue = self.find_new_current_queue(self.shuffled_list)
+        else:
+            self.shuffled_list = []
+            if len(self.track_list) > 0:
+                self.current_queue = self.find_new_current_queue(self.track_list)
 
-    @now_playing.setter
-    def now_playing(self, value) -> None:
-        try:
-            self.queue[self.track_list[self.current_track]] = value
-        except IndexError:
-            pass
+        super().set_shuffle(value)
+        self.settings.music.shuffle = value
+        bot.loop.create_task(self.settings.save_changes())
+        self.refresh_player_message(embed=True)
 
-    def get_track(self, index: int) -> dict:
-        return self.queue[index]
+    def set_autoplay(self, value: bool):
+        self.autoplay = value
+        self.refresh_player_message(embed=True)
 
     @tasks.loop(count=1)
     async def reset_timeout(self, timeout=60) -> None:
@@ -133,427 +98,298 @@ class Player:
 
         msg = 'Player reset due to inactivity.'
         log.cmd(self.ctx, msg)
-        await self.channel.send(embed=Embed(msg))
+        await self.ctx.channel.send(embed=Embed(msg))
 
-        self.remove_instance()
+        await self.destroy()
 
-    async def connect(self, channel: Optional[discord.VoiceChannel] = None):
-        if self.connection:
+    async def connect(self):
+        if self.ctx.guild.voice_client:
             return
 
-        if not channel and self.last_voice_channel:
-            await self.last_voice_channel.connect(self_deaf=True)
-        else:
-            self.last_voice_channel = channel
-            await channel.connect(self_deaf=True)
+        await self.ctx.author.voice.channel.connect(timeout=3, reconnect=True, self_deaf=True, cls=LavalinkVoiceClient)
 
-        log.cmd(self.ctx, t('music.player_connected', channel=self.last_voice_channel))
+        log.cmd(self.ctx, t('music.player_connected', channel=self.ctx.author.voice.channel))
 
     async def disconnect(self, force=True, timeout=None) -> None:
-        if self.connection and self.connection.is_connected():
+        if self.is_connected and self.ctx.voice_client:
             try:
-                await asyncio.wait_for(self.connection.disconnect(force=force), timeout=timeout)
+                await asyncio.wait_for(self.ctx.voice_client.disconnect(force=force), timeout=timeout)
             except asyncio.TimeoutError:
                 pass
 
-    async def set_repeat(self, mode: Repeat, requester: discord.User):
-        self.repeat = mode.value
-
-        msg = t('music.repeat_changed', mode=mode.name.lower(), user=requester.mention)
-        await self.channel.send(embed=Embed(msg))
-        log.cmd(self.ctx, msg, user=requester)
-
-        await self.refresh_player_message(embed=True)
-
-    async def set_shuffle(self, requester: discord.User):
-        self.shuffle = not self.shuffle
-
-        msg = t('music.shuffle_changed', mode='on' if self.shuffle else 'off', user=requester.mention)
-        await self.channel.send(embed=Embed(msg))
-        log.cmd(self.ctx, msg, user=requester)
-
-        await self.refresh_player_message(embed=True)
-
-    async def set_autoplay(self, requester: discord.User):
-        self.autoplay = not self.autoplay
-
-        msg = t('music.autoplay_changed', mode='on' if self.autoplay else 'off', user=requester.mention)
-        await self.channel.send(embed=Embed(msg))
-        log.cmd(self.ctx, msg, user=requester)
-
-        await self.refresh_player_message(embed=True)
-
-    async def pause(self, requester: discord.User, auto=False):
-        if self.connection.is_paused() or not self.connection.is_playing():
+    async def pause(self, requester: discord.User):
+        if not self.is_playing:
             return
 
-        self.connection.pause()
+        await self.set_pause(True)
         log.cmd(self.ctx, t('music.player_paused', user=requester.name))
 
-        self.state = PlayerState.AUTO_PAUSED if auto else PlayerState.PAUSED
-
-        await self.channel.send(embed=Embed(t('music.player_paused', user=requester.mention)))
-        await self.refresh_player_message()
+        await self.ctx.channel.send(embed=Embed(t('music.player_paused', user=requester.mention)))
+        self.refresh_player_message()
 
     async def resume(self, requester: discord.User):
-        if not self.connection.is_paused():
+        if not self.paused:
             return
 
-        self.connection.resume()
+        await self.set_pause(False)
         log.cmd(self.ctx, t('music.player_resumed', user=requester.name))
 
-        self.state = PlayerState.PLAYING
+        await self.ctx.channel.send(embed=Embed(t('music.player_resumed', user=requester.mention)))
+        self.refresh_player_message()
 
-        await self.channel.send(embed=Embed(t('music.player_resumed', user=requester.mention)))
-        await self.refresh_player_message()
+    def add(self, track: Union[AudioTrack, 'DeferredAudioTrack', Dict[str, Union[Optional[str], bool, int]]],
+            requester: int = 0, index: Optional[int] = None):
+        track.extra['index'] = len(self.track_list)
+        if requester:
+            track.requester = requester
+        self.track_list.append(track)
+        if self.shuffle:
+            index = random.randint(self.current_queue, len(self.shuffled_list))
+            self.shuffled_list.insert(index, track)
+        self.refresh_player_message()
 
-    async def play(self) -> None:
-        if not self.connection or not self.connection.is_connected() or self.connection.is_playing():
-            return
+    def remove(self, index):
+        if self.shuffle:
+            self.shuffled_list[:] = [
+                track for track in self.shuffled_list
+                if track.extra['index'] != index
+            ]
 
-        try:
-            if not self.now_playing.get('stream') or Ytdl.is_expired(self.now_playing['stream']):
-                ytdl_info = await Ytdl().extract_info(self.now_playing['url'])
-                info = ytdl_info.get_track()
-                self.now_playing = {'index': self.track_list[self.current_track] + 1, **self.now_playing, **info}
+        target_index = find(lambda track: track.extra['index'], self.track_list)
 
-            source = discord.FFmpegOpusAudio(
-                self.now_playing['stream'],
-                before_options=None if self.download else FFMPEG_BEFORE_OPTIONS,
-                # before_options=FFMPEG_BEFORE_OPTIONS,
-                options=FFMPEG_OPTIONS,
+        if not target_index:
+            raise IndexError
+
+        removed_track = self.track_list.pop(target_index.extra['index'])
+
+        # Adjust index on all tracks
+        for index, track in enumerate(self.shuffled_list):
+            if track.extra['index'] > index:
+                track.extra['index'] -= 1
+        for index, track in enumerate(self.track_list):
+            if track.extra['index'] > index:
+                track.extra['index'] -= 1
+
+        return removed_track
+
+    async def prev(self):
+        if self.current_queue >= 1:
+            self.current_queue -= 2  # Double minus since it will be increment on play()
+        await self.skip()
+
+    async def next(self):
+        await self.skip()
+
+    async def search(self, query: str, send_message=True):
+        if not query.startswith(('http://', 'https://')):
+            query = f'ytmsearch:{query}'
+
+        results = await self.node.get_tracks(query)
+
+        load_type = results.load_type
+        tracks = results.tracks
+        embed = None
+
+        log.info(results)
+
+        if load_type == LoadType.EMPTY or load_type == LoadType.ERROR:
+            embed = Embed(t('music.no_songs_available'))
+
+        elif load_type == LoadType.PLAYLIST:
+            count = 0
+            for track in tracks:
+                self.add(track, requester=self.ctx.author.id)
+                count += 1
+
+            embed = Embed(
+                t('music.added_multiple_to_queue', count=len(tracks)) + ' ' + t('music.added_failed',
+                                                                                count=len(tracks) - count)
             )
-            self.connection.play(source, after=lambda e: self.loop.create_task(self.after(error=e)))
-            self.state = PlayerState.PLAYING
-            await self.send_playing_message()
 
-        except Exception as error:
-            msg = str(error)
+        elif load_type == LoadType.TRACK or load_type == LoadType.SEARCH:
+            track = tracks[0]
 
-            if isinstance(error, discord.ClientException):
-                if str(error) == 'Already playing audio.':
-                    return
-            elif not isinstance(error, YtdlError):
-                msg = t('music.player_error')
+            self.add(track, requester=self.ctx.author.id)
 
-            log.exception(msg, error)
-            await self.channel.send(embed=Embed(remove_ansi(msg)).set_author(self.now_playing.get('title')))
-            self.loop.create_task(self.after())
+            embed = Embed(t('music.added_to_queue', queue=len(self.track_list), title=track.title, url=track.uri))
 
-    async def after(self, error=None):
-        if error:
-            log.error(error)
-            return
+        if embed and send_message:
+            await self.ctx.reply(embed=embed)
 
-        self.last_track = self.now_playing
+    async def play(self,
+                   track: Optional[
+                       Union[AudioTrack, 'DeferredAudioTrack', Dict[str, Union[Optional[str], bool, int]]]] = None,
+                   *args,
+                   **kwargs):
 
-        if self.state == PlayerState.NONE:
-            return
-
-        if self.state == PlayerState.STOPPED:
-            await self.send_finished_message(detailed=True)
-            return
-
-        if self.state == PlayerState.JUMPED:
-            self.current_track = self.jump_to_track
-            self.jump_to_track = None
-        else:
-            # If shuffle
-            if self.shuffle:
-                self.process_shuffle()
-
-            # If repeat is on SINGLE
-            elif self.repeat == Repeat.SINGLE:
-                await self.send_finished_message()
-                await self.play()
-                return
-
-            # If last track and repeat is OFF
-            elif self.is_last_track and self.repeat == Repeat.OFF:
-                if self.autoplay:
-                    try:
-                        await self.send_finished_message()
-                        await self.process_autoplay()
-                    except ApiError:
-                        return
+        if not track:
+            if self.autoplay and self.is_last_track:
+                await self.process_autoplay(self.last_track)
+                self.current_queue += 1
+            elif self.shuffle:
+                if self.current_queue == len(self.track_list) - 1:
+                    self.current_queue = 0
                 else:
-                    await self.send_finished_message(detailed=True)
-                    self.state = PlayerState.STOPPED
-                    return
+                    self.current_queue += 1
+            elif self.loop == Repeat.ALL and self.current_queue == len(self.track_list) - 1:
+                self.current_queue = 0
+            elif self.loop == Repeat.OFF and self.current_queue < len(self.track_list) - 1:
+                self.current_queue += 1
 
-            # If last track and repeat is ALL
-            elif self.is_last_track and self.repeat == Repeat.ALL:
-                await self.send_finished_message()
-                self.track_list.append(0)
+            try:
+                track = self.playlist[self.current_queue]
+            except IndexError:
+                pass
 
-            else:
-                await self.send_finished_message()
-                self.track_list.append(self.track_list[self.current_track] + 1)
+        await super().play(track, *args, **kwargs)
 
-            self.current_track += 1
-
-        self.loop.create_task(self.play())
-
-    def next(self):
-        self.connection.stop()
-
-    def jump(self, index):
-        self.track_list.append(index)
-        self.jump_to_track = self.current_track + 1
-        self.state = PlayerState.JUMPED
-        self.connection.stop()
-
-    async def reset(self, timeout=None, clear_cache=True):
-        self.state = PlayerState.NONE
+    async def reset(self, timeout=None):
         await self.disconnect(force=True, timeout=timeout)
         await self.clear_messages()
-        if clear_cache:
-            self.delete_cache()
-        self.queue = []
-        self.player_controls = None
 
-    async def stop(self):
-        await self.clear_messages()
-        self.state = PlayerState.STOPPED
-        self.next()
+        self.ctx = None
+        self.current = None
+        self.current_queue = -1
+        self.last_track = None
+        self.track_list = []
 
-    async def remove_song(self, index: int):
-        self.queue.pop(index)
+        await self.destroy()
 
-        if len(self.track_list) > 0:
-            for i, track in enumerate(self.track_list):
-                if track > index:
-                    self.track_list[i] -= 1
+    async def process_autoplay(self, track: AudioTrack) -> None:
+        try:
+            if len(track.identifier) != 11:
+                video_id = await YTMusic.search(track.title)
+            else:
+                video_id = track.identifier
 
-        # if current track is playing now
-        if self.track_list[self.current_track] == index:
-            self.current_track -= 1
-            self.state = PlayerState.REMOVED
-            self.next()
-
-        if self.track_list[self.current_track] > index:
-            self.current_track -= 1
-            await self.refresh_player_message(embed=True)
-
-    def process_shuffle(self) -> None:
-        def choices():
-            return [x for x in range(0, len(self.queue)) if x not in self.shuffled_list]
-
-        if len(self.queue) == 1:
-            self.shuffled_list = []
-        elif len(self.shuffled_list) == 0 or len(choices()) == 0:
-            self.shuffled_list = [self.track_list[self.current_track]]
-            return self.process_shuffle()
-
-        index = random.choice(choices())
-        self.shuffled_list.append(index)
-        self.track_list.append(index)
-
-    async def process_autoplay(self) -> None:
-        related_video_id = await YTMusic().get_related_video(
-            self.now_playing, playlist=list(map(lambda track: track['id'], self.queue))
-        )
+            related_video_id = await YTMusic.get_related_video(
+                video_id, playlist=list(map(lambda i: i.identifier, self.queue))
+            )
+        except ytmusicapi.exceptions.YTMusicServerError:
+            return
 
         if not related_video_id:
             await self.ctx.channel.send(embed=Embed(t('music.no_related_video_found')))
             raise ApiError('No related video found.')
 
-        ytdl_info = await Ytdl().extract_info('https://www.youtube.com/watch?v=' + related_video_id)
-        data = ytdl_info.get_track()
-
-        if data:
-            self.add_to_queue(data, requested=bot.user)
-            self.track_list.append(self.track_list[self.current_track] + 1)
+        video_url = f"https://www.youtube.com/watch?v={related_video_id}"
+        await self.search(video_url, send_message=False)
 
     async def send_playing_message(self) -> None:
-        if not self.now_playing:
+        if not self.current:
             return
 
         log.cmd(
-            self.ctx, t('music.now_playing.title', title=self.now_playing['title']), user=self.now_playing['requested']
+            self.ctx, t('music.now_playing.title', title=self.current.title), user=bot.get_user(self.current.requester)
         )
 
         await self.clear_messages()
         self.player_controls.initialize()
 
-        self.messages['playing'] = await self.channel.send(
+        self.messages['playing'] = await self.ctx.channel.send(
             embed=self.get_playing_embed(), view=self.player_controls.get(), silent=True
         )
 
-    async def send_finished_message(self, detailed=False) -> None:
+    async def send_finished_message(self, track: AudioTrack, compact=True) -> None:
+        self.last_track = track
         log.cmd(
             self.ctx,
-            t('music.finished_playing.title', title=self.last_track['title']),
-            user=self.last_track['requested'],
+            t('music.finished_playing.title', title=track.title),
+            user=track.requester,
         )
 
         await self.clear_messages()
         self.player_controls.initialize()
 
-        message = await self.channel.send(
-            embed=self.get_finished_embed() if detailed else self.get_simplified_finished_message(),
-            view=self.player_controls.get() if detailed else None,
+        message = await self.ctx.channel.send(
+            embed=self.get_finished_embed() if not compact else self.get_simplified_finished_message(track),
+            view=self.player_controls.get() if not compact else None,
             silent=True,
         )
 
         # Will replace by simplified after
-        if detailed:
+        if compact:
             self.messages['finished'] = message
 
     async def clear_messages(self):
-        if self.messages['finished']:
+        if not self.is_connected and self.messages['finished']:
             await bot.delete_message(self.messages['finished'])
-            await self.channel.send(embed=self.get_simplified_finished_message(), silent=True)
+            await self.ctx.send(embed=self.get_simplified_finished_message(self.last_track), silent=True)
 
         await bot.delete_message(self.messages['playing'])
         self.messages['playing'] = None
         self.messages['finished'] = None
 
-    async def refresh_player_message(self, *, embed=False):
+    def refresh_player_message(self, *, embed=False):
         self.player_controls.refresh()
 
         if self.messages['playing']:
-            await bot.edit_message(
+            bot.loop.create_task(bot.edit_message(
                 self.messages['playing'],
                 embed=self.get_playing_embed() if embed else MISSING,
                 view=self.player_controls.get(),
-            )
+            ))
         elif self.messages['finished']:
-            await bot.edit_message(
+            bot.loop.create_task(bot.edit_message(
                 self.messages['finished'],
                 embed=self.get_finished_embed() if embed else MISSING,
-                view=self.player_controls.get(),
-            )
+                view=self.player_controls.get() if len(self.messages['finished'].components) > 0 else MISSING,
+            ))
 
-    def get_footer(self, now_playing):
+    def get_footer(self, track):
         return [
-            str(now_playing['requested']),
-            now_playing['formatted_duration'],
+            str(bot.get_user(track.requester)),
+            format_milliseconds(track.duration),
             t('music.shuffle_footer', shuffle='on' if self.shuffle else 'off'),
-            t('music.repeat_footer', repeat=Repeat(self.repeat).name.lower()),
+            t('music.repeat_footer', repeat=Repeat(self.loop).name.lower()),
             t('music.autoplay_footer', autoplay='on' if self.autoplay else 'off'),
         ]
 
     def get_playing_embed(self):
-        return self.get_track_embed(self.now_playing).set_author(
-            name=t('music.now_playing.index', index=self.now_playing['index']),
+        return self.get_track_embed(self.current).set_author(
+            name=t('music.now_playing.index', index=self.current.extra['index'] + 1),
             icon_url=ICONS['music'],
         )
 
     def get_finished_embed(self):
         return self.get_track_embed(self.last_track).set_author(
-            name=t('music.finished_playing.index', index=self.last_track['index']),
+            name=t('music.finished_playing.index', index=self.track_list.index(self.last_track) + 1),
             icon_url=ICONS['music'],
         )
 
-    def get_track_embed(self, track):
+    def get_track_embed(self, track: AudioTrack):
         footer = self.get_footer(track)
-        embed = Embed(title=track['title'], url=track['url'])
-        embed.set_footer(text=' | '.join(footer), icon_url=track['requested'].display_avatar)
+        embed = Embed(title=track.title, url=track.uri)
+        embed.set_footer(text=' | '.join(footer), icon_url=bot.get_user(track.requester).display_avatar)
 
         return embed
 
-    def get_simplified_finished_message(self):
-        title = self.last_track['title']
-        url = self.last_track['url']
+    def get_simplified_finished_message(self, track: AudioTrack):
+        formatted_title = f'[{track.title}]({track.uri})' if track.uri else track.title
 
-        formatted_title = f'[{title}]({url})' if url else title
+        return Embed(f'{t("music.finished_playing.index", index=track.extra['index'] + 1)}: {formatted_title}')
 
-        return Embed(f'{t("music.finished_playing.index", index=self.last_track["index"])}: {formatted_title}')
+    def find_new_current_queue(self, track_list):
+        for index, track in enumerate(track_list):
+            if track.extra['index'] == self.current.extra['index']:
+                return index
 
-    @staticmethod
-    def has_cache(guild_id):
-        file = PLAYER_CACHE_PATH % guild_id
-        return path.exists(file)
+    async def track_start_event(self, event: TrackStartEvent):
+        if self.track_end_event_task:
+            await self.track_end_event_task
+            self.track_end_event_task = None
 
-    @staticmethod
-    async def load_cache(guild_id):
-        file = PLAYER_CACHE_PATH % guild_id
+        await self.send_playing_message()
+        self.last_track = event.track
 
-        try:
-            with open(file, 'r') as f:
-
-                def map_queue(track):
-                    track['requested'] = bot.get_user(track['requested'])
-                    return track
-
-                cache = json.load(f)
-                channel = bot.get_channel(cache['channel_id'])
-
-                if not channel:
-                    raise PlayerError("Can't find channel.")
-
-                origin = await channel.send(embed=Embed('Picking up where you left off...'))
-
-                player = await Player.get_instance(origin)
-                player.queue = list(map(map_queue, cache['queue']))
-                player.current_track = cache['current_track']
-                player.track_list = cache['track_list']
-                player.shuffled_list = cache['shuffled_list']
-                player.state = PlayerState.get_by_value(cache['state'])
-                player.last_voice_channel = bot.get_channel(cache['voice_channel_id'])
-
-                if player.state == PlayerState.PLAYING:
-                    await player.connect()
-                    await player.play()
-
-                await origin.delete()
-        except Exception as error:
-            log.error(error)
-        finally:
-            os.remove(file)
-
-    def save_cache(self):
-        if len(self.queue) == 0:
-            return
-
-        file = PLAYER_CACHE_PATH % self.ctx.guild.id
-
-        with open(file, 'w') as f:
-
-            def map_queue(track):
-                if hasattr(track['requested'], 'id'):
-                    track['requested'] = track['requested'].id
-                track['stream'] = None
-                return track
-
-            # noinspection PyTypeChecker
-            json.dump(
-                {
-                    'voice_channel_id': self.last_voice_channel.id,
-                    'channel_id': self.ctx.channel.id,
-                    'queue': list(map(map_queue, self.queue)),
-                    'current_track': self.current_track,
-                    'track_list': self.track_list,
-                    'shuffled_list': self.shuffled_list,
-                    'state': self.state.value,
-                },
-                f,
-                indent=4,
+    async def track_end_event(self, event: TrackEndEvent):
+        async def task():
+            compact = (
+                self.is_playing
+                or not self.is_last_track
+                or self.loop != Repeat.OFF
+                or not self.shuffle
             )
+            await self.send_finished_message(track=self.last_track, compact=compact)
 
-    def delete_cache(self):
-        file = PLAYER_CACHE_PATH % self.ctx.guild.id
-
-        if not self.has_cache(self.ctx.guild.id):
-            return
-
-        try:
-            os.remove(file)
-        except Exception as error:
-            log.error(error)
-
-    def add_to_queue(self, data: Union[List, dict], *, requested: discord.User = None) -> None:
-        if not data:
-            return
-
-        if not isinstance(data, list):
-            data = [data]
-
-        for info in data:
-            info['requested'] = requested
-            self.queue.append(info)
-
-        # Update next button
-        if self.player_controls.next_disabled:
-            self.loop.create_task(self.refresh_player_message())
+        self.track_end_event_task = bot.loop.create_task(task())

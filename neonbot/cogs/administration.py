@@ -11,7 +11,6 @@ from discord.ui import View
 
 from neonbot import bot
 from neonbot.classes.embed import Embed
-from neonbot.classes.player import Player
 from neonbot.classes.select_choices import SelectChoices
 from neonbot.models.guild import GuildModel
 from neonbot.utils.constants import ICONS
@@ -49,7 +48,7 @@ class Administration(commands.Cog):
     async def eval(self, ctx: commands.Context, *, code: str) -> None:
         """Evaluates a line/s of python code. *BOT_OWNER"""
 
-        variables = {'bot': bot, 'ctx': ctx, 'player': Player.get_instance_from_guild(ctx.guild), 'Embed': Embed}
+        variables = {'bot': bot, 'ctx': ctx, 'player': bot.lavalink.player_manager.get(ctx.guild.id), 'Embed': Embed}
 
         if code.startswith('```') and code.endswith('```'):
             code = '\n'.join(code.splitlines()[1:-1])
@@ -68,7 +67,7 @@ class Administration(commands.Cog):
             await ctx.message.add_reaction('👌')
 
         if output:
-            msg_array = [output[i : i + 1900] for i in range(0, len(output), 1900)]
+            msg_array = [output[i: i + 1900] for i in range(0, len(output), 1900)]
 
             messages = ['```py\n' + msg.strip('\n') + '```' for msg in msg_array]
             for message in messages:
@@ -234,9 +233,9 @@ class Administration(commands.Cog):
 
         await bot.sync_command()
 
-        guilds = [guild async for guild in self.fetch_guilds()]
+        guilds = [guild async for guild in bot.fetch_guilds()]
 
-        await asyncio.gather(*[self.bot.sync_command(guild) for guild in guilds])
+        await asyncio.gather(*[bot.sync_command(guild) for guild in guilds])
 
         await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed('Commands Synced!'))
 
