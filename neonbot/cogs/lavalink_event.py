@@ -2,7 +2,7 @@ from typing import cast
 
 from discord.ext import commands
 from lavalink import listener, TrackEndEvent, TrackStartEvent, TrackExceptionEvent, NodeDisconnectedEvent, \
-    NodeConnectedEvent, NodeReadyEvent
+    NodeConnectedEvent, NodeReadyEvent, Node
 
 from neonbot import bot
 from neonbot.classes.player import Player
@@ -18,11 +18,11 @@ class LavalinkEvent(commands.Cog):
         bot.lavalink._event_hooks.clear()
 
     @listener(NodeConnectedEvent)
-    async def on_node_connected(self):
+    async def on_node_connected(self, node: Node):
         log.info('Node connected.')
 
     @listener(NodeDisconnectedEvent)
-    async def on_node_disconnected(self):
+    async def on_node_disconnected(self, node: Node):
         log.info('Node disconnected.')
 
     @listener(NodeReadyEvent)
