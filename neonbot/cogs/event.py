@@ -4,7 +4,6 @@ from io import BytesIO
 from typing import Optional, Union
 
 import discord
-import yt_dlp.utils
 from discord.app_commands import AppCommandError
 from discord.ext import commands
 from discord.utils import escape_markdown
@@ -114,7 +113,6 @@ class Event(commands.Cog):
         send_msg = (
             discord.app_commands.AppCommandError,
             discord.app_commands.CommandInvokeError,
-            yt_dlp.utils.YoutubeDLError,
         )
 
         tb = traceback.format_exception(error, value=error, tb=error.__traceback__)
