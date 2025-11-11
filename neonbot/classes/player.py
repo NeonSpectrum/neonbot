@@ -155,7 +155,7 @@ class Player(DefaultPlayer):
                 if track.extra['index'] != index
             ]
 
-        target_index = find(lambda track: track.extra['index'], self.track_list)
+        target_index = find(lambda track: track.extra['index'] == index, self.track_list)
 
         if not target_index:
             raise IndexError
@@ -179,6 +179,10 @@ class Player(DefaultPlayer):
 
     async def next(self):
         await self.skip()
+
+    async def stop(self):
+        self.current_queue = -1
+        await super().stop()
 
     async def search(self, query: str, send_message=True):
         if not query.startswith(('http://', 'https://')):
