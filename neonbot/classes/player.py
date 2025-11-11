@@ -100,8 +100,6 @@ class Player(DefaultPlayer):
         log.cmd(self.ctx, msg)
         await self.ctx.channel.send(embed=Embed(msg))
 
-        await self.destroy()
-
     async def connect(self):
         if self.ctx.guild.voice_client:
             return
@@ -256,8 +254,6 @@ class Player(DefaultPlayer):
         self.current_queue = -1
         self.last_track = None
         self.track_list = []
-
-        await self.destroy()
 
     async def process_autoplay(self, track: AudioTrack) -> None:
         try:

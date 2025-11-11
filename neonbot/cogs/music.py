@@ -4,11 +4,9 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from i18n import t
-from lavalink import listener, TrackEndEvent, TrackStartEvent
 
 from neonbot import bot
 from neonbot.classes.embed import Embed, PaginationEmbed
-from neonbot.classes.player import Player
 from neonbot.enums import Repeat
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
@@ -203,16 +201,6 @@ class Music(commands.Cog):
         msg = 'Player reset.'
         log.cmd(ctx, msg)
         await ctx.reply(msg)
-
-    @listener(TrackStartEvent)
-    async def on_track_start(self, event: TrackStartEvent):
-        player = cast(Player, event.player)
-        await player.track_start_event(event)
-
-    @listener(TrackEndEvent)
-    async def on_track_end(self, event: TrackEndEvent):
-        player = cast(Player, event.player)
-        await player.track_end_event(event)
 
 
 # noinspection PyShadowingNames

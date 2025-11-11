@@ -13,7 +13,6 @@ from neonbot import bot
 from neonbot.classes.chatgpt.chatgpt import ChatGPT
 from neonbot.classes.embed import Embed
 from neonbot.classes.gemini import GeminiChat
-from neonbot.classes.player import Player
 from neonbot.classes.voice_events import VoiceEvents
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log
@@ -151,12 +150,12 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
-        player: Player = bot.lavalink.player_manager.get(member.guild.id)
+        player = bot.lavalink.player_manager.get(member.guild.id)
 
         if member.id == bot.user.id:
             return
 
-        if player.ctx and player.ctx.voice_client:
+        if player and player.ctx and player.ctx.voice_client:
             voice_members = [member for member in player.ctx.channel.members if not member.bot]
 
             if any(voice_members):
