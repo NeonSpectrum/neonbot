@@ -43,6 +43,7 @@ class Player(DefaultPlayer):
             finished=None,
         )
         self.track_end_event_task = None
+        self.is_auto_paused = False
 
         self.set_autoplay(self.autoplay)
         self.set_shuffle(self.settings.music.shuffle)
