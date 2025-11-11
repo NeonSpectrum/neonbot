@@ -22,11 +22,11 @@ class LavalinkEvent(commands.Cog):
         log.info('Node connected.')
 
     @listener(NodeDisconnectedEvent)
-    async def on_node_disconnected(self, node: Node):
+    async def on_node_disconnected(self, node: Node, code: int | None, reason: str | None):
         log.info('Node disconnected.')
 
     @listener(NodeReadyEvent)
-    async def on_node_disconnected(self):
+    async def on_node_ready(self, node: Node, session_id: str, resumed: bool):
         log.info('Node ready.')
 
     @listener(TrackStartEvent)
