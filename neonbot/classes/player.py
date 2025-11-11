@@ -116,6 +116,7 @@ class Player(DefaultPlayer):
         if self.is_connected and self.ctx.voice_client:
             try:
                 await asyncio.wait_for(self.ctx.voice_client.disconnect(force=force), timeout=timeout)
+                self.vc = None
             except asyncio.TimeoutError:
                 pass
 
