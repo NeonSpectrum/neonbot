@@ -156,7 +156,7 @@ class Event(commands.Cog):
         if member.id == bot.user.id:
             return
 
-        if player.ctx.voice_client:
+        if player.ctx and player.ctx.voice_client:
             voice_members = [member for member in player.ctx.channel.members if not member.bot]
 
             if any(voice_members):
