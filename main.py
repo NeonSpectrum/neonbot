@@ -1,6 +1,5 @@
 import logging
 import os
-import shutil
 from concurrent.futures import ThreadPoolExecutor
 
 import i18n
@@ -18,8 +17,6 @@ def main() -> None:
     from neonbot import bot
     from neonbot.utils.constants import PLAYER_CACHE_DIR, YOUTUBE_DOWNLOADS_DIR
 
-    if env.bool('YTDL_AUTO_CLEAR_DOWNLOADS', default=False):
-        shutil.rmtree(YOUTUBE_DOWNLOADS_DIR, ignore_errors=True)
     os.makedirs(YOUTUBE_DOWNLOADS_DIR, exist_ok=True)
     os.makedirs(PLAYER_CACHE_DIR, exist_ok=True)
 

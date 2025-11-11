@@ -17,7 +17,7 @@ from neonbot.classes.gemini import GeminiChat
 from neonbot.classes.player import Player
 from neonbot.classes.voice_events import VoiceEvents
 from neonbot.models.guild import GuildModel
-from neonbot.utils import exceptions, log
+from neonbot.utils import log
 from neonbot.utils.functions import format_seconds, get_command_string, get_log_prefix, md_to_text, remove_ansi
 
 
@@ -112,7 +112,6 @@ class Event(commands.Cog):
         error = getattr(error, 'original', error)
         ignored = discord.NotFound, commands.BadArgument, commands.CheckFailure, discord.app_commands.CheckFailure
         send_msg = (
-            exceptions.YtdlError,
             discord.app_commands.AppCommandError,
             discord.app_commands.CommandInvokeError,
             yt_dlp.utils.YoutubeDLError,

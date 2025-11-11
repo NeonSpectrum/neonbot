@@ -11,7 +11,6 @@ from discord import app_commands
 from discord.ext import commands
 from discord.utils import format_dt
 from envparse import env
-from yt_dlp import version as ytdl_version
 
 from neonbot import __author__, __title__, __version__, bot
 from neonbot.classes.embed import Embed
@@ -58,7 +57,6 @@ class Utility(commands.Cog):
             'Packages',
             f"""
             discord `{discord.__version__}`
-            youtube-dl `{ytdl_version.__version__}`
             """,
         )
 
@@ -178,7 +176,7 @@ class Utility(commands.Cog):
             await cast(discord.InteractionResponse, interaction.response).send_message(f'<t:{timestamp}>')
         except ValueError:
             await cast(discord.InteractionResponse, interaction.response).send_message('Format not supported.',
-                                                                                   ephemeral=True)
+                                                                                       ephemeral=True)
 
 
 # noinspection PyShadowingNames
