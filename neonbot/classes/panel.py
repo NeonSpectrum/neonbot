@@ -1,6 +1,5 @@
 import asyncio
 from datetime import datetime, timedelta
-from typing import List
 
 import discord
 import validators
@@ -10,8 +9,7 @@ from envparse import env
 
 from neonbot import bot
 from neonbot.classes.embed import Embed
-from neonbot.models.guild import Guild
-from neonbot.models.panel import PanelServer, Panel
+from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
 from neonbot.utils.exceptions import ApiError
@@ -33,11 +31,11 @@ class Panel:
         res = await bot.session.get(
             self.URL + '/api/client/servers/' + self.server_id,
             headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.API_KEY}"
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {self.API_KEY}',
             },
-            ssl=False
+            ssl=False,
         )
 
         if res.status != 200:
@@ -51,11 +49,11 @@ class Panel:
         res = await bot.session.get(
             self.URL + '/api/client/servers/' + self.server_id + '/resources',
             headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.API_KEY}"
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {self.API_KEY}',
             },
-            ssl=False
+            ssl=False,
         )
 
         if res.status != 200:
@@ -70,11 +68,11 @@ class Panel:
         res = await bot.session.get(
             Panel.URL + '/api/client',
             headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {Panel.API_KEY}"
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {Panel.API_KEY}',
             },
-            ssl=False
+            ssl=False,
         )
 
         if res.status != 200:
@@ -85,7 +83,7 @@ class Panel:
     @staticmethod
     async def start_monitor(guild_id):
         try:
-            server = Guild.get_instance(guild_id)
+            server = GuildModel.get_instance(guild_id)
 
             for server_id, panel in server.panel.servers.items():
                 channel_id = panel.channel_id
@@ -126,11 +124,11 @@ class Panel:
                     state = resources['attributes']['current_state']
 
                     current_cpu_usage = resources['attributes']['resources']['cpu_absolute']
-                    current_cpu_usage = f"{current_cpu_usage:.2f}"
+                    current_cpu_usage = f'{current_cpu_usage:.2f}'
                     max_cpu_usage = details['attributes']['limits']['cpu']
 
                     current_memory_usage = resources['attributes']['resources']['memory_bytes'] / 1024 / 1024
-                    current_memory_usage = f"{current_memory_usage:,.0f}"
+                    current_memory_usage = f'{current_memory_usage:,.0f}'
                     max_memory_usage = details['attributes']['limits']['memory']
                     max_memory_usage = f'{max_memory_usage:,.0f}' if max_memory_usage != 0 else 0
 
@@ -139,8 +137,16 @@ class Panel:
                     embed.add_field('Status', state.title())
                     embed.add_field('Uptime', format_uptime(uptime))
                     embed.add_field('\u200b', '\u200b')
-                    embed.add_field('CPU Usage', f"{current_cpu_usage} / {max_cpu_usage} %" if max_cpu_usage != 0 else f"{current_cpu_usage} %")
-                    embed.add_field('Memory Usage', f"{current_memory_usage} / {max_memory_usage} MB" if max_memory_usage != 0 else f"{current_memory_usage} MB")
+                    embed.add_field(
+                        'CPU Usage',
+                        f'{current_cpu_usage} / {max_cpu_usage} %' if max_cpu_usage != 0 else f'{current_cpu_usage} %',
+                    )
+                    embed.add_field(
+                        'Memory Usage',
+                        f'{current_memory_usage} / {max_memory_usage} MB'
+                        if max_memory_usage != 0
+                        else f'{current_memory_usage} MB',
+                    )
                     embed.add_field('\u200b', '\u200b')
 
                     if 'minecraft' in name.lower():
@@ -149,7 +155,7 @@ class Panel:
                     embed.add_field('Status', state.title())
 
                 channel = bot.get_channel(channel_id)
-                server = Guild.get_instance(channel.guild.id)
+                server = GuildModel.get_instance(channel.guild.id)
 
                 message_id = server.panel.servers[server_id].message_id
 
@@ -185,22 +191,19 @@ class Panel:
             if not data['online']:
                 return
 
-            players = [player["name_clean"] for player in data["players"]["list"]]
+            players = [player['name_clean'] for player in data['players']['list']]
 
             embed.add_field(
-                'Players',
-                '```\n' + '\n'.join(players) + '\n```'
-                if len(players) > 0 else
-                '*```No players online```*'
+                'Players', '```\n' + '\n'.join(players) + '\n```' if len(players) > 0 else '*```No players online```*'
             )
-        except (ContentTypeError, asyncio.TimeoutError) as error:
+        except (ContentTypeError, asyncio.TimeoutError):
             pass
 
     def get_variable(self, key, default=None):
         try:
             variable = find(
                 lambda data: data['attributes']['env_variable'] == key,
-                self.details['attributes']['relationships']['variables']['data']
+                self.details['attributes']['relationships']['variables']['data'],
             )['attributes']
 
             return variable['server_value'] or variable['default_value']
@@ -211,16 +214,16 @@ class Panel:
         try:
             allocation = find(
                 lambda data: data['attributes']['is_default'] is True,
-                self.details['attributes']['relationships']['allocations']['data']
+                self.details['attributes']['relationships']['allocations']['data'],
             )['attributes']
 
             return allocation['ip'] + ':' + str(allocation['port'])
-        except (KeyError, TypeError) as e:
+        except (KeyError, TypeError):
             return None
 
     @staticmethod
     def start_listener(guild_id: int):
-        server = Guild.get_instance(guild_id)
+        server = GuildModel.get_instance(guild_id)
 
         if bot.scheduler.get_job('panel-' + str(guild_id)):
             return
@@ -238,6 +241,6 @@ class Panel:
                 kwargs={
                     'guild_id': guild_id,
                 },
-                next_run_time=next_run_time
+                next_run_time=next_run_time,
             )
             log.info(f'Auto started job panel-{guild_id}')

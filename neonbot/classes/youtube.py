@@ -1,8 +1,9 @@
 import re
+from urllib.parse import parse_qs, urlencode, urlparse
 
 from i18n import t
 
-from neonbot.classes.embed import Embed, EmbedChoices
+from neonbot.classes.embed import Embed
 from neonbot.classes.player import Player
 from neonbot.classes.with_interaction import WithInteraction
 from neonbot.classes.ytdl import Ytdl
@@ -18,46 +19,22 @@ class Youtube(WithInteraction):
         await self.send_message(embed=Embed(t('music.searching')))
 
         try:
-            ytdl_info = await Ytdl().extract_info(keyword)
-        except YtdlError:
-            await self.send_message(embed=Embed(t('music.no_songs_available')))
-            return
+            ytdl_info = await YTMusic().search(keyword)
+            track = ytdl_info.get_track()
 
-        data = ytdl_info.get_list()
-        choice = (await EmbedChoices(self.interaction, data).build()).value
-
-        if choice < 0:
-            return
-
-        info = data[choice]
-
-        await self.send_message(embed=Embed(
-            t('music.added_to_queue', queue=len(player.queue) + 1, title=info['title'], url=info['url'])
-        ))
-
-        player.add_to_queue(info, requested=self.interaction.user)
-
-    async def search_keyword_first(self, keyword: str):
-        player = await Player.get_instance(self.interaction)
-
-        await self.send_message(embed=Embed(t('music.searching')))
-
-        try:
-            video_id = await YTMusic().search(keyword)
-
-            if not video_id:
+            if not track.get('id'):
                 raise YtdlError()
 
-            ytdl_info = await Ytdl().extract_info(str(video_id))
+            ytdl_info = await Ytdl().extract_info('https://www.youtube.com/watch?v=' + track.get('id'))
             data = ytdl_info.get_track()
 
-        except YtdlError:
+        except (YtdlError, IndexError):
             await self.send_message(embed=Embed(t('music.no_songs_available')))
             return
 
-        await self.send_message(embed=Embed(
-            t('music.added_to_queue', queue=len(player.queue) + 1, title=data['title'], url=data['url'])
-        ))
+        await self.send_message(
+            embed=Embed(t('music.added_to_queue', queue=len(player.queue) + 1, title=data['title'], url=data['url']))
+        )
 
         player.add_to_queue(data, requested=self.interaction.user)
 
@@ -70,8 +47,11 @@ class Youtube(WithInteraction):
 
         await self.send_message(embed=Embed(t('music.fetching_youtube_url')))
 
+        if 'v=' in url and 'list=' in url:
+            url = self.remove_extra_query(url)
+
         try:
-            ytdl_info = await Ytdl().extract_info(url)
+            ytdl_info = await Ytdl({'skip_download': 'list=' in url}).extract_info(url)
         except YtdlError:
             await self.send_message(embed=Embed(t('music.no_songs_available')))
             return
@@ -105,3 +85,17 @@ class Youtube(WithInteraction):
                 new_data.append(entry)
 
         return new_data, error
+
+    def remove_extra_query(self, url):
+        parsed_url = urlparse(url)
+        query_params = parse_qs(parsed_url.query)
+        video_id = query_params.get('v', [None])[0]
+
+        if video_id:
+            new_query = urlencode({'v': video_id})
+        else:
+            new_query = ''
+
+        reconstructed_url = parsed_url._replace(query=new_query)
+
+        return reconstructed_url.geturl()

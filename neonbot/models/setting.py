@@ -7,7 +7,7 @@ from beanie import Document
 from neonbot.utils import log
 
 
-class Setting(Document):
+class SettingModel(Document):
     status: str
     activity_name: str
     activity_type: str
@@ -17,17 +17,17 @@ class Setting(Document):
         use_cache = True
 
     @staticmethod
-    async def get_instance() -> Optional[Setting]:
-        return await Setting.find_one()
+    async def get_instance() -> Optional[SettingModel]:
+        return await SettingModel.find_one()
 
     @staticmethod
     async def initialize():
-        settings = await Setting.find_one()
+        settings = await SettingModel.find_one()
 
         if settings is None:
             log.info('Settings not found. Creating settings...')
-            await Setting.create_default_collection()
+            await SettingModel.create_default_collection()
 
     @staticmethod
     async def create_default_collection():
-        await Setting(status="online", activity_type="listening", activity_name="my heartbeat").create()
+        await SettingModel(status='online', activity_type='listening', activity_name='my heartbeat').create()

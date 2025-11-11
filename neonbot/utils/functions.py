@@ -1,13 +1,16 @@
 import asyncio
 import re
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from typing import Union
-import pytz
 
 import discord
-from envparse import env
 import markdown
+import pytz
 from bs4 import BeautifulSoup
+from discord.utils import format_dt
+from envparse import env
+
+from neonbot.classes.embed import Embed
 
 
 async def shell_exec(command: str) -> str:
@@ -27,21 +30,18 @@ def get_command_string(interaction: discord.Interaction):
     if interaction.command.name[0].isupper():
         try:
             users = list(interaction.data['resolved']['users'].values())
-            params = [f"{user['username']}#{user['discriminator']}" for user in users]
+            params = [f'{user["username"]}#{user["discriminator"]}' for user in users]
         except IndexError:
             pass
     else:
-        params = [
-            f'{key}="{value}"'
-            for key, value in interaction.namespace.__dict__.items()
-        ]
+        params = [f'{key}="{value}"' for key, value in interaction.namespace.__dict__.items()]
 
-    return f"{interaction.command.name} {' '.join(params)}"
+    return f'{interaction.command.name} {" ".join(params)}'
 
 
 def format_seconds(secs: Union[int, float]) -> str:
-    formatted = str(timedelta(seconds=secs)).split(".")[0]
-    if formatted.startswith("0:"):
+    formatted = str(timedelta(seconds=secs)).split('.')[0]
+    if formatted.startswith('0:'):
         return formatted[2:]
     return formatted
 
@@ -59,9 +59,9 @@ def format_uptime(milliseconds: int) -> str:
 
 
 def get_log_prefix() -> str:
-    tz = pytz.timezone(env.str('TZ', default="Asia/Manila"))
+    tz = pytz.timezone(env.str('TZ', default='Asia/Manila'))
     now = datetime.now(tz)
-    return f"[{now.strftime('%I:%M:%S %p')}] :bust_in_silhouette:"
+    return f'[{now.strftime("%I:%M:%S %p")}] :bust_in_silhouette:'
 
 
 def split_long_message(text: str):
@@ -75,20 +75,88 @@ def split_long_message(text: str):
     for line in lines:
         if len(message) + len(line) + 1 > 2000:
             messages.append(message)
-            message = line + "\n"
+            message = line + '\n'
         else:
-            message += line + "\n"
+            message += line + '\n'
 
     if message:
         messages.append(message)
 
     return messages
 
+
 def md_to_text(md):
     html = markdown.markdown(md)
     soup = BeautifulSoup(html, features='html.parser')
     return soup.get_text()
 
+
 def remove_ansi(text):
     ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     return ansi_escape.sub('', text)
+
+
+async def generate_profile_member_embed(interaction: discord.Interaction, member: discord.Member):
+    user = await interaction.client.fetch_user(member.id)
+
+    roles = member.roles[1:]
+    # noinspection PyUnresolvedReferences
+    flags = [flag.name.title().replace('_', ' ') for flag in member.public_flags.all()]
+
+    embed = Embed(member.mention, timestamp=datetime.now())
+    embed.set_author(str(member), icon_url=member.display_avatar.url)
+    embed.set_footer(str(member.id))
+    embed.add_field('Created', format_dt(member.created_at, 'F'), inline=False)
+    embed.add_field('Joined', format_dt(member.joined_at, 'F'), inline=True)
+    if member.premium_since:
+        embed.add_field('Server Booster since', format_dt(member.premium_since, 'F'), inline=False)
+    embed.add_field('Roles', ' '.join([role.mention for role in roles]) if len(roles) > 0 else 'None', inline=False)
+    embed.add_field('Badges', '\n'.join(flags) if len(flags) > 0 else 'None', inline=False)
+
+    if user.display_avatar:
+        embed.set_thumbnail(member.display_avatar.url)
+
+    if user.banner:
+        embed.set_image(user.banner.url)
+
+    return embed
+
+
+async def generate_profile_user_embed(interaction: discord.Interaction, user: discord.User):
+    user = await interaction.client.fetch_user(user.id)
+
+    # noinspection PyUnresolvedReferences
+    flags = [flag.name.title().replace('_', ' ') for flag in user.public_flags.all()]
+
+    embed = Embed(user.mention, timestamp=datetime.now())
+    embed.set_author(str(user), icon_url=user.display_avatar.url)
+    embed.set_footer(str(user.id))
+    embed.add_field('Created', format_dt(user.created_at, 'F'), inline=False)
+    embed.add_field('Badges', '\n'.join(flags) if len(flags) > 0 else 'None', inline=False)
+
+    if user.display_avatar:
+        embed.set_thumbnail(user.display_avatar.url)
+
+    if user.banner:
+        embed.set_image(user.banner.url)
+
+    return embed
+
+
+async def check_ip_online_socket(host: str, port: int, timeout: float = 5.0) -> bool:
+    try:
+        reader, writer = await asyncio.wait_for(
+            asyncio.open_connection(host, port),
+            timeout=timeout
+        )
+
+        writer.close()
+        await writer.wait_closed()
+
+        return True
+
+    except (asyncio.TimeoutError, ConnectionRefusedError, OSError):
+        return False
+    except Exception as e:
+        print(f"An unexpected error occurred while checking {host}:{port}: {e}")
+        return False

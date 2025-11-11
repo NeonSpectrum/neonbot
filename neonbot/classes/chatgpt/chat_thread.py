@@ -1,17 +1,10 @@
-import asyncio
-
 import discord
-from openai import AsyncOpenAI
-from discord.ext import commands
+import tiktoken
 from discord.utils import find
 from envparse import env
-from i18n import t
-import tiktoken
 
-from neonbot.classes.embed import Embed
-from neonbot.models.chatgpt import Message, Chat
-from neonbot.models.guild import Guild
-from neonbot.utils.functions import split_long_message
+from neonbot.models.chatgpt import Chat, Message
+from neonbot.models.guild import GuildModel
 
 
 class ChatThread:
@@ -20,7 +13,7 @@ class ChatThread:
     def __init__(self, client, thread: discord.Thread):
         self.client = client
         self.encoder = tiktoken.get_encoding('gpt2')
-        self.server = Guild.get_instance(thread.guild.id)
+        self.server = GuildModel.get_instance(thread.guild.id)
         self.chat = self.get_chat(thread.id)
 
     def get_chat(self, thread_id: int):
@@ -70,7 +63,7 @@ class ChatThread:
     async def get_response(self) -> str:
         chat_completion = await self.client.chat.completions.create(
             model=env.str('OPENAI_MODEL', default='gpt-3.5-turbo'),
-            messages=[{'role': message.role, 'content': message.content} for message in self.chat.messages]
+            messages=[{'role': message.role, 'content': message.content} for message in self.chat.messages],
         )
         answer = chat_completion.choices[0].message.content
         self.chat.messages.append(Message(role='assistant', content=answer))

@@ -6,7 +6,7 @@ authors = [
     {name = "NeonSpectrum",email = "youngskymann@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.9,<4.0"
+requires-python = ">=3.10,<4.0"
 dependencies = [
     "environs (>=14.1.1,<15.0.0)",
     "motor (>=3.7.0,<4.0.0)",
@@ -30,7 +30,10 @@ dependencies = [
     "ytmusicapi (>=1.10.3,<2.0.0)",
     "apscheduler (>=3.11.0,<4.0.0)",
     "discord-py[voice] (>=2.5.2,<3.0.0)",
-    "jikanpy-v4 (>=1.0.2,<2.0.0)"
+    "jikanpy-v4 (>=1.0.2,<2.0.0)",
+    "google-auth (>=2.40.3,<3.0.0)",
+    "durations-nlp (>=1.0.1,<2.0.0)",
+    "python-dateutil (>=2.9.0.post0,<3.0.0)"
 ]
 
 
@@ -43,3 +46,17 @@ package-mode = false
 
 [tool.poetry.requires-plugins]
 poetry-plugin-export = ">=1.8"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.11.12"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+docstring-code-format = true
+
+[tool.ruff.lint.isort]
+case-sensitive = true

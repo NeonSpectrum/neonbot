@@ -6,7 +6,7 @@ from envparse import env
 from openai import AsyncOpenAI
 
 from neonbot.classes.chatgpt.chat_thread import ChatThread
-from neonbot.models.guild import Guild
+from neonbot.models.guild import GuildModel
 from neonbot.utils.functions import split_long_message
 
 
@@ -15,7 +15,7 @@ class ChatGPT:
         self.client = AsyncOpenAI()
 
     async def create_thread(self, ctx: commands.Context):
-        server = Guild.get_instance(ctx.guild.id)
+        server = GuildModel.get_instance(ctx.guild.id)
         channel = ctx.channel
         content = ctx.message.content
 
@@ -56,6 +56,7 @@ class ChatGPT:
             await chat_thread.trim_messages()
 
         if content.lower().strip() == 'bye':
+
             async def remove():
                 await asyncio.sleep(5)
                 await channel.edit(archived=True, locked=True)
@@ -70,13 +71,16 @@ class ChatGPT:
             prompt=keyword,
             n=1,
             size='1024x1024',
-            quality="standard",
+            quality='standard',
         )
 
     @staticmethod
     async def cleanup_threads(guild: discord.Guild):
-        server = Guild.get_instance(guild.id)
-        active_threads = map(lambda thread: thread.id, filter(lambda thread: not thread.archived, guild.threads))
+        server = GuildModel.get_instance(guild.id)
+        active_threads = map(
+            lambda thread: thread.id,
+            filter(lambda thread: not thread.archived, guild.threads),
+        )
 
         server.chatgpt.chats = list(filter(lambda chat: chat.thread_id in active_threads, server.chatgpt.chats))
         await server.save_changes()

@@ -1,4 +1,4 @@
-from typing import Union, List
+from typing import List, Union
 
 import discord
 
@@ -9,6 +9,7 @@ class SelectChoices(discord.ui.Select):
             min_values=1,
             max_values=len(options),
             placeholder=placeholder,
-            options=[discord.SelectOption(**{'label': option} if isinstance(option, str) else option)
-                     for option in options]
+            options=[
+                discord.SelectOption(**{'label': option} if isinstance(option, str) else option) for option in options
+            ],
         )
