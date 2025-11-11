@@ -197,7 +197,7 @@ class Music(commands.Cog):
 
         msg = 'Player reset.'
         log.cmd(ctx, msg)
-        await ctx.reply(msg)
+        await ctx.reply(embed=Embed(msg))
 
 
 # noinspection PyShadowingNames
