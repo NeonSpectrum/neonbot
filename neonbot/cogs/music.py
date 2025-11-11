@@ -20,7 +20,7 @@ async def in_voice(ctx: commands.Context) -> bool:
         return True
 
     if not ctx.author.voice:
-        await ctx.send(
+        await ctx.reply(
             embed=Embed('You need to be in the channel.'), ephemeral=True
         )
         return False
@@ -29,10 +29,17 @@ async def in_voice(ctx: commands.Context) -> bool:
 
 async def has_permission(ctx: commands.Context) -> bool:
     if not ctx.channel.permissions_for(ctx.guild.me).send_messages:
-        await ctx.send(
+        await ctx.reply(
             embed=Embed("I don't have permission to send message on this channel."), ephemeral=True
         )
         return False
+
+    if ctx.author.voice and not ctx.author.voice.channel.permissions_for(ctx.guild.me).connect:
+        await ctx.reply(
+            embed=Embed("I don't have permission to connect to that voice channel."), ephemeral=True
+        )
+        return False
+
     return True
 
 
@@ -40,9 +47,7 @@ async def has_player(ctx: commands.Context) -> bool:
     player = bot.lavalink.player_manager.get(ctx.guild.id)
 
     if not player:
-        await ctx.send(
-            embed=Embed('No active player.'), ephemeral=True
-        )
+        await ctx.reply(embed=Embed('No active player.'), ephemeral=True)
         return False
     return True
 
