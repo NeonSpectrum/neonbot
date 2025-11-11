@@ -4,11 +4,19 @@ from discord.ext import commands
 from lavalink import listener, TrackEndEvent, TrackStartEvent, TrackExceptionEvent, NodeDisconnectedEvent, \
     NodeConnectedEvent, NodeReadyEvent
 
+from neonbot import bot
 from neonbot.classes.player import Player
 from neonbot.utils import log
 
 
 class LavalinkEvent(commands.Cog):
+    def __init__(self):
+        bot.lavalink.add_event_hooks(self)
+
+    def cog_unload(self):
+        # noinspection PyProtectedMember
+        bot.lavalink._event_hooks.clear()
+
     @listener(NodeConnectedEvent)
     async def on_node_connected(self):
         log.info('Node connected.')

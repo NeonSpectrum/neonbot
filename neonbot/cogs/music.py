@@ -51,9 +51,6 @@ async def has_player(ctx: commands.Context) -> bool:
 
 
 class Music(commands.Cog):
-    def __init__(self):
-        bot.lavalink.add_event_hooks(self)
-
     @commands.hybrid_command(name='play', aliases=['p'], )
     @app_commands.describe(query='Enter keyword or url...')
     @commands.check(has_permission)
