@@ -45,7 +45,7 @@ ICONS = {
     'emeraldflyff': 'https://i.imgur.com/JT3DlyW.png',
     'deezer': 'https://i.imgur.com/zIMXnXD.png',
     'youtube': 'https://i.imgur.com/wCADAJY.png',
-    'applemusic': 'https://i.imgur.com/l1LJkLr.png',
+    'applemusic': 'https://i.imgur.com/1nu2yo5.png',
     'spotify': 'https://i.imgur.com/Yby9AcE.png'
 }
 
