@@ -59,6 +59,9 @@ class Music(commands.Cog):
     async def play(self, ctx, *, query: str):
         """Searches the url or the keyword and add it to queue. This will queue the first search."""
 
+        if query.isdigit():
+            return await self.goto(ctx, int(query))
+
         player = bot.lavalink.player_manager.create(ctx.guild.id)
         player.ctx = ctx
 
