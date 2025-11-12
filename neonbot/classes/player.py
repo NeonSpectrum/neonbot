@@ -269,7 +269,7 @@ class Player(DefaultPlayer):
 
             if len(self.autoplay_list) == 0:
                 related_tracks = await YTMusic.get_related_tracks(video_id)
-                existing_ids = [i.identifier for i in self.history]
+                existing_ids = [i.identifier for i in self.track_list]
                 
                 self.autoplay_list = [i for i in related_tracks if i["id"] not in existing_ids]
 
