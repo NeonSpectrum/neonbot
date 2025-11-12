@@ -352,13 +352,13 @@ class Player(DefaultPlayer):
     def get_playing_embed(self):
         return self.get_track_embed(self.current).set_author(
             name=t('music.now_playing.index', index=self.current.extra['index'] + 1),
-            icon_url=ICONS['music'],
+            icon_url=ICONS.get(self.last_track.source_name, 'music'),
         )
 
     def get_finished_embed(self):
         return self.get_track_embed(self.last_track).set_author(
             name=t('music.finished_playing.index', index=self.track_list.index(self.last_track) + 1),
-            icon_url=ICONS['music'],
+            icon_url=ICONS.get(self.last_track.source_name, 'music'),
         )
 
     def get_track_embed(self, track: AudioTrack):
