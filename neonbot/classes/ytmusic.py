@@ -1,4 +1,5 @@
 import functools
+import json
 from typing import Optional
 
 from ytmusicapi import YTMusic
@@ -25,6 +26,8 @@ class YTMusic:
             bot.executor,
             functools.partial(ytmusic.get_watch_playlist, video_id, limit=1),
         )
+        print(json.dump(result))
+
         tracks = result.get('tracks', [])
         video_ids = []
 
