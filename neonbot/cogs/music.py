@@ -67,6 +67,9 @@ class Music(commands.Cog):
         player = bot.lavalink.player_manager.create(ctx.guild.id)
         player.ctx = ctx
 
+        # Clear autoplay list whenever there's new song
+        player.autoplay_list = []
+
         await player.search(query)
         await player.connect()
 

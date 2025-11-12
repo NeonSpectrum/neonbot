@@ -40,6 +40,7 @@ class Player(DefaultPlayer):
         self.last_track: Optional[AudioTrack] = None
         self.track_list: List[AudioTrack] = []
         self.shuffled_list: List[AudioTrack] = []
+        self.autoplay_list: List[AudioTrack] = []
         self.messages: Dict[str, Optional[discord.Message]] = dict(
             playing=None,
             finished=None,
@@ -266,15 +267,12 @@ class Player(DefaultPlayer):
             else:
                 video_id = track.identifier
 
-            related_video_id = await YTMusic.get_related_video(
-                video_id, playlist=list(map(lambda i: i.identifier, self.queue))
-            )
+            if len(self.autoplay_list) == 0:
+                self.autoplay_list = await YTMusic.get_related_video_ids(video_id)
+
+            related_video_id = self.autoplay_list.pop(0)
         except ytmusicapi.exceptions.YTMusicServerError:
             return
-
-        if not related_video_id:
-            await self.ctx.channel.send(embed=Embed(t('music.no_related_video_found')))
-            raise ApiError('No related video found.')
 
         video_url = f"https://www.youtube.com/watch?v={related_video_id}"
         await self.search(video_url, send_message=False)
