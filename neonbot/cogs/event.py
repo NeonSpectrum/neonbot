@@ -98,15 +98,24 @@ class Event(commands.Cog):
 
     @staticmethod
     @bot.event
+    async def on_command(ctx: commands.Context):
+        log.cmd(ctx, get_command_string(ctx), guild=ctx.guild or 'N/A')
+
+    @staticmethod
+    @bot.event
     async def on_interaction(interaction: discord.Interaction):
         if interaction.type != discord.InteractionType.application_command:
             return
 
-        log.cmd(interaction, get_command_string(interaction), guild=interaction.guild or 'N/A')
+        ctx = await bot.get_context(interaction)
+        log.cmd(ctx, get_command_string(ctx), guild=ctx.guild or 'N/A')
 
     @staticmethod
     @bot.event
-    async def on_app_command_error(interaction: discord.Interaction, error: AppCommandError) -> None:
+    async def on_command_error(ctx: Union[discord.Interaction, commands.Context], error: AppCommandError) -> None:
+        if isinstance(ctx, discord.Interaction):
+            ctx = await bot.get_context(ctx)
+
         error = getattr(error, 'original', error)
         ignored = discord.NotFound, commands.BadArgument, commands.CheckFailure, discord.app_commands.CheckFailure
         send_msg = (
@@ -121,18 +130,18 @@ class Event(commands.Cog):
         if type(error) in ignored:
             return
 
-        log.cmd(interaction, f'Command error: {error}')
+        log.cmd(ctx, f'Command error: {error}')
 
         if isinstance(error, send_msg):
             embed = Embed(remove_ansi(error))
         else:
             embed = Embed('There was an error executing the command. Please contact the administrator.')
 
-        await bot.send_response(interaction, embed=embed, ephemeral=True)
+        await ctx.send(embed=embed, ephemeral=True)
 
         embed = Embed(
             title='Traceback Exception',
-            description=f'Command: ```{get_command_string(interaction)}``````py\n{tb_msg}```',
+            description=f'Command: ```{get_command_string(ctx)}``````py\n{tb_msg}```',
         )
 
         await bot.send_to_owner(embed=embed)
@@ -286,5 +295,5 @@ class Event(commands.Cog):
 
 # noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:
-    bot.tree.on_error = Event.on_app_command_error
+    bot.tree.on_error = Event.on_command_error
     await bot.add_cog(Event())

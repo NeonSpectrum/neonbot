@@ -56,10 +56,12 @@ class Music(commands.Cog):
     @commands.check(has_permission)
     @commands.check(in_voice)
     @commands.guild_only()
-    async def play(self, ctx, *, query: str):
+    async def play(self, ctx: commands.Context, *, query: str):
         """Searches the url or the keyword and add it to queue. This will queue the first search."""
 
         if query.isdigit():
+            if not await has_player(ctx):
+                return
             return await self.goto(ctx, int(query))
 
         player = bot.lavalink.player_manager.create(ctx.guild.id)
