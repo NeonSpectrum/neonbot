@@ -22,14 +22,19 @@ class YTMusic:
 
     @staticmethod
     async def get_related_video_ids(video_id: str) -> Optional[int]:
-        result = await bot.loop.run_in_executor(
+        watch_playlist = await bot.loop.run_in_executor(
             bot.executor,
-            functools.partial(ytmusic.get_watch_playlist, video_id, limit=1),
+            functools.partial(ytmusic.get_watch_playlist, video_id),
         )
-        result['tracks'] = result['tracks'][:1]
-        print(json.dumps(result))
 
-        tracks = result.get('tracks', [])
+        browserId = watch_playlist['related']
+
+        song_related = await bot.loop.run_in_executor(
+            bot.executor,
+            functools.partial(ytmusic.get_song_related, browserId),
+        )
+
+        tracks = song_related[0].get('contents', [])
         video_ids = []
 
         for track in tracks[1:]:
