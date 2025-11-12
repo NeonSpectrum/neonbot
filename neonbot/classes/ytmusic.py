@@ -23,7 +23,7 @@ class YTMusic:
     async def get_related_tracks(video_id: str) -> List[dict]:
         watch_playlist = await bot.loop.run_in_executor(
             bot.executor,
-            functools.partial(ytmusic.get_watch_playlist, video_id, limit=1),
+            functools.partial(ytmusic.get_watch_playlist, video_id),
         )
 
         browserId = watch_playlist['related']
