@@ -26,11 +26,11 @@ class YTMusic:
             functools.partial(ytmusic.get_watch_playlist, video_id),
         )
 
-        browserId = watch_playlist['related']
+        browser_id = watch_playlist['related']
 
         song_related = await bot.loop.run_in_executor(
             bot.executor,
-            functools.partial(ytmusic.get_song_related, browserId),
+            functools.partial(ytmusic.get_song_related, browser_id),
         )
 
         tracks = song_related[0].get('contents', [])
