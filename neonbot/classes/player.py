@@ -268,7 +268,10 @@ class Player(DefaultPlayer):
                 video_id = track.identifier
 
             if len(self.autoplay_list) == 0:
-                self.autoplay_list = await YTMusic.get_related_tracks(video_id)
+                related_tracks = await YTMusic.get_related_tracks(video_id)
+                existing_ids = [i.identifier for i in self.history]
+                
+                self.autoplay_list = [i for i in related_tracks if i["id"] not in existing_ids]
 
             related_video = self.autoplay_list.pop(0)
         except ytmusicapi.exceptions.YTMusicServerError:
