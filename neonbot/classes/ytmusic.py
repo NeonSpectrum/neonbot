@@ -31,9 +31,6 @@ class YTMusic:
             if playlist and track.get('videoId') in playlist:
                 continue
 
-            if track.get('videoType') == 'MUSIC_VIDEO_TYPE_ATV' and track.get('counterpart'):
-                return track.get('counterpart')['videoId']
-
-            return track.get('videoId')
+            return track.get('videoId', track.get('counterpart')['videoId'])
 
         return None
