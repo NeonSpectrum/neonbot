@@ -42,7 +42,11 @@ ICONS = {
     'openai': 'https://i.imgur.com/TAeEnLT.png',
     'green': 'https://i.imgur.com/Vk1wdHH.png',
     'red': 'https://i.imgur.com/gnfYVjW.png',
-    'emeraldflyff': 'https://i.imgur.com/JT3DlyW.png'
+    'emeraldflyff': 'https://i.imgur.com/JT3DlyW.png',
+    'deezer': 'https://i.imgur.com/zIMXnXD.png',
+    'youtube': 'https://i.imgur.com/wCADAJY.png',
+    'applemusic': 'https://i.imgur.com/l1LJkLr.png',
+    'spotify': 'https://i.imgur.com/Yby9AcE.png'
 }
 
 FFMPEG_BEFORE_OPTIONS = '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5'

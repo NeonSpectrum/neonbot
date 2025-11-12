@@ -11,7 +11,7 @@ from discord.ext import tasks
 from discord.ext.commands import Context
 from discord.utils import MISSING, find
 from i18n import t
-from lavalink import DefaultPlayer, LoadType, AudioTrack, DeferredAudioTrack, TrackEndEvent, TrackStartEvent
+from lavalink import AudioTrack, DefaultPlayer, DeferredAudioTrack, LoadType, TrackEndEvent, TrackStartEvent
 
 from lib.lavalink_voice_client import LavalinkVoiceClient
 from neonbot import bot
@@ -379,6 +379,8 @@ class Player(DefaultPlayer):
                 return index
 
     async def track_start_event(self, event: TrackStartEvent):
+        print(event.track.source_name)
+
         if self.track_end_event_task:
             await self.track_end_event_task
             self.track_end_event_task = None
