@@ -60,6 +60,7 @@ class PlayerControls:
     async def callback(self, button: discord.ui.Button, interaction: discord.Interaction):
         async def send_message(message):
             await interaction.channel.send(embed=Embed(message))
+            message = message.replace(interaction.user.mention, str(interaction.user))
             log.cmd(interaction, message)
 
         if not interaction.user.voice or (
