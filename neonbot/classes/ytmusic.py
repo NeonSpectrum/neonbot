@@ -1,6 +1,5 @@
 import functools
-import json
-from typing import Optional
+from typing import List
 
 from ytmusicapi import YTMusic
 
@@ -21,7 +20,7 @@ class YTMusic:
         return result.get('videoId')
 
     @staticmethod
-    async def get_related_video_ids(video_id: str) -> Optional[int]:
+    async def get_related_tracks(video_id: str) -> List[dict]:
         watch_playlist = await bot.loop.run_in_executor(
             bot.executor,
             functools.partial(ytmusic.get_watch_playlist, video_id, limit=1),
@@ -35,12 +34,12 @@ class YTMusic:
         )
 
         tracks = song_related[0].get('contents', [])
-        video_ids = []
+        related_tracks = []
 
         for track in tracks[1:]:
             if track.get('videoId'):
-                video_ids.append({'id': track.get('videoId'), 'title': track.get('title')})
+                related_tracks.append({'id': track.get('videoId'), 'title': track.get('title')})
             else:
-                video_ids.append({'id': track.get('counterpart')['videoId'], 'title': track.get('title')})
+                related_tracks.append({'id': track.get('counterpart')['videoId'], 'title': track.get('title')})
 
-        return video_ids
+        return related_tracks

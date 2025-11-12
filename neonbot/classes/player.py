@@ -270,11 +270,11 @@ class Player(DefaultPlayer):
             if len(self.autoplay_list) == 0:
                 self.autoplay_list = await YTMusic.get_related_video_ids(video_id)
 
-            related_video_id = self.autoplay_list.pop(0)
+            related_video = self.autoplay_list.pop(0)
         except ytmusicapi.exceptions.YTMusicServerError:
             return
 
-        video_url = f"https://music.youtube.com/watch?v={related_video_id}"
+        video_url = f"https://music.youtube.com/watch?v={related_video['id']}"
         await self.search(video_url, send_message=False)
 
     async def send_playing_message(self) -> None:
