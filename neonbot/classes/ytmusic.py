@@ -31,6 +31,8 @@ class YTMusic:
             if playlist and track.get('videoId') in playlist:
                 continue
 
+            print(track)
+
             return track.get('videoId', track.get('counterpart')['videoId'])
 
         return None
