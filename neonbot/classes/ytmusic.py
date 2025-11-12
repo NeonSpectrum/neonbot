@@ -30,9 +30,10 @@ class YTMusic:
         for track in tracks[1:]:
             if playlist and track.get('videoId') in playlist:
                 continue
+            
+            if not track.get('videoId') and track.get('counterpart'):
+                return track.get('counterpart')['videoId']
 
-            print(track)
-
-            return track.get('videoId', track.get('counterpart')['videoId'])
+            return track.get('videoId')
 
         return None
