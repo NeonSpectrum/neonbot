@@ -24,7 +24,7 @@ class YTMusic:
     async def get_related_video_ids(video_id: str) -> Optional[int]:
         watch_playlist = await bot.loop.run_in_executor(
             bot.executor,
-            functools.partial(ytmusic.get_watch_playlist, video_id),
+            functools.partial(ytmusic.get_watch_playlist, video_id, limit=1),
         )
 
         browserId = watch_playlist['related']
@@ -39,8 +39,8 @@ class YTMusic:
 
         for track in tracks[1:]:
             if track.get('videoId'):
-                video_ids.append(track.get('videoId'))
+                video_ids.append({'id': track.get('videoId'), 'title': track.get('title')})
             else:
-                video_ids.append(track.get('counterpart')['videoId'])
+                video_ids.append({'id': track.get('counterpart')['videoId'], 'title': track.get('title')})
 
         return video_ids
