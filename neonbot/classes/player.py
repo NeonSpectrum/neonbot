@@ -274,7 +274,7 @@ class Player(DefaultPlayer):
         except ytmusicapi.exceptions.YTMusicServerError:
             return
 
-        video_url = f"https://www.youtube.com/watch?v={related_video_id}"
+        video_url = f"https://music.youtube.com/watch?v={related_video_id}"
         await self.search(video_url, send_message=False)
 
     async def send_playing_message(self) -> None:
@@ -377,8 +377,6 @@ class Player(DefaultPlayer):
                 return index
 
     async def track_start_event(self, event: TrackStartEvent):
-        print(event.track.source_name)
-
         if self.track_end_event_task:
             await self.track_end_event_task
             self.track_end_event_task = None
