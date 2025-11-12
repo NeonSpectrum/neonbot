@@ -26,6 +26,7 @@ class YTMusic:
             bot.executor,
             functools.partial(ytmusic.get_watch_playlist, video_id, limit=1),
         )
+        result['tracks'] = result['tracks'][:1]
         print(json.dumps(result))
 
         tracks = result.get('tracks', [])
