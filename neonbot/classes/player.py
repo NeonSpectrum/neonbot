@@ -22,7 +22,6 @@ from neonbot.enums import Repeat
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
-from neonbot.utils.exceptions import ApiError
 from neonbot.utils.functions import format_milliseconds
 
 
@@ -324,7 +323,7 @@ class Player(DefaultPlayer):
     async def clear_messages(self):
         if self.messages['finished']:
             print('sending finished')
-            await bot.edit_message(self.messages['finished'], embed=self.get_simplified_finished_message(self.last_track), silent=True, view=MISSING)
+            await bot.edit_message(self.messages['finished'], embed=self.get_simplified_finished_message(self.last_track), view=MISSING)
 
         await bot.delete_message(self.messages['playing'])
         self.messages['playing'] = None
@@ -388,6 +387,9 @@ class Player(DefaultPlayer):
         if self.track_end_event_task:
             await self.track_end_event_task
             self.track_end_event_task = None
+
+        while not self.is_playing:
+            await asyncio.sleep(0.1)
 
         await self.send_playing_message()
         self.last_track = event.track
