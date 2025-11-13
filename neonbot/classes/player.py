@@ -243,7 +243,7 @@ class Player(DefaultPlayer):
                 self.current_queue = 0
             elif self.loop == Repeat.OFF:
                 if self.current_queue == len(self.playlist) - 1:
-                    self.stop()
+                    await self.stop()
                     return
                 self.current_queue += 1
 
@@ -322,7 +322,7 @@ class Player(DefaultPlayer):
             self.messages['finished'] = message
 
     async def clear_messages(self):
-        if not self.is_connected and self.messages['finished']:
+        if self.messages['finished']:
             await bot.delete_message(self.messages['finished'])
             await self.ctx.send(embed=self.get_simplified_finished_message(self.last_track), silent=True)
 
