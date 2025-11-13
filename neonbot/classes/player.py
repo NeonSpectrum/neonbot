@@ -254,7 +254,7 @@ class Player(DefaultPlayer):
         await super().play(track, *args, **kwargs)
 
     async def reset(self, timeout=None):
-        await self.clear_messages()
+        await self.stop()
         await self.disconnect(force=True, timeout=timeout)
 
         self.current = None
