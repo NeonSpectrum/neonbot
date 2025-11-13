@@ -306,7 +306,7 @@ class Flyff:
             minutes=1,
             next_run_time=next_run_time,
         )
-        log.info(f'Auto started job flyff-status-monitor')
+        log.info('Auto started job flyff-status-monitor')
 
         bot.scheduler.add_job(
             id='flyff-alert-monitor',
@@ -315,7 +315,7 @@ class Flyff:
             seconds=5,
             next_run_time=next_run_time,
         )
-        log.info(f'Auto started job flyff-alert-monitor')
+        log.info('Auto started job flyff-alert-monitor')
 
         bot.scheduler.add_job(
             id='flyff-ping-monitor',
@@ -324,4 +324,4 @@ class Flyff:
             seconds=5,
             next_run_time=next_run_time,
         )
-        log.info(f'Auto started job flyff-ping-monitor')
+        log.info('Auto started job flyff-ping-monitor')

@@ -165,7 +165,7 @@ async def check_ip_online_socket(host: str, port: int, timeout: float = 5.0) -> 
 
         return True
 
-    except (asyncio.TimeoutError, ConnectionRefusedError, OSError):
+    except (asyncio.TimeoutError, ConnectionRefusedError, OSError, asyncio.CancelledError):
         return False
     except Exception as e:
         print(f"An unexpected error occurred while checking {host}:{port}: {e}")
