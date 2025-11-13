@@ -34,10 +34,13 @@ class PlayerControls:
             views[2].emoji = '▶️'
 
         views[3].disabled = (
-            self.player.is_last_track
-            and self.player.loop == Repeat.OFF
-            and not self.player.autoplay
-            and not self.player.shuffle
+            not self.player.is_playing
+            or (
+                self.player.is_last_track
+                and self.player.loop == Repeat.OFF
+                and not self.player.autoplay
+                and not self.player.shuffle
+            )
         )
 
         if self.player.loop == Repeat.OFF:
