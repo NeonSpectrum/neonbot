@@ -259,6 +259,7 @@ class Player(DefaultPlayer):
 
         self.current = None
         self.current_queue = -1
+        self.last_track = None
         self.track_list = []
         self.shuffled_list = []
         self.autoplay_list = []
@@ -306,14 +307,18 @@ class Player(DefaultPlayer):
             user=track.requester,
         )
 
+        log.info('clearing message')
         await self.clear_messages()
         self.player_controls.initialize()
+
+        log.info('sending message')
 
         message = await self.ctx.channel.send(
             embed=self.get_finished_embed() if not compact else self.get_simplified_finished_message(track),
             view=self.player_controls.get() if not compact else None,
             silent=True,
         )
+        log.info('sent message')
 
         # Will replace by simplified after
         if not compact:
