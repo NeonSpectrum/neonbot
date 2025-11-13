@@ -256,6 +256,7 @@ class Player(DefaultPlayer):
     async def reset(self, timeout=None):
         await self.stop()
         await self.disconnect(force=True, timeout=timeout)
+        await self.wait_for_track_end_event()
 
         self.current = None
         self.current_queue = -1
@@ -387,10 +388,13 @@ class Player(DefaultPlayer):
             if track.extra['index'] == self.current.extra['index']:
                 return index
 
-    async def track_start_event(self, event: TrackStartEvent):
+    async def wait_for_track_end_event(self):
         if self.track_end_event_task:
             await self.track_end_event_task
             self.track_end_event_task = None
+
+    async def track_start_event(self, event: TrackStartEvent):
+        await self.wait_for_track_end_event()
 
         while not self.is_playing:
             await asyncio.sleep(0.1)
