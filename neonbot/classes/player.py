@@ -259,7 +259,6 @@ class Player(DefaultPlayer):
 
         self.current = None
         self.current_queue = -1
-        self.last_track = None
         self.track_list = []
         self.shuffled_list = []
         self.autoplay_list = []
@@ -405,4 +404,3 @@ class Player(DefaultPlayer):
             await self.send_finished_message(track=self.last_track, compact=compact)
 
         self.track_end_event_task = bot.loop.create_task(task())
-        await self.track_end_event_task
