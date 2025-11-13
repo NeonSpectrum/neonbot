@@ -235,13 +235,15 @@ class Player(DefaultPlayer):
                 await self.process_autoplay(self.last_track)
                 self.current_queue += 1
             elif self.shuffle:
-                if self.current_queue == len(self.track_list) - 1:
+                if self.current_queue == len(self.playlist) - 1:
                     self.current_queue = 0
                 else:
                     self.current_queue += 1
-            elif self.loop == Repeat.ALL and self.current_queue == len(self.track_list) - 1:
+            elif self.loop == Repeat.ALL and self.current_queue == len(self.playlist) - 1:
                 self.current_queue = 0
-            elif self.loop == Repeat.OFF and self.current_queue < len(self.track_list) - 1:
+            elif self.loop == Repeat.OFF:
+                if self.current_queue == len(self.playlist) - 1:
+                    return
                 self.current_queue += 1
 
             try:
@@ -259,6 +261,8 @@ class Player(DefaultPlayer):
         self.current_queue = -1
         self.last_track = None
         self.track_list = []
+        self.shuffled_list = []
+        self.autoplay_list = []
 
     async def process_autoplay(self, track: AudioTrack) -> None:
         try:

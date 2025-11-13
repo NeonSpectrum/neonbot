@@ -4,8 +4,8 @@ from typing import Any, Optional, cast
 
 import discord
 
-from neonbot.utils.constants import CHOICES_EMOJI, PAGINATION_EMOJI
 from neonbot.classes.view import Button, View
+from neonbot.utils.constants import CHOICES_EMOJI, PAGINATION_EMOJI
 
 
 class Embed(discord.Embed):
@@ -75,9 +75,13 @@ class PaginationEmbed:
         self.index = 0
         self.embed = Embed()
 
-    async def build(self) -> None:
+    async def build(self, page_number = None) -> None:
         self.authorized_users.append(self.interaction.user.id)
         self.title = self.embed.title
+
+        if page_number:
+            self.index = page_number
+
         await self.send()
 
     async def send(self) -> None:

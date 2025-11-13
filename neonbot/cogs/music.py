@@ -147,7 +147,7 @@ class Music(commands.Cog):
         pagination = PaginationEmbed(interaction, embeds=embeds)
         pagination.embed.set_author(name=t('music.player_queue'), icon_url=ICONS['music'])
         pagination.embed.set_footer(text=' | '.join(footer), icon_url=bot.user.display_avatar)
-        await pagination.build()
+        await pagination.build(page_number=player.current.extra['index'] // 10 + 1)
 
     @commands.hybrid_command(name='goto', aliases=['jump', 'go'])
     @commands.check(has_permission)
