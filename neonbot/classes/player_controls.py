@@ -28,7 +28,7 @@ class PlayerControls:
 
         views[1].disabled = not (0 <= self.player.current_queue - 1 < len(self.player.track_list))
 
-        if not self.player.paused:
+        if self.player.is_playing and not self.player.paused:
             views[2].emoji = '⏸️'
         else:
             views[2].emoji = '▶️'
