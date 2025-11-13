@@ -394,10 +394,10 @@ class Player(DefaultPlayer):
     async def track_end_event(self, event: TrackEndEvent):
         async def task():
             compact = (
-                self.is_playing
-                or not self.is_last_track
-                or self.loop != Repeat.OFF
-                or not self.shuffle
+                not self.is_last_track
+                and self.loop != Repeat.OFF
+                and not self.shuffle
+                or self.autoplay
             )
             await self.send_finished_message(track=self.last_track, compact=compact)
 
