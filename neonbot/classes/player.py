@@ -188,9 +188,6 @@ class Player(DefaultPlayer):
         self.current_queue = -1
         await super().stop()
 
-        if self.last_track:
-            await self.send_finished_message(self.last_track, compact=False)
-
     async def search(self, query: str, send_message=True):
         if not query.startswith(('http://', 'https://')):
             query = f'ytmsearch:{query}'
@@ -321,13 +318,13 @@ class Player(DefaultPlayer):
         )
 
         # Will replace by simplified after
-        if compact:
+        if not compact:
             self.messages['finished'] = message
 
     async def clear_messages(self):
         if self.messages['finished']:
             await bot.delete_message(self.messages['finished'])
-            await self.ctx.send(embed=self.get_simplified_finished_message(self.last_track), silent=True)
+            await bot.edit_message(self.messages['finished'], embed=self.get_simplified_finished_message(self.last_track), silent=True)
 
         await bot.delete_message(self.messages['playing'])
         self.messages['playing'] = None
