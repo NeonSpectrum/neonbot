@@ -188,6 +188,9 @@ class Player(DefaultPlayer):
         self.current_queue = -1
         await super().stop()
 
+        if self.last_track:
+            await self.send_finished_message(self.last_track, compact=False)
+
     async def search(self, query: str, send_message=True):
         if not query.startswith(('http://', 'https://')):
             query = f'ytmsearch:{query}'
