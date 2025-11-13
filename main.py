@@ -23,8 +23,7 @@ def main() -> None:
     # Clear debug.log on startup
     open('./debug.log', 'w').close()
 
-    scheduler_logger = logging.getLogger('apscheduler.executors')
-    scheduler_logger.setLevel(logging.ERROR)
+    logging.getLogger('apscheduler.scheduler').setLevel(logging.ERROR)
 
     with ThreadPoolExecutor() as executor:
         bot.run(log_level=logging.getLevelName(env.str('LOG_LEVEL', default='ERROR')), executor=executor)
