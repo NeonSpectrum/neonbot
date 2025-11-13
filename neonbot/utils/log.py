@@ -47,6 +47,8 @@ class Log(logging.Logger):
                 user = ctx.author
             elif isinstance(ctx, discord.Interaction):
                 user = ctx.user
+        elif isinstance(user, int):
+            user = ctx.bot.get_user(user)
 
         print(file=sys.stderr)
         self._log(

@@ -289,7 +289,7 @@ class Player(DefaultPlayer):
             return
 
         log.cmd(
-            self.ctx, t('music.now_playing.title', title=self.current.title), user=bot.get_user(self.current.requester)
+            self.ctx, t('music.now_playing.title', title=self.current.title), user=self.current.requester
         )
 
         await self.clear_messages()
@@ -405,3 +405,4 @@ class Player(DefaultPlayer):
             await self.send_finished_message(track=self.last_track, compact=compact)
 
         self.track_end_event_task = bot.loop.create_task(task())
+        await self.track_end_event_task
