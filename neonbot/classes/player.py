@@ -323,7 +323,7 @@ class Player(DefaultPlayer):
     async def clear_messages(self):
         if self.messages['finished']:
             await bot.delete_message(self.messages['finished'])
-            await self.channel.send(embed=self.get_simplified_finished_message(), silent=True)
+            await self.ctx.channel.send(embed=self.get_simplified_finished_message(), silent=True)
 
         await bot.delete_message(self.messages['playing'])
         self.messages['playing'] = None
