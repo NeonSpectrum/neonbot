@@ -243,6 +243,7 @@ class Player(DefaultPlayer):
                 self.current_queue = 0
             elif self.loop == Repeat.OFF:
                 if self.current_queue == len(self.playlist) - 1:
+                    self.stop()
                     return
                 self.current_queue += 1
 
