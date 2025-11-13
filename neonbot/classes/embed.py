@@ -80,7 +80,7 @@ class PaginationEmbed:
         self.title = self.embed.title
 
         if page_number:
-            self.index = page_number
+            self.index = page_number - 1
 
         await self.send()
 
