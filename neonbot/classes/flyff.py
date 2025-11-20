@@ -277,6 +277,8 @@ class Flyff:
             if Flyff.DOWNTIME_COUNT >= 12:
                 bot.flyff_settings.world_start_time = None
                 await bot.flyff_settings.save_changes()
+        else:
+            Flyff.DOWNTIME_COUNT = 0
 
         if not embed:
             return
