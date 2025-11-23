@@ -187,7 +187,7 @@ class Player(DefaultPlayer):
         self.current_queue = -1
         await super().stop()
 
-    async def search(self, query: str, send_message=True):
+    async def search(self, query: str, *, send_message=True, requester=None):
         if not query.startswith(('http://', 'https://')):
             query = f'ytmsearch:{query}'
 
@@ -205,7 +205,7 @@ class Player(DefaultPlayer):
         elif load_type == LoadType.PLAYLIST:
             count = 0
             for track in tracks:
-                self.add(track, requester=self.ctx.author.id)
+                self.add(track, requester=requester or self.ctx.author.id)
                 count += 1
 
             embed = Embed(
@@ -216,7 +216,7 @@ class Player(DefaultPlayer):
         elif load_type == LoadType.TRACK or load_type == LoadType.SEARCH:
             track = tracks[0]
 
-            self.add(track, requester=self.ctx.author.id)
+            self.add(track, requester=requester or self.ctx.author.id)
 
             embed = Embed(t('music.added_to_queue', queue=len(self.track_list), title=track.title, url=track.uri))
 
@@ -282,7 +282,7 @@ class Player(DefaultPlayer):
             return
 
         video_url = f"https://music.youtube.com/watch?v={related_video['id']}"
-        await self.search(video_url, send_message=False)
+        await self.search(video_url, send_message=False, requester=bot.user.id)
 
     async def send_playing_message(self) -> None:
         if not self.current:
