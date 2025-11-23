@@ -28,13 +28,16 @@ class YTMusic:
 
         browser_id = watch_playlist['related']
 
-        if browser_id:
+        try:
+            if not browser_id:
+                raise Exception('Browse id not found.')
+
             song_related = await bot.loop.run_in_executor(
                 bot.executor,
                 functools.partial(ytmusic.get_song_related, browser_id),
             )
             tracks = song_related[0].get('contents', [])
-        else:
+        except Exception:
             tracks = watch_playlist.get('tracks', [])
 
         related_tracks = []
