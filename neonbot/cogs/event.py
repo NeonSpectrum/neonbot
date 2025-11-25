@@ -7,7 +7,7 @@ import discord
 from discord.app_commands import AppCommandError
 from discord.ext import commands
 from discord.utils import escape_markdown
-from lavalink import listener, NodeConnectedEvent, Node
+from lavalink import Node, NodeConnectedEvent, listener
 
 from neonbot import bot
 from neonbot.classes.chatgpt.chatgpt import ChatGPT
@@ -226,7 +226,10 @@ class Event(commands.Cog):
 
             if status_log_channel:
                 embed.description = get_log_prefix() + embed.description
-                await status_log_channel.send(embed=embed)
+                try:
+                    await status_log_channel.send(embed=embed)
+                except Exception:
+                    pass
         elif before.activities != after.activities:
             before_activity = before.activities and before.activities[-1]
             after_activity = after.activities and after.activities[-1]
@@ -290,7 +293,10 @@ class Event(commands.Cog):
 
             if activity_log_channel:
                 embed.description = ':bust_in_silhouette:' + embed.description
-                await activity_log_channel.send(embed=embed)
+                try:
+                    await activity_log_channel.send(embed=embed)
+                except Exception:
+                    pass
 
 
 # noinspection PyShadowingNames
