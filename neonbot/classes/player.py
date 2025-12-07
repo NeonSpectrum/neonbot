@@ -257,13 +257,6 @@ class Player(DefaultPlayer):
         await self.disconnect(force=True, timeout=timeout)
         await self.wait_for_track_end_event()
 
-        self.current = None
-        self.current_queue = -1
-        self.last_track = None
-        self.track_list = []
-        self.shuffled_list = []
-        self.autoplay_list = []
-
     async def process_autoplay(self, track: AudioTrack) -> None:
         try:
             if len(track.identifier) != 11:
