@@ -29,10 +29,11 @@ class LavalinkVoiceClient(discord.VoiceProtocol):
         await self.lavalink.voice_update_handler(lavalink_data)
 
     async def on_voice_state_update(self, data):
+        player = self.lavalink.player_manager.get(self.channel.guild.id)
         channel_id = data['channel_id']
 
         if not channel_id:
-            await self.disconnect()
+            player.vc = None
             return
 
         self.channel = self.client.get_channel(int(channel_id))

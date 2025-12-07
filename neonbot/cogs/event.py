@@ -162,7 +162,7 @@ class Event(commands.Cog):
         player = bot.lavalink.player_manager.get(member.guild.id)
 
         if member.id == bot.user.id:
-            if player and not player.ctx.voice_client:
+            if player and not player.vc:
                 await player.reset_timeout.start(timeout=3)
             return
 
