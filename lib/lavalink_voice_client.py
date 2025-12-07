@@ -32,6 +32,7 @@ class LavalinkVoiceClient(discord.VoiceProtocol):
         channel_id = data['channel_id']
 
         if not channel_id:
+            await self.disconnect()
             return
 
         self.channel = self.client.get_channel(int(channel_id))
