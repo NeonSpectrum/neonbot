@@ -176,8 +176,8 @@ class Event(commands.Cog):
                 if not player.paused:
                     await player.pause(requester=bot.user)
                     player.is_auto_paused = True
-                if not player.reset_timeout.is_running():
-                    await player.reset_timeout.start()
+                # if not player.reset_timeout.is_running():
+                #     await player.reset_timeout.start()
 
         server = GuildModel.get_instance(member.guild.id)
 
