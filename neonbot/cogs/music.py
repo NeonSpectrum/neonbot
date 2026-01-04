@@ -207,6 +207,17 @@ class Music(commands.Cog):
         log.cmd(ctx, msg)
         await ctx.reply(embed=Embed(msg))
 
+    @commands.hybrid_command(name='join')
+    @commands.check(has_permission)
+    @commands.check(in_voice)
+    @commands.guild_only()
+    async def join(self, ctx: commands.Context) -> None:
+        """Connect to voice channel."""
+
+        player = bot.lavalink.player_manager.create(ctx.guild.id)
+        player.ctx = ctx
+        await player.connect()
+
 
 # noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:
