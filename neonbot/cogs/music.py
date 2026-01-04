@@ -217,6 +217,8 @@ class Music(commands.Cog):
         player.ctx = ctx
         await player.connect(voice_channel)
 
+        await ctx.reply(embed=Embed(f'Joined {voice_channel.mention}.'), ephemeral=True)
+
 
 # noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:
