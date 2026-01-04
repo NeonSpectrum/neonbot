@@ -209,7 +209,6 @@ class Music(commands.Cog):
 
     @commands.hybrid_command(name='join')
     @commands.check(has_permission)
-    @commands.check(in_voice)
     @commands.guild_only()
     async def join(self, ctx: commands.Context, voice_channel: discord.VoiceChannel) -> None:
         """Connect to voice channel."""
