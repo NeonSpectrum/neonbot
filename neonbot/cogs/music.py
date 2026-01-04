@@ -211,12 +211,12 @@ class Music(commands.Cog):
     @commands.check(has_permission)
     @commands.check(in_voice)
     @commands.guild_only()
-    async def join(self, ctx: commands.Context) -> None:
+    async def join(self, ctx: commands.Context, voice_channel: discord.VoiceChannel) -> None:
         """Connect to voice channel."""
 
         player = bot.lavalink.player_manager.create(ctx.guild.id)
         player.ctx = ctx
-        await player.connect()
+        await player.connect(voice_channel)
 
 
 # noinspection PyShadowingNames
