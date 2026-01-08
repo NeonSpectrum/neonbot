@@ -219,7 +219,7 @@ class Player(DefaultPlayer):
             self.add(track, requester=requester or self.ctx.author.id)
 
             embed = Embed(t('music.added_to_queue', queue=len(self.track_list), title=track.title, url=track.uri))
-
+ 
         if embed and send_message:
             await self.ctx.reply(embed=embed)
 
@@ -271,7 +271,7 @@ class Player(DefaultPlayer):
                 self.autoplay_list = [i for i in related_tracks if i["id"] not in existing_ids]
 
             related_video = self.autoplay_list.pop(0)
-        except ytmusicapi.exceptions.YTMusicServerError:
+        except (ytmusicapi.exceptions.YTMusicServerError, IndexError):
             return
 
         video_url = f"https://music.youtube.com/watch?v={related_video['id']}"
