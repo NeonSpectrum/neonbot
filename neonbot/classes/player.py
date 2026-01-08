@@ -22,6 +22,7 @@ from neonbot.enums import Repeat
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
+from neonbot.utils.exceptions import PlayerError
 from neonbot.utils.functions import format_milliseconds
 
 
@@ -231,7 +232,11 @@ class Player(DefaultPlayer):
 
         if not track:
             if self.autoplay and self.is_last_track:
-                await self.process_autoplay(self.last_track)
+                try:
+                    await self.process_autoplay(self.last_track)
+                except PlayerError:
+                    await self.ctx.channel.send('No related videos available.')
+                    return
                 self.current_queue += 1
             elif self.shuffle:
                 if self.current_queue == len(self.playlist) - 1:
@@ -272,7 +277,7 @@ class Player(DefaultPlayer):
 
             related_video = self.autoplay_list.pop(0)
         except (ytmusicapi.exceptions.YTMusicServerError, IndexError):
-            return
+            raise PlayerError()
 
         video_url = f"https://music.youtube.com/watch?v={related_video['id']}"
         await self.search(video_url, send_message=False, requester=bot.user.id)
