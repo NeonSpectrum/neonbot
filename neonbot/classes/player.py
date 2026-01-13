@@ -235,7 +235,7 @@ class Player(DefaultPlayer):
                 try:
                     await self.process_autoplay(self.last_track)
                 except PlayerError:
-                    await self.ctx.channel.send('No related videos available.')
+                    await self.ctx.channel.send(embed=Embed('No related videos available.'))
                     return
                 self.current_queue += 1
             elif self.shuffle:
