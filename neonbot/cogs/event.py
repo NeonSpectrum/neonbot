@@ -173,7 +173,7 @@ class Event(commands.Cog):
                     await player.resume(requester=bot.user)
                     player.is_auto_paused = False
             else:
-                if not player.paused:
+                if not player.paused and player.is_playing:
                     await player.pause(requester=bot.user)
                     player.is_auto_paused = True
                 # if not player.reset_timeout.is_running():
