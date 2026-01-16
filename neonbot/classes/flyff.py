@@ -246,7 +246,8 @@ class Flyff:
             else:
                 await bot.edit_message(message, embed=embed)
         except discord.HTTPException as error:
-            log.error(error)
+            if error.status != 404:
+                log.error(error)
 
     @staticmethod
     async def start_status_monitor():
