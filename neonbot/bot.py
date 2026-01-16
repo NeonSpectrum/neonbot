@@ -6,7 +6,7 @@ import sys
 from glob import glob
 from os import sep
 from time import time
-from typing import Any, Optional, Tuple, Type, Union, cast, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional, Tuple, Type, Union, cast
 
 import discord
 import lavalink
@@ -102,9 +102,9 @@ class NeonBot(commands.Bot):
             return
 
         from neonbot.classes.panel import Panel
-        from neonbot.classes.flyff import Flyff
+        #from neonbot.classes.flyff import Flyff
 
-        Flyff.start_listener()
+        #Flyff.start_listener()
 
         for guild in self.guilds:
             server = GuildModel.get_instance(guild.id)
