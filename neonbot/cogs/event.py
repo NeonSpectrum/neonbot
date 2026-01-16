@@ -179,6 +179,9 @@ class Event(commands.Cog):
                 # if not player.reset_timeout.is_running():
                 #     await player.reset_timeout.start()
 
+        if member.bot:
+            return
+
         server = GuildModel.get_instance(member.guild.id)
 
         connect_channel = bot.get_channel(int(server.channel_log.connect or -1))
