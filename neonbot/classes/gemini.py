@@ -1,7 +1,7 @@
 from io import BytesIO
 
 import discord
-import google.generativeai as genai
+import google.genai as genai
 from PIL import Image
 from discord.ext import commands
 from envparse import env
