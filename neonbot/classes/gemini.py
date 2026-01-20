@@ -4,16 +4,14 @@ import discord
 import google.genai as genai
 from PIL import Image
 from discord.ext import commands
-from envparse import env
 
 from neonbot.utils import log
 
-genai.configure(api_key=env.str('GEMINI_API_KEY'))
-
+client = genai.Client()
 
 class GeminiChat:
     def __init__(self, message):
-        self.model = genai.GenerativeModel('gemini-2.5-flash')
+        self.model_name = 'gemini-3.0-flash'
         self.response = None
         self.prompt = message.lstrip('? ')
 
@@ -21,21 +19,20 @@ class GeminiChat:
         prompts = []
         attachments = []
 
-        # Check for message reference
         if ctx.message.reference:
             reply_to_message_id = ctx.message.reference.message_id
 
             try:
                 replied_message = await ctx.message.channel.fetch_message(reply_to_message_id)
-
                 prompts.append(replied_message.content)
                 attachments += replied_message.attachments
             except discord.NotFound:
                 pass
 
-        # Add current message contents
         prompts.append(self.prompt)
         attachments += ctx.message.attachments
+
+        contents = [self.prompt]
 
         if len(attachments) > 0:
             for attachment in attachments:
@@ -43,16 +40,22 @@ class GeminiChat:
                     attachment_data = await attachment.read()
                     image_data = BytesIO(attachment_data)
                     image = Image.open(image_data)
-                    prompts.append(image)
+                    contents.append(image)
                 except (IOError, OSError):
                     pass
 
-        self.response = await self.model.generate_content_async(prompts)
+        self.response = await client.aio.models.generate_content(
+            model=self.model_name,
+            contents=contents
+        )
         self.log()
         return self
 
     async def generate_content(self):
-        self.response = await self.model.generate_content_async([self.prompt])
+        self.response = await client.aio.models.generate_content(
+            model=self.model_name,
+            contents=[self.prompt]
+        )
         self.log()
         return self
 
