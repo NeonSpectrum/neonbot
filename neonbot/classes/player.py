@@ -184,8 +184,9 @@ class Player(DefaultPlayer):
     async def next(self):
         await self.skip()
 
-    async def stop(self):
-        self.current_queue = -1
+    async def stop(self, queue=None):
+        if queue:
+            self.current_queue = queue
         await super().stop()
 
     async def search(self, query: str, *, send_message=True, requester=None):
@@ -235,6 +236,7 @@ class Player(DefaultPlayer):
                 try:
                     await self.process_autoplay(self.last_track)
                 except PlayerError:
+                    await self.stop()
                     await self.ctx.channel.send(embed=Embed('No related videos available.'))
                     return
                 self.current_queue += 1
