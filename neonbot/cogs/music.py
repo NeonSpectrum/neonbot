@@ -71,6 +71,10 @@ class Music(commands.Cog):
         player.autoplay_list = []
 
         await player.search(query)
+
+        if len(player.track_list) == 0:
+            return
+
         await player.connect()
 
         if not player.is_playing:

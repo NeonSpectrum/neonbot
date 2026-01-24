@@ -37,6 +37,7 @@
     "player_queue": "Player Queue",
     "volume_rules": "Volume must be 1 - 100.",
     "no_songs_available": "No songs available.",
+    "search_error": "An issue occurred while searching for the requested track.",
     "added_to_queue": "Added to #%{queue}: [%{title}](%{url})",
     "added_multiple_to_queue": {
         "zero": "Added %{count} songs to queue.",

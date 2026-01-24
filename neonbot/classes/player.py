@@ -201,8 +201,11 @@ class Player(DefaultPlayer):
 
         log.info(results)
 
-        if load_type == LoadType.EMPTY or load_type == LoadType.ERROR:
+        if load_type == LoadType.EMPTY:
             embed = Embed(t('music.no_songs_available'))
+
+        if load_type == LoadType.ERROR:
+            embed = Embed(t('music.search_error'))
 
         elif load_type == LoadType.PLAYLIST:
             count = 0
