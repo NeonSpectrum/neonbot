@@ -236,6 +236,8 @@ class Player(DefaultPlayer):
                    **kwargs):
 
         if not track:
+            next_queue = None
+
             if self.autoplay and self.is_last_track:
                 try:
                     await self.process_autoplay(self.last_track)
@@ -243,23 +245,22 @@ class Player(DefaultPlayer):
                     await self.stop()
                     await self.ctx.channel.send(embed=Embed('No related videos available.'))
                     return
-                self.current_queue += 1
+                next_queue = self.current_queue + 1
             elif self.shuffle:
                 if self.current_queue == len(self.playlist) - 1:
-                    self.current_queue = 0
+                    next_queue = 0
                 else:
-                    self.current_queue += 1
+                    next_queue = self.current_queue + 1
             elif self.loop == Repeat.ALL and self.current_queue == len(self.playlist) - 1:
-                self.current_queue = 0
+                next_queue = 0
             elif self.loop == Repeat.OFF:
                 if self.current_queue == len(self.playlist) - 1:
                     return
-                self.current_queue += 1
+                next_queue = self.current_queue + 1
 
-            try:
+            if 0 <= next_queue < len(self.playlist):
+                self.current_queue = next_queue
                 track = self.playlist[self.current_queue]
-            except IndexError:
-                pass
 
         await super().play(track, *args, **kwargs)
 

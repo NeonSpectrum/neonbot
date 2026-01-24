@@ -121,6 +121,7 @@ class Event(commands.Cog):
         send_msg = (
             discord.app_commands.AppCommandError,
             discord.app_commands.CommandInvokeError,
+            discord.ext.commands.MissingRequiredArgument
         )
 
         tb = traceback.format_exception(error, value=error, tb=error.__traceback__)
