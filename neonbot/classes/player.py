@@ -32,6 +32,7 @@ class Player(DefaultPlayer):
 
         self.settings = GuildModel.get_instance(self.guild_id)
         self.player_controls = PlayerControls(self)
+        self._start_event_lock = asyncio.Lock()
 
         self.ctx: Optional[Context] = None
         self.vc: Optional[VoiceChannel] = None
@@ -397,8 +398,9 @@ class Player(DefaultPlayer):
         while not self.is_playing:
             await asyncio.sleep(0.1)
 
-        await self.send_playing_message()
-        self.last_track = event.track
+        async with self._start_event_lock:
+            await self.send_playing_message()
+            self.last_track = event.track
 
     async def track_end_event(self, event: TrackEndEvent):
         async def task():
