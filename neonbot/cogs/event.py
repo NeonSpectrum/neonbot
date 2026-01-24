@@ -133,7 +133,7 @@ class Event(commands.Cog):
         log.cmd(ctx, f'Command error: {error}')
 
         if isinstance(error, send_msg):
-            embed = Embed(remove_ansi(error))
+            embed = Embed(remove_ansi(str(error)))
         else:
             embed = Embed('There was an error executing the command. Please contact the administrator.')
 
