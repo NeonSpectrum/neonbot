@@ -23,7 +23,7 @@ from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
 from neonbot.utils.exceptions import PlayerError
-from neonbot.utils.functions import format_milliseconds
+from neonbot.utils.functions import clean_youtube_url, format_milliseconds, is_youtube_url
 
 
 class Player(DefaultPlayer):
@@ -193,13 +193,14 @@ class Player(DefaultPlayer):
     async def search(self, query: str, *, send_message=True, requester=None):
         if not query.startswith(('http://', 'https://')):
             query = f'ytmsearch:{query}'
+        elif is_youtube_url(query):
+            query = clean_youtube_url(query)
 
         results = await self.node.get_tracks(query)
 
         load_type = results.load_type
         tracks = results.tracks
         embed = None
-
         log.info(results)
 
         if load_type == LoadType.EMPTY:
@@ -207,7 +208,8 @@ class Player(DefaultPlayer):
 
         if load_type == LoadType.ERROR:
             embed = Embed(t('music.search_error'))
-
+            log.error(results.error.message)
+            
         elif load_type == LoadType.PLAYLIST:
             count = 0
             for track in tracks:

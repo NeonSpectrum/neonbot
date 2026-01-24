@@ -1,5 +1,6 @@
 import asyncio
 import re
+import urllib.parse
 from datetime import datetime, timedelta
 from typing import Union
 
@@ -170,3 +171,30 @@ async def check_ip_online_socket(host: str, port: int, timeout: float = 5.0) -> 
     except Exception as e:
         print(f"An unexpected error occurred while checking {host}:{port}: {e}")
         return False
+
+def is_youtube_url(url):
+    parsed = urllib.parse.urlparse(url.lower())
+    youtube_hosts = ('youtube.com', 'www.youtube.com', 'youtu.be', 'm.youtube.com')
+    return parsed.hostname in youtube_hosts
+
+def clean_youtube_url(url):
+    parsed = urllib.parse.urlparse(url)
+    params = urllib.parse.parse_qs(parsed.query)
+    
+    # Extract video ID from v param or youtu.be path
+    vid = params.get('v', [None])[0]
+    if not vid:
+        path_match = re.match(r'/([a-zA-Z0-9_-]{11})', parsed.path)
+        vid = path_match.group(1) if path_match else None
+    
+    if not vid:
+        return url
+    
+    # Clean only if both video ID and 'list' present
+    has_list = 'list' in params
+    if has_list:
+        if parsed.hostname == 'youtu.be':
+            return f"https://youtu.be/{vid}"
+        else:
+            return f"https://www.youtube.com/watch?v={vid}"
+    return url
