@@ -260,7 +260,7 @@ class Player(DefaultPlayer):
                     return
                 next_queue = self.current_queue + 1
 
-            if 0 <= next_queue < len(self.playlist):
+            if next_queue and 0 <= next_queue < len(self.playlist):
                 self.current_queue = next_queue
                 track = self.playlist[self.current_queue]
 
