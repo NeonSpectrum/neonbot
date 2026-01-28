@@ -262,7 +262,8 @@ class Player(DefaultPlayer):
 
             if next_queue and 0 <= next_queue < len(self.playlist):
                 self.current_queue = next_queue
-                track = self.playlist[self.current_queue]
+                
+            track = self.playlist[self.current_queue]
 
         await super().play(track, *args, **kwargs)
 
