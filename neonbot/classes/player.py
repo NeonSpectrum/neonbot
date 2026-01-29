@@ -262,10 +262,8 @@ class Player(DefaultPlayer):
                 if self.current_queue == len(self.playlist) - 1: # dont play if last
                     return
                 next_queue = self.current_queue + 1 # just increment if not last
-            else:
-                next_queue = self.current_queue + 1 # increment
 
-            if next_queue and 0 <= next_queue < len(self.playlist):
+            if next_queue is not None and 0 <= next_queue < len(self.playlist):
                 self.current_queue = next_queue
                 
             track = self.playlist[self.current_queue]
