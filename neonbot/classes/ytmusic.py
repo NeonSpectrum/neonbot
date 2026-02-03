@@ -5,7 +5,7 @@ from ytmusicapi import YTMusic
 
 from neonbot import bot
 
-ytmusic = YTMusic()
+ytmusic = YTMusic(location='PH')
 
 
 class YTMusic:
