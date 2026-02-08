@@ -419,4 +419,6 @@ class Player(DefaultPlayer):
             )
             await self.send_finished_message(track=self.last_track, compact=compact)
 
-        self.track_end_event_task = bot.loop.create_task(task())
+        if self.track_end_event_task is None:
+            self.track_end_event_task = bot.loop.create_task(task())
+            await self.wait_for_track_end_event()
