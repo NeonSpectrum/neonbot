@@ -99,6 +99,9 @@ class Event(commands.Cog):
     @staticmethod
     @bot.event
     async def on_command(ctx: commands.Context):
+        if ctx.interaction is not None:
+            return
+
         log.cmd(ctx, get_command_string(ctx), guild=ctx.guild or 'N/A')
 
     @staticmethod
