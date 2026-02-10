@@ -7,6 +7,7 @@ from i18n import t
 
 from neonbot import bot
 from neonbot.classes.embed import Embed, PaginationEmbed
+from neonbot.classes.ytmusic import YTMusic
 from neonbot.enums import Repeat
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
@@ -70,6 +71,29 @@ class Music(commands.Cog):
         # Clear autoplay list whenever there's new song
         player.autoplay_list = []
 
+        await player.search(query)
+
+        if len(player.track_list) == 0:
+            return
+
+        await player.connect()
+
+        if not player.is_playing:
+            await player.play()
+
+    @commands.hybrid_command(name='playrandom', aliases=['pr'], )
+    @commands.check(has_permission)
+    @commands.check(in_voice)
+    @commands.guild_only()
+    async def playrandom(self, ctx: commands.Context):
+        player = bot.lavalink.player_manager.create(ctx.guild.id)
+        player.ctx = ctx
+
+        # Clear autoplay list whenever there's new song
+        player.autoplay_list = []
+
+        tracks = await YTMusic.get_random_home()
+        query = tracks[0].get('videoId')
         await player.search(query)
 
         if len(player.track_list) == 0:
