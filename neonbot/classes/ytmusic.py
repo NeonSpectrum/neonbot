@@ -49,3 +49,27 @@ class YTMusic:
                 related_tracks.append({'id': track.get('counterpart')['videoId'], 'title': track.get('title')})
 
         return related_tracks
+
+    @staticmethod
+    async def get_random_home() -> List[dict]:
+        homes = await bot.loop.run_in_executor(
+            bot.executor,
+            functools.partial(ytmusic.get_home),
+        )
+
+        tracks = []
+
+        for home in homes:
+            if home.get('title') == 'Quick picks':
+                tracks = contents
+                break
+
+        home_tracks = []
+
+        for track in tracks:
+            if track.get('videoId'):
+                home_tracks.append({'id': track.get('videoId'), 'title': track.get('title')})
+            else:
+                home_tracks.append({'id': track.get('counterpart')['videoId'], 'title': track.get('title')})
+
+        return home_tracks
