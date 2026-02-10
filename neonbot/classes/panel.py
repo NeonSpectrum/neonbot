@@ -99,6 +99,8 @@ class Panel:
                 except ApiError as error:
                     log.warn(error)
                     return
+                except Exception as error:
+                    log.error(error)
 
                 identifier = details['attributes']['identifier']
                 name = details['attributes']['name']
@@ -177,6 +179,8 @@ class Panel:
             log.error('Panel server timeout!')
         except asyncio.CancelledError:
             pass
+        except Exception as error:
+            log.error(error)
 
     async def add_minecraft(self, embed):
         server_ip = self.get_default_ip()
