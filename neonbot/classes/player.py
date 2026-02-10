@@ -266,7 +266,11 @@ class Player(DefaultPlayer):
             if next_queue is not None and 0 <= next_queue < len(self.playlist):
                 self.current_queue = next_queue
                 
-            track = self.playlist[self.current_queue]
+            try:
+                track = self.playlist[self.current_queue]
+            except IndexError:
+                log.error(f'Playlist length is {len(self.playlist)}. Current queue is {self.current_queue}')
+                return
 
         await super().play(track, *args, **kwargs)
 
@@ -368,13 +372,13 @@ class Player(DefaultPlayer):
     def get_playing_embed(self):
         return self.get_track_embed(self.current).set_author(
             name=t('music.now_playing.index', index=self.current.extra['index'] + 1),
-            icon_url=ICONS.get(self.current.source_name, 'music'),
+            icon_url=ICONS.get(self.current.source_name, ICONS.get('music')),
         )
 
     def get_finished_embed(self):
         return self.get_track_embed(self.last_track).set_author(
             name=t('music.finished_playing.index', index=self.track_list.index(self.last_track) + 1),
-            icon_url=ICONS.get(self.last_track.source_name, 'music'),
+            icon_url=ICONS.get(self.last_track.source_name, ICONS.get('music')),
         )
 
     def get_track_embed(self, track: AudioTrack):
