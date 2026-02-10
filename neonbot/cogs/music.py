@@ -89,12 +89,7 @@ class Music(commands.Cog):
         player = bot.lavalink.player_manager.create(ctx.guild.id)
         player.ctx = ctx
 
-        # Clear autoplay list whenever there's new song
-        player.autoplay_list = []
-
-        tracks = await YTMusic.get_random_home()
-        query = tracks[0].get('videoId')
-        await player.search(query)
+        await player.search_random()
 
         if len(player.track_list) == 0:
             return

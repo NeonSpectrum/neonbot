@@ -190,6 +190,14 @@ class Player(DefaultPlayer):
             self.current_queue = queue
         await super().stop()
 
+    async def search_random(self):
+        tracks = await YTMusic.get_random_home()
+
+        self.autoplay_list = self.filter_tracks_from_existing(tracks)
+
+        track = self.autoplay_list.pop(0)
+        self.search(track['id'])
+
     async def search(self, query: str, *, send_message=True, requester=None):
         if not query.startswith(('http://', 'https://')):
             query = f'ytmsearch:{query}'
@@ -292,9 +300,7 @@ class Player(DefaultPlayer):
                 if len(related_tracks) == 0:
                     related_tracks = await YTMusic.get_random_home()
 
-                existing_ids = [i.identifier for i in self.track_list]
-                
-                self.autoplay_list = [i for i in related_tracks if i["id"] not in existing_ids]
+                self.autoplay_list = self.filter_tracks_from_existing(related_tracks)
 
             related_video = self.autoplay_list.pop(0)
         except (ytmusicapi.exceptions.YTMusicServerError, IndexError):
@@ -401,6 +407,10 @@ class Player(DefaultPlayer):
         for index, track in enumerate(track_list):
             if track.extra['index'] == self.current.extra['index']:
                 return index
+
+    def filter_tracks_from_existing(self, track_list):
+        existing_ids = [i.identifier for i in self.track_list]
+        return [i for i in track_list if i['id'] not in existing_ids]
 
     async def wait_for_track_end_event(self):
         if self.track_end_event_task:
