@@ -120,11 +120,16 @@ class Event(commands.Cog):
             ctx = await bot.get_context(ctx)
 
         error = getattr(error, 'original', error)
-        ignored = discord.NotFound, commands.BadArgument, commands.CheckFailure, discord.app_commands.CheckFailure
+        ignored = (
+            discord.NotFound,
+            commands.BadArgument,
+            commands.CheckFailure,
+            discord.app_commands.CheckFailure,
+            discord.ext.commands.MissingRequiredArgument
+        )
         send_msg = (
             discord.app_commands.AppCommandError,
-            discord.app_commands.CommandInvokeError,
-            discord.ext.commands.MissingRequiredArgument
+            discord.app_commands.CommandInvokeError
         )
 
         tb = traceback.format_exception(error, value=error, tb=error.__traceback__)
