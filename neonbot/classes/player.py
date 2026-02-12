@@ -148,9 +148,11 @@ class Player(DefaultPlayer):
         if requester:
             track.requester = requester
         self.track_list.append(track)
+
         if self.shuffle:
             index = random.randint(self.current_queue, len(self.shuffled_list))
             self.shuffled_list.insert(index, track)
+            
         self.refresh_player_message()
 
     def remove(self, index):
@@ -284,8 +286,8 @@ class Player(DefaultPlayer):
 
     async def reset(self, timeout=None):
         await self.stop(queue=-1)
-        await self.disconnect(force=True, timeout=timeout)
         await self.wait_for_track_end_event()
+        await self.disconnect(force=True, timeout=timeout)
 
     async def process_autoplay(self, track: AudioTrack) -> None:
         try:
@@ -434,6 +436,7 @@ class Player(DefaultPlayer):
                 and self.loop != Repeat.OFF
                 and not self.shuffle
                 or self.autoplay
+                or self.current_queue == -1
             )
             await self.send_finished_message(track=self.last_track, compact=compact)
 
