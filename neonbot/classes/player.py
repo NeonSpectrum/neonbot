@@ -248,15 +248,7 @@ class Player(DefaultPlayer):
         if not track:
             next_queue = None
 
-            if self.autoplay and self.is_last_track: # autoplay
-                try:
-                    await self.process_autoplay(self.last_track)
-                except PlayerError:
-                    await self.stop()
-                    await self.ctx.channel.send(embed=Embed('No related videos available.'))
-                    return
-                next_queue = self.current_queue + 1
-            elif self.shuffle: # shuffle
+            if self.shuffle: # shuffle
                 if self.current_queue == len(self.playlist) - 1:
                     next_queue = 0
                 else:
@@ -270,6 +262,14 @@ class Player(DefaultPlayer):
                 if self.current_queue == len(self.playlist) - 1: # dont play if last
                     return
                 next_queue = self.current_queue + 1 # just increment if not last
+            elif self.autoplay and self.is_last_track: # autoplay
+                try:
+                    await self.process_autoplay(self.last_track)
+                except PlayerError:
+                    await self.stop()
+                    await self.ctx.channel.send(embed=Embed('No related videos available.'))
+                    return
+                next_queue = self.current_queue + 1
 
             if next_queue is not None and 0 <= next_queue < len(self.playlist):
                 self.current_queue = next_queue
