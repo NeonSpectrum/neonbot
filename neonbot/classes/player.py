@@ -250,6 +250,8 @@ class Player(DefaultPlayer):
         if not track:
             next_queue = None
 
+            # Priority: shuffle > repeat all > autoplay > repeat off
+
             if self.shuffle: # shuffle
                 if self.current_queue == len(self.playlist) - 1:
                     next_queue = 0
@@ -260,10 +262,6 @@ class Player(DefaultPlayer):
                     next_queue = 0
                 else:
                     next_queue = self.current_queue + 1 # just increment if not last
-            elif self.loop == Repeat.OFF and not self.autoplay: # repeat off
-                if self.current_queue == len(self.playlist) - 1: # dont play if last
-                    return
-                next_queue = self.current_queue + 1 # just increment if not last
             elif self.autoplay and self.is_last_track: # autoplay
                 try:
                     await self.process_autoplay(self.last_track)
@@ -272,6 +270,10 @@ class Player(DefaultPlayer):
                     await self.ctx.channel.send(embed=Embed('No related videos available.'))
                     return
                 next_queue = self.current_queue + 1
+            elif self.loop == Repeat.OFF: # repeat off
+                if self.current_queue == len(self.playlist) - 1: # dont play if last
+                    return
+                next_queue = self.current_queue + 1 # just increment if not last
 
             if next_queue is not None and 0 <= next_queue < len(self.playlist):
                 self.current_queue = next_queue
