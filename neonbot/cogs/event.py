@@ -83,9 +83,10 @@ class Event(commands.Cog):
                             file=discord.File(BytesIO(response.encode()), filename=gemini_chat.get_prompt() + '.txt')
                         )
                     else:
-                        await ctx.reply(gemini_chat.get_response())
-            except Exception:
+                        await ctx.reply(response)
+            except Exception as error:
                 await ctx.reply(embed=Embed('Something went wrong.'))
+                log.error(error)
             finally:
                 return
 
