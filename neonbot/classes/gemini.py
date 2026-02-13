@@ -4,6 +4,7 @@ import discord
 import google.genai as genai
 from PIL import Image
 from discord.ext import commands
+from envparse import env
 
 from neonbot.utils import log
 
@@ -11,7 +12,7 @@ client = genai.Client()
 
 class GeminiChat:
     def __init__(self, message):
-        self.model_name = 'gemini-3.0-flash'
+        self.model_name = env.str('GEMINI_MODEL')
         self.response = None
         self.prompt = message.lstrip('? ')
 
