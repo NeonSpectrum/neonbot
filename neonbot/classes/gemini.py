@@ -40,7 +40,7 @@ class GeminiChat:
             contents.append(types.Content(
                 role='user' if message.author.id != bot.user.id else 'model',
                 parts=[
-                    types.Part.from_text(message.content),
+                    types.Part.from_text(text=message.content),
                     *attachments
                 ]
             ))
