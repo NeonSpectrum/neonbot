@@ -26,7 +26,7 @@ class GeminiChat:
         else:
             messages = [ctx.message]
 
-        for message in message:
+        for message in messages:
             attachments = []
 
             for attachment in message.attachments:
