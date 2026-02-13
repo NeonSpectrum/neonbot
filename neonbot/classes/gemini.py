@@ -22,7 +22,7 @@ class GeminiChat:
         contents = []
 
         if ctx.message.reference:
-            messages = await get_all_descendants(ctx.channel, ctx.message.id)
+            messages = await self.get_all_descendants(ctx.channel, ctx.message.id)
         else:
             messages = [ctx.message]
 
