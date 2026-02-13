@@ -376,7 +376,7 @@ class Player(DefaultPlayer):
 
     def get_footer(self, track):
         return [
-            str(bot.get_user(track.requester)),
+            bot.get_user(track.requester).display_name,
             format_milliseconds(track.duration),
             t('music.shuffle_footer', shuffle='on' if self.shuffle else 'off'),
             t('music.repeat_footer', repeat=Repeat(self.loop).name.lower()),
