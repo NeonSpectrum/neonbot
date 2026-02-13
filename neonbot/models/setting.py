@@ -16,6 +16,7 @@ class SettingModel(Document):
     class Settings:
         name = 'settings'
         use_cache = True
+        use_state_management = True
 
     @staticmethod
     async def get_instance() -> Optional[SettingModel]:

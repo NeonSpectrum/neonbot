@@ -224,7 +224,7 @@ class Administration(commands.Cog):
             )
 
     @settings.command(name='set-gemini-instruction')
-    async def set_gemini_instruction(self, interaction: discord.Interaction, channel: discord.TextChannel, value: str):
+    async def set_gemini_instruction(self, interaction: discord.Interaction, value: str):
         """Sets the chatgpt channel. *ADMINISTRATOR"""
 
         bot.setting.gemini_system_instruction = value
