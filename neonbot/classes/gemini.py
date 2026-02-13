@@ -99,4 +99,4 @@ class GeminiChat:
                 else:
                     break
                 
-        return messages.reverse()
+        return messages[::-1]
