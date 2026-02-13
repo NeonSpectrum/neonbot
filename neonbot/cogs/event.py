@@ -51,8 +51,6 @@ class Event(commands.Cog):
             return
 
         ctx = await bot.get_context(message)
-        content = message.content
-        is_mentioned = bot.user.mentioned_in(message)
 
         if ctx.channel.type == discord.ChannelType.private:
             if message.content.lower() == 'invite':
@@ -68,36 +66,27 @@ class Event(commands.Cog):
         if await ChatGPT().create_thread(ctx):
             return
 
-        if content.startswith('?? ') or is_mentioned:
-            prompt = message.content
+        if bot.user.mentioned_in(message):
+            try:
+                gemini_chat = GeminiChat(ctx)
 
-            if content.startswith('?? '):
-                prompt = prompt.lstrip('? ')
-            if is_mentioned:
-                prompt = prompt.replace(bot.user.mention, '(you got mentioned here)').strip()
+                if not gemini_chat.get_prompt():
+                    return
 
-            gemini_chat = GeminiChat(prompt)
+                async with ctx.channel.typing():
+                    await gemini_chat.generate_content()
+                    response = gemini_chat.get_response()
 
-            if not gemini_chat.get_prompt():
-                return
-
-            await ctx.message.add_reaction('🤔')
-
-            if is_mentioned:
-                gemini_chat.set_prompt_concise()
-
-            async with ctx.channel.typing():
-                await gemini_chat.generate_content_from_ctx(ctx)
-                response = gemini_chat.get_response()
-
-                if len(response) > 2000:
-                    response = md_to_text(response)
-                    await ctx.reply(
-                        file=discord.File(BytesIO(response.encode()), filename=gemini_chat.get_prompt() + '.txt')
-                    )
-                else:
-                    await ctx.reply(gemini_chat.get_response())
-
+                    if len(response) > 2000:
+                        response = md_to_text(response)
+                        await ctx.reply(
+                            file=discord.File(BytesIO(response.encode()), filename=gemini_chat.get_prompt() + '.txt')
+                        )
+                    else:
+                        await ctx.reply(gemini_chat.get_response())
+            except Exception:
+                await ctx.reply(embed=Embed('Something went wrong.'))
+            finally:
                 return
 
         if ctx.command is not None:

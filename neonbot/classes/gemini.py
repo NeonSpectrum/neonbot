@@ -13,20 +13,26 @@ from neonbot.utils import log
 client = genai.Client()
 
 class GeminiChat:
-    def __init__(self, message):
+    def __init__(self, ctx: commands.Context):
         self.model_name = env.str('GEMINI_MODEL')
         self.response = None
-        self.prompt = message
+        self.ctx = ctx
+        self.prompt = ctx.message.content
 
-    async def generate_content_from_ctx(self, ctx: commands.Context):
+    async def generate_content(self):
         contents = []
 
-        if ctx.message.reference:
-            messages = await self.get_all_messages(ctx.channel, ctx.message)
+        if self.ctx.message.reference:
+            messages = await self.get_all_messages()
         else:
-            messages = [ctx.message]
+            messages = [self.ctx.message]
 
         for message in messages:
+            text = message.content
+
+            if bot.user.mentioned_in(message):
+                text = text.replace(bot.user.mention, bot.user.global_name).strip()
+
             attachments = []
 
             for attachment in message.attachments:
@@ -40,7 +46,7 @@ class GeminiChat:
             contents.append(types.Content(
                 role='user' if message.author.id != bot.user.id else 'model',
                 parts=[
-                    types.Part.from_text(text=message.content),
+                    types.Part.from_text(text=text),
                     *attachments
                 ]
             ))
@@ -48,17 +54,6 @@ class GeminiChat:
         self.response = await client.aio.models.generate_content(
             model=self.model_name,
             contents=contents,
-            config=types.GenerateContentConfig(
-                system_instruction=bot.setting.gemini_system_instruction
-            )
-        )
-        self.log()
-        return self
-
-    async def generate_content(self):
-        self.response = await client.aio.models.generate_content(
-            model=self.model_name,
-            contents=[self.prompt],
             config=types.GenerateContentConfig(
                 system_instruction=bot.setting.gemini_system_instruction
             )
@@ -75,23 +70,15 @@ class GeminiChat:
     def get_prompt(self):
         return self.prompt
 
-    def set_prompt_concise(self):
-        self.prompt = 'Please provide a concise answer. ' + self.prompt
+    async def get_all_messages(self):
+        channel = self.ctx.channel
+        last_message = self.ctx.message
 
-    @staticmethod
-    async def generate(prompt, precise=False):
-        gemini_chat = GeminiChat(prompt)
-        if precise:
-            gemini_chat.set_prompt_concise()
-        await gemini_chat.generate_content()
-        return gemini_chat.get_response()
-
-    async def get_all_messages(self, channel, last_message, limit=1000):
         messages = []
-        last_reference_id = None
+        last_reference_id = last_message.id
 
-        async for message in channel.history(limit=limit):
-            if message.id == last_reference_id or last_reference_id is None:
+        async for message in channel.history(limit=1000):
+            if message.id == last_reference_id:
                 messages.append(message)
 
                 if message.reference:
