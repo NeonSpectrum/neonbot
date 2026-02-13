@@ -1,8 +1,4 @@
-from io import BytesIO
-
-import discord
 import google.genai as genai
-from PIL import Image
 from discord.ext import commands
 from envparse import env
 from google.genai import types

@@ -260,7 +260,7 @@ class Player(DefaultPlayer):
                     next_queue = 0
                 else:
                     next_queue = self.current_queue + 1 # just increment if not last
-            elif self.loop == Repeat.OFF: # repeat off
+            elif self.loop == Repeat.OFF and not self.autoplay: # repeat off
                 if self.current_queue == len(self.playlist) - 1: # dont play if last
                     return
                 next_queue = self.current_queue + 1 # just increment if not last
