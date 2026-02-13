@@ -52,6 +52,7 @@ class Event(commands.Cog):
 
         ctx = await bot.get_context(message)
         content = message.content
+        is_mentioned = bot.user.mentioned_in(message)
 
         if ctx.channel.type == discord.ChannelType.private:
             if message.content.lower() == 'invite':
@@ -67,15 +68,22 @@ class Event(commands.Cog):
         if await ChatGPT().create_thread(ctx):
             return
 
-        if content.startswith('?? ') or content.startswith('??? '):
-            gemini_chat = GeminiChat(ctx.message.content)
+        if content.startswith('?? ') or is_mentioned:
+            prompt = message.content
+
+            if content.startswith('?? '):
+                prompt = prompt.lstrip('? ')
+            if is_mentioned():
+                prompt = prompt.replace(bot.mention, '').strip()
+
+            gemini_chat = GeminiChat(prompt)
 
             if not gemini_chat.get_prompt():
                 return
 
             await ctx.message.add_reaction('🤔')
 
-            if content.startswith('?? '):
+            if is_mentioned:
                 gemini_chat.set_prompt_concise()
 
             async with ctx.channel.typing():

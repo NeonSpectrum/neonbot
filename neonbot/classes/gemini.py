@@ -16,7 +16,7 @@ class GeminiChat:
     def __init__(self, message):
         self.model_name = env.str('GEMINI_MODEL')
         self.response = None
-        self.prompt = message.lstrip('? ')
+        self.prompt = message
 
     async def generate_content_from_ctx(self, ctx: commands.Context):
         prompts = []
