@@ -22,7 +22,7 @@ class GeminiChat:
         contents = []
 
         if ctx.message.reference:
-            messages = await self.get_all_descendants(ctx.channel, ctx.message.id)
+            messages = await self.get_all_messages(ctx.channel, ctx.message)
         else:
             messages = [ctx.message]
 
@@ -86,13 +86,17 @@ class GeminiChat:
         await gemini_chat.generate_content()
         return gemini_chat.get_response()
 
-    async def get_all_descendants(self, channel, last_message_id, limit=1000):
-        descendants = []
-        current_ids = {last_message_id}
-        async for msg in channel.history(limit=limit):  # Newest-first, skips unrelated
-            if msg.reference and msg.reference.message_id in current_ids:
-                descendants.append(msg)
-                current_ids.add(msg.id)  # Enables nested like C → B
-            elif msg.id == last_message_id:
-                break
-        return sorted(descendants, key=lambda m: m.created_at)  # Chrono order
+    async def get_all_messages(self, channel, last_message, limit=1000):
+        messages = []
+        last_reference_id = None
+
+        async for message in channel.history(limit=limit):
+            if message.id == last_reference_id or last_reference_id is None:
+                messages.append(message)
+
+                if message.reference:
+                    last_reference_id = message.reference.message_id
+                else:
+                    break
+                
+        return messages.reverse()
