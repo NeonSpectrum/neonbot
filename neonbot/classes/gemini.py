@@ -86,7 +86,7 @@ class GeminiChat:
         await gemini_chat.generate_content()
         return gemini_chat.get_response()
 
-    async def get_all_descendants(channel, last_message_id, limit=1000):
+    async def get_all_descendants(self, channel, last_message_id, limit=1000):
         descendants = []
         current_ids = {last_message_id}
         async for msg in channel.history(limit=limit):  # Newest-first, skips unrelated
