@@ -223,6 +223,19 @@ class Administration(commands.Cog):
                 embed=Embed('ChatGPT is now disabled.')
             )
 
+    @server.command(name='set-gemini-instruction')
+    async def set_gemini_instruction(self, interaction: discord.Interaction, channel: discord.TextChannel, value: str):
+        """Sets the chatgpt channel. *ADMINISTRATOR"""
+
+        bot.setting.gemini_system_instruction = value
+
+        await bot.setting.save_changes()
+
+        # noinspection PyUnresolvedReferences
+        await cast(discord.InteractionResponse, interaction.response).send_message(
+            embed=Embed(f'Gemini instruction is now set to **{value}**.')
+        )
+
     @app_commands.command(name='sync')
     @app_commands.allowed_installs(guilds=False, users=True)
     @app_commands.allowed_contexts(guilds=False, dms=True, private_channels=False)

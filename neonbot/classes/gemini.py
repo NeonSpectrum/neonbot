@@ -5,7 +5,9 @@ import google.genai as genai
 from PIL import Image
 from discord.ext import commands
 from envparse import env
+from google.genai import types
 
+from neonbot import bot
 from neonbot.utils import log
 
 client = genai.Client()
@@ -55,7 +57,10 @@ class GeminiChat:
     async def generate_content(self):
         self.response = await client.aio.models.generate_content(
             model=self.model_name,
-            contents=[self.prompt]
+            contents=[self.prompt],
+            config=types.GenerateContentConfig(
+                system_instruction=bot.setting.gemini_system_instruction
+            )
         )
         self.log()
         return self

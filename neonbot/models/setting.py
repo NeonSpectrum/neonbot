@@ -11,6 +11,7 @@ class SettingModel(Document):
     status: str
     activity_name: str
     activity_type: str
+    gemini_system_instruction: Optional[str] = ''
 
     class Settings:
         name = 'settings'
