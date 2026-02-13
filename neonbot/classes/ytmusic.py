@@ -61,7 +61,7 @@ class YTMusic:
 
         for home in homes:
             if home.get('title') == 'Quick picks':
-                tracks = contents
+                tracks = home.get('contents')
                 break
 
         home_tracks = []

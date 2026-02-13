@@ -223,7 +223,7 @@ class Administration(commands.Cog):
                 embed=Embed('ChatGPT is now disabled.')
             )
 
-    @server.command(name='set-gemini-instruction')
+    @settings.command(name='set-gemini-instruction')
     async def set_gemini_instruction(self, interaction: discord.Interaction, channel: discord.TextChannel, value: str):
         """Sets the chatgpt channel. *ADMINISTRATOR"""
 

@@ -7,7 +7,6 @@ from i18n import t
 
 from neonbot import bot
 from neonbot.classes.embed import Embed, PaginationEmbed
-from neonbot.classes.ytmusic import YTMusic
 from neonbot.enums import Repeat
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
