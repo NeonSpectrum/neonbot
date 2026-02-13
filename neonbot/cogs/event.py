@@ -74,7 +74,7 @@ class Event(commands.Cog):
             if content.startswith('?? '):
                 prompt = prompt.lstrip('? ')
             if is_mentioned:
-                prompt = prompt.replace(bot.mention, '').strip()
+                prompt = prompt.replace(bot.user.mention, '(you got mentioned here)').strip()
 
             gemini_chat = GeminiChat(prompt)
 
