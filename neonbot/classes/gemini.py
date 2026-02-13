@@ -49,7 +49,10 @@ class GeminiChat:
 
         self.response = await client.aio.models.generate_content(
             model=self.model_name,
-            contents=contents
+            contents=contents,
+            config=types.GenerateContentConfig(
+                system_instruction=bot.setting.gemini_system_instruction
+            )
         )
         self.log()
         return self
