@@ -31,7 +31,7 @@ class GeminiChat:
             text = message.content
 
             if bot.user.mentioned_in(message):
-                text = text.replace(bot.user.mention, bot.user.global_name).strip()
+                text = text.replace(bot.user.mention, bot.user.name).strip()
 
             attachments = []
 
