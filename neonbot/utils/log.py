@@ -27,7 +27,7 @@ class Log(logging.Logger):
     def set_console_handler(self) -> None:
         console = logging.StreamHandler()
         console.setFormatter(self.formatter)
-        console.setLevel(logging.ERROR)
+        console.setLevel(logging.INFO)
         self.addHandler(console)
 
     def cmd(
