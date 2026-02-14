@@ -105,7 +105,8 @@ class YTMusic:
 
             log.info(response)
         except Exception as error:
-            log.error(error)
+            log.debug(error)
+            log.error('Failed to add history item. ' + str(error))
 
     @staticmethod
     async def get_account_info():

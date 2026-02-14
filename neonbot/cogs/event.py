@@ -39,7 +39,7 @@ class Event(commands.Cog):
         log.info('Ready!\n')
         bot.set_ready()
         bot.start_listeners()
-        print(await YTMusic.get_account_info())
+        log.debug(await YTMusic.get_account_info())
 
     @staticmethod
     @listener(NodeConnectedEvent)
@@ -56,7 +56,8 @@ class Event(commands.Cog):
 
         if ctx.channel.type == discord.ChannelType.private:
             if message.content.lower() == 'invite':
-                return await bot.send_invite_link(message)
+                await bot.send_invite_link(message)
+                return
 
             log.info(f'DM from {ctx.author}: {message.content}')
             await bot.send_to_owner(

@@ -15,19 +15,19 @@ class Log(logging.Logger):
 
         self.formatter = logging.Formatter(LOG_FORMAT, '%Y-%m-%d %I:%M:%S %p')
 
-        self.setLevel(logging.DEBUG if self.name.startswith('neonbot') else logging.ERROR)
-
         self.set_file_handler()
         self.set_console_handler()
 
     def set_file_handler(self) -> None:
         file = logging.FileHandler(filename='debug.log', encoding='utf-8', mode='a')
         file.setFormatter(self.formatter)
+        file.setLevel(logging.DEBUG)
         self.addHandler(file)
 
     def set_console_handler(self) -> None:
         console = logging.StreamHandler()
         console.setFormatter(self.formatter)
+        console.setLevel(logging.ERROR)
         self.addHandler(console)
 
     def cmd(
