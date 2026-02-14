@@ -90,7 +90,7 @@ class YTMusic:
         return home_tracks
 
     @staticmethod
-    async def add_history(video_id: int) -> None:
+    async def add_history(video_id: str) -> None:
         try:
             song = await bot.loop.run_in_executor(
                 bot.executor,

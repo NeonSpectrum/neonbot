@@ -156,7 +156,7 @@ class Player(DefaultPlayer):
         self.refresh_player_message()
 
         if 'identifier' in track and requester != bot.user.id:
-            bot.loop.create_task(YTMusic.add_history(track['identifier']))
+            bot.loop.create_task(YTMusic.add_history(track.identifier))
 
     def remove(self, index):
         if self.shuffle:
