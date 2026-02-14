@@ -59,12 +59,15 @@ class YTMusic:
             functools.partial(ytmusic.get_charts, YTMUSIC_COUNTRY),
         )
 
+        print(charts)
+
         playlist_id = charts.get('videos')[0].get('playlistId')
 
         playlist = await bot.loop.run_in_executor(
             bot.executor,
             functools.partial(ytmusic.get_playlist, playlist_id),
         )
+        print(playlist)
 
         tracks = []
 
