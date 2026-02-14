@@ -104,12 +104,17 @@ class YTMusic:
                 functools.partial(ytmusic.get_song, video_id),
             )
 
-            response = await bot.loop.run_in_executor(
+            await bot.loop.run_in_executor(
                 bot.executor,
                 functools.partial(ytmusic.add_history_item, song),
             )
 
-            log.info(response)
+            history = await bot.loop.run_in_executor(
+                bot.executor,
+                functools.partial(ytmusic.get_history),
+            )
+
+            log.info('Added history item. Total history: ' + f'{len(history)}.')
         except Exception as error:
             log.debug(error)
             log.error('Failed to add history item. ' + str(error))
