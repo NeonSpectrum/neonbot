@@ -9,15 +9,21 @@ from neonbot import bot
 from neonbot.utils import log
 
 YTMUSIC_COUNTRY = env.str('YTMUSIC_COUNTRY')
+YTMUSIC_CREDENTIALS_TYPE = env.str('YTMUSIC_CREDENTIALS_TYPE')
 
-if env.str('YTMUSIC_CREDENTIALS_JSON'):
+if YTMUSIC_CREDENTIALS_TYPE == 'browser':
+    ytmusic = YTMusic(
+        env.str('YTMUSIC_CREDENTIALS_JSON'),
+        env.str('YTMUSIC_BRAND_ACCOUNT_ID'),
+        location=YTMUSIC_COUNTRY
+    )
+elif YTMUSIC_CREDENTIALS_TYPE == 'oauth':
     ytmusic = YTMusic(
         env.str('YTMUSIC_CREDENTIALS_JSON'),
         env.str('YTMUSIC_BRAND_ACCOUNT_ID'),
         oauth_credentials=OAuthCredentials(client_id=env.str('YTMUSIC_CLIENT_ID'), client_secret=env.str('YTMUSIC_CLIENT_SECRET')),
         location=YTMUSIC_COUNTRY
     )
-    print('using YTMUSIC_CREDENTIALS_JSON')
 else:
     ytmusic = YTMusic(
         location=YTMUSIC_COUNTRY
