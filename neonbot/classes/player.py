@@ -152,8 +152,11 @@ class Player(DefaultPlayer):
         if self.shuffle:
             index = random.randint(self.current_queue, len(self.shuffled_list))
             self.shuffled_list.insert(index, track)
-            
+
         self.refresh_player_message()
+
+        if 'identifier' in track:
+            bot.loop.create_task(YTMusic.add_history(track['identifier']))
 
     def remove(self, index):
         if self.shuffle:
@@ -193,8 +196,7 @@ class Player(DefaultPlayer):
         await super().stop()
 
     async def search_random(self):
-        tracks = await YTMusic.get_top_playlist()
-        print(tracks)
+        tracks = await YTMusic.get_random_song()
 
         self.autoplay_list = self.filter_tracks_from_existing(tracks)
 
@@ -220,7 +222,7 @@ class Player(DefaultPlayer):
         if load_type == LoadType.ERROR:
             embed = Embed(t('music.search_error'))
             log.error(results.error.message)
-            
+
         elif load_type == LoadType.PLAYLIST:
             count = 0
             for track in tracks:
@@ -238,7 +240,7 @@ class Player(DefaultPlayer):
             self.add(track, requester=requester or self.ctx.author.id)
 
             embed = Embed(t('music.added_to_queue', queue=len(self.track_list), title=track.title, url=track.uri))
- 
+
         if embed and send_message:
             await self.ctx.reply(embed=embed)
 
@@ -278,7 +280,7 @@ class Player(DefaultPlayer):
 
             if next_queue is not None and 0 <= next_queue < len(self.playlist):
                 self.current_queue = next_queue
-                
+
             try:
                 track = self.playlist[self.current_queue]
             except IndexError:

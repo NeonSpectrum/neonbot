@@ -3,9 +3,10 @@ import random
 from typing import List
 
 from envparse import env
-from ytmusicapi import YTMusic
+from ytmusicapi import YTMusic, OAuthCredentials
 
 from neonbot import bot
+from neonbot.utils import log
 
 YTMUSIC_COUNTRY = env.str('YTMUSIC_COUNTRY')
 ytmusic = YTMusic(
@@ -16,7 +17,6 @@ ytmusic = YTMusic(
 
 
 class YTMusic:
-
     @staticmethod
     async def search(keyword):
         results: list[dict] = await bot.loop.run_in_executor(
@@ -59,24 +59,40 @@ class YTMusic:
         return related_tracks
 
     @staticmethod
-    async def get_top_playlist() -> List[dict]:
-        playlist_id = 'PLFcGX84jKOu5_K-w5jo9KkmrVvWzBMv-F'
-
-        playlist = await bot.loop.run_in_executor(
+    async def get_random_song() -> List[dict]:
+        homes = await bot.loop.run_in_executor(
             bot.executor,
-            functools.partial(ytmusic.get_playlist, playlist_id),
+            functools.partial(ytmusic.get_home),
         )
 
         tracks = []
 
-        playlist_tracks = playlist.get('tracks')
+        for home in homes:
+            if home.get('title') == 'Quick picks':
+                tracks = home.get('contents')
+                break
 
-        random.shuffle(playlist_tracks)
+        home_tracks = []
 
-        for track in playlist_tracks:
+        for track in tracks:
             if track.get('videoId'):
-                tracks.append({'id': track.get('videoId'), 'title': track.get('title')})
+                home_tracks.append({'id': track.get('videoId'), 'title': track.get('title')})
             else:
-                tracks.append({'id': track.get('counterpart')['videoId'], 'title': track.get('title')})
+                home_tracks.append({'id': track.get('counterpart')['videoId'], 'title': track.get('title')})
 
-        return tracks
+        return home_tracks
+
+    @staticmethod
+    async def add_history(video_id: int) -> None:
+        try:
+            song = await bot.loop.run_in_executor(
+                bot.executor,
+                functools.partial(ytmusic.get_song, video_id),
+            )
+
+            await bot.loop.run_in_executor(
+                bot.executor,
+                functools.partial(ytmusic.add_history_item, song),
+            )
+        except Exception as error:
+            log.error(error)
