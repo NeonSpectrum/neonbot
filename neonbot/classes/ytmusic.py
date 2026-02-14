@@ -3,7 +3,7 @@ import random
 from typing import List
 
 from envparse import env
-from ytmusicapi import YTMusic, OAuthCredentials
+from ytmusicapi import YTMusic, OAuthCredentials, LikeStatus
 
 from neonbot import bot
 from neonbot.utils import log
@@ -97,27 +97,15 @@ class YTMusic:
         return home_tracks
 
     @staticmethod
-    async def add_history(video_id: str) -> None:
+    async def like_song(video_id: str) -> None:
         try:
-            song = await bot.loop.run_in_executor(
-                bot.executor,
-                functools.partial(ytmusic.get_song, video_id),
-            )
-
             await bot.loop.run_in_executor(
                 bot.executor,
-                functools.partial(ytmusic.add_history_item, song),
+                functools.partial(ytmusic.rate_song, video_id, LikeStatus.LIKE),
             )
-
-            history = await bot.loop.run_in_executor(
-                bot.executor,
-                functools.partial(ytmusic.get_history),
-            )
-
-            log.info('Added history item. Total history: ' + f'{len(history)}.')
         except Exception as error:
-            log.exception(error)
-            log.error('Failed to add history item. ' + str(error))
+            log.debug(error, exc_info=True)
+            log.error('Failed to like song. ' + str(error))
 
     @staticmethod
     async def get_account_info():
