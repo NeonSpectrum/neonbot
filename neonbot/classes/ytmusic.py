@@ -105,3 +105,10 @@ class YTMusic:
             log.info(response)
         except Exception as error:
             log.error(error)
+
+    @staticmethod
+    async def get_account_info():
+        return await bot.loop.run_in_executor(
+            bot.executor,
+            functools.partial(ytmusic.get_account_info),
+        )

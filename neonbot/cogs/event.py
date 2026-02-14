@@ -14,6 +14,7 @@ from neonbot.classes.chatgpt.chatgpt import ChatGPT
 from neonbot.classes.embed import Embed
 from neonbot.classes.gemini import GeminiChat
 from neonbot.classes.voice_events import VoiceEvents
+from neonbot.classes.ytmusic import YTMusic
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.functions import format_seconds, get_command_string, get_log_prefix, md_to_text, remove_ansi
@@ -38,6 +39,7 @@ class Event(commands.Cog):
         log.info('Ready!\n')
         bot.set_ready()
         bot.start_listeners()
+        print(YTMusic.get_account_info())
 
     @staticmethod
     @listener(NodeConnectedEvent)
