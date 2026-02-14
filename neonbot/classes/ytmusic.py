@@ -17,6 +17,7 @@ if env.str('YTMUSIC_CREDENTIALS_JSON'):
         oauth_credentials=OAuthCredentials(client_id=env.str('YTMUSIC_CLIENT_ID'), client_secret=env.str('YTMUSIC_CLIENT_SECRET')),
         location=YTMUSIC_COUNTRY
     )
+    print('using YTMUSIC_CREDENTIALS_JSON')
 else:
     ytmusic = YTMusic(
         location=YTMUSIC_COUNTRY
