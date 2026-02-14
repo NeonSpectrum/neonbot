@@ -194,6 +194,7 @@ class Player(DefaultPlayer):
 
     async def search_random(self):
         tracks = await YTMusic.get_top_playlist()
+        print(tracks)
 
         self.autoplay_list = self.filter_tracks_from_existing(tracks)
 
