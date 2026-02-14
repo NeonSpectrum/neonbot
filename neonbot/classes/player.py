@@ -193,9 +193,12 @@ class Player(DefaultPlayer):
         await super().stop()
 
     async def search_random(self):
-        spotify_top_playlist_url = 'https://open.spotify.com/playlist/37i9dQZEVXbNBz9cRCSFkY'
-        results = await self.node.get_tracks(spotify_top_playlist_url)
-        print(results)
+        tracks = await YTMusic.get_top_playlist()
+
+        self.autoplay_list = self.filter_tracks_from_existing(tracks)
+
+        track = self.autoplay_list.pop(0)
+        await self.search(track['id'])
 
     async def search(self, query: str, *, send_message=True, requester=None):
         if not query.startswith(('http://', 'https://')):
