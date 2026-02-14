@@ -51,30 +51,3 @@ class YTMusic:
                 related_tracks.append({'id': track.get('counterpart')['videoId'], 'title': track.get('title')})
 
         return related_tracks
-
-    @staticmethod
-    async def get_top_playlist() -> List[dict]:
-        charts = await bot.loop.run_in_executor(
-            bot.executor,
-            functools.partial(ytmusic.get_charts, YTMUSIC_COUNTRY),
-        )
-
-        print(charts)
-
-        playlist_id = charts.get('videos')[0].get('playlistId')
-
-        playlist = await bot.loop.run_in_executor(
-            bot.executor,
-            functools.partial(ytmusic.get_playlist, playlist_id),
-        )
-        print(playlist)
-
-        tracks = []
-
-        for track in playlist.get('tracks'):
-            if track.get('videoId'):
-                tracks.append({'id': track.get('videoId'), 'title': track.get('title')})
-            else:
-                tracks.append({'id': track.get('counterpart')['videoId'], 'title': track.get('title')})
-
-        return tracks
