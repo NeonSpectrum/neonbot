@@ -97,9 +97,11 @@ class YTMusic:
                 functools.partial(ytmusic.get_song, video_id),
             )
 
-            await bot.loop.run_in_executor(
+            response = await bot.loop.run_in_executor(
                 bot.executor,
                 functools.partial(ytmusic.add_history_item, song),
             )
+
+            log.info(response)
         except Exception as error:
             log.error(error)
