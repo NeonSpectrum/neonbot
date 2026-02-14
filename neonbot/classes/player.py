@@ -199,7 +199,7 @@ class Player(DefaultPlayer):
         self.autoplay_list = self.filter_tracks_from_existing(tracks)
 
         track = self.autoplay_list.pop(0)
-        await self.search(track['id'])
+        await self.search(f"https://music.youtube.com/watch?v={track['id']}")
 
     async def search(self, query: str, *, send_message=True, requester=None):
         if not query.startswith(('http://', 'https://')):
