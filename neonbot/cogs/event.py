@@ -39,7 +39,7 @@ class Event(commands.Cog):
         log.info('Ready!\n')
         bot.set_ready()
         bot.start_listeners()
-        print(YTMusic.get_account_info())
+        print(await YTMusic.get_account_info())
 
     @staticmethod
     @listener(NodeConnectedEvent)
