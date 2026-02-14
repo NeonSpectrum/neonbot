@@ -10,7 +10,8 @@ from neonbot.utils import log
 
 YTMUSIC_COUNTRY = env.str('YTMUSIC_COUNTRY')
 ytmusic = YTMusic(
-    './oauth.json',
+    env.str('YTMUSIC_CREDENTIALS_JSON'),
+    env.str('YTMUSIC_BRAND_ACCOUNT_ID'),
     oauth_credentials=OAuthCredentials(client_id=env.str('YTMUSIC_CLIENT_ID'), client_secret=env.str('YTMUSIC_CLIENT_SECRET')),
     location=YTMUSIC_COUNTRY
 )
