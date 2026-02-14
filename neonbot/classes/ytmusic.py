@@ -5,10 +5,12 @@ from ytmusicapi import YTMusic
 
 from neonbot import bot
 
-ytmusic = YTMusic(location='PH')
+ytmusic = YTMusic(location=YTMusic.COUNTRY)
 
 
 class YTMusic:
+    COUNTRY = 'PH'
+
     @staticmethod
     async def search(keyword):
         results: list[dict] = await bot.loop.run_in_executor(
@@ -51,25 +53,25 @@ class YTMusic:
         return related_tracks
 
     @staticmethod
-    async def get_random_home() -> List[dict]:
-        homes = await bot.loop.run_in_executor(
+    async def get_top_playlist() -> List[dict]:
+        charts = await bot.loop.run_in_executor(
             bot.executor,
-            functools.partial(ytmusic.get_home),
+            functools.partial(ytmusic.get_charts, YTMusic.COUNTRY),
+        )
+
+        playlist_id = charts.get('videos')[0].get('playlistId')
+
+        playlist = await bot.loop.run_in_executor(
+            bot.executor,
+            functools.partial(ytmusic.get_playlist, playlist_id),
         )
 
         tracks = []
 
-        for home in homes:
-            if home.get('title') == 'Quick picks':
-                tracks = home.get('contents')
-                break
-
-        home_tracks = []
-
-        for track in tracks:
+        for track in playlist.get('tracks'):
             if track.get('videoId'):
-                home_tracks.append({'id': track.get('videoId'), 'title': track.get('title')})
+                tracks.append({'id': track.get('videoId'), 'title': track.get('title')})
             else:
-                home_tracks.append({'id': track.get('counterpart')['videoId'], 'title': track.get('title')})
+                tracks.append({'id': track.get('counterpart')['videoId'], 'title': track.get('title')})
 
-        return home_tracks
+        return tracks
