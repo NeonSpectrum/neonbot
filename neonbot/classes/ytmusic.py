@@ -116,7 +116,7 @@ class YTMusic:
 
             log.info('Added history item. Total history: ' + f'{len(history)}.')
         except Exception as error:
-            log.debug(error)
+            log.exception(error)
             log.error('Failed to add history item. ' + str(error))
 
     @staticmethod
