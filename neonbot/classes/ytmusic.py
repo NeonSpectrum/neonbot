@@ -5,11 +5,11 @@ from ytmusicapi import YTMusic
 
 from neonbot import bot
 
-ytmusic = YTMusic(location=YTMusic.COUNTRY)
+YTMUSIC_COUNTRY = 'PH'
+ytmusic = YTMusic(location=YTMUSIC_COUNTRY)
 
 
 class YTMusic:
-    COUNTRY = 'PH'
 
     @staticmethod
     async def search(keyword):
@@ -56,7 +56,7 @@ class YTMusic:
     async def get_top_playlist() -> List[dict]:
         charts = await bot.loop.run_in_executor(
             bot.executor,
-            functools.partial(ytmusic.get_charts, YTMusic.COUNTRY),
+            functools.partial(ytmusic.get_charts, YTMUSIC_COUNTRY),
         )
 
         playlist_id = charts.get('videos')[0].get('playlistId')
