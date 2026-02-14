@@ -9,12 +9,18 @@ from neonbot import bot
 from neonbot.utils import log
 
 YTMUSIC_COUNTRY = env.str('YTMUSIC_COUNTRY')
-ytmusic = YTMusic(
-    env.str('YTMUSIC_CREDENTIALS_JSON'),
-    env.str('YTMUSIC_BRAND_ACCOUNT_ID'),
-    oauth_credentials=OAuthCredentials(client_id=env.str('YTMUSIC_CLIENT_ID'), client_secret=env.str('YTMUSIC_CLIENT_SECRET')),
-    location=YTMUSIC_COUNTRY
-)
+
+if env.str('YTMUSIC_CREDENTIALS_JSON'):
+    ytmusic = YTMusic(
+        env.str('YTMUSIC_CREDENTIALS_JSON'),
+        env.str('YTMUSIC_BRAND_ACCOUNT_ID'),
+        oauth_credentials=OAuthCredentials(client_id=env.str('YTMUSIC_CLIENT_ID'), client_secret=env.str('YTMUSIC_CLIENT_SECRET')),
+        location=YTMUSIC_COUNTRY
+    )
+else:
+    ytmusic = YTMusic(
+        location=YTMUSIC_COUNTRY
+    )
 
 
 class YTMusic:
