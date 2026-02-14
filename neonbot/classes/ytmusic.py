@@ -2,12 +2,17 @@ import functools
 import random
 from typing import List
 
+from envparse import env
 from ytmusicapi import YTMusic
 
 from neonbot import bot
 
-YTMUSIC_COUNTRY = 'PH'
-ytmusic = YTMusic(location=YTMUSIC_COUNTRY)
+YTMUSIC_COUNTRY = env.str('YTMUSIC_COUNTRY')
+ytmusic = YTMusic(
+    './oauth.json',
+    oauth_credentials=OAuthCredentials(client_id=env.str('YTMUSIC_CLIENT_ID'), client_secret=env.str('YTMUSIC_CLIENT_SECRET')),
+    location=YTMUSIC_COUNTRY
+)
 
 
 class YTMusic:

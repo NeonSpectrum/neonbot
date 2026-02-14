@@ -204,7 +204,7 @@ class Flyff:
     async def trigger_webhook(self, url, message):
         try:
             await bot.session.post(url, json={'message': message}, timeout=ClientTimeout(total=2))
-        except asyncio.exceptions.TimeoutError as e:
+        except asyncio.exceptions.TimeoutError:
             pass
         except Exception as e:
             log.error(f'An unexpected error occurred: {e}')

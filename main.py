@@ -1,5 +1,4 @@
 import logging
-import os
 from concurrent.futures import ThreadPoolExecutor
 
 import i18n
@@ -15,10 +14,6 @@ i18n.set('skip_locale_root_data', True)
 
 def main() -> None:
     from neonbot import bot
-    from neonbot.utils.constants import PLAYER_CACHE_DIR, YOUTUBE_DOWNLOADS_DIR
-
-    os.makedirs(YOUTUBE_DOWNLOADS_DIR, exist_ok=True)
-    os.makedirs(PLAYER_CACHE_DIR, exist_ok=True)
 
     # Clear debug.log on startup
     open('./debug.log', 'w').close()

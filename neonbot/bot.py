@@ -187,7 +187,7 @@ class NeonBot(commands.Bot):
 
         try:
             await message.edit(**kwargs)
-        except:
+        except Exception:
             pass
 
     async def delete_message(self, *messages: Union[discord.Message, None]) -> None:

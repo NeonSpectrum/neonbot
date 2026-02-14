@@ -1,9 +1,6 @@
 TIMEZONE = 'Asia/Manila'
 LOG_FORMAT = '%(asctime)s [%(levelname)s] [%(module)s.%(funcName)s:%(lineno)d]: %(message)s'
 
-YOUTUBE_TMP_DIR = './tmp/youtube_dl'
-YOUTUBE_DOWNLOADS_DIR = './tmp/youtube_dl/downloads'
-YOUTUBE_CACHE_DIR = './tmp/youtube_dl/cache'
 PLAYER_CACHE_DIR = './tmp/players'
 
 PLAYER_CACHE_PATH = './tmp/players/%s.json'
