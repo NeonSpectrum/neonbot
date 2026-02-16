@@ -1,5 +1,3 @@
-from typing import cast
-
 import discord
 from discord import app_commands
 
@@ -18,11 +16,11 @@ def load_context_menu(bot):
         await member.remove_roles(guest_role)
         await member.add_roles(member_role)
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed(f'{member.mention} added to {member_role.mention} role.'), ephemeral=True
         )
 
     @bot.tree.context_menu(name='Profile')
     async def profile(interaction: discord.Interaction, member: discord.Member):
         embed = await generate_profile_member_embed(interaction, member)
-        await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=True)

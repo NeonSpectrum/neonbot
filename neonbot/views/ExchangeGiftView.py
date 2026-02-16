@@ -1,5 +1,3 @@
-from typing import cast
-
 import discord
 
 from neonbot.classes.embed import Embed
@@ -23,13 +21,13 @@ class ExchangeGiftView(discord.ui.View):
         exchange_gift = ExchangeGift(interaction)
 
         if exchange_gift.member:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
+            await interaction.response.send_message(
                 embed=Embed('You are already registered in the exchange gift event.'), ephemeral=True
             )
             return
 
         await exchange_gift.register()
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed('You have been registered in the exchange gift event.'), ephemeral=True
         )
 
@@ -40,15 +38,15 @@ class ExchangeGiftView(discord.ui.View):
             wishlist = exchange_gift.get_wishlist()
 
             if not wishlist:
-                await cast(discord.InteractionResponse, interaction.response).send_modal(WishlistModal())
+                await interaction.response.send_modal(WishlistModal())
             else:
                 view = WishlistView(interaction)
-                message = await cast(discord.InteractionResponse, interaction.response).send_message(
+                message = await interaction.response.send_message(
                     embed=Embed(f'Your wishlist: ```{wishlist}```'), view=view, ephemeral=True
                 )
 
         except ExchangeGiftNotRegistered as error:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
+            await interaction.response.send_message(
                 embed=Embed(error), ephemeral=True
             )
 
@@ -67,18 +65,18 @@ class ExchangeGiftView(discord.ui.View):
             embed = exchange_gift.create_wishlist_template()
             embed.set_description(''.join(template))
 
-            message = await cast(discord.InteractionResponse, interaction.response).send_message(
+            message = await interaction.response.send_message(
                 embed=embed, ephemeral=True
             )
 
         except ExchangeGiftNotRegistered as error:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
+            await interaction.response.send_message(
                 embed=Embed(error), ephemeral=True
             )
 
     @discord.ui.button(label='Get event info', custom_id='exchange_gift:get_event_info', emoji='📄')
     async def get_event_info(self, interaction: discord.Interaction, button: discord.ui.Button):
         exchange_gift = ExchangeGift(interaction)
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=exchange_gift.get_current_info(), ephemeral=True
         )

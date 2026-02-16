@@ -151,7 +151,7 @@ class Flyff:
 
         await asyncio.gather(*tasks)
         bot.flyff_settings.last_alert_message = alert_message
-        await bot.flyff_settings.save_changes()
+        await bot.flyff_settings.save_changes(False)
 
     def get_interval_counter(self, name, count):
         match name:
@@ -222,7 +222,7 @@ class Flyff:
                 message = await channel.send(embed=embed)
 
                 bot.flyff_settings.status_channels[channel_id] = message.id
-                await bot.flyff_settings.save_changes()
+                await bot.flyff_settings.save_changes(False)
             else:
                 await bot.edit_message(message, embed=embed)
         except discord.HTTPException as error:
@@ -242,7 +242,7 @@ class Flyff:
             if not message:
                 message = await webhook.send(embed=embed, wait=True)
                 webhook_channel.message_id = message.id if message else None
-                await bot.flyff_settings.save_changes()
+                await bot.flyff_settings.save_changes(False)
             else:
                 await bot.edit_message(message, embed=embed)
         except discord.HTTPException as error:
@@ -277,7 +277,7 @@ class Flyff:
 
             if Flyff.DOWNTIME_COUNT >= 12:
                 bot.flyff_settings.world_start_time = None
-                await bot.flyff_settings.save_changes()
+                await bot.flyff_settings.save_changes(False)
         else:
             Flyff.DOWNTIME_COUNT = 0
 
@@ -293,7 +293,7 @@ class Flyff:
         await asyncio.gather(*tasks)
 
         bot.flyff_settings.status = status
-        await bot.flyff_settings.save_changes()
+        await bot.flyff_settings.save_changes(False)
 
     @staticmethod
     def start_listener():

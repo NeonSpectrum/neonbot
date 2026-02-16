@@ -1,5 +1,3 @@
-from typing import cast
-
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -26,23 +24,23 @@ class PanelCog(commands.Cog):
         details = await Panel(server_id).get_server_details()
 
         if not details:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
+            await interaction.response.send_message(
                 embed=Embed('Invalid server id.'), ephemeral=True
             )
             return
 
         if server_id in server.panel.servers:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
+            await interaction.response.send_message(
                 embed=Embed('Server id already exists.'), ephemeral=True
             )
             return
 
         server.panel.servers[server_id] = PanelServer(channel_id=interaction.channel_id)
-        await server.save_changes()
+        await server.save_changes(False)
 
         Panel.start_listener(interaction.guild.id)
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed(f'Started monitor for `{server_id}` on {interaction.channel.mention}'), ephemeral=True
         )
 
@@ -51,7 +49,7 @@ class PanelCog(commands.Cog):
         server = GuildModel.get_instance(interaction.guild.id)
 
         if server_id not in server.panel.servers:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
+            await interaction.response.send_message(
                 embed=Embed('Server id not in monitor list.'), ephemeral=True
             )
             return
@@ -62,9 +60,9 @@ class PanelCog(commands.Cog):
             await bot.delete_message(await bot.get_channel(panel.channel_id).fetch_message(panel.message_id))
 
         server.panel.servers[server_id] = PanelServer()
-        await server.save_changes()
+        await server.save_changes(False)
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed(f'Removed monitor for `{server_id}` on {interaction.channel.mention}'), ephemeral=True
         )
 

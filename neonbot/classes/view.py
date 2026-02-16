@@ -1,5 +1,5 @@
 import inspect
-from typing import Optional, cast
+from typing import Optional
 
 import discord
 
@@ -18,8 +18,8 @@ class Button(discord.ui.Button):
         else:
             self._callback(self, interaction)
 
-        if not cast(discord.InteractionResponse, interaction.response).is_done():
-            await cast(discord.InteractionResponse, interaction.response).defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
 
 class View(discord.ui.View):

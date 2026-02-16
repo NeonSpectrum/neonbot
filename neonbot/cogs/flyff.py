@@ -1,5 +1,3 @@
-from typing import cast
-
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -28,7 +26,7 @@ class FlyffCog(commands.Cog):
     )
     async def start(self, interaction: discord.Interaction, option: str) -> None:
         if not bot.flyff_settings.world_start_time:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
+            await interaction.response.send_message(
                 embed=Embed('Set world start time first.'), ephemeral=True
             )
             return
@@ -40,12 +38,12 @@ class FlyffCog(commands.Cog):
         elif option == 'ping':
             bot.flyff_settings.ping_channels.append(FlyffPingChannel(channel_id=interaction.channel_id))
 
-        await bot.flyff_settings.save_changes()
+        await bot.flyff_settings.save_changes(False)
 
         flyff = Flyff()
         await flyff.refresh_status()
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed(f'Started monitor on {interaction.channel.mention}'), ephemeral=True
         )
 
@@ -54,12 +52,12 @@ class FlyffCog(commands.Cog):
         bot.flyff_settings = await FlyffModel.get_instance()
 
         bot.flyff_settings.world_start_time = time
-        await bot.flyff_settings.save_changes()
+        await bot.flyff_settings.save_changes(False)
 
         flyff = Flyff()
         await flyff.refresh_status()
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed(f'Set world start to `{time}`'), ephemeral=True
         )
 
@@ -70,7 +68,7 @@ class FlyffCog(commands.Cog):
         bot.flyff_settings = await FlyffModel.get_instance()
 
         if name in bot.flyff_settings.timers:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
+            await interaction.response.send_message(
                 embed=Embed('Name already in timer list.'), ephemeral=True
             )
             return
@@ -79,9 +77,9 @@ class FlyffCog(commands.Cog):
         interval = Duration(interval).to_seconds()
 
         bot.flyff_settings.timers[name] = FlyffTimer(initial_interval=initial_interval, interval=interval)
-        await bot.flyff_settings.save_changes()
+        await bot.flyff_settings.save_changes(False)
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed(f'Added `{name}` timer'), ephemeral=True
         )
 
@@ -90,15 +88,15 @@ class FlyffCog(commands.Cog):
         bot.flyff_settings = await FlyffModel.get_instance()
 
         if name not in bot.flyff_settings.timers:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
+            await interaction.response.send_message(
                 embed=Embed('Name not in timer list.'), ephemeral=True
             )
             return
 
         del bot.flyff_settings.timers[name]
-        await bot.flyff_settings.save_changes()
+        await bot.flyff_settings.save_changes(False)
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed(f'Removed `{name}` timer on {interaction.channel.mention}'), ephemeral=True
         )
 
@@ -107,15 +105,15 @@ class FlyffCog(commands.Cog):
         bot.flyff_settings = await FlyffModel.get_instance()
 
         if name in bot.flyff_settings.fixed_timers:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
+            await interaction.response.send_message(
                 embed=Embed('Name already in fixed timer list.'), ephemeral=True
             )
             return
 
         bot.flyff_settings.fixed_timers[name] = start_time.split(',')
-        await bot.flyff_settings.save_changes()
+        await bot.flyff_settings.save_changes(False)
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed(f'Added `{name}` fixed timer'), ephemeral=True
         )
 
@@ -124,15 +122,15 @@ class FlyffCog(commands.Cog):
         bot.flyff_settings = await FlyffModel.get_instance()
 
         if name not in bot.flyff_settings.fixed_timers:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
+            await interaction.response.send_message(
                 embed=Embed('Name not in fixed timer list.'), ephemeral=True
             )
             return
 
         del bot.flyff_settings.fixed_timers[name]
-        await bot.flyff_settings.save_changes()
+        await bot.flyff_settings.save_changes(False)
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed(f'Removed `{name}` fixed timer on {interaction.channel.mention}'), ephemeral=True
         )
 
@@ -141,15 +139,15 @@ class FlyffCog(commands.Cog):
         bot.flyff_settings = await FlyffModel.get_instance()
 
         if name in bot.flyff_settings.webhooks:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
+            await interaction.response.send_message(
                 embed=Embed('Webhook name already in the list.'), ephemeral=True
             )
             return
 
         bot.flyff_settings.webhooks[name] = url
-        await bot.flyff_settings.save_changes()
+        await bot.flyff_settings.save_changes(False)
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed(f'Added `{name}` fixed timer'), ephemeral=True
         )
 
@@ -158,15 +156,15 @@ class FlyffCog(commands.Cog):
         bot.flyff_settings = await FlyffModel.get_instance()
 
         if name not in bot.flyff_settings.webhooks:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
+            await interaction.response.send_message(
                 embed=Embed('Webhook name is not in list.'), ephemeral=True
             )
             return
 
         del bot.flyff_settings.webhooks[name]
-        await bot.flyff_settings.save_changes()
+        await bot.flyff_settings.save_changes(False)
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed(f'Removed `{name}` webhook'), ephemeral=True
         )
 
@@ -174,9 +172,9 @@ class FlyffCog(commands.Cog):
     async def add_webhook(self, interaction: discord.Interaction, url: str) -> None:
         bot.flyff_settings = await FlyffModel.get_instance()
         bot.flyff_settings.webhook_channels.append(FlyffWebhookChannel(url=url))
-        await bot.flyff_settings.save_changes()
+        await bot.flyff_settings.save_changes(False)
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed(f'Added `{url}` webhook url'), ephemeral=True
         )
 

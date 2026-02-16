@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Optional, cast
+from typing import Any, Optional
 
 import discord
 
@@ -75,7 +75,7 @@ class PaginationEmbed:
         self.index = 0
         self.embed = Embed()
 
-    async def build(self, page_number = None) -> None:
+    async def build(self, page_number=None) -> None:
         self.authorized_users.append(self.interaction.user.id)
         self.title = self.embed.title
 
@@ -93,8 +93,8 @@ class PaginationEmbed:
             embed.description += f'\n\n**Page {self.index + 1}/{len(self.embeds)}**'
             buttons = self.get_buttons()
 
-        if not cast(discord.InteractionResponse, self.interaction.response).is_done():
-            await cast(discord.InteractionResponse, self.interaction.response).send_message(embed=embed, view=buttons)
+        if not self.interaction.response.is_done():
+            await self.interaction.response.send_message(embed=embed, view=buttons)
         else:
             await self.interaction.edit_original_response(embed=embed, view=buttons)
 

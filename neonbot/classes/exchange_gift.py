@@ -36,7 +36,7 @@ class ExchangeGift:
 
     async def set_message_id(self, message_id: int):
         self.server.exchange_gift.message_id = message_id
-        await self.server.save_changes()
+        await self.server.save_changes(False)
 
     def get_no_wishlist_users(self):
         no_wishlist_users = []
@@ -49,7 +49,7 @@ class ExchangeGift:
 
     async def set_budget(self, budget):
         self.server.exchange_gift.budget = budget
-        await self.server.save_changes()
+        await self.server.save_changes(False)
 
     async def set_wishlist(self, wishlist: str):
         if not self.member:
@@ -57,7 +57,7 @@ class ExchangeGift:
 
         self.member.wishlist = wishlist
 
-        await self.server.save_changes()
+        await self.server.save_changes(False)
 
     def get_wishlist(self):
         if not self.member:
@@ -67,14 +67,14 @@ class ExchangeGift:
 
     async def register(self):
         self.server.exchange_gift.members.append(ExchangeGiftMember(user_id=self.user.id))
-        await self.server.save_changes()
+        await self.server.save_changes(False)
 
     async def unregister(self):
         if not self.member:
             raise ExchangeGiftNotRegistered()
 
         self.server.exchange_gift.members.remove(ExchangeGiftMember(user_id=self.user.id))
-        await self.server.save_changes()
+        await self.server.save_changes(False)
 
     async def shuffle(self):
         members = list(map(lambda m: m.user_id, self.get_all()))
@@ -88,11 +88,11 @@ class ExchangeGift:
 
             self.get(member.user_id).chosen = chosen_member
 
-            await self.server.save_changes()
+            await self.server.save_changes(False)
 
     async def set_finish(self):
         self.server.exchange_gift.finish = True
-        await self.server.save_changes()
+        await self.server.save_changes(False)
 
     def create_embed_template(self):
         year = datetime.now().strftime('%Y')

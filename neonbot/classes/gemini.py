@@ -8,6 +8,7 @@ from neonbot.utils import log
 
 client = genai.Client()
 
+
 class GeminiChat:
     def __init__(self, ctx: commands.Context):
         self.model_name = env.str('GEMINI_MODEL')
@@ -81,5 +82,5 @@ class GeminiChat:
                     last_reference_id = message.reference.message_id
                 else:
                     break
-                
+
         return messages[::-1]

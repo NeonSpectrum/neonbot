@@ -2,7 +2,7 @@ import asyncio
 import contextlib
 import sys
 from io import StringIO
-from typing import Generator, Optional, cast
+from typing import Generator, Optional
 
 import discord
 from discord import app_commands
@@ -84,7 +84,7 @@ class Administration(commands.Cog):
     ) -> None:
         """Deletes a number of messages of a specific member (if specified). *MANAGE_MESSAGES"""
 
-        await cast(discord.InteractionResponse, interaction.response).defer()
+        await interaction.response.defer()
 
         async for message in interaction.channel.history(limit=1000 if member else count):
             if count <= 0:
@@ -103,9 +103,9 @@ class Administration(commands.Cog):
         server = GuildModel.get_instance(interaction.guild.id)
         server.prefix = prefix
 
-        await server.save_changes()
+        await server.save_changes(False)
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed(f'Prefix is now set to `{server.prefix}`.')
         )
 
@@ -113,15 +113,15 @@ class Administration(commands.Cog):
     async def set_status(self, interaction: discord.Interaction, status: discord.Status) -> None:
         """Sets the status of the bot. *BOT_OWNER"""
 
-        if status is False:
+        if not status:
             return
 
         bot.setting.status = str(status)
-        await bot.setting.save_changes()
+        await bot.setting.save_changes(False)
 
         await bot.update_presence()
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed(f'Status is now set to {bot.settings.get("status")}.')
         )
 
@@ -138,12 +138,12 @@ class Administration(commands.Cog):
         bot.setting.activity_type = presence_type.name
         bot.setting.activity_name = name
 
-        await bot.setting.save_changes()
+        await bot.setting.save_changes(False)
 
         await bot.update_presence()
 
         # noinspection PyUnresolvedReferences
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed(f'Presence is now set to **{presence_type.name} {name}**.')
         )
 
@@ -171,7 +171,7 @@ class Administration(commands.Cog):
             for value in select.values:
                 setattr(guild.channel_log, value, channel.id if enable else None)
 
-            await guild.save_changes()
+            await guild.save_changes(False)
 
             await interaction.edit_original_response(
                 embed=Embed(f'Log channel type `{", ".join(select.values)}` has been set to {channel.mention}'),
@@ -183,7 +183,7 @@ class Administration(commands.Cog):
         view = View()
         view.add_item(select)
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(view=view, ephemeral=True)
+        await interaction.response.send_message(view=view, ephemeral=True)
 
     @server.command(name='get-logs')
     async def get_logs(self, interaction: discord.Interaction):
@@ -198,7 +198,7 @@ class Administration(commands.Cog):
             channel = bot.get_channel(channel_id or -1)
             embed.add_field(name.title().replace('_', ''), channel.mention if channel else 'None', inline=False)
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @server.command(name='set-chatgpt')
     async def set_chatgpt(self, interaction: discord.Interaction, channel: discord.TextChannel, enable: bool):
@@ -206,10 +206,10 @@ class Administration(commands.Cog):
 
         guild = GuildModel.get_instance(interaction.guild_id)
         guild.chatgpt.channel_id = channel.id if enable else None
-        await guild.save_changes()
+        await guild.save_changes(False)
 
         if guild.chatgpt.channel_id:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
+            await interaction.response.send_message(
                 embed=Embed(f'ChatGPT is now set to {channel.mention}.')
             )
 
@@ -219,7 +219,7 @@ class Administration(commands.Cog):
 
             await channel.send(embed=embed)
         else:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
+            await interaction.response.send_message(
                 embed=Embed('ChatGPT is now disabled.')
             )
 
@@ -229,10 +229,10 @@ class Administration(commands.Cog):
 
         bot.setting.gemini_system_instruction = value
 
-        await bot.setting.save_changes()
+        await bot.setting.save_changes(False)
 
         # noinspection PyUnresolvedReferences
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed(f'Gemini instruction is now set to **{value}**.')
         )
 
@@ -241,7 +241,7 @@ class Administration(commands.Cog):
     @app_commands.allowed_contexts(guilds=False, dms=True, private_channels=False)
     async def sync(self, interaction: discord.Interaction):
         if not bot.is_owner(interaction.user):
-            await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed('No permission.'))
+            await interaction.response.send_message(embed=Embed('No permission.'))
             return
 
         await bot.sync_command()
@@ -250,7 +250,7 @@ class Administration(commands.Cog):
 
         await asyncio.gather(*[bot.sync_command(guild) for guild in guilds])
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed('Commands Synced!'))
+        await interaction.response.send_message(embed=Embed('Commands Synced!'))
 
 
 # noinspection PyShadowingNames

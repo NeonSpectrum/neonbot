@@ -1,5 +1,3 @@
-from typing import cast
-
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -141,7 +139,7 @@ class Music(commands.Cog):
         duration = 0
 
         if len(player.track_list) == 0:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
+            await interaction.response.send_message(
                 embed=Embed(t('music.empty_playlist')), ephemeral=True
             )
             return

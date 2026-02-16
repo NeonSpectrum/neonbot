@@ -2,7 +2,7 @@ import os
 import random
 from datetime import datetime
 from time import time
-from typing import Union, cast
+from typing import Union
 
 import discord
 import psutil
@@ -14,7 +14,6 @@ from envparse import env
 
 from neonbot import __author__, __title__, __version__, bot
 from neonbot.classes.embed import Embed
-from neonbot.classes.gemini import GeminiChat
 from neonbot.utils.constants import ICONS
 from neonbot.utils.functions import format_seconds, generate_profile_member_embed, generate_profile_user_embed
 
@@ -27,7 +26,7 @@ class Utility(commands.Cog):
     async def random(self, interaction: discord.Interaction, word_list: str) -> None:
         """Picks a text in the given list."""
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed(random.choice(word_list.split(',')).strip())
         )
 
@@ -60,7 +59,7 @@ class Utility(commands.Cog):
             """,
         )
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name='sms')
     @app_commands.guilds(*bot.owner_guilds)
@@ -76,7 +75,7 @@ class Utility(commands.Cog):
 
             return embed
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=generate_embed().add_field('Status:', 'Sending...', inline=False)
         )
 
@@ -116,7 +115,7 @@ class Utility(commands.Cog):
             embed = await generate_profile_member_embed(interaction, user)
         else:
             embed = await generate_profile_user_embed(interaction, user)
-        await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed, ephemeral=ephemeral)
+        await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
     @app_commands.command(name='avatar')
     @app_commands.allowed_installs(guilds=True, users=True)
@@ -125,12 +124,12 @@ class Utility(commands.Cog):
         self, interaction: discord.Interaction, user: Union[discord.User, discord.Member], ephemeral: bool = False
     ) -> None:
         if not user.display_avatar:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
+            await interaction.response.send_message(
                 embed=Embed('Avatar not found.'), ephemeral=True
             )
             return
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             user.display_avatar.url, ephemeral=ephemeral
         )
 
@@ -143,12 +142,12 @@ class Utility(commands.Cog):
         user = await bot.fetch_user(user.id)
 
         if not user.banner:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
+            await interaction.response.send_message(
                 embed=Embed('Banner not found.'), ephemeral=True
             )
             return
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(user.banner.url, ephemeral=ephemeral)
+        await interaction.response.send_message(user.banner.url, ephemeral=ephemeral)
 
     @app_commands.command(name='timestamp')
     @app_commands.allowed_installs(guilds=True, users=True)
@@ -158,10 +157,10 @@ class Utility(commands.Cog):
     ) -> None:
         try:
             timestamp = int(parse(date_string).timestamp())
-            await cast(discord.InteractionResponse, interaction.response).send_message(f'<t:{timestamp}>')
+            await interaction.response.send_message(f'<t:{timestamp}>')
         except ValueError:
-            await cast(discord.InteractionResponse, interaction.response).send_message('Format not supported.',
-                                                                                       ephemeral=True)
+            await interaction.response.send_message('Format not supported.',
+                                                    ephemeral=True)
 
 
 # noinspection PyShadowingNames

@@ -56,7 +56,6 @@ class ChatGPT:
             await chat_thread.trim_messages()
 
         if content.lower().strip() == 'bye':
-
             async def remove():
                 await asyncio.sleep(5)
                 await channel.edit(archived=True, locked=True)
@@ -83,4 +82,4 @@ class ChatGPT:
         )
 
         server.chatgpt.chats = list(filter(lambda chat: chat.thread_id in active_threads, server.chatgpt.chats))
-        await server.save_changes()
+        await server.save_changes(False)

@@ -1,4 +1,4 @@
-from typing import Optional, cast
+from typing import Optional
 
 import discord
 from discord import app_commands
@@ -36,7 +36,7 @@ class ExchangeGiftCog(commands.Cog):
                 content='@everyone', embed=embed, view=ExchangeGiftView(bot.get_channel(int(discussion_id)).jump_url)
             )
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed('Done!'), ephemeral=True)
+        await interaction.response.send_message(embed=Embed('Done!'), ephemeral=True)
 
     @exchangegift.command(name='finish')
     async def exchangegift_finish(self, interaction: discord.Interaction):
@@ -51,12 +51,12 @@ class ExchangeGiftCog(commands.Cog):
 
         await exchange_gift.set_finish()
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed('Done!'), ephemeral=True)
+        await interaction.response.send_message(embed=Embed('Done!'), ephemeral=True)
 
     @exchangegift.command(name='shuffle')
     async def exchangegift_shuffle(self, interaction: discord.Interaction):
         await ExchangeGift(interaction).shuffle()
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed('Exchange gift has been shuffled.')
         )
 
@@ -78,10 +78,10 @@ class ExchangeGiftCog(commands.Cog):
             )
             embed.add_field('Users:', '\n'.join(members))
 
-            await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
 
-        await cast(discord.InteractionResponse, interaction.response).defer()
+        await interaction.response.defer()
 
         members = [exchange_gift.get(specific_user.id)] if specific_user else exchange_gift.get_all()
 
@@ -117,7 +117,7 @@ class ExchangeGiftCog(commands.Cog):
     @exchangegift.command(name='setbudget')
     async def exchangegift_setbudget(self, interaction: discord.Interaction, budget: int):
         await ExchangeGift(interaction).set_budget(budget)
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed(f'Budget has been set to `{budget}`.')
         )
 

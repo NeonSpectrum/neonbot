@@ -1,5 +1,4 @@
 import functools
-import random
 from typing import List
 
 from envparse import env
@@ -21,7 +20,8 @@ elif YTMUSIC_CREDENTIALS_TYPE == 'oauth':
     ytmusic = YTMusic(
         env.str('YTMUSIC_CREDENTIALS_JSON'),
         env.str('YTMUSIC_BRAND_ACCOUNT_ID'),
-        oauth_credentials=OAuthCredentials(client_id=env.str('YTMUSIC_CLIENT_ID'), client_secret=env.str('YTMUSIC_CLIENT_SECRET')),
+        oauth_credentials=OAuthCredentials(client_id=env.str('YTMUSIC_CLIENT_ID'),
+                                           client_secret=env.str('YTMUSIC_CLIENT_SECRET')),
         location=YTMUSIC_COUNTRY
     )
 else:

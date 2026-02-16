@@ -58,7 +58,7 @@ class ChatThread:
         self.chat.messages.clear()
         self.chat.messages.extend(saved_messages)
         self.chat.token = total_tokens
-        await self.server.save_changes()
+        await self.server.save_changes(False)
 
     async def get_response(self) -> str:
         chat_completion = await self.client.chat.completions.create(
@@ -68,6 +68,6 @@ class ChatThread:
         answer = chat_completion.choices[0].message.content
         self.chat.messages.append(Message(role='assistant', content=answer))
         self.add_token(chat_completion.usage.total_tokens)
-        await self.server.save_changes()
+        await self.server.save_changes(False)
 
         return answer

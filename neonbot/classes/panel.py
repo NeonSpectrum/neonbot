@@ -93,6 +93,9 @@ class Panel:
 
                 panel = Panel(server_id)
 
+                details = None
+                resources = None
+
                 try:
                     details = await panel.get_server_details()
                     resources = await panel.get_server_resources()
@@ -101,6 +104,10 @@ class Panel:
                     return
                 except Exception as error:
                     log.error(error)
+
+                if not details or not resources:
+                    log.warn('Details or resources are empty!')
+                    return
 
                 identifier = details['attributes']['identifier']
                 name = details['attributes']['name']
@@ -170,7 +177,7 @@ class Panel:
                     if not message:
                         message = await channel.send(embed=embed)
                         server.panel.servers[server_id].message_id = message.id
-                        await server.save_changes()
+                        await server.save_changes(False)
                     else:
                         await message.edit(embed=embed)
                 except discord.HTTPException as error:

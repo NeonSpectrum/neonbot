@@ -6,13 +6,14 @@ import sys
 from glob import glob
 from os import sep
 from time import time
-from typing import TYPE_CHECKING, Any, Optional, Tuple, Type, Union, cast
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import discord
 import lavalink
 import psutil
 from aiohttp import ClientSession, ClientTimeout
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from discord import Activity, Status
 from discord.ext import commands
 from discord.utils import oauth_url
 from envparse import env
@@ -55,7 +56,7 @@ class NeonBot(commands.Bot):
         self.is_player_cache_loaded = False
         self.lavalink: Optional[Client[Player]] = None
 
-    def get_presence(self) -> Tuple[Type[discord.Status], discord.Activity]:
+    def get_presence(self) -> tuple[Status, Activity]:
         activity_type = self.setting.activity_type
         activity_name = self.setting.activity_name
         status = self.setting.status
@@ -102,9 +103,9 @@ class NeonBot(commands.Bot):
             return
 
         from neonbot.classes.panel import Panel
-        #from neonbot.classes.flyff import Flyff
+        # from neonbot.classes.flyff import Flyff
 
-        #Flyff.start_listener()
+        # Flyff.start_listener()
 
         for guild in self.guilds:
             server = GuildModel.get_instance(guild.id)
@@ -165,10 +166,10 @@ class NeonBot(commands.Bot):
         )
 
     async def send_response(self, interaction: discord.Interaction, *args, **kwargs):
-        if not cast(discord.InteractionResponse, interaction.response).is_done():
-            await cast(discord.InteractionResponse, interaction.response).send_message(*args, **kwargs)
+        if not interaction.response.is_done():
+            await interaction.response.send_message(*args, **kwargs)
         elif (
-            cast(discord.InteractionResponse, interaction.response).type
+            interaction.response.type
             == discord.InteractionResponseType.deferred_message_update
         ):
             await interaction.followup.send(*args, **kwargs)
