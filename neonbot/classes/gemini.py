@@ -130,7 +130,9 @@ class GeminiChat:
 
         placeholders = {
             '{{DISPLAY_NAME}}': bot.user.name,
+            '{{OWNER_ID}}': bot.get_user(bot.app_info.owner.id).id,
             '{{OWNER_NAME}}': bot.get_user(bot.app_info.owner.id).display_name,
+            '{{USER_ID}}': self.ctx.author.id,
             '{{PLAYER_DATA}}': json.dumps(playlist)
         }
 
