@@ -27,6 +27,11 @@ class GeminiChat:
         except FileNotFoundError:
             system_instruction = bot.setting.gemini_system_instruction
 
+        player = bot.lavalink.player_manager.get(self.ctx.guild.id)
+
+        if player:
+            system_instruction = system_instruction.replace('{{PLAYER_DATA}}', json.dumps(player.playlist))
+
         contents = []
 
         if self.ctx.message.reference:

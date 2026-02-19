@@ -81,7 +81,7 @@ class Event(commands.Cog):
                     response = gemini_chat.get_response()
 
                     if gemini_chat.is_command():
-                        command = await bot.get_command(gemini_chat.command)
+                        command = bot.get_command(gemini_chat.command)
                         arguments = gemini_chat.arguments
 
                         if isinstance(arguments, dict):
