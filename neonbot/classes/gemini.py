@@ -112,16 +112,19 @@ class GeminiChat:
 
     def replace_placeholder(self, text):
         player = bot.lavalink.player_manager.get(self.ctx.guild.id)
+        playlist = []
 
         if player:
-            playlist = []
-
             for track in player.playlist:
                 playlist.append({'index': track.extra['index'], 'title': track.title, 'identifier': track.identifier})
 
-            text = text.replace('{{PLAYER_DATA}}', json.dumps(playlist))
+        placeholders = {
+            '{{DISPLAY_NAME}}': bot.user.name,
+            '{{OWNER_NAME}}': bot.get_user(bot.app_info.owner.id).name,
+            '{{PLAYER_DATA}}': json.dumps(playlist)
+        }
 
-        text = text.replace('{{DISPLAY_NAME}}', bot.user.name)
-        text = text.replace('{{OWNER_NAME}}', bot.get_user(bot.app_info.owner.id).name)
+        for placeholder, value in placeholders.items():
+            text = text.replace(placeholder, value)
 
         return text
