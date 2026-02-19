@@ -291,6 +291,7 @@ class Player(DefaultPlayer):
 
     async def reset(self, timeout=None):
         await self.stop(queue=-1)
+        await self.clear_messages()
         await self.wait_for_track_end_event()
         await self.disconnect(force=True, timeout=timeout)
 
@@ -436,12 +437,14 @@ class Player(DefaultPlayer):
 
     async def track_end_event(self, event: TrackEndEvent):
         async def task():
+            if self.current_queue == -1:
+                return
+
             compact = (
                 not self.is_last_track
                 and self.loop != Repeat.OFF
                 and not self.shuffle
                 or self.autoplay
-                or self.current_queue == -1
             )
             await self.send_finished_message(track=self.last_track, compact=compact)
 

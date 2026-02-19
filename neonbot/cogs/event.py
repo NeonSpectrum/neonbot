@@ -80,6 +80,17 @@ class Event(commands.Cog):
                     await gemini_chat.generate_content()
                     response = gemini_chat.get_response()
 
+                    if gemini_chat.is_command():
+                        command = await bot.get_command(gemini_chat.command)
+                        arguments = gemini_chat.arguments
+
+                        if isinstance(arguments, dict):
+                            await command(ctx, **gemini_chat.arguments)
+                        else:
+                            await command(ctx, *gemini_chat.arguments)
+
+                        return
+
                     if len(response) > 2000:
                         response = md_to_text(response)
                         await ctx.reply(

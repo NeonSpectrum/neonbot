@@ -1,3 +1,5 @@
+import json
+
 import google.genai as genai
 from discord.ext import commands
 from envparse import env
@@ -15,8 +17,16 @@ class GeminiChat:
         self.response = None
         self.ctx = ctx
         self.prompt = ctx.message.content
+        self.command = None
+        self.arguments = []
 
     async def generate_content(self):
+        try:
+            with open('./system_instruction.md', 'r') as f:
+                system_instruction = f.read()
+        except FileNotFoundError:
+            system_instruction = bot.setting.gemini_system_instruction
+
         contents = []
 
         if self.ctx.message.reference:
@@ -52,7 +62,7 @@ class GeminiChat:
             model=self.model_name,
             contents=contents,
             config=types.GenerateContentConfig(
-                system_instruction=bot.setting.gemini_system_instruction
+                system_instruction=system_instruction
             )
         )
         self.log()
@@ -63,6 +73,20 @@ class GeminiChat:
 
     def get_response(self):
         return self.response.text if self.response else None
+
+    def is_command(self):
+        try:
+            data = json.loads(self.get_response())
+
+            self.command = data.get('command')
+            self.arguments = data.get('arguments', [])
+
+            if not self.command or not self.arguments:
+                return False
+
+            return True
+        except ValueError:
+            return False
 
     def get_prompt(self):
         return self.prompt
