@@ -80,17 +80,19 @@ class Event(commands.Cog):
                     await gemini_chat.generate_content()
                     response = gemini_chat.get_response()
 
-                    if gemini_chat.is_command():
-                        command = gemini_chat.command
-                        arguments = gemini_chat.arguments
+                    cmds = gemini_chat.get_commands()
 
-                        if not await command.can_run(ctx):
-                            return
+                    if cmds:
+                        for cmd in cmds:
+                            [command, arguments] = cmd
 
-                        if isinstance(arguments, dict):
-                            await command(ctx, **gemini_chat.arguments)
-                        else:
-                            await command(ctx, *gemini_chat.arguments)
+                            if not await command.can_run(ctx):
+                                return
+
+                            if isinstance(arguments, dict):
+                                await command(ctx, **gemini_chat.arguments)
+                            else:
+                                await command(ctx, *gemini_chat.arguments)
 
                         return
 

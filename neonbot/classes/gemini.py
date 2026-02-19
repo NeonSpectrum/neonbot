@@ -76,22 +76,17 @@ class GeminiChat:
     def get_response(self):
         return self.response.text if self.response else None
 
-    def is_command(self):
+    def get_commands(self):
         try:
+            cmds = []
             data = json.loads(self.get_response())
 
-            self.command = data.get('command')
-            self.arguments = data.get('arguments', [])
+            for row in data:
+                command = bot.get_command(row['name'])
+                arguments = row['arguments']
+                cmds.append([command, arguments])
 
-            if not self.command:
-                return False
-
-            self.command = bot.get_command(self.command)
-
-            if not self.command:
-                return False
-
-            return True
+            return cmds
         except ValueError:
             return False
 
