@@ -100,6 +100,7 @@ class Event(commands.Cog):
                         await ctx.reply(response)
             except Exception as error:
                 await ctx.reply(embed=Embed('Something went wrong.'))
+                log.debug(error, exc_info=True)
                 log.error(error)
             finally:
                 return
