@@ -63,8 +63,10 @@ class GeminiChat:
             model=self.model_name,
             contents=contents,
             config=types.GenerateContentConfig(
-                system_instruction=system_instruction
-            )
+                system_instruction=system_instruction,
+                response_mime_type='application/json'
+            ),
+
         )
         self.log()
         return self
@@ -73,21 +75,21 @@ class GeminiChat:
         log.info(f'Gemini Chat\nQuestion: {self.prompt}\nAnswer: {self.get_response()}')
 
     def get_response(self):
-        return self.response.text if self.response else None
+        return self.get_json().get('response')
+
+    def get_json(self):
+        return repair_json(self.response.text, True)
 
     def get_commands(self):
-        try:
-            cmds = []
-            data = repair_json(self.get_response(), True)
+        cmds = []
+        data = self.get_json()
 
-            for row in data:
-                command = bot.get_command(row['name'])
-                arguments = row['arguments']
-                cmds.append([command, arguments])
+        for row in data.get('commands', []):
+            command = bot.get_command(row.get('name'))
+            arguments = row.get('arguments')
+            cmds.append([command, arguments])
 
-            return cmds
-        except Exception:
-            return False
+        return cmds
 
     def get_prompt(self):
         return self.prompt

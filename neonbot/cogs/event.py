@@ -80,22 +80,6 @@ class Event(commands.Cog):
                     await gemini_chat.generate_content()
                     response = gemini_chat.get_response()
 
-                    cmds = gemini_chat.get_commands()
-
-                    if cmds:
-                        for cmd in cmds:
-                            [command, arguments] = cmd
-
-                            if not await command.can_run(ctx):
-                                return
-
-                            if isinstance(arguments, dict):
-                                await command(ctx, **arguments)
-                            else:
-                                await command(ctx, *arguments)
-
-                        return
-
                     if len(response) > 2000:
                         response = md_to_text(response)
                         await ctx.reply(
@@ -103,6 +87,16 @@ class Event(commands.Cog):
                         )
                     else:
                         await ctx.reply(response)
+
+                    cmds = gemini_chat.get_commands()
+
+                    for cmd in cmds:
+                        [command, arguments] = cmd
+
+                        if not await command.can_run(ctx):
+                            continue
+
+                        await command(ctx, **arguments)
             except Exception as error:
                 await ctx.reply(embed=Embed('Something went wrong.'))
                 log.debug(error, exc_info=True)
