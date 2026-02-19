@@ -17,8 +17,6 @@ class GeminiChat:
         self.response = None
         self.ctx = ctx
         self.prompt = ctx.message.content
-        self.command = None
-        self.arguments = []
 
     async def generate_content(self):
         try:

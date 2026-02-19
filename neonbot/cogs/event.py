@@ -90,9 +90,9 @@ class Event(commands.Cog):
                                 return
 
                             if isinstance(arguments, dict):
-                                await command(ctx, **gemini_chat.arguments)
+                                await command(ctx, **arguments)
                             else:
-                                await command(ctx, *gemini_chat.arguments)
+                                await command(ctx, *arguments)
 
                         return
 
