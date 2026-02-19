@@ -4,6 +4,7 @@ import google.genai as genai
 from discord.ext import commands
 from envparse import env
 from google.genai import types
+from json_repair import repair_json
 
 from neonbot import bot
 from neonbot.utils import log
@@ -77,7 +78,7 @@ class GeminiChat:
     def get_commands(self):
         try:
             cmds = []
-            data = json.loads(self.get_response())
+            data = repair_json(self.get_response(), True)
 
             for row in data:
                 command = bot.get_command(row['name'])
@@ -85,7 +86,7 @@ class GeminiChat:
                 cmds.append([command, arguments])
 
             return cmds
-        except ValueError:
+        except Exception:
             return False
 
     def get_prompt(self):
