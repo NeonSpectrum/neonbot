@@ -75,7 +75,7 @@ class Utility(commands.Cog):
     @commands.hybrid_command(name='sms')
     @commands.check(is_owner_guilds)
     @app_commands.guilds(*bot.owner_guilds)
-    async def sms(self, ctx: commands.Context, number: str, *, text: str) -> None:
+    async def sms(self, ctx: commands.Context, number: str, *, body: str) -> None:
         """Send SMS using NeonBot. *BOT_OWNER"""
 
         def generate_embed():
@@ -83,7 +83,7 @@ class Utility(commands.Cog):
             embed.set_author(name='✉ SMS')
             embed.set_footer(text='Powered by Semaphore', icon_url=ICONS['semaphone'])
             embed.add_field('To:', number, inline=True)
-            embed.add_field('Body:', text, inline=True)
+            embed.add_field('Body:', body, inline=True)
 
             return embed
 
@@ -94,7 +94,7 @@ class Utility(commands.Cog):
         api_key = env.str('SEMAPHONE_API_KEY')
         sender_name = env.str('SEMAPHONE_SENDER_NAME')
 
-        body = f'{text}\n\nSent by {ctx.author.name}'
+        body = f'{body}\n\nSent by {ctx.author.name}'
 
         response = await bot.session.post(
             'https://api.semaphore.co/api/v4/messages',
