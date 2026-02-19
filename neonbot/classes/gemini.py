@@ -91,7 +91,12 @@ class GeminiChat:
             self.command = data.get('command')
             self.arguments = data.get('arguments', [])
 
-            if not self.command or not self.arguments:
+            if not self.command:
+                return False
+
+            self.command = bot.get_command(self.command)
+
+            if not self.command:
                 return False
 
             return True
