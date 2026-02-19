@@ -27,15 +27,7 @@ class GeminiChat:
         except FileNotFoundError:
             system_instruction = bot.setting.gemini_system_instruction
 
-        player = bot.lavalink.player_manager.get(self.ctx.guild.id)
-
-        if player:
-            playlist = []
-
-            for track in player.playlist:
-                playlist.append({'index': track.extra['index'], 'title': track.title, 'identifier': track.identifier})
-
-            system_instruction = system_instruction.replace('{{PLAYER_DATA}}', json.dumps(playlist))
+        system_instruction = self.replace_placeholder(system_instruction)
 
         contents = []
 
@@ -123,3 +115,18 @@ class GeminiChat:
                     break
 
         return messages[::-1]
+
+    def replace_placeholder(self, text):
+        player = bot.lavalink.player_manager.get(self.ctx.guild.id)
+
+        if player:
+            playlist = []
+
+            for track in player.playlist:
+                playlist.append({'index': track.extra['index'], 'title': track.title, 'identifier': track.identifier})
+
+            text = text.replace('{{PLAYER_DATA}}', json.dumps(playlist))
+
+        text = text.replace('{{DISPLAY_NAME}}', bot.user.name)
+
+        return text
