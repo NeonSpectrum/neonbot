@@ -94,7 +94,7 @@ class Utility(commands.Cog):
         api_key = env.str('SEMAPHONE_API_KEY')
         sender_name = env.str('SEMAPHONE_SENDER_NAME')
 
-        body = f'{body}\n\nSent by {ctx.author.name}'
+        body = f'{body}\n\nSent by {ctx.author.display_name}'
 
         response = await bot.session.post(
             'https://api.semaphore.co/api/v4/messages',
