@@ -84,6 +84,9 @@ class Event(commands.Cog):
                         command = bot.get_command(gemini_chat.command)
                         arguments = gemini_chat.arguments
 
+                        if not await command.can_run():
+                            return
+
                         if isinstance(arguments, dict):
                             await command(ctx, **gemini_chat.arguments)
                         else:
