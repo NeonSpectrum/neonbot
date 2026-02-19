@@ -72,7 +72,7 @@ class GeminiChat:
         return self
 
     def log(self):
-        log.info("\n".join([
+        log.info('\n'.join([
             'Gemini Chat',
             f'Question: {self.prompt}',
             f'Answer: {self.get_response()}',

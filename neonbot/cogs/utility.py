@@ -82,8 +82,8 @@ class Utility(commands.Cog):
             embed = Embed()
             embed.set_author(name='✉ SMS')
             embed.set_footer(text='Powered by Semaphore', icon_url=ICONS['semaphone'])
-            embed.add_field('To:', number, inline=True)
-            embed.add_field('Body:', body, inline=True)
+            embed.add_field('To:', number, inline=False)
+            embed.add_field('Body:', f'```\n{body}```', inline=False)
 
             return embed
 
