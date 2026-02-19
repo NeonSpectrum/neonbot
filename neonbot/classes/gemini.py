@@ -72,19 +72,27 @@ class GeminiChat:
         return self
 
     def log(self):
-        log.info(f'Gemini Chat\nQuestion: {self.prompt}\nAnswer: {self.get_response()}')
-
-    def get_response(self):
-        return self.get_json().get('response')
+        log.info("\n".join([
+            'Gemini Chat',
+            f'Question: {self.prompt}',
+            f'Answer: {self.get_response()}',
+            f'Commands: {self.get_json().get('commands')}'
+        ]))
 
     def get_json(self):
         return repair_json(self.response.text, True)
 
-    def get_commands(self):
-        cmds = []
-        data = self.get_json()
+    def get_response(self):
+        return self.get_json().get('response')
 
-        for row in data.get('commands', []):
+    def get_commands(self):
+        return self.get_json().get('commands', [])
+
+    def get_command_list(self):
+        cmds = []
+        data = self.get_commands()
+
+        for row in data:
             command = bot.get_command(row.get('name'))
             arguments = row.get('arguments')
             cmds.append([command, arguments])

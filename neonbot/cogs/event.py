@@ -88,7 +88,7 @@ class Event(commands.Cog):
                     else:
                         await ctx.reply(response)
 
-                    cmds = gemini_chat.get_commands()
+                    cmds = gemini_chat.get_command_list()
 
                     for cmd in cmds:
                         [command, arguments] = cmd
