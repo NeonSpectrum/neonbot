@@ -122,5 +122,6 @@ class GeminiChat:
             text = text.replace('{{PLAYER_DATA}}', json.dumps(playlist))
 
         text = text.replace('{{DISPLAY_NAME}}', bot.user.name)
+        text = text.replace('{{OWNER_NAME}}', bot.get_user(bot.app_info.owner.id).name)
 
         return text
