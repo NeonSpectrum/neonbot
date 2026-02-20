@@ -438,6 +438,8 @@ class Player(DefaultPlayer):
             self.track_end_event_task = None
 
     async def track_start_event(self, event: TrackStartEvent):
+        print(event)
+
         await self.wait_for_track_end_event()
 
         while not self.is_playing:
@@ -447,6 +449,8 @@ class Player(DefaultPlayer):
             await self.send_playing_message(event.track)
 
     async def track_end_event(self, event: TrackEndEvent):
+        print(event)
+
         async def task():
             if self.current_queue == -1:
                 return
