@@ -323,7 +323,7 @@ class Player(DefaultPlayer):
             return
 
         log.cmd(
-            self.ctx, t('music.now_playing.title', title=self.current.title), user=self.current.requester
+            self.ctx, t('music.now_playing.title', title=self.current.title + ' test'), user=self.current.requester
         )
 
         await self.clear_messages()
@@ -416,6 +416,9 @@ class Player(DefaultPlayer):
         for index, track in enumerate(track_list):
             if track.extra['index'] == self.current.extra['index']:
                 return index
+
+        log.warn('Cannot find new current queue. Returning index 0')
+        return 0
 
     def filter_tracks_from_existing(self, track_list):
         existing_ids = [i.identifier for i in self.track_list]
