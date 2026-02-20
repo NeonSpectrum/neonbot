@@ -52,7 +52,6 @@ class NeonBot(commands.Bot):
         self.setting: Optional[SettingModel] = None
         self.flyff_settings: Optional[FlyffModel] = None
         self.scheduler: Optional[AsyncIOScheduler] = None
-        self.is_listeners_done = False
         self.is_player_cache_loaded = False
         self.lavalink: Optional[Client[Player]] = None
 
@@ -78,8 +77,6 @@ class NeonBot(commands.Bot):
         self.scheduler = AsyncIOScheduler()
         self.scheduler.start()
 
-        self.initialize_lavalink()
-
         await self.add_cogs()
         load_context_menu(self)
 
@@ -99,9 +96,6 @@ class NeonBot(commands.Bot):
         log.info(f'Command synced to: {guild or "Global"}')
 
     def start_listeners(self):
-        if self.is_listeners_done:
-            return
-
         from neonbot.classes.panel import Panel
         # from neonbot.classes.flyff import Flyff
 
@@ -114,8 +108,6 @@ class NeonBot(commands.Bot):
                 self.add_view(ExchangeGiftView(), message_id=server.exchange_gift.message_id)
 
             Panel.start_listener(guild.id)
-
-        self.is_listeners_done = True
 
     def initialize_lavalink(self):
         from neonbot.classes.player import Player

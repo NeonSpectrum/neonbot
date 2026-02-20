@@ -37,9 +37,13 @@ class Event(commands.Cog):
     @bot.event
     async def on_ready() -> None:
         log.info('Ready!\n')
+
+        if not bot.is_ready():
+            bot.initialize_lavalink()
+            bot.start_listeners()
+            log.debug(await YTMusic.get_account_info())
+
         bot.set_ready()
-        bot.start_listeners()
-        log.debug(await YTMusic.get_account_info())
 
     @staticmethod
     @listener(NodeConnectedEvent)
