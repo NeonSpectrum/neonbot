@@ -287,9 +287,20 @@ class Player(DefaultPlayer):
         await self.queue_next_song()
         await self.play()
 
-    async def stop(self):
-        self.last_track = self.current
+    async def stop(self, wait=True):
+        last_playing = self.current
         await super().stop()
+
+        if wait:
+            # Wait for TrackEndEvent to finish by checking if last_track == last_playing
+            start_time = asyncio.get_event_loop().time()
+            timeout = 5.0
+
+            while self.last_track != last_playing:
+                if asyncio.get_event_loop().time() - start_time > timeout:
+                    break
+
+                await asyncio.sleep(0.05)
 
     async def reset(self, timeout=None):
         self.track_list = []
@@ -446,8 +457,6 @@ class Player(DefaultPlayer):
             return
 
         async with self._end_event_lock:
-            self.last_track = event.track
-
             compact = (
                 not self.is_last_track
                 and self.loop != Repeat.OFF
@@ -456,6 +465,7 @@ class Player(DefaultPlayer):
             )
 
             await self.send_finished_message(event.track, compact=compact)
+            self.last_track = event.track
 
             if event.reason.may_start_next():
                 await self.play_next()
