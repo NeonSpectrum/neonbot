@@ -89,21 +89,33 @@ class PlayerControls:
 
             await self.player.next()
         elif button.emoji.name in ('🔁', '🔂'):  # repeat
+            bot.loop.create_task(
+                send_message(t('music.repeat_changed', mode=modes[index].name.lower(), user=interaction.user.mention))
+            )
+
             modes = [Repeat.OFF, Repeat.SINGLE, Repeat.ALL]
             index = (modes.index(Repeat(self.player.loop)) + 1) % 3
             self.player.set_loop(modes[index].value)
-            await send_message(t('music.repeat_changed', mode=modes[index].name.lower(), user=interaction.user.mention))
         elif button.emoji.name == '🔀':  # shuffle
+            bot.loop.create_task(
+                send_message(t('music.shuffle_changed', mode='on' if self.player.shuffle else 'off',
+                               user=interaction.user.mention))
+            )
+
             self.player.set_shuffle(not self.player.shuffle)
-            await send_message(
-                t('music.shuffle_changed', mode='on' if self.player.shuffle else 'off', user=interaction.user.mention))
         elif button.emoji.name == '♾️':  # autoplay
+            bot.loop.create_task(
+                send_message(t('music.autoplay_changed', mode='on' if self.player.autoplay else 'off',
+                               user=interaction.user.mention))
+            )
+
             self.player.set_autoplay(not self.player.autoplay)
-            await send_message(t('music.autoplay_changed', mode='on' if self.player.autoplay else 'off',
-                                 user=interaction.user.mention))
         elif button.emoji.name == '⏏️':  # reset
+            bot.loop.create_task(
+                send_message(t('music.player_controls_pressed', action='reset', user=interaction.user.mention))
+            )
+
             await self.player.reset()
-            await send_message(t('music.player_controls_pressed', action='reset', user=interaction.user.mention))
 
     def initialize(self) -> None:
         buttons = [

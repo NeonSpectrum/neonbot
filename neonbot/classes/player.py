@@ -344,16 +344,16 @@ class Player(DefaultPlayer):
 
         if not compact:
             self.player_controls.initialize()
-
-        message = await self.send_message(
-            embed=self.get_finished_embed(track) if not compact else self.get_simplified_finished_message(track),
-            view=self.player_controls.get() if not compact else None,
-            silent=True,
-        )
-
-        # Will replace by simplified after
-        if not compact:
-            self.messages['finished'] = message
+            self.messages['finished'] = await self.send_message(
+                embed=self.get_finished_embed(track),
+                view=self.player_controls.get(),
+                silent=True,
+            )
+        else:
+            await self.send_message(
+                embed=self.get_simplified_finished_message(track),
+                silent=True,
+            )
 
     async def clear_messages(self):
         if self.messages['finished']:
