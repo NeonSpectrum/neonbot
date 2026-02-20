@@ -128,8 +128,6 @@ class UpdaterCog(commands.Cog):
                             bot.lavalink.player_manager.create(guild_id)
                             player: Player = bot.lavalink.player_manager.players[guild_id]
                             player.__dict__.update(new_player)
-                            await player.connect()
-                            await player.play(player.current)
 
                         await asyncio.gather(
                             *[replace(guild_id, new_player) for guild_id, new_player in new_players.items()]
