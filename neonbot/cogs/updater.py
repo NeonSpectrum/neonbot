@@ -106,7 +106,7 @@ class UpdaterCog(commands.Cog):
 
         # noinspection PyShadowingNames
         async def replace(guild_id, new_player):
-            player = bot.lavalink.player_manager.create(guild_id)
+            player: Player = bot.lavalink.player_manager.create(guild_id)
             position = new_player.pop('position')
             player.__dict__.update(new_player)
             await player.execute_fn_without_event(
