@@ -399,7 +399,7 @@ class Player(DefaultPlayer):
 
     def get_finished_embed(self, track: AudioTrack):
         return self.get_track_embed(track).set_author(
-            name=t('music.finished_playing.index', index=self.track_list.index(track) + 1),
+            name=t('music.finished_playing.index', index=track.extra['index'] + 1),
             icon_url=ICONS.get(track.source_name, ICONS.get('music')),
         )
 
