@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import random
-from typing import Dict, List, Optional, Union, Callable, Coroutine, Any
+from typing import Dict, List, Optional, Union, Coroutine
 
 import discord
 import ytmusicapi.exceptions
@@ -423,9 +423,9 @@ class Player(DefaultPlayer):
         existing_ids = [i.identifier for i in self.track_list]
         return [i for i in track_list if i['id'] not in existing_ids]
 
-    async def execute_fn_without_event(self, fn: Callable[[], Coroutine[Any, Any, None]]):
+    async def execute_fn_without_event(self, fn: Coroutine):
         self.event_enabled = False
-        await fn()
+        await fn
         self.event_enabled = True
 
     async def wait_for_track_end_event(self):
