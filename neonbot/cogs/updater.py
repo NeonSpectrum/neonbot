@@ -53,6 +53,8 @@ class UpdaterCog(commands.Cog):
                 if item.a_path and item.a_path.endswith('.py')
             ]
 
+        module_changed = []
+
         for file_path in changed_files:
             module_name = file_path.replace('/', '.').rstrip('.py')
             if module_name in sys.modules:
