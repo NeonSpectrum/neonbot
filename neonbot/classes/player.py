@@ -321,7 +321,8 @@ class Player(DefaultPlayer):
 
     async def send_message(self, *args, **kwargs):
         if self.is_send_message:
-            await self.ctx.send(*args, **kwargs)
+            return await self.ctx.send(*args, **kwargs)
+        return None
 
     async def send_playing_message(self, track: AudioTrack) -> None:
         log.cmd(
