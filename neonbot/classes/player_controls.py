@@ -14,8 +14,8 @@ if TYPE_CHECKING:
 
 
 class PlayerControls:
-    def __init__(self, player):
-        self.player: Player = player
+    def __init__(self, guild_id):
+        self.player: Player = bot.lavalink.player_manager.get(guild_id)
         self.view = None
 
     def update_buttons(self, views):

@@ -11,7 +11,7 @@ from discord.ext import tasks
 from discord.ext.commands import Context
 from discord.utils import MISSING, find
 from i18n import t
-from lavalink import AudioTrack, DefaultPlayer, DeferredAudioTrack, LoadType, TrackEndEvent, TrackStartEvent, EndReason
+from lavalink import AudioTrack, DefaultPlayer, DeferredAudioTrack, LoadType, TrackEndEvent, TrackStartEvent
 
 from lib.lavalink_voice_client import LavalinkVoiceClient
 from neonbot import bot
@@ -31,8 +31,9 @@ class Player(DefaultPlayer):
         super().__init__(*args, **kwargs)
 
         self.settings = GuildModel.get_instance(self.guild_id)
-        self.player_controls = PlayerControls(self)
+        self.player_controls = PlayerControls(self.guild_id)
         self._start_event_lock = asyncio.Lock()
+        self._end_event_lock = asyncio.Lock()
 
         self.ctx: Optional[Context] = None
         self.vc: Optional[VoiceChannel] = None
@@ -46,9 +47,7 @@ class Player(DefaultPlayer):
             playing=None,
             finished=None,
         )
-        self.track_end_event_task = None
         self.is_auto_paused = False
-        self.is_send_message = True
 
         self.set_autoplay(self.autoplay)
         self.set_shuffle(self.settings.music.shuffle)
@@ -195,6 +194,10 @@ class Player(DefaultPlayer):
     async def stop(self, queue=None):
         if queue:
             self.current_queue = queue
+
+        if queue == -1:
+            await self.clear_messages()
+
         await super().stop()
 
     async def search_random(self):
@@ -246,60 +249,47 @@ class Player(DefaultPlayer):
         if embed and send_message:
             await self.ctx.reply(embed=embed)
 
-    async def play(self,
-                   track: Optional[
-                       Union[AudioTrack, 'DeferredAudioTrack', Dict[str, Union[Optional[str], bool, int]]]] = None,
-                   *args,
-                   **kwargs):
+    async def queue_next_song(self):
+        next_queue = None
 
-        if not track:
-            next_queue = None
+        # Priority: shuffle > repeat all > autoplay > repeat off
 
-            # Priority: shuffle > repeat all > autoplay > repeat off
-
-            if self.shuffle:  # shuffle
-                if self.current_queue == len(self.playlist) - 1:
-                    next_queue = 0
-                else:
-                    next_queue = self.current_queue + 1
-            elif self.loop == Repeat.ALL:  # repeat all
-                if self.current_queue == len(self.playlist) - 1:  # move to last if end of playlist
-                    next_queue = 0
-                else:
-                    next_queue = self.current_queue + 1  # just increment if not last
-            elif self.autoplay and self.is_last_track:  # autoplay
-                try:
-                    await self.process_autoplay(self.last_track)
-                except PlayerError:
-                    await self.stop()
-                    await self.send_message(embed=Embed('No related videos available.'))
-                    return
+        if self.shuffle:  # shuffle
+            if self.current_queue == len(self.playlist) - 1:
+                next_queue = 0
+            else:
                 next_queue = self.current_queue + 1
-            elif self.loop == Repeat.OFF:  # repeat off
-                if self.current_queue == len(self.playlist) - 1:  # dont play if last
-                    return
+        elif self.loop == Repeat.ALL:  # repeat all
+            if self.current_queue == len(self.playlist) - 1:  # move to last if end of playlist
+                next_queue = 0
+            else:
                 next_queue = self.current_queue + 1  # just increment if not last
-
-            if next_queue is not None and 0 <= next_queue < len(self.playlist):
-                self.current_queue = next_queue
-
+        elif self.autoplay and self.is_last_track:  # autoplay
             try:
-                track = self.playlist[self.current_queue]
-            except IndexError:
-                log.error(f'Playlist length is {len(self.playlist)}. Current queue is {self.current_queue}')
+                await self.process_autoplay(self.last_track)
+            except PlayerError:
+                await self.stop()
+                await self.send_message(embed=Embed('No related videos available.'))
                 return
+            next_queue = self.current_queue + 1
+        elif self.loop == Repeat.OFF:  # repeat off
+            if self.current_queue == len(self.playlist) - 1:  # dont play if last
+                return
+            next_queue = self.current_queue + 1  # just increment if not last
 
-        print(self.track_list)
-        print(self.current)
-        print(self.queue)
-        print(track)
+        if next_queue is not None and 0 <= next_queue < len(self.playlist):
+            self.current_queue = next_queue
 
-        await super().play(track, *args, **kwargs)
+        try:
+            track = self.playlist[self.current_queue]
+        except IndexError:
+            log.error(f'Playlist length is {len(self.playlist)}. Current queue is {self.current_queue}')
+            return
+
+        self.queue.append(track)
 
     async def reset(self, timeout=None):
         await self.stop(queue=-1)
-        await self.clear_messages()
-        await self.wait_for_track_end_event()
         await self.disconnect(force=True, timeout=timeout)
 
     async def process_autoplay(self, track: AudioTrack) -> None:
@@ -329,9 +319,6 @@ class Player(DefaultPlayer):
         return await self.ctx.send(*args, **kwargs)
 
     async def send_playing_message(self, track: AudioTrack) -> None:
-        if not self.is_send_message:
-            return
-
         log.cmd(
             self.ctx, t('music.now_playing.title', title=track.title), user=track.requester
         )
@@ -344,9 +331,6 @@ class Player(DefaultPlayer):
         )
 
     async def send_finished_message(self, track: AudioTrack, compact=True) -> None:
-        if not self.is_send_message:
-            return
-
         log.cmd(
             self.ctx,
             t('music.finished_playing.title', title=track.title),
@@ -436,19 +420,14 @@ class Player(DefaultPlayer):
         existing_ids = [i.identifier for i in self.track_list]
         return [i for i in track_list if i['id'] not in existing_ids]
 
-    async def wait_for_track_end_event(self):
-        if self.track_end_event_task:
-            await self.track_end_event_task
-            self.track_end_event_task = None
-
     async def track_start_event(self, event: TrackStartEvent):
         async with self._start_event_lock:
             await self.send_playing_message(event.track)
 
-        self.last_track = event.track
-
     async def track_end_event(self, event: TrackEndEvent):
-        async def task():
+        async with self._end_event_lock:
+            self.last_track = event.track
+
             if self.current_queue == -1:
                 return
 
@@ -458,12 +437,5 @@ class Player(DefaultPlayer):
                 and not self.shuffle
                 or self.autoplay
             )
+
             await self.send_finished_message(event.track, compact=compact)
-
-        log.debug('Last Track: ' + event.track.title)
-        log.debug('TrackEndEvent.Reason: ' + event.reason.name)
-
-        if self.track_end_event_task is None \
-            and event.reason in (EndReason.FINISHED, EndReason.STOPPED, EndReason.REPLACED):
-            self.track_end_event_task = bot.loop.create_task(task())
-            await self.wait_for_track_end_event()
