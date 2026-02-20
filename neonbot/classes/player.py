@@ -456,5 +456,5 @@ class Player(DefaultPlayer):
             print(event.reason.may_start_next())
 
             # Since self.play() will only execute if EndReason.FINISHED
-            if event.reason == EndReason.STOPPED and len(self.queue) > 0:
+            if event.reason == EndReason.STOPPED or event.reason == EndReason.FINISHED and len(self.queue) > 0:
                 await self.play()
