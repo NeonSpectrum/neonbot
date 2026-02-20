@@ -102,14 +102,14 @@ class UpdaterCog(commands.Cog):
 
                     if module == 'neonbot.classes.player':
                         from neonbot.classes.player import Player
-                        bot.lavalink.player_manager = PlayerManager(self, Player)
+                        bot.lavalink.player_manager = PlayerManager(bot.lavalink, Player)
 
                     module_reloaded.append(module)
 
             embed = Embed()
             embed.set_author('Reloaded!', icon_url=bot.user.display_avatar)
-            embed.add_field('Python modules', f'```\n{", ".join(module_reloaded or ["None"])}\n```', inline=False)
-            embed.add_field('Cogs modules', f'```\n{", ".join(cogs_reloaded or ["None"])}\n```', inline=False)
+            embed.add_field('Python modules', f'```\n{'\n'.join(module_reloaded or ["None"])}\n```', inline=False)
+            embed.add_field('Cogs modules', f'```\n{'\n'.join(cogs_reloaded or ["None"])}\n```', inline=False)
 
             await interaction.edit_original_response(embed=embed, view=None)
 
