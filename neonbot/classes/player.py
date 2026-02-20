@@ -185,11 +185,11 @@ class Player(DefaultPlayer):
     async def prev(self):
         if self.current_queue >= 1:
             self.current_queue -= 2  # Double minus since it will be increment on play()
-        await self.stop()
+        await self.stop(wait=True)
         await self.play_next()
 
     async def next(self):
-        await self.stop()
+        await self.stop(wait=True)
         await self.play_next()
 
     async def search_random(self):
@@ -287,7 +287,7 @@ class Player(DefaultPlayer):
         await self.queue_next_song()
         await self.play()
 
-    async def stop(self, wait=True):
+    async def stop(self, wait=False):
         last_playing = self.current
         await super().stop()
 
