@@ -190,15 +190,6 @@ class Player(DefaultPlayer):
     async def next(self):
         await self.stop()
 
-    async def stop(self, queue=None):
-        if queue:
-            self.current_queue = queue
-
-        if queue == -1:
-            await self.clear_messages()
-
-        await super().stop()
-
     async def search_random(self):
         tracks = await YTMusic.get_random_song()
 
@@ -296,8 +287,11 @@ class Player(DefaultPlayer):
 
     async def reset(self, timeout=None):
         self.track_list = []
-        await self.stop(queue=-1)
+        track = self.current
+
+        await self.stop()
         await self.disconnect(force=True, timeout=timeout)
+        await self.send_finished_message(track, compact=True)
 
     async def process_autoplay(self, track: AudioTrack) -> None:
         try:
@@ -435,11 +429,12 @@ class Player(DefaultPlayer):
             await self.send_playing_message(event.track)
 
     async def track_end_event(self, event: TrackEndEvent):
+        # This means player has been reset
+        if len(self.track_list) == 0:
+            return
+
         async with self._end_event_lock:
             self.last_track = event.track
-
-            if self.current_queue == -1:
-                return
 
             compact = (
                 not self.is_last_track
@@ -451,5 +446,6 @@ class Player(DefaultPlayer):
             await self.send_finished_message(event.track, compact=compact)
             await self.queue_next_song()
 
+            # Since self.play() will only execute if EndReason.FINISHED
             if event.reason == EndReason.STOPPED and len(self.queue) > 0:
                 await self.play()
