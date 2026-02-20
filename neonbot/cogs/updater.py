@@ -5,6 +5,7 @@ import discord
 import git
 from discord import app_commands
 from discord.ext import commands
+from lavalink import PlayerManager
 
 from neonbot import bot
 from neonbot.classes.embed import Embed
@@ -80,6 +81,10 @@ class UpdaterCog(commands.Cog):
                 bot.reload_extension(module)
             elif module in sys.modules:
                 importlib.reload(sys.modules[module])
+
+                if module == 'neonbot.classes.player':
+                    from neonbot.classes.player import Player
+                    bot.lavalink.player_manager = PlayerManager(self, Player)
 
         await ctx.send(
             embed=Embed('\n'.join([
