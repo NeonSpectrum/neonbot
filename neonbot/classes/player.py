@@ -48,7 +48,7 @@ class Player(DefaultPlayer):
         )
         self.track_end_event_task = None
         self.is_auto_paused = False
-        self.is_send_message = True
+        self.is_event_enabled = True
 
         self.set_autoplay(self.autoplay)
         self.set_shuffle(self.settings.music.shuffle)
@@ -320,9 +320,7 @@ class Player(DefaultPlayer):
         await self.search(video_url, send_message=False, requester=bot.user.id)
 
     async def send_message(self, *args, **kwargs):
-        if self.is_send_message:
-            return await self.ctx.send(*args, **kwargs)
-        return None
+        return await self.ctx.send(*args, **kwargs)
 
     async def send_playing_message(self, track: AudioTrack) -> None:
         log.cmd(
@@ -428,10 +426,10 @@ class Player(DefaultPlayer):
         existing_ids = [i.identifier for i in self.track_list]
         return [i for i in track_list if i['id'] not in existing_ids]
 
-    async def execute_fn_without_message(self, fn: Coroutine):
-        self.is_send_message = False
+    async def execute_fn_without_event(self, fn: Coroutine):
+        self.is_event_enabled = False
         await fn
-        self.is_send_message = True
+        self.is_event_enabled = True
 
     async def wait_for_track_end_event(self):
         if self.track_end_event_task:
