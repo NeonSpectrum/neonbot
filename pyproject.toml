@@ -35,6 +35,8 @@ dependencies = [
     "ytmusicapi (>=1.11.1,<2.0.0)",
     "google-genai (>=1.59.0,<2.0.0)",
     "json-repair (>=0.58.0,<0.59.0)",
+    "gitpython (>=3.1.46,<4.0.0)",
+    "importlib (>=1.0.4,<2.0.0)",
 ]
 
 
@@ -49,7 +51,7 @@ package-mode = false
 poetry-plugin-export = ">=1.8"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.15.1"
+ruff = "^0.15.2"
 
 [tool.ruff]
 line-length = 120
