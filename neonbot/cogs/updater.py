@@ -3,6 +3,7 @@ import sys
 
 import discord
 import git
+from discord import app_commands
 from discord.ext import commands
 
 from neonbot import bot
@@ -39,7 +40,7 @@ class UpdaterCog(commands.Cog):
             await ctx.send("Already up to date.", ephemeral=True)
             return
 
-        await ctx.reply(embed=Embed(title='Git Pull Result', description=f'```md\n{pull_output}\n```'))
+        await ctx.reply(embed=Embed(title='Git Pull Result', description=f'```md\n{pull_output}\n```'), ephemeral=True)
 
         changed_files = []
 
@@ -61,7 +62,8 @@ class UpdaterCog(commands.Cog):
                 'Updated!',
                 f'{len(changed_files)} files changed.',
                 f'Python modules: {', '.join(changed_files)}',
-            ]), ephemeral=True)
+            ])),
+            ephemeral=True
         )
 
     @commands.hybrid_command('reload')
@@ -84,12 +86,13 @@ class UpdaterCog(commands.Cog):
                 'Reloaded!',
                 f'Python modules: {', '.join(module_reloaded)}',
                 f'Cogs modules: {', '.join(cogs_reloaded)}',
-            ]), ephemeral=True)
+            ])),
+            ephemeral=True
         )
 
     @reload.autocomplete('modules')
     async def reload_autocomplete(self, interaction: discord.Interaction, current: str):
-        return [module for module in module_changed if current in module]
+        return [app_commands.Choice(name=module, value=module) for module in module_changed if current in module]
 
 
 # noinspection PyShadowingNames
