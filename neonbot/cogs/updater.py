@@ -106,6 +106,19 @@ class UpdaterCog(commands.Cog):
                         for guild_id, player in bot.lavalink.player_manager.players.items():
                             new_player = Player(guild_id, player.node)
                             new_player.__dict__.update(player.__dict__)
+
+                            new_player.ctx = player.ctx
+                            new_player.vc = player.vc
+                            new_player.current = player.current
+                            new_player.current_queue = player.current_queue
+                            new_player.last_track = player.last_track
+                            new_player.track_list = player.track_list.copy()
+                            new_player.shuffled_list = player.shuffled_list.copy()
+                            new_player.autoplay_list = player.autoplay_list.copy()
+                            new_player.messages = player.messages
+                            new_player.is_auto_paused = player.is_auto_paused
+                            new_player.channel_id = player.channel_id
+
                             bot.lavalink.player_manager.players[guild_id] = new_player
 
                     module_reloaded.append(module)
