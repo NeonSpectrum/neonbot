@@ -452,8 +452,8 @@ class Player(DefaultPlayer):
             )
             await self.send_finished_message(track=self.last_track, compact=compact)
 
-        log.debug('Last Track: ', self.last_track)
-        log.debug('TrackEndEvent.Reason: ', event.reason)
+        log.debug('Last Track: ' + self.last_track.title)
+        log.debug('TrackEndEvent.Reason: ' + event.reason.name)
 
         if self.track_end_event_task is None \
             and event.reason in (EndReason.FINISHED, EndReason.STOPPED, EndReason.REPLACED):
