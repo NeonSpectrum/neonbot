@@ -11,6 +11,7 @@ from lavalink import PlayerManager
 from neonbot import bot
 from neonbot.classes.embed import Embed
 from neonbot.classes.select_choices import SelectChoices
+from neonbot.utils.constants import ICONS
 
 ROOT_FOLDERS = (
     'assets',
@@ -70,15 +71,14 @@ class UpdaterCog(commands.Cog):
             if module_name in sys.modules:
                 module_changed.append(module_name)
 
-        await interaction.response.send_message(
-            embed=Embed('\n'.join([
-                'Updated!',
-                f'{len(changed_files)} files changed.',
-                f'Python modules: {', '.join(changed_files)}',
-                f'```md\n{pull_output}\n```'
-            ])),
-            ephemeral=True
-        )
+        embed = Embed('\n'.join([
+            f'{len(changed_files)} files changed.',
+            f'Python modules: {', '.join(module_changed)}',
+            f'```md\n{pull_output}\n```'
+        ]))
+        embed.set_author('Updated!', icon_url=ICONS['github'])
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @app_commands.command(name='reload')
     @app_commands.check(is_owner)
@@ -95,6 +95,7 @@ class UpdaterCog(commands.Cog):
 
             for module in modules:
                 module = 'neonbot.' + module.strip()
+                print(sys.modules)
 
                 if module.startswith('neonbot.cogs') and module in bot.extensions:
                     bot.reload_extension(module)
@@ -111,9 +112,10 @@ class UpdaterCog(commands.Cog):
             await interaction.edit_original_response(
                 embed=Embed('\n'.join([
                     'Reloaded!',
-                    f'Python modules: {', '.join(module_reloaded)}',
-                    f'Cogs modules: {', '.join(cogs_reloaded)}',
+                    f'Python modules: {', '.join(module_reloaded or ['None'])}',
+                    f'Cogs modules: {', '.join(cogs_reloaded or ['None'])}',
                 ])),
+                view=None
             )
 
         select.callback = callback
