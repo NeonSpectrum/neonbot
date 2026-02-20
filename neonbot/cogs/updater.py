@@ -52,7 +52,7 @@ class UpdaterCog(commands.Cog):
         new_hash = repo.head.commit.hexsha
 
         if old_hash == new_hash:
-            await interaction.response.send_message("Already up to date.", ephemeral=True)
+            await interaction.response.send_message(embed=Embed('Already up to date.'), ephemeral=True)
             return
 
         changed_files = []
