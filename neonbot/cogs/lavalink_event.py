@@ -1,10 +1,7 @@
-from typing import cast
-
 from discord.ext import commands
 from lavalink import NodeConnectedEvent, NodeDisconnectedEvent, NodeReadyEvent, TrackEndEvent, TrackStartEvent, listener
 
 from neonbot import bot
-from neonbot.classes.player import Player
 from neonbot.utils import log
 
 
@@ -30,12 +27,12 @@ class LavalinkEvent(commands.Cog):
 
     @listener(TrackStartEvent)
     async def on_track_start(self, event: TrackStartEvent):
-        player = cast(Player, event.player)
+        player = bot.lavalink.player_manager.get(event.player.guild_id)
         await player.track_start_event(event)
 
     @listener(TrackEndEvent)
     async def on_track_end(self, event: TrackEndEvent):
-        player = cast(Player, event.player)
+        player = bot.lavalink.player_manager.get(event.player.guild_id)
         await player.track_end_event(event)
 
 
