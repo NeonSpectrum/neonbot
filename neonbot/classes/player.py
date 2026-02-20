@@ -283,6 +283,8 @@ class Player(DefaultPlayer):
 
             try:
                 track = self.playlist[self.current_queue]
+                print(self.current_queue)
+                print(track)
             except IndexError:
                 log.error(f'Playlist length is {len(self.playlist)}. Current queue is {self.current_queue}')
                 return
