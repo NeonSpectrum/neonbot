@@ -27,7 +27,7 @@ module_changed = []
 
 
 async def is_owner(interaction: discord.Interaction) -> bool:
-    if interaction.message.author.id not in bot.owner_ids:
+    if interaction.user.id not in bot.owner_ids:
         await interaction.response.send_message(
             embed=Embed("You do not have permission to use this command."), ephemeral=True
         )
