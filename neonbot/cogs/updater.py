@@ -114,7 +114,7 @@ class UpdaterCog(commands.Cog):
             position = new_player.pop('position')
             player.__dict__.update(new_player)
             await player.execute_fn_without_event(
-                player.play()
+                player.play(player.current, start_time=position)
             )
 
         await asyncio.gather(
