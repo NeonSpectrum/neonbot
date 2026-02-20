@@ -320,12 +320,12 @@ class Player(DefaultPlayer):
         await self.search(video_url, send_message=False, requester=bot.user.id)
 
     async def send_message(self, *args, **kwargs):
-        if not self.is_send_message:
-            return None
-
         return await self.ctx.send(*args, **kwargs)
 
     async def send_playing_message(self, track: AudioTrack) -> None:
+        if not self.is_send_message:
+            return
+
         log.cmd(
             self.ctx, t('music.now_playing.title', title=track.title), user=track.requester
         )
@@ -338,6 +338,9 @@ class Player(DefaultPlayer):
         )
 
     async def send_finished_message(self, track: AudioTrack, compact=True) -> None:
+        if not self.is_send_message:
+            return
+
         self.last_track = track
 
         log.cmd(
