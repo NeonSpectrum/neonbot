@@ -293,7 +293,9 @@ class Player(DefaultPlayer):
 
         await self.stop()
         await self.disconnect(force=True, timeout=timeout)
-        await self.send_finished_message(track, compact=True)
+
+        if track:
+            await self.send_finished_message(track, compact=True)
 
     async def process_autoplay(self, track: AudioTrack) -> None:
         try:
