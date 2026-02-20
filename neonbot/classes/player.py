@@ -440,9 +440,9 @@ class Player(DefaultPlayer):
         async with self._start_event_lock:
             await self.send_playing_message(event.track)
 
-    async def track_end_event(self, event: TrackEndEvent):
         self.last_track = event.track
 
+    async def track_end_event(self, event: TrackEndEvent):
         async def task():
             if self.current_queue == -1:
                 return
