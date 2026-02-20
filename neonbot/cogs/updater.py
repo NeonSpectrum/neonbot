@@ -118,7 +118,9 @@ class UpdaterCog(commands.Cog):
                                 'autoplay_list': player.autoplay_list.copy(),
                                 'messages': player.messages,
                                 'is_auto_paused': player.is_auto_paused,
-                                'channel_id': player.channel_id
+                                'channel_id': player.channel_id,
+                                'queue': player.queue.copy(),
+                                '_next': player._next
                             }
 
                         bot.lavalink.player_manager = PlayerManager(bot.lavalink, Player)
