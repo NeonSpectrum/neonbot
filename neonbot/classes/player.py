@@ -268,7 +268,7 @@ class Player(DefaultPlayer):
                     next_queue = self.current_queue + 1  # just increment if not last
             elif self.autoplay and self.is_last_track:  # autoplay
                 try:
-                    await self.process_autoplay(self.last_track)
+                    await self.process_autoplay(self.current)
                 except PlayerError:
                     await self.stop()
                     await self.ctx.channel.send(embed=Embed('No related videos available.'))
