@@ -327,11 +327,12 @@ class Player(DefaultPlayer):
         self.player_controls.initialize()
 
         self.messages['playing'] = await self.ctx.channel.send(
-            embed=self.get_playing_embed(), view=self.player_controls.get(), silent=True
+            embed=self.get_playing_embed(track), view=self.player_controls.get(), silent=True
         )
 
     async def send_finished_message(self, track: AudioTrack, compact=True) -> None:
         self.last_track = track
+
         log.cmd(
             self.ctx,
             t('music.finished_playing.title', title=track.title),
@@ -342,7 +343,7 @@ class Player(DefaultPlayer):
         self.player_controls.initialize()
 
         message = await self.ctx.channel.send(
-            embed=self.get_finished_embed() if not compact else self.get_simplified_finished_message(track),
+            embed=self.get_finished_embed(track) if not compact else self.get_simplified_finished_message(track),
             view=self.player_controls.get() if not compact else None,
             silent=True,
         )
@@ -366,13 +367,13 @@ class Player(DefaultPlayer):
         if self.messages['playing']:
             bot.loop.create_task(bot.edit_message(
                 self.messages['playing'],
-                embed=self.get_playing_embed() if embed else MISSING,
+                embed=self.get_playing_embed(self.current) if embed else MISSING,
                 view=self.player_controls.get(),
             ))
         elif self.messages['finished']:
             bot.loop.create_task(bot.edit_message(
                 self.messages['finished'],
-                embed=self.get_finished_embed() if embed else MISSING,
+                embed=self.get_finished_embed(self.last_track) if embed else MISSING,
                 view=self.player_controls.get() if len(self.messages['finished'].components) > 0 else MISSING,
             ))
 
@@ -385,16 +386,16 @@ class Player(DefaultPlayer):
             t('music.autoplay_footer', autoplay='on' if self.autoplay else 'off'),
         ]
 
-    def get_playing_embed(self):
-        return self.get_track_embed(self.current).set_author(
-            name=t('music.now_playing.index', index=self.current.extra['index'] + 1),
-            icon_url=ICONS.get(self.current.source_name, ICONS.get('music')),
+    def get_playing_embed(self, track: AudioTrack):
+        return self.get_track_embed(track).set_author(
+            name=t('music.now_playing.index', index=track.extra['index'] + 1),
+            icon_url=ICONS.get(track.source_name, ICONS.get('music')),
         )
 
-    def get_finished_embed(self):
-        return self.get_track_embed(self.last_track).set_author(
-            name=t('music.finished_playing.index', index=self.track_list.index(self.last_track) + 1),
-            icon_url=ICONS.get(self.last_track.source_name, ICONS.get('music')),
+    def get_finished_embed(self, track: AudioTrack):
+        return self.get_track_embed(track).set_author(
+            name=t('music.finished_playing.index', index=self.track_list.index(track) + 1),
+            icon_url=ICONS.get(track.source_name, ICONS.get('music')),
         )
 
     def get_track_embed(self, track: AudioTrack):
@@ -427,7 +428,6 @@ class Player(DefaultPlayer):
             self.track_end_event_task = None
 
     async def track_start_event(self, event: TrackStartEvent):
-        print(event.track)
         await self.wait_for_track_end_event()
 
         while not self.is_playing:
@@ -435,7 +435,6 @@ class Player(DefaultPlayer):
 
         async with self._start_event_lock:
             await self.send_playing_message(event.track)
-            self.last_track = event.track
 
     async def track_end_event(self, event: TrackEndEvent):
         async def task():
@@ -448,9 +447,9 @@ class Player(DefaultPlayer):
                 and not self.shuffle
                 or self.autoplay
             )
-            await self.send_finished_message(track=self.last_track, compact=compact)
+            await self.send_finished_message(event.track, compact=compact)
 
-        log.debug('Last Track: ' + self.last_track.title)
+        log.debug('Last Track: ' + event.track.title)
         log.debug('TrackEndEvent.Reason: ' + event.reason.name)
 
         if self.track_end_event_task is None \
