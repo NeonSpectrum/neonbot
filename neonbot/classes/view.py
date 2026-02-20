@@ -23,7 +23,7 @@ class Button(discord.ui.Button):
 
 
 class View(discord.ui.View):
-    def __init__(self, interaction: Optional[discord.Interaction], delete_on_timeout: bool, **kwargs):
+    def __init__(self, interaction: Optional[discord.Interaction], delete_on_timeout: bool = False, **kwargs):
         self.interaction = interaction
         self.delete_on_timeout = delete_on_timeout
         super().__init__(**kwargs)

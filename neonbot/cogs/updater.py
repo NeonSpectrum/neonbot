@@ -5,10 +5,12 @@ import discord
 import git
 from discord import app_commands
 from discord.ext import commands
+from discord.ui import View
 from lavalink import PlayerManager
 
 from neonbot import bot
 from neonbot.classes.embed import Embed
+from neonbot.classes.select_choices import SelectChoices
 
 ROOT_FOLDERS = (
     'assets',
@@ -24,10 +26,20 @@ ROOT_FOLDERS = (
 module_changed = []
 
 
+async def is_owner(interaction: discord.Interaction) -> bool:
+    if interaction.message.author.id not in bot.owner_ids:
+        await interaction.response.send_message(
+            embed=Embed("You do not have permission to use this command."), ephemeral=True
+        )
+        return False
+
+    return True
+
+
 class UpdaterCog(commands.Cog):
-    @commands.hybrid_command('update')
-    @commands.is_owner()
-    async def update(self, ctx: commands.Context):
+    @app_commands.command(name='update')
+    @app_commands.check(is_owner)
+    async def update(self, interaction: discord.Interaction):
         global module_changed
 
         repo = git.Repo('.')
@@ -38,10 +50,11 @@ class UpdaterCog(commands.Cog):
         new_hash = repo.head.commit.hexsha
 
         if old_hash == new_hash:
-            await ctx.send("Already up to date.", ephemeral=True)
+            await interaction.response.send_message("Already up to date.", ephemeral=True)
             return
 
-        await ctx.reply(embed=Embed(title='Git Pull Result', description=f'```md\n{pull_output}\n```'), ephemeral=True)
+        await interaction.response.send_message(
+            embed=Embed(title='Git Pull Result', description=f'```md\n{pull_output}\n```'), ephemeral=True)
 
         changed_files = []
 
@@ -60,7 +73,7 @@ class UpdaterCog(commands.Cog):
             if module_name in sys.modules:
                 module_changed.append(module_name)
 
-        await ctx.reply(
+        await interaction.response.send_message(
             embed=Embed('\n'.join([
                 'Updated!',
                 f'{len(changed_files)} files changed.',
@@ -69,40 +82,48 @@ class UpdaterCog(commands.Cog):
             ephemeral=True
         )
 
-    @commands.hybrid_command('reload')
-    @commands.is_owner()
-    async def reload(self, ctx, *, modules: str):
-        modules = modules.split(' ')
-        cogs_reloaded = []
-        module_reloaded = []
-
-        for module in modules:
-            module = 'neonbot.' + module.strip()
-
-            if module.startswith('neonbot.cogs') and module in bot.extensions:
-                bot.reload_extension(module)
-                cogs_reloaded.append(module)
-            elif module in sys.modules:
-                importlib.reload(sys.modules[module])
-
-                if module == 'neonbot.classes.player':
-                    from neonbot.classes.player import Player
-                    bot.lavalink.player_manager = PlayerManager(self, Player)
-
-                module_reloaded.append(module)
-
-        await ctx.send(
-            embed=Embed('\n'.join([
-                'Reloaded!',
-                f'Python modules: {', '.join(module_reloaded)}',
-                f'Cogs modules: {', '.join(cogs_reloaded)}',
-            ])),
-            ephemeral=True
+    @app_commands.command(name='reload')
+    @app_commands.check(is_owner)
+    async def reload(self, interaction: discord.Interaction):
+        select = SelectChoices(
+            'Select modules to reload...',
+            module_changed,
         )
 
-    @reload.autocomplete('modules')
-    async def reload_autocomplete(self, interaction: discord.Interaction, current: str):
-        return [app_commands.Choice(name=module, value=module) for module in module_changed if current in module]
+        async def callback(_):
+            modules = select.values
+            cogs_reloaded = []
+            module_reloaded = []
+
+            for module in modules:
+                module = 'neonbot.' + module.strip()
+
+                if module.startswith('neonbot.cogs') and module in bot.extensions:
+                    bot.reload_extension(module)
+                    cogs_reloaded.append(module)
+                elif module in sys.modules:
+                    importlib.reload(sys.modules[module])
+
+                    if module == 'neonbot.classes.player':
+                        from neonbot.classes.player import Player
+                        bot.lavalink.player_manager = PlayerManager(self, Player)
+
+                    module_reloaded.append(module)
+
+            await interaction.edit_original_response(
+                embed=Embed('\n'.join([
+                    'Reloaded!',
+                    f'Python modules: {', '.join(module_reloaded)}',
+                    f'Cogs modules: {', '.join(cogs_reloaded)}',
+                ])),
+            )
+
+        select.callback = callback
+
+        view = View()
+        view.add_item(select)
+
+        await interaction.response.send_message(view=view, ephemeral=True)
 
 
 # noinspection PyShadowingNames
