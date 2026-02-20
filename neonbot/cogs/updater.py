@@ -32,26 +32,31 @@ class UpdaterCog(commands.Cog):
         old_hash = repo.head.commit.hexsha
 
         repo.git.reset('--hard')
-        pull_info = repo.git.pull()
+        pull_output = repo.git.pull('origin', repo.active_branch.name, verbose=True)
         new_hash = repo.head.commit.hexsha
 
         if old_hash == new_hash:
             await ctx.send("Already up to date.", ephemeral=True)
             return
 
+        await ctx.reply(embed=Embed(title='Git Pull Result', description=f'```md\n{pull_output}\n```'))
+
         changed_files = []
 
-        if pull_info and pull_info[0][2]:
-            commit = repo.head.commit
-            changed_files = [diff.a_path for diff in commit.diff(commit.parents[0]) if
-                             diff.a_path.endswith('.py')]
+        if repo.head.commit.parents:
+            parent = repo.head.commit.parents[0]
+            changed_files = [
+                item.a_path
+                for item in repo.head.commit.diff(parent)
+                if item.a_path and item.a_path.endswith('.py')
+            ]
 
         for file_path in changed_files:
             module_name = file_path.replace('/', '.').rstrip('.py')
             if module_name in sys.modules:
                 module_changed.append(module_name)
 
-        await ctx.send(
+        await ctx.reply(
             embed=Embed('\n'.join([
                 'Updated!',
                 f'{len(changed_files)} files changed.',
