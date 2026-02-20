@@ -1,4 +1,5 @@
 import asyncio
+import importlib
 import sys
 
 import discord
@@ -81,6 +82,8 @@ class UpdaterCog(commands.Cog):
     @app_commands.command(name='reload')
     @app_commands.check(is_owner)
     async def reload(self, interaction: discord.Interaction):
+        importlib.reload(sys.modules['neonbot.classes.player'])
+
         from neonbot.classes.player import Player
 
         new_players = {}
