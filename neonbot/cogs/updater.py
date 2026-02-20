@@ -123,15 +123,17 @@ class UpdaterCog(commands.Cog):
 
                         bot.lavalink.player_manager = PlayerManager(bot.lavalink, Player)
 
-                        async def replace(new_player):
+                        # noinspection PyShadowingNames
+                        async def replace(guild_id, new_player):
                             bot.lavalink.player_manager.create(guild_id)
-                            # noinspection PyShadowingNames
                             player: Player = bot.lavalink.player_manager.players[guild_id]
                             player.__dict__.update(new_player)
                             await player.connect()
                             await player.play(player.current)
 
-                        await asyncio.gather(*[replace(new_player) for new_player in new_players])
+                        await asyncio.gather(
+                            *[replace(guild_id, new_player) for guild_id, new_player in new_players.items()]
+                        )
 
                     module_reloaded.append(module)
 
