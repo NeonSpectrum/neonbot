@@ -59,7 +59,7 @@ class UpdaterCog(commands.Cog):
             ]), ephemeral=True)
         )
 
-    @commands.hybrid_command('update')
+    @commands.hybrid_command('reload')
     @commands.is_owner()
     async def reload(self, ctx, *, modules: str):
         modules = modules.split(' ')
