@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import random
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Callable, Coroutine, Any
 
 import discord
 import ytmusicapi.exceptions
@@ -48,6 +48,7 @@ class Player(DefaultPlayer):
         )
         self.track_end_event_task = None
         self.is_auto_paused = False
+        self.event_enabled = True
 
         self.set_autoplay(self.autoplay)
         self.set_shuffle(self.settings.music.shuffle)
@@ -421,6 +422,11 @@ class Player(DefaultPlayer):
     def filter_tracks_from_existing(self, track_list):
         existing_ids = [i.identifier for i in self.track_list]
         return [i for i in track_list if i['id'] not in existing_ids]
+
+    async def execute_fn_without_event(self, fn: Callable[[], Coroutine[Any, Any, None]]):
+        self.event_enabled = False
+        await fn()
+        self.event_enabled = True
 
     async def wait_for_track_end_event(self):
         if self.track_end_event_task:
