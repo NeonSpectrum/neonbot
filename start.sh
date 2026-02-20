@@ -5,7 +5,12 @@ if [[ ! -e .local/bin/poetry ]]; then
 fi
 
 if [[ -d .git ]] && [[ "${AUTO_UPDATE}" == "1" ]]; then
+    old_hash=$(git rev-parse HEAD)
     git pull
+    new_hash=$(git rev-parse HEAD)
+    if [[ "$old_hash" != "$new_hash" ]] && git diff --name-only "$old_hash" "$new_hash" | grep -q '^pyproject\.toml$'; then
+        poetry update --without dev
+    fi
 fi
 
 if [[ ! -z "${AUTO_UPDATE_PYTHON_PACKAGES}" ]]; then

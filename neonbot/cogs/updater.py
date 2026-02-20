@@ -87,5 +87,6 @@ class UpdaterCog(commands.Cog):
         return [module for module in module_changed if current in module]
 
 
-async def setup():
+# noinspection PyShadowingNames
+async def setup(bot):
     await bot.add_cog(UpdaterCog())
