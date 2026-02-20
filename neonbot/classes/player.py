@@ -429,9 +429,9 @@ class Player(DefaultPlayer):
         return [i for i in track_list if i['id'] not in existing_ids]
 
     async def execute_fn_without_message(self, fn: Coroutine):
-        # self.is_send_message = False
+        self.is_send_message = False
         await fn
-        # self.is_send_message = True
+        self.is_send_message = True
 
     async def wait_for_track_end_event(self):
         if self.track_end_event_task:
