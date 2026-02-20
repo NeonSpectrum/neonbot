@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import random
-from typing import Dict, List, Optional, Union, Coroutine
+from typing import Dict, List, Optional, Union
 
 import discord
 import ytmusicapi.exceptions
@@ -48,6 +48,7 @@ class Player(DefaultPlayer):
         )
         self.track_end_event_task = None
         self.is_auto_paused = False
+        self.is_send_message = True
 
         self.set_autoplay(self.autoplay)
         self.set_shuffle(self.settings.music.shuffle)
@@ -319,6 +320,9 @@ class Player(DefaultPlayer):
         await self.search(video_url, send_message=False, requester=bot.user.id)
 
     async def send_message(self, *args, **kwargs):
+        if not self.is_send_message:
+            return None
+
         return await self.ctx.send(*args, **kwargs)
 
     async def send_playing_message(self, track: AudioTrack) -> None:
@@ -425,20 +429,12 @@ class Player(DefaultPlayer):
         existing_ids = [i.identifier for i in self.track_list]
         return [i for i in track_list if i['id'] not in existing_ids]
 
-    async def execute_fn_without_event(self, fn: Coroutine):
-        self.is_event_enabled = False
-        await fn
-        self.is_event_enabled = True
-
     async def wait_for_track_end_event(self):
         if self.track_end_event_task:
             await self.track_end_event_task
             self.track_end_event_task = None
 
     async def track_start_event(self, event: TrackStartEvent):
-        print('start')
-        print(event.track)
-
         await self.wait_for_track_end_event()
 
         while not self.is_playing:
@@ -448,9 +444,6 @@ class Player(DefaultPlayer):
             await self.send_playing_message(event.track)
 
     async def track_end_event(self, event: TrackEndEvent):
-        print('end')
-        print(event.track)
-
         async def task():
             if self.current_queue == -1:
                 return
