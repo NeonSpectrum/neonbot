@@ -79,12 +79,15 @@ class UpdaterCog(commands.Cog):
 
             if module.startswith('cogs'):
                 bot.reload_extension(module)
+                cogs_reloaded.append(module)
             elif module in sys.modules:
                 importlib.reload(sys.modules[module])
 
                 if module == 'neonbot.classes.player':
                     from neonbot.classes.player import Player
                     bot.lavalink.player_manager = PlayerManager(self, Player)
+
+                module_reloaded.append(module)
 
         await ctx.send(
             embed=Embed('\n'.join([
