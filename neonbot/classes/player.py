@@ -11,7 +11,7 @@ from discord.ext import tasks
 from discord.ext.commands import Context
 from discord.utils import MISSING, find
 from i18n import t
-from lavalink import AudioTrack, DefaultPlayer, DeferredAudioTrack, LoadType, TrackEndEvent, TrackStartEvent
+from lavalink import AudioTrack, DefaultPlayer, DeferredAudioTrack, LoadType, TrackEndEvent, TrackStartEvent, EndReason
 
 from lib.lavalink_voice_client import LavalinkVoiceClient
 from neonbot import bot
@@ -323,7 +323,7 @@ class Player(DefaultPlayer):
         await self.search(video_url, send_message=False, requester=bot.user.id)
 
     async def send_message(self, *args, **kwargs):
-        return await self.ctx.send(*args, **kwargs)
+        return await self.ctx.channel.send(*args, **kwargs)
 
     async def send_playing_message(self, track: AudioTrack) -> None:
         log.cmd(
@@ -450,3 +450,6 @@ class Player(DefaultPlayer):
 
             await self.send_finished_message(event.track, compact=compact)
             await self.queue_next_song()
+
+            if event.reason == EndReason.STOPPED and len(self.queue) > 0:
+                await self.play()
