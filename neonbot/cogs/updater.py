@@ -105,7 +105,6 @@ class UpdaterCog(commands.Cog):
 
                         for guild_id, player in bot.lavalink.player_manager.players.items():
                             new_player = Player(guild_id, player.node)
-                            new_player.__dict__.update(player.__dict__)
 
                             new_player.ctx = player.ctx
                             new_player.vc = player.vc
