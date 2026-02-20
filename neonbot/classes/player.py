@@ -189,7 +189,6 @@ class Player(DefaultPlayer):
 
     async def next(self):
         await self.stop()
-        await self.play()
 
     async def stop(self, queue=None):
         if queue:
@@ -250,6 +249,9 @@ class Player(DefaultPlayer):
             await self.ctx.reply(embed=embed)
 
     async def queue_next_song(self):
+        if len(self.track_list) == 0:
+            return
+
         next_queue = None
 
         # Priority: shuffle > repeat all > autoplay > repeat off
@@ -293,6 +295,7 @@ class Player(DefaultPlayer):
         await self.play()
 
     async def reset(self, timeout=None):
+        self.track_list = []
         await self.stop(queue=-1)
         await self.disconnect(force=True, timeout=timeout)
 
