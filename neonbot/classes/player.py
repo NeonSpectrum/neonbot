@@ -453,6 +453,7 @@ class Player(DefaultPlayer):
             await self.queue_next_song()
 
             print(event.reason)
+            print(event.reason.may_start_next())
 
             # Since self.play() will only execute if EndReason.FINISHED
             if event.reason == EndReason.STOPPED and len(self.queue) > 0:
