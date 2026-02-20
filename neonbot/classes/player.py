@@ -289,6 +289,11 @@ class Player(DefaultPlayer):
                 log.error(f'Playlist length is {len(self.playlist)}. Current queue is {self.current_queue}')
                 return
 
+        print(self.track_list)
+        print(self.current)
+        print(self.queue)
+        print(track)
+
         await super().play(track, *args, **kwargs)
 
     async def reset(self, timeout=None):
