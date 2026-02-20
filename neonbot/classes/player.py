@@ -323,7 +323,7 @@ class Player(DefaultPlayer):
             return
 
         log.cmd(
-            self.ctx, t('music.now_playing.title', title=self.current.title), user=self.current.requester
+            self.ctx, t('music.now_playing.title', title=self.current.title + ' test'), user=self.current.requester
         )
 
         await self.clear_messages()
