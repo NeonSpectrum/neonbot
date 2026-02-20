@@ -11,7 +11,7 @@ from discord.ext import tasks
 from discord.ext.commands import Context
 from discord.utils import MISSING, find
 from i18n import t
-from lavalink import AudioTrack, DefaultPlayer, DeferredAudioTrack, LoadType, TrackEndEvent, TrackStartEvent, EndReason
+from lavalink import AudioTrack, DefaultPlayer, DeferredAudioTrack, LoadType, TrackEndEvent, TrackStartEvent
 
 from lib.lavalink_voice_client import LavalinkVoiceClient
 from neonbot import bot
@@ -185,10 +185,12 @@ class Player(DefaultPlayer):
     async def prev(self):
         if self.current_queue >= 1:
             self.current_queue -= 2  # Double minus since it will be increment on play()
-        await self.skip()
+        await self.queue_next_song()
+        await self.play()
 
     async def next(self):
-        await self.stop()
+        await self.queue_next_song()
+        await self.play()
 
     async def search_random(self):
         tracks = await YTMusic.get_random_song()
@@ -452,9 +454,5 @@ class Player(DefaultPlayer):
             await self.send_finished_message(event.track, compact=compact)
             await self.queue_next_song()
 
-            print(self.queue)
-            print(event.reason.may_start_next())
-
-            # Since self.play() will only execute if EndReason.FINISHED
-            if event.reason == EndReason.STOPPED or event.reason == EndReason.FINISHED and len(self.queue) > 0:
+            if len(self.queue) > 0 and event.reason.may_start_next():
                 await self.play()
