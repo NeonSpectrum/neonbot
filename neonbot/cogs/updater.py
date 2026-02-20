@@ -101,6 +101,7 @@ class UpdaterCog(commands.Cog):
                 'position': player.position
             }
 
+        bot.lavalink.player_manager.players = {}
         bot.lavalink.player_manager = PlayerManager(bot.lavalink, Player)
 
         # noinspection PyShadowingNames
