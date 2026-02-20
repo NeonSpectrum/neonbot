@@ -11,7 +11,7 @@ from discord.ext import tasks
 from discord.ext.commands import Context
 from discord.utils import MISSING, find
 from i18n import t
-from lavalink import AudioTrack, DefaultPlayer, DeferredAudioTrack, LoadType, TrackEndEvent, TrackStartEvent
+from lavalink import AudioTrack, DefaultPlayer, DeferredAudioTrack, LoadType, TrackEndEvent, TrackStartEvent, EndReason
 
 from lib.lavalink_voice_client import LavalinkVoiceClient
 from neonbot import bot
@@ -448,6 +448,10 @@ class Player(DefaultPlayer):
             )
             await self.send_finished_message(track=self.last_track, compact=compact)
 
-        if self.track_end_event_task is None:
+        log.debug('Last Track: ', self.last_track)
+        log.debug('TrackEndEvent.Reason: ', event.reason)
+
+        if self.track_end_event_task is None \
+            and event.reason in (EndReason.FINISHED, EndReason.STOPPED, EndReason.REPLACED):
             self.track_end_event_task = bot.loop.create_task(task())
             await self.wait_for_track_end_event()
