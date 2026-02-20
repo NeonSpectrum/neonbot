@@ -129,7 +129,7 @@ class UpdaterCog(commands.Cog):
                             player = bot.lavalink.player_manager.create(guild_id)
                             position = new_player.pop('position')
                             player.__dict__.update(new_player)
-                            await player.execute_fn_without_event(
+                            await player.execute_fn_without_message(
                                 player.play(player.current, start_time=position)
                             )
 
