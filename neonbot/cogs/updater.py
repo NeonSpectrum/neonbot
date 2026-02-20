@@ -6,7 +6,6 @@ import git
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import View
-from lavalink import PlayerManager
 
 from neonbot import bot
 from neonbot.classes.embed import Embed
@@ -102,14 +101,7 @@ class UpdaterCog(commands.Cog):
 
                     if module == 'neonbot.classes.player':
                         from neonbot.classes.player import Player
-
-                        players = bot.lavalink.player_manager.players
-
-                        for player in players:
-                            player.__class__ = Player
-
-                        bot.lavalink.player_manager = PlayerManager(bot.lavalink, Player)
-                        bot.lavalink.player_manager.players = players
+                        bot.lavalink.player_manager._player_cls = Player
 
                     module_reloaded.append(module)
 
