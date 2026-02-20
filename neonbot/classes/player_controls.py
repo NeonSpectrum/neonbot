@@ -10,13 +10,16 @@ from neonbot.enums import Repeat
 from neonbot.utils import log
 
 if TYPE_CHECKING:
-    from neonbot.classes.player import Player
+    pass
 
 
 class PlayerControls:
     def __init__(self, guild_id):
-        self.player: Player = bot.lavalink.player_manager.get(guild_id)
         self.view = None
+
+    @property
+    def player(self):
+        return bot.lavalink.player_manager.get(guild_id)
 
     def update_buttons(self, views):
         # ["🔀","⏮️","⏸️","⏭️","🔁"]
