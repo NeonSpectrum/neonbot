@@ -311,7 +311,8 @@ class Player(DefaultPlayer):
                 self.autoplay_list = self.filter_tracks_from_existing(related_tracks)
 
             related_video = self.autoplay_list.pop(0)
-        except (ytmusicapi.exceptions.YTMusicServerError, IndexError):
+        except (ytmusicapi.exceptions.YTMusicServerError, IndexError) as error:
+            log.debug(error, exc_info=True)
             raise PlayerError()
 
         video_url = f"https://music.youtube.com/watch?v={related_video['id']}"
