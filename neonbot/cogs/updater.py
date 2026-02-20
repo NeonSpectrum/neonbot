@@ -118,8 +118,7 @@ class UpdaterCog(commands.Cog):
                                 'autoplay_list': player.autoplay_list.copy(),
                                 'messages': player.messages,
                                 'is_auto_paused': player.is_auto_paused,
-                                'channel_id': player.channel_id,
-                                'position': player.position
+                                'channel_id': player.channel_id
                             }
 
                         bot.lavalink.player_manager = PlayerManager(bot.lavalink, Player)
@@ -128,9 +127,7 @@ class UpdaterCog(commands.Cog):
                         async def replace(guild_id, new_player):
                             bot.lavalink.player_manager.create(guild_id)
                             player: Player = bot.lavalink.player_manager.players[guild_id]
-                            position = new_player.pop('position')
                             player.__dict__.update(new_player)
-                            await player.change_node(player.node)
 
                         await asyncio.gather(
                             *[replace(guild_id, new_player) for guild_id, new_player in new_players.items()]
