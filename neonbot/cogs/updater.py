@@ -103,6 +103,10 @@ class UpdaterCog(commands.Cog):
                         from neonbot.classes.player import Player
                         bot.lavalink.player_manager._player_cls = Player
 
+                        for guild_id, player in bot.lavalink.player_manager.players.items():
+                            new_player = Player(guild_id, player.node)
+                            bot.lavalink.player_manager.players[guild_id] = new_player.__dict__.update(player.__dict__)
+
                     module_reloaded.append(module)
 
             embed = Embed()
