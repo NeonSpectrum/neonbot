@@ -116,6 +116,8 @@ class UpdaterCog(commands.Cog):
             *[replace(guild_id, new_player) for guild_id, new_player in new_players.items()]
         )
 
+        await interaction.response.send_message('reloaded')
+
         # select = SelectChoices(
         #     'Select modules to reload...',
         #     module_changed,
