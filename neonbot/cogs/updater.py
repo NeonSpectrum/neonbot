@@ -1,3 +1,4 @@
+import asyncio
 import importlib
 import sys
 
@@ -6,6 +7,7 @@ import git
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import View
+from lavalink import PlayerManager
 
 from neonbot import bot
 from neonbot.classes.embed import Embed
@@ -101,24 +103,36 @@ class UpdaterCog(commands.Cog):
 
                     if module == 'neonbot.classes.player':
                         from neonbot.classes.player import Player
-                        bot.lavalink.player_manager._player_cls = Player
+
+                        new_players = {}
 
                         for guild_id, player in bot.lavalink.player_manager.players.items():
-                            new_player = Player(guild_id, player.node)
+                            new_players[guild_id] = {
+                                'ctx': player.ctx,
+                                'vc': player.vc,
+                                'current': player.current,
+                                'current_queue': player.current_queue,
+                                'last_track': player.last_track,
+                                'track_list': player.track_list.copy(),
+                                'shuffled_list': player.shuffled_list.copy(),
+                                'autoplay_list': player.autoplay_list.copy(),
+                                'messages': player.messages,
+                                'is_auto_paused': player.is_auto_paused,
+                                'channel_id': player.channel_id
+                            }
 
-                            new_player.ctx = player.ctx
-                            new_player.vc = player.vc
-                            new_player.current = player.current
-                            new_player.current_queue = player.current_queue
-                            new_player.last_track = player.last_track
-                            new_player.track_list = player.track_list.copy()
-                            new_player.shuffled_list = player.shuffled_list.copy()
-                            new_player.autoplay_list = player.autoplay_list.copy()
-                            new_player.messages = player.messages
-                            new_player.is_auto_paused = player.is_auto_paused
-                            new_player.channel_id = player.channel_id
+                        bot.lavalink.player_manager = PlayerManager(bot.lavalink, Player)
 
-                            bot.lavalink.player_manager.players[guild_id] = new_player
+                        async def replace(new_player):
+                            nonlocal player
+
+                            bot.lavalink.player_manager.create(guild_id)
+                            player: Player = bot.lavalink.player_manager.players[guild_id]
+                            player.__dict__.update(new_player)
+                            await player.connect()
+                            await player.play(player.current)
+
+                        await asyncio.gather(*[replace(new_player) for new_player in new_players])
 
                     module_reloaded.append(module)
 
