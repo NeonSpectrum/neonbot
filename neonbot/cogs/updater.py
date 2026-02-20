@@ -53,9 +53,6 @@ class UpdaterCog(commands.Cog):
             await interaction.response.send_message("Already up to date.", ephemeral=True)
             return
 
-        await interaction.response.send_message(
-            embed=Embed(title='Git Pull Result', description=f'```md\n{pull_output}\n```'), ephemeral=True)
-
         changed_files = []
 
         if repo.head.commit.parents:
@@ -78,6 +75,7 @@ class UpdaterCog(commands.Cog):
                 'Updated!',
                 f'{len(changed_files)} files changed.',
                 f'Python modules: {', '.join(changed_files)}',
+                f'```md\n{pull_output}\n```'
             ])),
             ephemeral=True
         )
