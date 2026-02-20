@@ -124,9 +124,8 @@ class UpdaterCog(commands.Cog):
                         bot.lavalink.player_manager = PlayerManager(bot.lavalink, Player)
 
                         async def replace(new_player):
-                            nonlocal player
-
                             bot.lavalink.player_manager.create(guild_id)
+                            # noinspection PyShadowingNames
                             player: Player = bot.lavalink.player_manager.players[guild_id]
                             player.__dict__.update(new_player)
                             await player.connect()
