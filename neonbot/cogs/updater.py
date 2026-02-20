@@ -77,7 +77,7 @@ class UpdaterCog(commands.Cog):
         for module in modules:
             module = 'neonbot.' + module.strip()
 
-            if module.startswith('cogs'):
+            if module.startswith('neonbot.cogs') and module in bot.extensions:
                 bot.reload_extension(module)
                 cogs_reloaded.append(module)
             elif module in sys.modules:
