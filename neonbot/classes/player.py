@@ -269,7 +269,7 @@ class Player(DefaultPlayer):
                     next_queue = self.current_queue + 1  # just increment if not last
             elif self.autoplay and self.is_last_track:  # autoplay
                 try:
-                    await self.process_autoplay(self.current)
+                    await self.process_autoplay(self.last_track)
                 except PlayerError:
                     await self.stop()
                     await self.send_message(embed=Embed('No related videos available.'))
@@ -339,8 +339,6 @@ class Player(DefaultPlayer):
         )
 
     async def send_finished_message(self, track: AudioTrack, compact=True) -> None:
-        self.last_track = track
-
         if not self.is_send_message:
             return
 
@@ -439,15 +437,12 @@ class Player(DefaultPlayer):
             self.track_end_event_task = None
 
     async def track_start_event(self, event: TrackStartEvent):
-        await self.wait_for_track_end_event()
-
-        while not self.is_playing:
-            await asyncio.sleep(0.1)
-
         async with self._start_event_lock:
             await self.send_playing_message(event.track)
 
     async def track_end_event(self, event: TrackEndEvent):
+        self.last_track = event.track
+
         async def task():
             if self.current_queue == -1:
                 return
