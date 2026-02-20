@@ -15,11 +15,12 @@ if TYPE_CHECKING:
 
 class PlayerControls:
     def __init__(self, guild_id):
+        self.guild_id = guild_id
         self.view = None
 
     @property
     def player(self):
-        return bot.lavalink.player_manager.get(guild_id)
+        return bot.lavalink.player_manager.get(self.guild_id)
 
     def update_buttons(self, views):
         # ["🔀","⏮️","⏸️","⏭️","🔁"]
