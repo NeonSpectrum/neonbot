@@ -48,7 +48,7 @@ class Player(DefaultPlayer):
         )
         self.track_end_event_task = None
         self.is_auto_paused = False
-        self.event_enabled = True
+        self.is_send_message = True
 
         self.set_autoplay(self.autoplay)
         self.set_shuffle(self.settings.music.shuffle)
@@ -104,7 +104,7 @@ class Player(DefaultPlayer):
 
         msg = 'Player reset due to inactivity.'
         log.cmd(self.ctx, msg)
-        await self.ctx.channel.send(embed=Embed(msg))
+        await self.send_message(embed=Embed(msg))
 
     async def connect(self, voice_channel=None):
         if self.ctx.guild.voice_client:
@@ -130,7 +130,7 @@ class Player(DefaultPlayer):
         await self.set_pause(True)
         log.cmd(self.ctx, t('music.player_paused', user=requester.name))
 
-        await self.ctx.channel.send(embed=Embed(t('music.player_paused', user=requester.mention)))
+        await self.send_message(embed=Embed(t('music.player_paused', user=requester.mention)))
         self.refresh_player_message()
 
     async def resume(self, requester: discord.User):
@@ -140,7 +140,7 @@ class Player(DefaultPlayer):
         await self.set_pause(False)
         log.cmd(self.ctx, t('music.player_resumed', user=requester.name))
 
-        await self.ctx.channel.send(embed=Embed(t('music.player_resumed', user=requester.mention)))
+        await self.send_message(embed=Embed(t('music.player_resumed', user=requester.mention)))
         self.refresh_player_message()
 
     def add(self, track: Union[AudioTrack, 'DeferredAudioTrack', Dict[str, Union[Optional[str], bool, int]]],
@@ -271,7 +271,7 @@ class Player(DefaultPlayer):
                     await self.process_autoplay(self.current)
                 except PlayerError:
                     await self.stop()
-                    await self.ctx.channel.send(embed=Embed('No related videos available.'))
+                    await self.send_message(embed=Embed('No related videos available.'))
                     return
                 next_queue = self.current_queue + 1
             elif self.loop == Repeat.OFF:  # repeat off
@@ -319,6 +319,10 @@ class Player(DefaultPlayer):
         video_url = f"https://music.youtube.com/watch?v={related_video['id']}"
         await self.search(video_url, send_message=False, requester=bot.user.id)
 
+    async def send_message(self, *args, **kwargs):
+        if self.send_message:
+            await self.ctx.send(*args, **kwargs)
+
     async def send_playing_message(self, track: AudioTrack) -> None:
         log.cmd(
             self.ctx, t('music.now_playing.title', title=track.title + ' test'), user=track.requester
@@ -327,7 +331,7 @@ class Player(DefaultPlayer):
         await self.clear_messages()
         self.player_controls.initialize()
 
-        self.messages['playing'] = await self.ctx.channel.send(
+        self.messages['playing'] = await self.send_message(
             embed=self.get_playing_embed(track), view=self.player_controls.get(), silent=True
         )
 
@@ -343,7 +347,7 @@ class Player(DefaultPlayer):
         await self.clear_messages()
         self.player_controls.initialize()
 
-        message = await self.ctx.channel.send(
+        message = await self.send_message(
             embed=self.get_finished_embed(track) if not compact else self.get_simplified_finished_message(track),
             view=self.player_controls.get() if not compact else None,
             silent=True,
@@ -356,7 +360,7 @@ class Player(DefaultPlayer):
     async def clear_messages(self):
         if self.messages['finished']:
             await bot.delete_message(self.messages['finished'])
-            await self.ctx.channel.send(embed=self.get_simplified_finished_message(self.last_track), silent=True)
+            await self.send_message(embed=self.get_simplified_finished_message(self.last_track), silent=True)
 
         await bot.delete_message(self.messages['playing'])
         self.messages['playing'] = None
@@ -423,10 +427,10 @@ class Player(DefaultPlayer):
         existing_ids = [i.identifier for i in self.track_list]
         return [i for i in track_list if i['id'] not in existing_ids]
 
-    async def execute_fn_without_event(self, fn: Coroutine):
-        # self.event_enabled = False
+    async def execute_fn_without_message(self, fn: Coroutine):
+        self.is_send_message = False
         await fn
-        # self.event_enabled = True
+        self.is_send_message = True
 
     async def wait_for_track_end_event(self):
         if self.track_end_event_task:

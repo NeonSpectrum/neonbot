@@ -31,16 +31,12 @@ class LavalinkEvent(commands.Cog):
     @listener(TrackStartEvent)
     async def on_track_start(self, event: TrackStartEvent):
         player = cast(Player, event.player)
-
-        if player.event_enabled:
-            await player.track_start_event(event)
+        await player.track_start_event(event)
 
     @listener(TrackEndEvent)
     async def on_track_end(self, event: TrackEndEvent):
         player = cast(Player, event.player)
-
-        if player.event_enabled:
-            await player.track_end_event(event)
+        await player.track_end_event(event)
 
 
 # noinspection PyShadowingNames
