@@ -427,10 +427,9 @@ class Player(DefaultPlayer):
         return [i for i in track_list if i['id'] not in existing_ids]
 
     async def execute_fn_without_event(self, fn: Coroutine):
-        # self.is_event_enabled = False
+        self.is_event_enabled = False
         await fn
-
-    #         self.is_event_enabled = True
+        self.is_event_enabled = True
 
     async def wait_for_track_end_event(self):
         if self.track_end_event_task:
