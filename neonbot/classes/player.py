@@ -240,7 +240,7 @@ class Player(DefaultPlayer):
             await self.ctx.reply(embed=embed)
 
     async def queue_next_song(self):
-        if len(self.track_list) == 0:
+        if len(self.playlist) == 0:
             return
 
         next_queue = None
@@ -287,6 +287,8 @@ class Player(DefaultPlayer):
 
     async def reset(self, timeout=None):
         self.track_list = []
+        self.shuffled_list = []
+
         track = self.current
 
         await self.stop()
@@ -339,7 +341,9 @@ class Player(DefaultPlayer):
         )
 
         await self.clear_messages()
-        self.player_controls.initialize()
+
+        if not compact:
+            self.player_controls.initialize()
 
         message = await self.send_message(
             embed=self.get_finished_embed(track) if not compact else self.get_simplified_finished_message(track),
@@ -430,7 +434,7 @@ class Player(DefaultPlayer):
 
     async def track_end_event(self, event: TrackEndEvent):
         # This means player has been reset
-        if len(self.track_list) == 0:
+        if len(self.playlist) == 0:
             return
 
         async with self._end_event_lock:
