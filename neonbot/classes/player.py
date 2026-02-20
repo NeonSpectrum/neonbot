@@ -189,7 +189,8 @@ class Player(DefaultPlayer):
         await self.skip()
 
     async def next(self):
-        await self.skip()
+        await self.stop()
+        await self.play()
 
     async def stop(self, queue=None):
         if queue:
