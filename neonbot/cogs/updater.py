@@ -1,6 +1,7 @@
 import importlib
 import sys
 
+import discord
 import git
 from discord.ext import commands
 
@@ -21,7 +22,7 @@ ROOT_FOLDERS = (
 module_changed = []
 
 
-class UpdateCog(commands.Cog):
+class UpdaterCog(commands.Cog):
     @commands.hybrid_command('update')
     @commands.is_owner()
     async def update(self, ctx: commands.Context):
@@ -82,9 +83,9 @@ class UpdateCog(commands.Cog):
         )
 
     @reload.autocomplete('modules')
-    async def reload_autocomplete(self):
-        return module_changed
+    async def reload_autocomplete(self, interaction: discord.Interaction, current: str):
+        return [module for module in module_changed if current in module]
 
 
 async def setup():
-    await bot.add_cog(UpdateCog())
+    await bot.add_cog(UpdaterCog())
