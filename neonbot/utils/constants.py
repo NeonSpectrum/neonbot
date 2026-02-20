@@ -26,7 +26,7 @@ ICONS = {
     'pokemon': 'https://i.imgur.com/3sQh8aN.png',
     'music': 'https://i.imgur.com/SBMH84I.png',
     'python': 'https://i.imgur.com/vzcWouB.png',
-    'github': 'https://cdn1.iconfinder.com/data/icons/social-media-vol-1-1/24/_github-512.png',
+    'github': 'https://github.githubassets.com/favicons/favicon.png',
     'pip': 'https://i.imgur.com/vzcWouB.png',
     'google': 'https://i.imgur.com/G46fm8J.png',
     'merriam': 'https://dictionaryapi.com/images/MWLogo.png',

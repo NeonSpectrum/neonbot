@@ -74,7 +74,7 @@ class UpdaterCog(commands.Cog):
         embed = Embed('\n'.join([
             f'{len(changed_files)} files changed.',
             f'Python modules: {', '.join(module_changed)}',
-            f'```md\n{pull_output}\n```'
+            f'```\n{pull_output}\n```'
         ]))
         embed.set_author('Updated!', icon_url=ICONS['github'])
 
@@ -129,7 +129,7 @@ class UpdaterCog(commands.Cog):
                     module_reloaded.append(module)
 
             embed = Embed()
-            embed.set_author('Reloaded!', icon_url=bot.user.display_avatar)
+            embed.set_author('Reloaded!', icon_url=ICONS['github'])
 
             if len(module_reloaded) > 0:
                 embed.add_field('Python modules', f'```\n{'\n'.join(module_reloaded)}\n```', inline=False)
