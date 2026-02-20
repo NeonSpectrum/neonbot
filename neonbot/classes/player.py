@@ -338,10 +338,10 @@ class Player(DefaultPlayer):
         )
 
     async def send_finished_message(self, track: AudioTrack, compact=True) -> None:
+        self.last_track = track
+
         if not self.is_send_message:
             return
-
-        self.last_track = track
 
         log.cmd(
             self.ctx,
