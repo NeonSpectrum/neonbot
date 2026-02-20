@@ -287,6 +287,10 @@ class Player(DefaultPlayer):
         await self.queue_next_song()
         await self.play()
 
+    async def stop(self):
+        self.last_track = self.current
+        await super().stop()
+
     async def reset(self, timeout=None):
         self.track_list = []
         self.shuffled_list = []
