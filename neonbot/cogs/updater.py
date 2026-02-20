@@ -104,6 +104,10 @@ class UpdaterCog(commands.Cog):
                         from neonbot.classes.player import Player
 
                         players = bot.lavalink.player_manager.players
+
+                        for player in players:
+                            player.__class__ = Player
+
                         bot.lavalink.player_manager = PlayerManager(bot.lavalink, Player)
                         bot.lavalink.player_manager.players = players
 
