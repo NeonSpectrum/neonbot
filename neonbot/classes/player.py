@@ -288,6 +288,10 @@ class Player(DefaultPlayer):
 
         self.queue.append(track)
 
+    async def play_next(self):
+        await self.queue_next_song()
+        await self.play()
+
     async def reset(self, timeout=None):
         await self.stop(queue=-1)
         await self.disconnect(force=True, timeout=timeout)
@@ -442,3 +446,4 @@ class Player(DefaultPlayer):
             )
 
             await self.send_finished_message(event.track, compact=compact)
+            await self.queue_next_song()
