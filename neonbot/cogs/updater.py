@@ -94,9 +94,6 @@ class UpdaterCog(commands.Cog):
             module_reloaded = []
 
             for module in modules:
-                module = 'neonbot.' + module.strip()
-                print(sys.modules)
-
                 if module.startswith('neonbot.cogs') and module in bot.extensions:
                     bot.reload_extension(module)
                     cogs_reloaded.append(module)
@@ -109,14 +106,12 @@ class UpdaterCog(commands.Cog):
 
                     module_reloaded.append(module)
 
-            await interaction.edit_original_response(
-                embed=Embed('\n'.join([
-                    'Reloaded!',
-                    f'Python modules: {', '.join(module_reloaded or ['None'])}',
-                    f'Cogs modules: {', '.join(cogs_reloaded or ['None'])}',
-                ])),
-                view=None
-            )
+            embed = Embed()
+            embed.set_author('Reloaded!', icon_url=bot.user.display_avatar)
+            embed.add_field('Python modules', f'```\n{", ".join(module_reloaded or ["None"])}\n```', inline=False)
+            embed.add_field('Cogs modules', f'```\n{", ".join(cogs_reloaded or ["None"])}\n```', inline=False)
+
+            await interaction.edit_original_response(embed=embed, view=None)
 
         select.callback = callback
 
