@@ -321,7 +321,7 @@ class Player(DefaultPlayer):
 
     async def send_playing_message(self, track: AudioTrack) -> None:
         log.cmd(
-            self.ctx, t('music.now_playing.title', title=track.title), user=track.requester
+            self.ctx, t('music.now_playing.title', title=track.title + ' test'), user=track.requester
         )
 
         await self.clear_messages()
