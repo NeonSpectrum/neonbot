@@ -130,7 +130,7 @@ class UpdaterCog(commands.Cog):
                             player: Player = bot.lavalink.player_manager.players[guild_id]
                             position = new_player.pop('position')
                             player.__dict__.update(new_player)
-                            await player.seek(position)
+                            await player.change_node(player.node)
 
                         await asyncio.gather(
                             *[replace(guild_id, new_player) for guild_id, new_player in new_players.items()]
