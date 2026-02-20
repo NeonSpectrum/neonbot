@@ -282,6 +282,7 @@ class Player(DefaultPlayer):
             return
 
         self.queue.append(track)
+        self.last_track = track
 
     async def play_next(self):
         await self.queue_next_song()
@@ -442,8 +443,6 @@ class Player(DefaultPlayer):
             return
 
         async with self._end_event_lock:
-            self.last_track = event.track
-
             compact = (
                 not self.is_last_track
                 and self.loop != Repeat.OFF
