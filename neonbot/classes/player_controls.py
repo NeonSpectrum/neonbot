@@ -1,5 +1,3 @@
-from typing import TYPE_CHECKING
-
 import discord
 from i18n import t
 
@@ -8,9 +6,6 @@ from neonbot.classes.embed import Embed
 from neonbot.classes.view import Button, View
 from neonbot.enums import Repeat
 from neonbot.utils import log
-
-if TYPE_CHECKING:
-    pass
 
 
 class PlayerControls:

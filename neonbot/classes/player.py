@@ -422,6 +422,9 @@ class Player(DefaultPlayer):
 
     async def track_start_event(self, event: TrackStartEvent):
         async with self._start_event_lock:
+            while not self.is_playing:
+                await asyncio.sleep(0.1)
+
             await self.send_playing_message(event.track)
 
     async def track_end_event(self, event: TrackEndEvent):
