@@ -76,6 +76,8 @@ class NeonBot(commands.Bot):
         self.session = ClientSession(timeout=ClientTimeout(total=30))
         self.scheduler = AsyncIOScheduler()
         self.scheduler.start()
+        
+        self.initialize_lavalink()
 
         await self.add_cogs()
         load_context_menu(self)
