@@ -283,7 +283,6 @@ class Player(DefaultPlayer):
 
             try:
                 track = self.playlist[self.current_queue]
-                self.current = track
             except IndexError:
                 log.error(f'Playlist length is {len(self.playlist)}. Current queue is {self.current_queue}')
                 return
@@ -319,12 +318,9 @@ class Player(DefaultPlayer):
         video_url = f"https://music.youtube.com/watch?v={related_video['id']}"
         await self.search(video_url, send_message=False, requester=bot.user.id)
 
-    async def send_playing_message(self) -> None:
-        if not self.current:
-            return
-
+    async def send_playing_message(self, track: AudioTrack) -> None:
         log.cmd(
-            self.ctx, t('music.now_playing.title', title=self.current.title + ' test'), user=self.current.requester
+            self.ctx, t('music.now_playing.title', title=track.title + ' test'), user=track.requester
         )
 
         await self.clear_messages()
@@ -431,13 +427,14 @@ class Player(DefaultPlayer):
             self.track_end_event_task = None
 
     async def track_start_event(self, event: TrackStartEvent):
+        print(event.track)
         await self.wait_for_track_end_event()
 
         while not self.is_playing:
             await asyncio.sleep(0.1)
 
         async with self._start_event_lock:
-            await self.send_playing_message()
+            await self.send_playing_message(event.track)
             self.last_track = event.track
 
     async def track_end_event(self, event: TrackEndEvent):
