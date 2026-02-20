@@ -320,7 +320,7 @@ class Player(DefaultPlayer):
         await self.search(video_url, send_message=False, requester=bot.user.id)
 
     async def send_message(self, *args, **kwargs):
-        if self.send_message:
+        if self.is_send_message:
             await self.ctx.send(*args, **kwargs)
 
     async def send_playing_message(self, track: AudioTrack) -> None:
