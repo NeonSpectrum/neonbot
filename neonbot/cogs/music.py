@@ -264,7 +264,7 @@ class Music(commands.Cog):
         player = bot.lavalink.player_manager.create(ctx.guild.id)
         player.set_shuffle(state)
 
-        user = ctx.author.mention if ctx.invoked_with != 'bot' else ctx.guild.me
+        user = ctx.author.mention if ctx.invoked_with != 'bot' else ctx.guild.me.mention
         await ctx.reply(embed=Embed(t('music.shuffle_changed', mode='on' if player.shuffle else 'off', user=user)))
 
     @commands.hybrid_command(name='repeat')
@@ -283,7 +283,7 @@ class Music(commands.Cog):
         modes = [Repeat.OFF, Repeat.SINGLE, Repeat.ALL]
         player.set_loop(modes[mode].value)
 
-        user = ctx.author.mention if ctx.invoked_with != 'bot' else ctx.guild.me
+        user = ctx.author.mention if ctx.invoked_with != 'bot' else ctx.guild.me.mention
         await ctx.reply(embed=Embed(t('music.repeat_changed', mode=modes[mode].name.lower(), user=user)))
 
     @commands.hybrid_command(name='autoplay')
@@ -295,7 +295,7 @@ class Music(commands.Cog):
         player = bot.lavalink.player_manager.create(ctx.guild.id)
         player.set_autoplay(state)
 
-        user = ctx.author.mention if ctx.invoked_with != 'bot' else ctx.guild.me
+        user = ctx.author.mention if ctx.invoked_with != 'bot' else ctx.guild.me.mention
         await ctx.reply(embed=Embed(t('music.autoplay_changed', mode='on' if player.autoplay else 'off', user=user)))
 
 
