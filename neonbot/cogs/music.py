@@ -287,7 +287,7 @@ class Music(commands.Cog):
         player = bot.lavalink.player_manager.get(ctx.guild.id)
         modes = [Repeat.OFF, Repeat.SINGLE, Repeat.ALL]
 
-        if player.repeat == modes[mode].value and is_from_bot:
+        if player.loop == modes[mode].value and is_from_bot:
             return
 
         player.set_loop(modes[mode].value)
