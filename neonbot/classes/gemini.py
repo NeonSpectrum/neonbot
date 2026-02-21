@@ -1,3 +1,4 @@
+import inspect
 import json
 from typing import List
 
@@ -97,7 +98,17 @@ class GeminiChat:
         for row in data:
             command = bot.get_command(row.get('name'))
             arguments = row.get('arguments')
-            cmds.append((command, arguments))
+
+            sig = inspect.signature(command.callback)
+            params = [p.name for p in sig.parameters.values() if p.name != 'ctx']
+
+            args_list = []
+            for param in params:
+                value = arguments.get(param)
+                if value:
+                    args_list.append(str(value))
+
+            cmds.append((command, args_list))
 
         return cmds
 

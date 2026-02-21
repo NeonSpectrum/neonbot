@@ -94,9 +94,9 @@ class Event(commands.Cog):
                     cmds = gemini_chat.get_command_list()
 
                     for cmd in cmds:
-                        command, arguments = cmd
+                        command, args = cmd
 
-                        message.content = f'{bot.default_prefix}{command.name} {' '.join(arguments.values())}'
+                        message.content = f'{bot.default_prefix}{command.name} {' '.join(args)}'
 
                         await bot.process_commands(message)
             except Exception as error:
