@@ -144,17 +144,7 @@ class GeminiChat:
         placeholders = {
             '{{DISPLAY_NAME}}': bot.user.name,
             '{{OWNER_ID}}': bot.get_user(bot.app_info.owner.id).id,
-            '{{OWNER_NAME}}': bot.get_user(bot.app_info.owner.id).display_name,
-            '{{USER_DATA}}': json.dumps({
-                'user_id': self.ctx.author.id,
-                'user_name': self.ctx.author.display_name,
-                'guild_id': self.ctx.guild.id,
-                'guild_name': self.ctx.guild.name,
-                'channel_id': self.ctx.channel.id,
-                'channel_name': self.ctx.channel.name,
-                'voice_channel_id': self.ctx.author.voice.channel.id if self.ctx.author.voice else None,
-                'voice_channel_name': self.ctx.author.voice.channel.name if self.ctx.author.voice else None,
-            }),
+            '{{USER_ID}}': bot.get_user(bot.app_info.owner.id).id,
             '{{GUILD_DATA}}': self.get_guild_data(),
             '{{PLAYER_DATA}}': json.dumps(playlist)
         }
@@ -177,21 +167,15 @@ class GeminiChat:
             "id": guild.id,
             "name": guild.name,
             "owner_id": guild.owner_id,
-            "member_count": guild.member_count,
-            "roles": [obj_to_dict(role) for role in guild.roles],
-            "channels": [obj_to_dict(channel) for channel in guild.channels],
-            "members": [],
-        }
-
-        for member in guild.members:
-            data["members"].append({
+            "channels": [{
+                'id': channel.id,
+                'name': channel.name,
+                'connected': [member.id for member in channel.members] if isinstance(channel, discord.VoiceChannel) else [],
+            } for channel in guild.channels],
+            "members": [{
                 "id": member.id,
                 "name": str(member),
-                "nick": member.nick,
-                "roles": [r.id for r in member.roles if r != guild.default_role],
-                "joined_at": member.joined_at.isoformat() if member.joined_at else None,
-                "bot": member.bot,
-                "permissions": [p[0] for p in member.guild_permissions if p[1]]
-            })
+            } for member in guild.members],
+        }
 
         return data

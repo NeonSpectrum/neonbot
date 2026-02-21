@@ -240,6 +240,21 @@ class Music(commands.Cog):
 
         await ctx.reply(embed=Embed(f'Joined {voice_channel.mention}.'), ephemeral=True)
 
+    @commands.hybrid_command(name='leave')
+    @commands.check(has_permission)
+    @commands.guild_only()
+    async def leave(self, ctx: commands.Context) -> None:
+        """Connect to voice channel."""
+
+        player = bot.lavalink.player_manager.create(ctx.guild.id)
+        player.ctx = ctx
+
+        last_voice_channel = player.vc.channel
+
+        await player.disconnect()
+
+        await ctx.reply(embed=Embed(f'Left {last_voice_channel.mention}.'), ephemeral=True)
+
 
 # noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:
