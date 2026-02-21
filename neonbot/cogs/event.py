@@ -96,11 +96,11 @@ class Event(commands.Cog):
                     for cmd in cmds:
                         command, args = cmd
 
-                        message.author = message.guild.me
-                        message.author.bot = False  # Bot not allowed to send commands
+                        message.author = ctx.guild.me
                         message.content = f'{bot.default_prefix}{command.name} {' '.join(args)}'
 
-                        await bot.process_commands(message)
+                        ctx = await bot.get_context(message)
+                        await bot.invoke(ctx)
             except Exception as error:
                 await ctx.reply(embed=Embed('Something went wrong.'))
                 log.debug(error, exc_info=True)
