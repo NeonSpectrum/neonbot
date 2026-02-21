@@ -157,12 +157,6 @@ class GeminiChat:
     def get_guild_data(self):
         guild = self.ctx.guild
 
-        def obj_to_dict(obj):
-            return {
-                "id": obj.id,
-                "name": obj.name,
-            }
-
         data = {
             "id": guild.id,
             "name": guild.name,
@@ -174,7 +168,7 @@ class GeminiChat:
             } for channel in guild.channels],
             "members": [{
                 "id": member.id,
-                "name": str(member),
+                "name": member.display_name,
             } for member in guild.members],
         }
 
