@@ -264,7 +264,8 @@ class Music(commands.Cog):
         player = bot.lavalink.player_manager.create(ctx.guild.id)
         player.set_shuffle(state)
 
-        await ctx.reply(embed=Embed(t('music.shuffle_changed', mode='on' if player.shuffle else 'off', user=ctx.author.mention)))
+        user = ctx.author.mention if ctx.invoked_with != 'bot' else ctx.guild.me
+        await ctx.reply(embed=Embed(t('music.shuffle_changed', mode='on' if player.shuffle else 'off', user=user)))
 
     @commands.hybrid_command(name='repeat')
     @commands.check(has_permission)
@@ -282,7 +283,8 @@ class Music(commands.Cog):
         modes = [Repeat.OFF, Repeat.SINGLE, Repeat.ALL]
         player.set_loop(modes[mode].value)
 
-        await ctx.reply(embed=Embed(t('music.repeat_changed', mode=modes[mode].name.lower(), user=ctx.author.mention)))
+        user = ctx.author.mention if ctx.invoked_with != 'bot' else ctx.guild.me
+        await ctx.reply(embed=Embed(t('music.repeat_changed', mode=modes[mode].name.lower(), user=user)))
 
     @commands.hybrid_command(name='autoplay')
     @commands.check(has_permission)
@@ -293,7 +295,8 @@ class Music(commands.Cog):
         player = bot.lavalink.player_manager.create(ctx.guild.id)
         player.set_autoplay(state)
 
-        await ctx.reply(embed=Embed(t('music.autoplay_changed', mode='on' if player.autoplay else 'off', user=ctx.author.mention)))
+        user = ctx.author.mention if ctx.invoked_with != 'bot' else ctx.guild.me
+        await ctx.reply(embed=Embed(t('music.autoplay_changed', mode='on' if player.autoplay else 'off', user=user)))
 
 
 # noinspection PyShadowingNames
