@@ -98,7 +98,7 @@ class Event(commands.Cog):
 
                         message.content = f'{bot.default_prefix}{command.name} {' '.join(args)}'
                         new_ctx = await bot.get_context(message)
-                        new_ctx.author = new_ctx.guild.me
+                        new_ctx.message.author = new_ctx.guild.me
 
                         await bot.invoke(new_ctx)
             except Exception as error:
