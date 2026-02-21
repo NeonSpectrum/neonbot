@@ -101,7 +101,7 @@ class Event(commands.Cog):
                         bot_message.content = f'{bot.default_prefix}{command.name} {' '.join(args)}'
 
                         bot_ctx = await bot.get_context(bot_message)
-                        bot_ctx.message.author = bot_ctx.guild.me
+                        bot_ctx.invoked_with = 'bot'
 
                         await bot.invoke(bot_ctx)
             except Exception as error:
@@ -121,7 +121,8 @@ class Event(commands.Cog):
         if ctx.interaction is not None:
             return
 
-        log.cmd(ctx, get_command_string(ctx), guild=ctx.guild or 'N/A')
+        log.cmd(ctx, get_command_string(ctx), guild=ctx.guild or 'N/A',
+                user=ctx.guild.me if ctx.invoked_with == 'bot' else None)
 
     @staticmethod
     @bot.event
