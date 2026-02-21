@@ -96,6 +96,7 @@ class Event(commands.Cog):
                     for cmd in cmds:
                         command, args = cmd
 
+                        message.author = message.guild.me
                         message.content = f'{bot.default_prefix}{command.name} {' '.join(args)}'
 
                         await bot.process_commands(message)
