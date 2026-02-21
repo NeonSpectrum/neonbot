@@ -85,19 +85,19 @@ class Event(commands.Cog):
 
                     if len(response) > 2000:
                         response = md_to_text(response)
-                        await ctx.reply(
+                        bot_message = await ctx.reply(
                             file=discord.File(BytesIO(response.encode()), filename=gemini_chat.get_prompt() + '.txt')
                         )
                     else:
-                        await ctx.reply(response)
+                        bot_message = await ctx.reply(response)
 
                     cmds = gemini_chat.get_command_list()
 
                     for cmd in cmds:
                         command, args = cmd
 
-                        message.content = f'{bot.default_prefix}{command.name} {' '.join(args)}'
-                        new_ctx = await bot.get_context(message)
+                        bot_message.content = f'{bot.default_prefix}{command.name} {' '.join(args)}'
+                        new_ctx = await bot.get_context(bot_message)
                         new_ctx.message.author = new_ctx.guild.me
 
                         await bot.invoke(new_ctx)
