@@ -255,6 +255,46 @@ class Music(commands.Cog):
 
         await ctx.reply(embed=Embed(f'Left {last_voice_channel.mention}.'), ephemeral=True)
 
+    @commands.hybrid_command(name='shuffle')
+    @commands.check(has_permission)
+    @commands.guild_only()
+    async def shuffle(self, ctx: commands.Context, value: bool) -> None:
+        """Set shuffle mode."""
+
+        player = bot.lavalink.player_manager.create(ctx.guild.id)
+        player.set_shuffle(value)
+
+        await ctx.reply(embed=Embed(t('music.shuffle_changed', mode='on' if player.shuffle else 'off', user=ctx.author.mention)))
+
+    @commands.hybrid_command(name='repeat')
+    @commands.check(has_permission)
+    @commands.guild_only()
+    @app_commands.choices(value=[
+        app_commands.Choice(name='Off', value=0),
+        app_commands.Choice(name='Single', value=1),
+        app_commands.Choice(name='All', value=2),
+    ])
+    async def repeat(self, ctx: commands.Context, value: int) -> None:
+        """Set repeat mode."""
+
+        player = bot.lavalink.player_manager.create(ctx.guild.id)
+
+        modes = [Repeat.OFF, Repeat.SINGLE, Repeat.ALL]
+        player.set_loop(modes[value].value)
+
+        await ctx.reply(embed=Embed(t('music.repeat_changed', mode=modes[value].name.lower(), user=ctx.author.mention)))
+
+    @commands.hybrid_command(name='autoplay')
+    @commands.check(has_permission)
+    @commands.guild_only()
+    async def autoplay(self, ctx: commands.Context, value: bool) -> None:
+        """Set autoplay mode."""
+
+        player = bot.lavalink.player_manager.create(ctx.guild.id)
+        player.set_autoplay(value)
+
+        await ctx.reply(embed=Embed(t('music.autoplay_changed', mode='on' if player.autoplay else 'off', user=ctx.author.mention)))
+
 
 # noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:
