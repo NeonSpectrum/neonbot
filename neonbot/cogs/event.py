@@ -96,9 +96,13 @@ class Event(commands.Cog):
                     for cmd in cmds:
                         command, arguments = cmd
 
-                        ctx.command = command
-                        ctx.args = list(arguments.values())
-                        await bot.invoke(ctx)
+                        message = discord.Message(
+                            content=f"{bot.default_prefix}{command.name} {' '.join(arguments.values())}",
+                            channel=ctx.channel
+                        )
+
+                        new_ctx = await bot.get_context(message)
+                        await bot.invoke(new_ctx)
             except Exception as error:
                 await ctx.reply(embed=Embed('Something went wrong.'))
                 log.debug(error, exc_info=True)
