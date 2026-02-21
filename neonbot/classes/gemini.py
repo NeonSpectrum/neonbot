@@ -1,5 +1,4 @@
 import inspect
-import json
 from typing import List
 
 import discord.ext.commands
@@ -10,6 +9,7 @@ from google.genai import types
 from json_repair import repair_json
 
 from neonbot import bot
+from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 
 client = genai.Client()
@@ -135,18 +135,26 @@ class GeminiChat:
 
     def replace_placeholder(self, text):
         player = bot.lavalink.player_manager.get(self.ctx.guild.id)
-        playlist = []
+        player_settings = GuildModel.get_instance(self.ctx.guild.id)
+        track_list = []
 
         if player:
             for track in player.playlist:
-                playlist.append({'index': track.extra['index'], 'title': track.title, 'identifier': track.identifier})
+                track_list.append({'index': track.extra['index'], 'title': track.title, 'identifier': track.identifier})
 
         placeholders = {
             '{{DISPLAY_NAME}}': bot.user.name,
             '{{OWNER_ID}}': bot.get_user(bot.app_info.owner.id).id,
             '{{USER_ID}}': bot.get_user(bot.app_info.owner.id).id,
             '{{GUILD_DATA}}': self.get_guild_data(),
-            '{{PLAYER_DATA}}': json.dumps(playlist)
+            '{{PLAYER_DATA}}': {
+                'settings': {
+                    'shuffle': player_settings.music.shuffle,
+                    'autoplay': player_settings.music.autoplay,
+                    'repeat': player_settings.music.repeat,
+                },
+                'track_list': track_list
+            }
         }
 
         for placeholder, value in placeholders.items():
