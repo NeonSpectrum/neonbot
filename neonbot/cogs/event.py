@@ -91,19 +91,19 @@ class Event(commands.Cog):
                     else:
                         bot_message = await ctx.reply(response)
 
-                    cmds = gemini_chat.get_command_list()
+                cmds = gemini_chat.get_command_list()
 
-                    for cmd in cmds:
-                        command, args = cmd
+                for cmd in cmds:
+                    command, args = cmd
 
-                        # Change message author so it won't recognize as bot
-                        bot_message.author = message.author
-                        bot_message.content = f'{bot.default_prefix}{command.name} {' '.join(args)}'
+                    # Change message author so it won't recognize as bot
+                    bot_message.author = message.author
+                    bot_message.content = f'{bot.default_prefix}{command.name} {' '.join(args)}'
 
-                        bot_ctx = await bot.get_context(bot_message)
-                        bot_ctx.invoked_with = 'bot'
+                    bot_ctx = await bot.get_context(bot_message)
+                    bot_ctx.invoked_with = 'bot'
 
-                        await bot.invoke(bot_ctx)
+                    await bot.invoke(bot_ctx)
             except Exception as error:
                 await ctx.reply(embed=Embed('Something went wrong.'))
                 log.debug(error, exc_info=True)
