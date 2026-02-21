@@ -137,6 +137,6 @@ class GeminiChat:
         }
 
         for placeholder, value in placeholders.items():
-            text = text.replace(placeholder, value)
+            text = text.replace(placeholder, str(value))
 
         return text
