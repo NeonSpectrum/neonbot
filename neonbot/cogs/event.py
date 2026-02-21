@@ -99,7 +99,7 @@ class Event(commands.Cog):
                         if not await command.can_run(ctx):
                             continue
 
-                        await command(ctx, **arguments)
+                        await ctx.invoke(cmd, **arguments)
             except Exception as error:
                 await ctx.reply(embed=Embed('Something went wrong.'))
                 log.debug(error, exc_info=True)
