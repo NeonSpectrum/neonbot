@@ -104,8 +104,8 @@ class GeminiChat:
 
             args_list = []
             for param in params:
-                value = arguments.get(param)
-                if value:
+                value = arguments.get(param, None)
+                if value is not None:
                     args_list.append(str(value))
 
             cmds.append((command, args_list))
