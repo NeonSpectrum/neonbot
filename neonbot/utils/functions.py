@@ -42,8 +42,10 @@ def get_command_string(ctx: commands.Context):
 
         return f'{interaction.command.name} {" ".join(params)}'
     else:
-        params = ctx.message.content[len(ctx.prefix + ctx.command.name):].strip()
-        return f'{ctx.prefix}{ctx.command.name} {params}'
+        command_name = ctx.invoked_with if ctx.invoked_with != 'bot' else ctx.command.name
+
+        params = ctx.message.content[len(ctx.prefix + command_name):].strip()
+        return f'{ctx.prefix}{command_name} {params}'
 
 
 def format_seconds(secs: Union[int, float]) -> str:
