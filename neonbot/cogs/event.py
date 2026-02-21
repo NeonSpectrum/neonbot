@@ -97,8 +97,8 @@ class Event(commands.Cog):
                         command, arguments = cmd
 
                         message = discord.Message(
-                            content=f"{bot.default_prefix}{command.name} {' '.join(arguments.values())}",
-                            channel=ctx.channel
+                            channel=ctx.channel,
+                            data={'content': f'{bot.default_prefix}{command.name} {' '.join(arguments.values())}'}
                         )
 
                         new_ctx = await bot.get_context(message)
