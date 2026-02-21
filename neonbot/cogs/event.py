@@ -94,16 +94,17 @@ class Event(commands.Cog):
                     cmds = gemini_chat.get_command_list()
 
                     for cmd in cmds:
-                        [command, arguments] = cmd
+                        command, arguments = cmd
 
                         if not await command.can_run(ctx):
                             continue
 
-                        await ctx.invoke(command, **arguments)
+                        ctx.kwargs = arguments
+                        await command.invoke(ctx)
             except Exception as error:
                 await ctx.reply(embed=Embed('Something went wrong.'))
                 log.debug(error, exc_info=True)
-                log.error(error, stacklevel=2)
+                log.error(error, stacklevel=3)
             finally:
                 return
 

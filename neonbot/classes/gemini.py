@@ -1,5 +1,7 @@
 import json
+from typing import List
 
+import discord.ext.commands
 import google.genai as genai
 from discord.ext import commands
 from envparse import env
@@ -88,14 +90,14 @@ class GeminiChat:
     def get_commands(self):
         return self.get_json().get('commands', [])
 
-    def get_command_list(self):
+    def get_command_list(self) -> List[tuple[discord.ext.commands.Command, dict]]:
         cmds = []
         data = self.get_commands()
 
         for row in data:
             command = bot.get_command(row.get('name'))
             arguments = row.get('arguments')
-            cmds.append([command, arguments])
+            cmds.append((command, arguments))
 
         return cmds
 
