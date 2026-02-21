@@ -98,8 +98,7 @@ class Event(commands.Cog):
 
                         message.content = f'{bot.default_prefix}{command.name} {' '.join(arguments.values())}'
 
-                        new_ctx = await bot.get_context(message)
-                        await bot.invoke(new_ctx)
+                        await bot.process_commands(message)
             except Exception as error:
                 await ctx.reply(embed=Embed('Something went wrong.'))
                 log.debug(error, exc_info=True)

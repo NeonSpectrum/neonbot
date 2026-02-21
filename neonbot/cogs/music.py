@@ -240,17 +240,6 @@ class Music(commands.Cog):
 
         await ctx.reply(embed=Embed(f'Joined {voice_channel.mention}.'), ephemeral=True)
 
-    @join.before_invoke
-    async def join_before_invoke(self, ctx: commands.Context):
-        print(ctx.args)
-        print(ctx.kwargs)
-
-        if isinstance(ctx.kwargs['voice_channel'], str):
-            ctx.kwargs['voice_channel'] = bot.get_channel(int(ctx.kwargs['voice_channel']))
-
-        print(ctx.args)
-        print(ctx.kwargs)
-
 
 # noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:
