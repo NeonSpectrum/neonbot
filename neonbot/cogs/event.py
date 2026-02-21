@@ -97,6 +97,7 @@ class Event(commands.Cog):
                         command, args = cmd
 
                         message.author = message.guild.me
+                        message.author.bot = False  # Bot not allowed to send commands
                         message.content = f'{bot.default_prefix}{command.name} {' '.join(args)}'
 
                         await bot.process_commands(message)
