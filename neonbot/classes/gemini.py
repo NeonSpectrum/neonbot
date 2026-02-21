@@ -155,6 +155,7 @@ class GeminiChat:
                 'voice_channel_id': self.ctx.author.voice.channel.id if self.ctx.author.voice else None,
                 'voice_channel_name': self.ctx.author.voice.channel.name if self.ctx.author.voice else None,
             }),
+            '{{GUILD_DATA}}': self.get_guild_data(),
             '{{PLAYER_DATA}}': json.dumps(playlist)
         }
 
@@ -162,3 +163,33 @@ class GeminiChat:
             text = text.replace(placeholder, str(value))
 
         return text
+
+    def get_guild_data(self):
+        guild = self.ctx.guild
+
+        def obj_to_dict(obj):
+            return {
+                "id": obj.id,
+                "name": obj.name,
+            }
+
+        data = {
+            "id": guild.id,
+            "name": guild.name,
+            "owner_id": guild.owner_id,
+            "member_count": guild.member_count,
+            "roles": [obj_to_dict(role) for role in guild.roles],
+            "channels": [obj_to_dict(channel) for channel in guild.channels],
+            "members": [],
+        }
+
+        for member in guild.members:
+            data["members"].append({
+                "id": member.id,
+                "name": str(member),
+                "nick": member.nick,
+                "roles": [r.id for r in member.roles if r != guild.default_role],
+                "joined_at": member.joined_at.isoformat() if member.joined_at else None,
+                "bot": member.bot,
+                "permissions": [p[0] for p in member.guild_permissions if p[1]]
+            })
