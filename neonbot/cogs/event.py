@@ -99,6 +99,7 @@ class Event(commands.Cog):
                         if not await command.can_run(ctx):
                             continue
 
+                        ctx.args = []
                         ctx.kwargs = arguments
                         await command.invoke(ctx)
             except Exception as error:
