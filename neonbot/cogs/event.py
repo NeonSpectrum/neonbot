@@ -99,13 +99,16 @@ class Event(commands.Cog):
                         if not await command.can_run(ctx):
                             continue
 
-                        ctx.args = []
-                        ctx.kwargs = arguments
-                        await command.invoke(ctx)
+                        await ctx.invoke(command, **arguments)
             except Exception as error:
                 await ctx.reply(embed=Embed('Something went wrong.'))
                 log.debug(error, exc_info=True)
-                log.error(error, stacklevel=3)
+                log.error(error, stacklevel=4)
+                log.error(error, stacklevel=5)
+                log.error(error, stacklevel=6)
+                log.error(error, stacklevel=7)
+                log.error(error, stacklevel=8)
+                log.error(error, stacklevel=9)
             finally:
                 return
 
