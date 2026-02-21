@@ -99,8 +99,7 @@ class Event(commands.Cog):
                         message.author = ctx.guild.me
                         message.content = f'{bot.default_prefix}{command.name} {' '.join(args)}'
 
-                        ctx = await bot.get_context(message)
-                        await bot.invoke(ctx)
+                        await bot.invoke(await bot.get_context(message))
             except Exception as error:
                 await ctx.reply(embed=Embed('Something went wrong.'))
                 log.debug(error, exc_info=True)
