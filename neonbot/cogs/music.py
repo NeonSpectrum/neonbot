@@ -260,11 +260,16 @@ class Music(commands.Cog):
     @commands.guild_only()
     async def shuffle(self, ctx: commands.Context, state: bool) -> None:
         """Set shuffle mode."""
+        is_from_bot = ctx.invoked_with != 'bot'
 
-        player = bot.lavalink.player_manager.create(ctx.guild.id)
+        player = bot.lavalink.player_manager.get(ctx.guild.id)
+
+        if player.shuffle == state and is_from_bot:
+            return
+
         player.set_shuffle(state)
 
-        user = ctx.author.mention if ctx.invoked_with != 'bot' else ctx.guild.me.mention
+        user = ctx.author.mention if not is_from_bot else ctx.guild.me.mention
         await ctx.reply(embed=Embed(t('music.shuffle_changed', mode='on' if player.shuffle else 'off', user=user)))
 
     @commands.hybrid_command(name='repeat')
@@ -277,13 +282,17 @@ class Music(commands.Cog):
     ])
     async def repeat(self, ctx: commands.Context, mode: int) -> None:
         """Set repeat mode."""
+        is_from_bot = ctx.invoked_with != 'bot'
 
-        player = bot.lavalink.player_manager.create(ctx.guild.id)
-
+        player = bot.lavalink.player_manager.get(ctx.guild.id)
         modes = [Repeat.OFF, Repeat.SINGLE, Repeat.ALL]
+
+        if player.repeat == modes[mode].value and is_from_bot:
+            return
+
         player.set_loop(modes[mode].value)
 
-        user = ctx.author.mention if ctx.invoked_with != 'bot' else ctx.guild.me.mention
+        user = ctx.author.mention if not is_from_bot else ctx.guild.me.mention
         await ctx.reply(embed=Embed(t('music.repeat_changed', mode=modes[mode].name.lower(), user=user)))
 
     @commands.hybrid_command(name='autoplay')
@@ -291,11 +300,16 @@ class Music(commands.Cog):
     @commands.guild_only()
     async def autoplay(self, ctx: commands.Context, state: bool) -> None:
         """Set autoplay mode."""
+        is_from_bot = ctx.invoked_with != 'bot'
 
-        player = bot.lavalink.player_manager.create(ctx.guild.id)
+        player = bot.lavalink.player_manager.get(ctx.guild.id)
+
+        if player.shuffle == state and is_from_bot:
+            return
+
         player.set_autoplay(state)
 
-        user = ctx.author.mention if ctx.invoked_with != 'bot' else ctx.guild.me.mention
+        user = ctx.author.mention if not is_from_bot else ctx.guild.me.mention
         await ctx.reply(embed=Embed(t('music.autoplay_changed', mode='on' if player.autoplay else 'off', user=user)))
 
 
