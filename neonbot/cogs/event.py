@@ -103,12 +103,7 @@ class Event(commands.Cog):
             except Exception as error:
                 await ctx.reply(embed=Embed('Something went wrong.'))
                 log.debug(error, exc_info=True)
-                log.error(error, stacklevel=4)
-                log.error(error, stacklevel=5)
-                log.error(error, stacklevel=6)
-                log.error(error, stacklevel=7)
-                log.error(error, stacklevel=8)
-                log.error(error, stacklevel=9)
+                log.error(error, exc_info=True)
             finally:
                 return
 
