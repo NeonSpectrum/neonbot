@@ -260,7 +260,7 @@ class Music(commands.Cog):
     @commands.guild_only()
     async def shuffle(self, ctx: commands.Context, state: bool) -> None:
         """Set shuffle mode."""
-        is_from_bot = ctx.invoked_with != 'bot'
+        is_from_bot = ctx.invoked_with == 'bot'
 
         player = bot.lavalink.player_manager.get(ctx.guild.id)
 
@@ -282,7 +282,7 @@ class Music(commands.Cog):
     ])
     async def repeat(self, ctx: commands.Context, mode: int) -> None:
         """Set repeat mode."""
-        is_from_bot = ctx.invoked_with != 'bot'
+        is_from_bot = ctx.invoked_with == 'bot'
 
         player = bot.lavalink.player_manager.get(ctx.guild.id)
         modes = [Repeat.OFF, Repeat.SINGLE, Repeat.ALL]
@@ -300,7 +300,7 @@ class Music(commands.Cog):
     @commands.guild_only()
     async def autoplay(self, ctx: commands.Context, state: bool) -> None:
         """Set autoplay mode."""
-        is_from_bot = ctx.invoked_with != 'bot'
+        is_from_bot = ctx.invoked_with == 'bot'
 
         player = bot.lavalink.player_manager.get(ctx.guild.id)
 
