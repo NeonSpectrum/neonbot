@@ -96,10 +96,7 @@ class Event(commands.Cog):
                     for cmd in cmds:
                         command, arguments = cmd
 
-                        message = discord.Message(
-                            channel=ctx.channel,
-                            data={'content': f'{bot.default_prefix}{command.name} {' '.join(arguments.values())}'}
-                        )
+                        message.content = f'{bot.default_prefix}{command.name} {' '.join(arguments.values())}'
 
                         new_ctx = await bot.get_context(message)
                         await bot.invoke(new_ctx)
