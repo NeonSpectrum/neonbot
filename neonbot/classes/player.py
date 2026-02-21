@@ -449,6 +449,9 @@ class Player(DefaultPlayer):
         return [i for i in track_list if i['id'] not in existing_ids]
 
     async def track_start_event(self, event: TrackStartEvent):
+        if self._start_event_lock.locked():
+            return
+
         async with self._start_event_lock:
             while not self.is_playing:
                 await asyncio.sleep(0.1)
@@ -456,6 +459,9 @@ class Player(DefaultPlayer):
             await self.send_playing_message(event.track)
 
     async def track_end_event(self, event: TrackEndEvent):
+        if self._end_event_lock.locked():
+            return
+
         # This means player has been reset
         if len(self.playlist) == 0:
             return
