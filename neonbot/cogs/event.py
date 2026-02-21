@@ -96,11 +96,14 @@ class Event(commands.Cog):
                     for cmd in cmds:
                         command, args = cmd
 
+                        # Change message author so it won't recognize as bot
+                        bot_message.author = message.author
                         bot_message.content = f'{bot.default_prefix}{command.name} {' '.join(args)}'
-                        new_ctx = await bot.get_context(bot_message)
-                        new_ctx.message.author = new_ctx.guild.me
 
-                        await bot.invoke(new_ctx)
+                        bot_ctx = await bot.get_context(bot_message)
+                        bot_ctx.message.author = bot_ctx.guild.me
+
+                        await bot.invoke(bot_ctx)
             except Exception as error:
                 await ctx.reply(embed=Embed('Something went wrong.'))
                 log.debug(error, exc_info=True)
