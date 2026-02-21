@@ -249,7 +249,7 @@ class Music(commands.Cog):
         player = bot.lavalink.player_manager.create(ctx.guild.id)
         player.ctx = ctx
 
-        last_voice_channel = player.vc.channel
+        last_voice_channel = player.vc
 
         await player.disconnect()
 
