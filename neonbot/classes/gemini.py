@@ -132,7 +132,16 @@ class GeminiChat:
             '{{DISPLAY_NAME}}': bot.user.name,
             '{{OWNER_ID}}': bot.get_user(bot.app_info.owner.id).id,
             '{{OWNER_NAME}}': bot.get_user(bot.app_info.owner.id).display_name,
-            '{{USER_ID}}': self.ctx.author.id,
+            '{{USER_DATA}}': json.dumps({
+                'user_id': self.ctx.author.id,
+                'user_name': self.ctx.author.display_name,
+                'guild_id': self.ctx.guild.id,
+                'guild_name': self.ctx.guild.name,
+                'channel_id': self.ctx.channel.id,
+                'channel_name': self.ctx.channel.name,
+                'voice_channel_id': self.ctx.author.voice.channel.id if self.ctx.author.voice else None,
+                'voice_channel_name': self.ctx.author.voice.channel.name if self.ctx.author.voice else None,
+            }),
             '{{PLAYER_DATA}}': json.dumps(playlist)
         }
 
