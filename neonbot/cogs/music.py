@@ -242,8 +242,14 @@ class Music(commands.Cog):
 
     @join.before_invoke
     async def join_before_invoke(self, ctx: commands.Context):
+        print(ctx.args)
+        print(ctx.kwargs)
+
         if isinstance(ctx.kwargs['voice_channel'], str):
             ctx.kwargs['voice_channel'] = bot.get_channel(int(ctx.kwargs['voice_channel']))
+
+        print(ctx.args)
+        print(ctx.kwargs)
 
 
 # noinspection PyShadowingNames
