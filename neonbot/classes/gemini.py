@@ -193,3 +193,5 @@ class GeminiChat:
                 "bot": member.bot,
                 "permissions": [p[0] for p in member.guild_permissions if p[1]]
             })
+
+        return data
