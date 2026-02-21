@@ -107,7 +107,7 @@ class Player(DefaultPlayer):
 
     async def connect(self, voice_channel: discord.VoiceChannel = None):
         if self.ctx.guild.voice_client:
-            if self.ctx.guild.voice_client.channel != voice_channel:
+            if voice_channel and self.ctx.guild.voice_client.channel != voice_channel:
                 self.vc = voice_channel
                 await self.ctx.guild.me.move_to(voice_channel)
                 log.cmd(self.ctx, t('music.player_connected', channel=self.vc))
