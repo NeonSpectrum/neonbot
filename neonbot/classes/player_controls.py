@@ -89,11 +89,11 @@ class PlayerControls:
 
             await self.player.next()
         elif button.emoji.name in ('🔁', '🔂'):  # repeat
+            modes = [Repeat.OFF, Repeat.SINGLE, Repeat.ALL]
+
             bot.loop.create_task(
                 send_message(t('music.repeat_changed', mode=modes[index].name.lower(), user=interaction.user.mention))
             )
-
-            modes = [Repeat.OFF, Repeat.SINGLE, Repeat.ALL]
             index = (modes.index(Repeat(self.player.loop)) + 1) % 3
             self.player.set_loop(modes[index].value)
         elif button.emoji.name == '🔀':  # shuffle
