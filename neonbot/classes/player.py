@@ -72,6 +72,9 @@ class Player(DefaultPlayer):
         self.settings.music.autoplay = value
         bot.loop.create_task(self.settings.save_changes(False))
 
+    async def handle_event(self, event):
+        pass
+
     def set_loop(self, value: int) -> None:
         super().set_loop(value)
         self.settings.music.repeat = value
@@ -192,11 +195,11 @@ class Player(DefaultPlayer):
         if self.current_queue >= 1:
             self.current_queue -= 2  # Double minus since it will be increment on play()
         await self.stop(wait=True)
-        await self.play()
+        await self.play_next()
 
     async def next(self):
         await self.stop(wait=True)
-        await self.play()
+        await self.play_next()
 
     async def search_random(self):
         tracks = await YTMusic.get_random_song()
@@ -289,9 +292,9 @@ class Player(DefaultPlayer):
 
         self.queue.append(track)
 
-    async def play(self, *args, **kwargs):
+    async def play_next(self):
         await self.queue_next_song()
-        await super().play(*args, **kwargs)
+        await self.play()
 
     async def stop(self, wait=False):
         last_playing = self.current
@@ -483,5 +486,8 @@ class Player(DefaultPlayer):
 
         await self.send_finished_message(event.track, compact=compact)
         self.last_track = event.track
+
+        if event.reason.may_start_next():
+            await self.play_next()
 
         self._track_end_event.set()
