@@ -290,7 +290,7 @@ class Player(DefaultPlayer):
             log.error(f'Playlist length is {len(self.playlist)}. Current queue is {self.current_queue}')
             return
 
-        self.queue.append(track)
+        self.queue = [track]
 
     async def play_next(self):
         await self.queue_next_song()
