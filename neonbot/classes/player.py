@@ -315,6 +315,8 @@ class Player(DefaultPlayer):
 
         if track:
             await self.send_finished_message(track)
+        else:
+            await self.clear_messages()
 
     async def process_autoplay(self, track: AudioTrack) -> None:
         try:
