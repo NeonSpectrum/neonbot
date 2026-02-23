@@ -73,7 +73,7 @@ class PlayerControls:
             if self.player.paused:
                 await self.player.resume(requester=interaction.user)
             else:
-                await self.player.play()
+                await self.player.play_next()
         elif button.emoji.name == '⏸️':  # pause
             await self.player.pause(requester=interaction.user)
         elif button.emoji.name == '⏮️':  # prev
