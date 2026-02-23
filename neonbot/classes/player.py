@@ -481,7 +481,7 @@ class Player(DefaultPlayer):
         await self.send_finished_message(event.track, compact=compact)
         self.last_track = event.track
 
+        self._track_end_event.set()
+
         if event.reason.may_start_next():
             await self.play_next()
-
-        self._track_end_event.set()
