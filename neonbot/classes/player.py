@@ -471,6 +471,8 @@ class Player(DefaultPlayer):
         print('Track end event start.')
 
         async with self._track_end_condition:
+            print("Lock acquired")
+
             compact = (
                 not self.is_last_track
                 and self.loop != Repeat.OFF
@@ -479,10 +481,11 @@ class Player(DefaultPlayer):
             )
 
             await self.send_finished_message(event.track, compact=compact)
+            print("After send_finished")
             self.last_track = event.track
-
+            print("Before play_next")
             if event.reason.may_start_next():
                 await self.play_next()
-
+            print("After play_next")
             self._track_end_condition.notify_all()
         print('Track end event end.')
