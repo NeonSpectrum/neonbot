@@ -378,8 +378,6 @@ class Player(DefaultPlayer):
         self.messages['finished'] = None
 
     def refresh_player_message(self, *, embed=False):
-        self.player_controls.refresh()
-
         if self.messages['playing']:
             bot.loop.create_task(bot.edit_message(
                 self.messages['playing'],

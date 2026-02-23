@@ -146,6 +146,8 @@ class PlayerControls:
         self.view = View.create_button(buttons, callback, timeout=None)
 
     def get(self) -> View:
+        self.refresh()
+
         return self.view
 
     def refresh(self) -> None:
