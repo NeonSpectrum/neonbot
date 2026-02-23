@@ -33,7 +33,11 @@ class PlayerControls:
             views[2].emoji = '▶️'
 
         views[2].disabled = (
-            not self.player.is_playing and not self.player.paused and self.player.loop == Repeat.OFF
+            not self.player.is_playing
+            and not self.player.paused
+            and self.player.loop == Repeat.OFF
+            and not self.player.shuffle
+            and not self.player.autoplay
         )
 
         views[3].disabled = (
