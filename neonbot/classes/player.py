@@ -451,7 +451,7 @@ class Player(DefaultPlayer):
     async def track_start_event(self, event: TrackStartEvent):
         print('Track start event start.')
 
-        if self._track_end_condition.locked():
+        async with self._track_end_condition:
             print('Track end event waiting.')
             await self._track_end_condition.wait()
             print('Track end event waiting done.')
