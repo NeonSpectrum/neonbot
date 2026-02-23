@@ -82,14 +82,15 @@ class Player(DefaultPlayer):
         self.refresh_player_message(embed=True)
 
     def set_shuffle(self, value: bool) -> None:
-        if value:
-            self.shuffled_list = random.sample(self.track_list, len(self.track_list))
-            if len(self.shuffled_list) > 0:
-                self.current_queue = self.find_new_current_queue(self.shuffled_list)
-        else:
-            self.shuffled_list = []
-            if len(self.track_list) > 0:
-                self.current_queue = self.find_new_current_queue(self.track_list)
+        if self.current:
+            if value:
+                self.shuffled_list = random.sample(self.track_list, len(self.track_list))
+                if len(self.shuffled_list) > 0:
+                    self.current_queue = self.find_new_current_queue(self.shuffled_list)
+            else:
+                self.shuffled_list = []
+                if len(self.track_list) > 0:
+                    self.current_queue = self.find_new_current_queue(self.track_list)
 
         super().set_shuffle(value)
         self.settings.music.shuffle = value
