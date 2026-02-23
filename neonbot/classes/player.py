@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Union
 
 import discord
 import ytmusicapi.exceptions
-from discord import VoiceChannel
+from discord import VoiceChannel, Message
 from discord.ext import tasks
 from discord.ext.commands import Context
 from discord.utils import MISSING, find
@@ -314,7 +314,7 @@ class Player(DefaultPlayer):
         await self.disconnect(force=True, timeout=timeout)
 
         if track:
-            await self.send_finished_message(track, compact=True)
+            await self.send_finished_message(track)
 
     async def process_autoplay(self, track: AudioTrack) -> None:
         try:
@@ -342,7 +342,7 @@ class Player(DefaultPlayer):
     async def send_message(self, *args, **kwargs):
         return await self.ctx.channel.send(*args, **kwargs)
 
-    async def send_playing_message(self, track: AudioTrack) -> None:
+    async def send_playing_message(self, track: AudioTrack) -> Message | None:
         log.cmd(
             self.ctx, t('music.now_playing.title', title=track.title), user=track.requester
         )
@@ -354,7 +354,9 @@ class Player(DefaultPlayer):
             embed=self.get_playing_embed(track), view=self.player_controls.get(), silent=True
         )
 
-    async def send_finished_message(self, track: AudioTrack, compact=True) -> None:
+        return self.messages['playing']
+
+    async def send_finished_message(self, track: AudioTrack) -> Message | None:
         log.cmd(
             self.ctx,
             t('music.finished_playing.title', title=track.title),
@@ -363,18 +365,10 @@ class Player(DefaultPlayer):
 
         await self.clear_messages()
 
-        if not compact:
-            self.player_controls.initialize()
-            self.messages['finished'] = await self.send_message(
-                embed=self.get_finished_embed(track),
-                view=self.player_controls.get(),
-                silent=True,
-            )
-        else:
-            await self.send_message(
-                embed=self.get_simplified_finished_message(track),
-                silent=True,
-            )
+        return await self.send_message(
+            embed=self.get_simplified_finished_message(track),
+            silent=True,
+        )
 
     async def clear_messages(self):
         if self.messages['finished']:
@@ -471,14 +465,15 @@ class Player(DefaultPlayer):
 
         self.current = None
 
-        compact = (
-            not self.is_last_track
-            and self.loop != Repeat.OFF
-            and not self.shuffle
-            or self.autoplay
-        )
+        message = await self.send_finished_message(event.track)
+        await self.queue_next_song()
 
-        await self.send_finished_message(event.track, compact=compact)
+        if len(self.queue) == 0:
+            self.messages['finished'] = await message.edit(
+                embed=self.get_finished_embed(event.track),
+                view=self.player_controls.get(),
+            )
+
         self.last_track = event.track
 
         self._track_end_event.set()
