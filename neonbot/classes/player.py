@@ -464,7 +464,7 @@ class Player(DefaultPlayer):
         self._track_start_event.set()
 
     async def track_end_event(self, event: TrackEndEvent):
-        if not self._track_start_event.is_set():
+        if not self._track_end_event.is_set():
             return
 
         if event.track is None:
