@@ -350,11 +350,9 @@ class Player(DefaultPlayer):
         await self.clear_messages()
         self.player_controls.initialize()
 
-        self.messages['playing'] = await self.send_message(
+        return await self.send_message(
             embed=self.get_playing_embed(track), view=self.player_controls.get(), silent=True
         )
-
-        return self.messages['playing']
 
     async def send_finished_message(self, track: AudioTrack) -> Message | None:
         log.cmd(
@@ -450,7 +448,7 @@ class Player(DefaultPlayer):
 
         await wait_until(lambda: self.is_playing, True)
 
-        await self.send_playing_message(event.track)
+        self.messages['playing'] = await self.send_playing_message(event.track)
 
         self._track_start_event.set()
 
