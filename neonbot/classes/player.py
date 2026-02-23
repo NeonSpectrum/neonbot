@@ -449,8 +449,12 @@ class Player(DefaultPlayer):
         return [i for i in track_list if i['id'] not in existing_ids]
 
     async def track_start_event(self, event: TrackStartEvent):
+        print('Track start event start.')
+
         if self._track_end_condition.locked():
+            print('Track end event waiting.')
             await self._track_end_condition.wait()
+            print('Track end event waiting done.')
 
         async with self._track_start_condition:
             while not self.is_playing:
@@ -458,9 +462,13 @@ class Player(DefaultPlayer):
 
             await self.send_playing_message(event.track)
 
+        print('Track start event end.')
+
     async def track_end_event(self, event: TrackEndEvent):
         if event.track is None or len(self.playlist) == 0:
             return
+
+        print('Track end event start.')
 
         async with self._track_end_condition:
             compact = (
@@ -477,3 +485,4 @@ class Player(DefaultPlayer):
                 await self.play_next()
 
             self._track_end_condition.notify_all()
+        print('Track end event end.')
