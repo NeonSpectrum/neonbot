@@ -76,7 +76,7 @@ class Music(commands.Cog):
         await player.connect()
 
         if not player.is_playing:
-            await player.play()
+            await player.play_next()
 
     @commands.hybrid_command(name='playrandom', aliases=['pr'], )
     @commands.check(has_permission)
@@ -94,7 +94,7 @@ class Music(commands.Cog):
         await player.connect()
 
         if not player.is_playing:
-            await player.play()
+            await player.play_next()
 
     @commands.hybrid_command(name='nowplaying', aliases=['np'])
     @commands.check(has_permission)
