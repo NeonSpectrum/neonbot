@@ -454,12 +454,15 @@ class Player(DefaultPlayer):
 
         async with self._start_event_lock:
             while not self.is_playing:
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.05)
 
             await self.send_playing_message(event.track)
 
     async def track_end_event(self, event: TrackEndEvent):
         if self._end_event_lock.locked():
+            return
+
+        if event.track is None:
             return
 
         # This means player has been reset

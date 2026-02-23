@@ -205,7 +205,7 @@ class Music(commands.Cog):
             if player.current.extra['index'] == index - 1:
                 if len(player.track_list) == 0:
                     player.current_queue = -1
-                    await player.stop(wait=False)
+                    await player.stop()
                 else:
                     player.current_queue -= 1
                     await player.next()
