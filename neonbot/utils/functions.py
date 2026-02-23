@@ -1,5 +1,6 @@
 import asyncio
 import re
+import time
 import urllib.parse
 from datetime import datetime, timedelta
 from typing import Union
@@ -202,3 +203,13 @@ def clean_youtube_url(url):
         else:
             return f"https://www.youtube.com/watch?v={vid}"
     return url
+
+
+async def wait_until(func, expected_value, poll_interval=0.05, timeout=None):
+    start_time = time.monotonic()
+
+    while func() != expected_value:
+        if timeout is not None and (time.monotonic() - start_time) > timeout:
+            break
+
+        await asyncio.sleep(poll_interval)
