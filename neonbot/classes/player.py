@@ -32,8 +32,10 @@ class Player(DefaultPlayer):
 
         self.settings = GuildModel.get_instance(self.guild_id)
         self.player_controls = PlayerControls(self.guild_id)
-        self._track_start_condition = asyncio.Condition()
-        self._track_end_condition = asyncio.Condition()
+        self._track_start_event = asyncio.Event()
+        self._track_end_event = asyncio.Event()
+        self._track_start_event.set()
+        self._track_end_event.set()
 
         self.ctx: Optional[Context] = None
         self.vc: Optional[VoiceChannel] = None
@@ -451,17 +453,19 @@ class Player(DefaultPlayer):
     async def track_start_event(self, event: TrackStartEvent):
         print('Track start event start.')
 
-        if self._track_start_condition.locked():
-            async with self._track_end_condition:
-                print('Track end event waiting.')
-                await self._track_end_condition.wait()
-                print('Track end event waiting done.')
+        if not self._track_start_event.is_set():
+            return
 
-        async with self._track_start_condition:
-            while not self.is_playing:
-                await asyncio.sleep(0.05)
+        await self._track_end_event.wait()
 
-            await self.send_playing_message(event.track)
+        self._track_start_event.clear()
+
+        while not self.is_playing:
+            await asyncio.sleep(0.05)
+
+        await self.send_playing_message(event.track)
+
+        self._track_start_event.set()
 
         print('Track start event end.')
 
@@ -469,24 +473,23 @@ class Player(DefaultPlayer):
         if event.track is None or len(self.playlist) == 0:
             return
 
-        print('Track end event start.')
+        self._track_end_event.clear()
 
-        async with self._track_end_condition:
-            print("Lock acquired")
+        compact = (
+            not self.is_last_track
+            and self.loop != Repeat.OFF
+            and not self.shuffle
+            or self.autoplay
+        )
 
-            compact = (
-                not self.is_last_track
-                and self.loop != Repeat.OFF
-                and not self.shuffle
-                or self.autoplay
-            )
+        await self.send_finished_message(event.track, compact=compact)
+        print("After send_finished")
+        self.last_track = event.track
+        print("Before play_next")
+        if event.reason.may_start_next():
+            await self.play_next()
+        print("After play_next")
 
-            await self.send_finished_message(event.track, compact=compact)
-            print("After send_finished")
-            self.last_track = event.track
-            print("Before play_next")
-            if event.reason.may_start_next():
-                await self.play_next()
-            print("After play_next")
-            self._track_end_condition.notify_all()
+        self._track_end_event.set()
+
         print('Track end event end.')
