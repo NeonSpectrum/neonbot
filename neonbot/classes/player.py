@@ -32,8 +32,8 @@ class Player(DefaultPlayer):
 
         self.settings = GuildModel.get_instance(self.guild_id)
         self.player_controls = PlayerControls(self.guild_id)
-        self._start_event_lock = asyncio.Lock()
-        self._end_event_lock = asyncio.Lock()
+        self._track_start_event = asyncio.Event()
+        self._track_end_event = asyncio.Event()
 
         self.ctx: Optional[Context] = None
         self.vc: Optional[VoiceChannel] = None
@@ -166,10 +166,10 @@ class Player(DefaultPlayer):
         if self.shuffle:
             self.shuffled_list[:] = [
                 track for track in self.shuffled_list
-                if track.extra['index'] != index
+                if track.extra.get('index') != index
             ]
 
-        target_index = find(lambda track: track.extra['index'] == index, self.track_list)
+        target_index = find(lambda track: track.extra.get('index') == index, self.track_list)
 
         if not target_index:
             raise IndexError
@@ -178,10 +178,10 @@ class Player(DefaultPlayer):
 
         # Adjust index on all tracks
         for index, track in enumerate(self.shuffled_list):
-            if track.extra['index'] > index:
+            if track.extra.get('index') > index:
                 track.extra['index'] -= 1
         for index, track in enumerate(self.track_list):
-            if track.extra['index'] > index:
+            if track.extra.get('index') > index:
                 track.extra['index'] -= 1
 
         return removed_track
@@ -414,13 +414,13 @@ class Player(DefaultPlayer):
 
     def get_playing_embed(self, track: AudioTrack):
         return self.get_track_embed(track).set_author(
-            name=t('music.now_playing.index', index=track.extra['index'] + 1),
+            name=t('music.now_playing.index', index=track.extra.get('index') + 1),
             icon_url=ICONS.get(track.source_name, ICONS.get('music')),
         )
 
     def get_finished_embed(self, track: AudioTrack):
         return self.get_track_embed(track).set_author(
-            name=t('music.finished_playing.index', index=track.extra['index'] + 1),
+            name=t('music.finished_playing.index', index=track.extra.get('index') + 1),
             icon_url=ICONS.get(track.source_name, ICONS.get('music')),
         )
 
@@ -434,11 +434,11 @@ class Player(DefaultPlayer):
     def get_simplified_finished_message(self, track: AudioTrack):
         formatted_title = f'[{track.title}]({track.uri})' if track.uri else track.title
 
-        return Embed(f'{t("music.finished_playing.index", index=track.extra['index'] + 1)}: {formatted_title}')
+        return Embed(f'{t("music.finished_playing.index", index=track.extra.get('index') + 1)}: {formatted_title}')
 
     def find_new_current_queue(self, track_list):
         for index, track in enumerate(track_list):
-            if track.extra['index'] == self.current.extra['index']:
+            if track.extra.get('index') == self.current.extra['index']:
                 return index
 
         log.warn('Cannot find new current queue. Returning index 0')
@@ -449,17 +449,22 @@ class Player(DefaultPlayer):
         return [i for i in track_list if i['id'] not in existing_ids]
 
     async def track_start_event(self, event: TrackStartEvent):
-        if self._start_event_lock.locked():
+        if self._track_start_event.is_set():
             return
 
-        async with self._start_event_lock:
-            while not self.is_playing:
-                await asyncio.sleep(0.05)
+        await self._track_end_event.wait()
 
-            await self.send_playing_message(event.track)
+        self._track_start_event.set()
+
+        while not self.is_playing:
+            await asyncio.sleep(0.05)
+
+        await self.send_playing_message(event.track)
+
+        self._track_start_event.set()
 
     async def track_end_event(self, event: TrackEndEvent):
-        if self._end_event_lock.locked():
+        if self._track_start_event.is_set():
             return
 
         if event.track is None:
@@ -469,16 +474,19 @@ class Player(DefaultPlayer):
         if len(self.playlist) == 0:
             return
 
-        async with self._end_event_lock:
-            compact = (
-                not self.is_last_track
-                and self.loop != Repeat.OFF
-                and not self.shuffle
-                or self.autoplay
-            )
+        self._track_end_event.set()
 
-            await self.send_finished_message(event.track, compact=compact)
-            self.last_track = event.track
+        compact = (
+            not self.is_last_track
+            and self.loop != Repeat.OFF
+            and not self.shuffle
+            or self.autoplay
+        )
 
-            if event.reason.may_start_next():
-                await self.play_next()
+        await self.send_finished_message(event.track, compact=compact)
+        self.last_track = event.track
+
+        if event.reason.may_start_next():
+            await self.play_next()
+
+        self._track_end_event.clear()
