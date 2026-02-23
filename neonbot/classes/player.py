@@ -449,22 +449,22 @@ class Player(DefaultPlayer):
         return [i for i in track_list if i['id'] not in existing_ids]
 
     async def track_start_event(self, event: TrackStartEvent):
-        if self._track_start_event.is_set():
+        if not self._track_start_event.is_set():
             return
 
         await self._track_end_event.wait()
 
-        self._track_start_event.set()
+        self._track_start_event.clear()
 
         while not self.is_playing:
             await asyncio.sleep(0.05)
 
         await self.send_playing_message(event.track)
 
-        self._track_start_event.clear()
+        self._track_start_event.set()
 
     async def track_end_event(self, event: TrackEndEvent):
-        if self._track_start_event.is_set():
+        if not self._track_start_event.is_set():
             return
 
         if event.track is None:
@@ -474,7 +474,7 @@ class Player(DefaultPlayer):
         if len(self.playlist) == 0:
             return
 
-        self._track_end_event.set()
+        self._track_end_event.clear()
 
         compact = (
             not self.is_last_track
@@ -489,4 +489,4 @@ class Player(DefaultPlayer):
         if event.reason.may_start_next():
             await self.play_next()
 
-        self._track_end_event.clear()
+        self._track_end_event.set()
