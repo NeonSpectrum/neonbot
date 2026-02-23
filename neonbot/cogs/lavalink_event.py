@@ -28,12 +28,16 @@ class LavalinkEvent(commands.Cog):
     @listener(TrackStartEvent)
     async def on_track_start(self, event: TrackStartEvent):
         player = bot.lavalink.player_manager.get(event.player.guild_id)
-        await player.track_start_event(event)
+
+        if player:
+            await player.track_start_event(event)
 
     @listener(TrackEndEvent)
     async def on_track_end(self, event: TrackEndEvent):
         player = bot.lavalink.player_manager.get(event.player.guild_id)
-        await player.track_end_event(event)
+
+        if player:
+            await player.track_end_event(event)
 
 
 # noinspection PyShadowingNames
