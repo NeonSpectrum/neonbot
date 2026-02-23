@@ -212,6 +212,4 @@ async def wait_until(func, expected_value, poll_interval=0.05, timeout=None):
         if timeout is not None and (time.monotonic() - start_time) > timeout:
             break
 
-        print(func(), '!=', expected_value)
-
         await asyncio.sleep(poll_interval)
