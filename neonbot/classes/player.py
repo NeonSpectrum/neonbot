@@ -299,19 +299,10 @@ class Player(DefaultPlayer):
         await self.play()
 
     async def stop(self, wait=False):
-        last_playing = self.current
         await super().stop()
 
         if wait:
-            # Wait for TrackEndEvent to finish by checking if last_track == last_playing
-            start_time = asyncio.get_event_loop().time()
-            timeout = 5.0
-
-            while self.last_track != last_playing:
-                if asyncio.get_event_loop().time() - start_time > timeout:
-                    break
-
-                await asyncio.sleep(0.05)
+            await self._track_end_event.wait()
 
     async def reset(self, timeout=None):
         self.track_list = []
