@@ -192,11 +192,11 @@ class Player(DefaultPlayer):
         if self.current_queue >= 1:
             self.current_queue -= 2  # Double minus since it will be increment on play()
         await self.stop(wait=True)
-        await self.play_next()
+        await self.play()
 
     async def next(self):
         await self.stop(wait=True)
-        await self.play_next()
+        await self.play()
 
     async def search_random(self):
         tracks = await YTMusic.get_random_song()
@@ -289,9 +289,9 @@ class Player(DefaultPlayer):
 
         self.queue.append(track)
 
-    async def play_next(self):
+    async def play(self, *args, **kwargs):
         await self.queue_next_song()
-        await self.play()
+        await super().play(*args, **kwargs)
 
     async def stop(self, wait=False):
         last_playing = self.current
