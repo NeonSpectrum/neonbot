@@ -458,7 +458,7 @@ class Player(DefaultPlayer):
 
         async with self._track_start_condition:
             while not self.is_playing:
-                await self._track_start_condition.wait_for(lambda: self.is_playing)
+                await asyncio.sleep(0.05)
 
             await self.send_playing_message(event.track)
 
