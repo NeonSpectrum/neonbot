@@ -32,8 +32,8 @@ class Player(DefaultPlayer):
 
         self.settings = GuildModel.get_instance(self.guild_id)
         self.player_controls = PlayerControls(self.guild_id)
-        self._track_start_event = asyncio.Event()
-        self._track_end_event = asyncio.Event()
+        self._track_start_condition = asyncio.Condition()
+        self._track_end_condition = asyncio.Condition()
 
         self.ctx: Optional[Context] = None
         self.vc: Optional[VoiceChannel] = None
@@ -449,44 +449,31 @@ class Player(DefaultPlayer):
         return [i for i in track_list if i['id'] not in existing_ids]
 
     async def track_start_event(self, event: TrackStartEvent):
-        if not self._track_start_event.is_set():
-            return
+        if self._track_end_condition.locked():
+            await self._track_end_condition.wait()
 
-        await self._track_end_event.wait()
+        async with self._track_start_condition:
+            while not self.is_playing:
+                await self._track_start_condition.wait_for(lambda: self.is_playing)
 
-        self._track_start_event.clear()
-
-        while not self.is_playing:
-            await asyncio.sleep(0.05)
-
-        await self.send_playing_message(event.track)
-
-        self._track_start_event.set()
+            await self.send_playing_message(event.track)
 
     async def track_end_event(self, event: TrackEndEvent):
-        if not self._track_end_event.is_set():
+        if event.track is None or len(self.playlist) == 0:
             return
 
-        if event.track is None:
-            return
+        async with self._track_end_condition:
+            compact = (
+                not self.is_last_track
+                and self.loop != Repeat.OFF
+                and not self.shuffle
+                or self.autoplay
+            )
 
-        # This means player has been reset
-        if len(self.playlist) == 0:
-            return
+            await self.send_finished_message(event.track, compact=compact)
+            self.last_track = event.track
 
-        self._track_end_event.clear()
+            if event.reason.may_start_next():
+                await self.play_next()
 
-        compact = (
-            not self.is_last_track
-            and self.loop != Repeat.OFF
-            and not self.shuffle
-            or self.autoplay
-        )
-
-        await self.send_finished_message(event.track, compact=compact)
-        self.last_track = event.track
-
-        if event.reason.may_start_next():
-            await self.play_next()
-
-        self._track_end_event.set()
+            self._track_end_condition.notify_all()
