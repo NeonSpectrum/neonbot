@@ -461,7 +461,7 @@ class Player(DefaultPlayer):
 
         await self.send_playing_message(event.track)
 
-        self._track_start_event.set()
+        self._track_start_event.clear()
 
     async def track_end_event(self, event: TrackEndEvent):
         if self._track_start_event.is_set():
