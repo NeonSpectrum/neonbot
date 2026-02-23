@@ -469,7 +469,7 @@ class Player(DefaultPlayer):
 
         self._track_end_event.clear()
 
-        await wait_until(lambda: self.is_playing, False)
+        self.current = None
 
         compact = (
             not self.is_last_track
