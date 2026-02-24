@@ -205,11 +205,8 @@ class Music(commands.Cog):
             if player.current.extra['index'] == index - 1:
                 if len(player.track_list) == 0:
                     await player.stop()
-                    print('stop')
                 else:
-                    player.current_queue -= 1
-                    await player.next()
-                    print('next')
+                    await player.prev()
             await ctx.reply(embed=Embed(t('music.removed_song', index=index, title=removed.title, url=removed.uri)))
         except IndexError:
             await ctx.reply(embed=Embed('Invalid index.'), ephemeral=True)
