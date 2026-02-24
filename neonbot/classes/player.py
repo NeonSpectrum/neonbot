@@ -179,7 +179,7 @@ class Player(DefaultPlayer):
         if not target_index:
             raise IndexError
 
-        removed_track = self.track_list.pop(target_index.extra['index'])
+        removed_track = self.track_list.pop(target_index.extra.get('index'))
 
         # Adjust index on all tracks
         for index, track in enumerate(self.shuffled_list):
