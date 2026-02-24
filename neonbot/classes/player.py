@@ -473,7 +473,7 @@ class Player(DefaultPlayer):
                 view=self.player_controls.get(),
             )
 
-        self._track_end_event.set()
-
         if event.reason.may_start_next():
             await self.play_next()
+
+        self._track_end_event.set()
