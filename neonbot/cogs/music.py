@@ -202,7 +202,7 @@ class Music(commands.Cog):
         try:
             removed = player.remove(index - 1)
 
-            if player.current.extra['index'] == index - 1:
+            if len(player.playlist) > 0 and player.current.extra['index'] == index - 1:
                 await player.prev()
 
             await ctx.reply(embed=Embed(t('music.removed_song', index=index, title=removed.title, url=removed.uri)))
