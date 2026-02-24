@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export PATH="~/.local/bin:$PATH";
-export SYNC_COMMANDS=0
+export SYNC_COMMANDS=0;
 
 if [[ ! -e .local/bin/poetry ]]; then
     curl -sSL https://install.python-poetry.org | python3 -
