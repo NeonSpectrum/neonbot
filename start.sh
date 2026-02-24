@@ -1,3 +1,5 @@
+#!/bin/bash
+
 export PATH="~/.local/bin:$PATH";
 
 if [[ ! -e .local/bin/poetry ]]; then
@@ -8,8 +10,15 @@ if [[ -d .git ]] && [[ "${AUTO_UPDATE}" == "1" ]]; then
     old_hash=$(git rev-parse HEAD)
     git pull
     new_hash=$(git rev-parse HEAD)
-    if [[ "$old_hash" != "$new_hash" ]] && git diff --name-only "$old_hash" "$new_hash" | grep -q '^pyproject\.toml$'; then
-        poetry update --without dev
+    if [[ "$old_hash" != "$new_hash" ]]; then
+        if git diff --name-only "$old_hash" "$new_hash" | grep -q '^neonbot/cog'; then
+            export SYNC_COMMANDS=1
+        else
+            export SYNC_COMMANDS=0
+        fi
+        if git diff --name-only "$old_hash" "$new_hash" | grep -q '^pyproject\.toml$'; then
+            poetry update --without dev
+        fi
     fi
 fi
 
