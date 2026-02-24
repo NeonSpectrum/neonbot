@@ -326,13 +326,19 @@ class Player(DefaultPlayer):
             else:
                 video_id = track.identifier
 
+            log.debug('video_id: ' + video_id)
+
             if len(self.autoplay_list) == 0:
                 related_tracks = await YTMusic.get_related_tracks(video_id)
 
+                log.debug('related_tracks: ' + str(len(related_tracks)))
+
                 if len(related_tracks) == 0:
                     related_tracks = await YTMusic.get_random_song()
+                    log.debug('replaced related_tracks: ' + str(len(related_tracks)))
 
                 self.autoplay_list = self.filter_tracks_from_existing(related_tracks)
+                log.debug('self.autoplay_list: ' + str(len(self.autoplay_list)))
 
             related_video = self.autoplay_list.pop(0)
         except (ytmusicapi.exceptions.YTMusicServerError, IndexError) as error:
