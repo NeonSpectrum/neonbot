@@ -1,6 +1,7 @@
 #!/bin/bash
 
 export PATH="~/.local/bin:$PATH";
+export SYNC_COMMANDS=0
 
 if [[ ! -e .local/bin/poetry ]]; then
     curl -sSL https://install.python-poetry.org | python3 -
@@ -13,9 +14,6 @@ if [[ -d .git ]] && [[ "${AUTO_UPDATE}" == "1" ]]; then
     if [[ "$old_hash" != "$new_hash" ]]; then
         if git diff --name-only "$old_hash" "$new_hash" | grep -q '^neonbot/cog'; then
             export SYNC_COMMANDS=1
-        else
-            export SYNC_COMMANDS=0
-        fi
         if git diff --name-only "$old_hash" "$new_hash" | grep -q '^pyproject\.toml$'; then
             poetry update --without dev
         fi
