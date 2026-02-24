@@ -268,7 +268,7 @@ class Player(DefaultPlayer):
                 return
             next_queue = self.current_queue + 1
         elif self.loop == Repeat.OFF:  # repeat off
-            if self.current_queue == len(self.playlist) - 1:  # dont play if last
+            if self.is_last_track:  # dont play if last
                 return
             next_queue = self.current_queue + 1  # just increment if not last
 
@@ -473,8 +473,7 @@ class Player(DefaultPlayer):
                 embed=self.get_finished_embed(event.track),
                 view=self.player_controls.get(),
             )
-
-        if event.reason.may_start_next():
+        elif event.reason.may_start_next():
             await self.play()
 
         self._track_end_event.set()
