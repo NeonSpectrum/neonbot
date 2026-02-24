@@ -474,6 +474,6 @@ class Player(DefaultPlayer):
             )
 
         if event.reason.may_start_next():
-            await self.play_next()
+            await self.play()
 
         self._track_end_event.set()
