@@ -191,14 +191,6 @@ class Player(DefaultPlayer):
 
         return removed_track
 
-    async def prev(self):
-        if self.current_queue >= 1:
-            self.current_queue -= 2  # Double minus since it will be increment on play()
-        await self.stop()
-
-    async def next(self):
-        await self.stop()
-
     async def search_random(self):
         tracks = await YTMusic.get_random_song()
 
@@ -272,7 +264,6 @@ class Player(DefaultPlayer):
             try:
                 await self.process_autoplay(self.last_track)
             except PlayerError:
-                await self.stop()
                 await self.send_message(embed=Embed('No related videos available.'))
                 return
             next_queue = self.current_queue + 1
@@ -292,15 +283,26 @@ class Player(DefaultPlayer):
 
         self.queue = [track]
 
+    async def prev(self):
+        if self.current_queue >= 1:
+            self.current_queue -= 2  # Double minus since it will be increment on play()
+        await self.skip()
+
+    async def next(self):
+        await self.skip()
+
     async def play_next(self):
         await self.queue_next_song()
         await self.play()
 
-    async def stop(self, wait=False):
+    async def skip(self):
         await super().stop()
+        await self._track_end_event.wait()
+        await self.play()
 
-        if wait:
-            await self._track_end_event.wait()
+    async def stop(self):
+        self.current_queue = -1
+        await super().stop()
 
     async def reset(self, timeout=None):
         self.track_list = []
@@ -454,7 +456,7 @@ class Player(DefaultPlayer):
         if not self._track_end_event.is_set():
             return
 
-        if event.track is None or len(self.playlist) == 0:
+        if event.track is None or len(self.playlist) == 0 or self.current_queue == -1:
             return
 
         self._track_end_event.clear()
@@ -472,6 +474,7 @@ class Player(DefaultPlayer):
                 view=self.player_controls.get(),
             )
 
-        await self.play()
+        if event.reason.may_start_next():
+            await self.play()
 
         self._track_end_event.set()
