@@ -194,14 +194,10 @@ class Player(DefaultPlayer):
     async def prev(self):
         if self.current_queue >= 1:
             self.current_queue -= 2  # Double minus since it will be increment on play()
-        await self.queue_next_song()
-        await self.stop(wait=True)
-        await self.play()
+        await self.stop()
 
     async def next(self):
-        await self.queue_next_song()
-        await self.stop(wait=True)
-        await self.play()
+        await self.stop()
 
     async def search_random(self):
         tracks = await YTMusic.get_random_song()
@@ -468,8 +464,7 @@ class Player(DefaultPlayer):
 
         message = await self.send_finished_message(event.track)
 
-        if event.reason.may_start_next():
-            await self.queue_next_song()
+        await self.queue_next_song()
 
         if len(self.queue) == 0:
             self.messages['finished'] = await message.edit(
@@ -477,7 +472,6 @@ class Player(DefaultPlayer):
                 view=self.player_controls.get(),
             )
 
-        if event.reason.may_start_next():
-            await self.play()
+        await self.play()
 
         self._track_end_event.set()
