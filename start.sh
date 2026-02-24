@@ -14,6 +14,7 @@ if [[ -d .git ]] && [[ "${AUTO_UPDATE}" == "1" ]]; then
     if [[ "$old_hash" != "$new_hash" ]]; then
         if git diff --name-only "$old_hash" "$new_hash" | grep -q '^neonbot/cog'; then
             export SYNC_COMMANDS=1
+        fi
         if git diff --name-only "$old_hash" "$new_hash" | grep -q '^pyproject\.toml$'; then
             poetry update --without dev
         fi
