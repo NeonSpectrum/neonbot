@@ -301,6 +301,7 @@ class Player(DefaultPlayer):
         await self.play()
 
     async def stop(self):
+        self.current = None
         self.current_queue = -1
         await super().stop()
 
@@ -456,7 +457,7 @@ class Player(DefaultPlayer):
         if not self._track_end_event.is_set():
             return
 
-        if event.track is None or len(self.playlist) == 0 or self.current_queue == -1:
+        if event.track is None or len(self.playlist) == 0 or (self.current_queue == -1 and self.current is None):
             return
 
         self._track_end_event.clear()
