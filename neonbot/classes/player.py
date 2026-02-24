@@ -462,6 +462,7 @@ class Player(DefaultPlayer):
         self._track_end_event.clear()
 
         self.current = None
+        self.last_track = event.track
 
         message = await self.send_finished_message(event.track)
         await self.queue_next_song()
@@ -471,8 +472,6 @@ class Player(DefaultPlayer):
                 embed=self.get_finished_embed(event.track),
                 view=self.player_controls.get(),
             )
-
-        self.last_track = event.track
 
         self._track_end_event.set()
 
