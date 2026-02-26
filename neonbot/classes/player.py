@@ -296,6 +296,7 @@ class Player(DefaultPlayer):
         await self.play()
 
     async def skip(self):
+        await self._track_end_event.wait()
         await super().stop()
         await self._track_end_event.wait()
         print('playing new song')
