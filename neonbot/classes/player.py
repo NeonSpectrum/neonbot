@@ -32,10 +32,8 @@ class Player(DefaultPlayer):
 
         self.settings = GuildModel.get_instance(self.guild_id)
         self.player_controls = PlayerControls(self.guild_id)
-        self._track_start_event = asyncio.Event()
-        self._track_end_event = asyncio.Event()
-        self._track_start_event.set()
-        self._track_end_event.set()
+        self._track_start_lock = asyncio.Lock()
+        self._track_end_lock = asyncio.Lock()
 
         self.ctx: Optional[Context] = None
         self.vc: Optional[VoiceChannel] = None
@@ -433,43 +431,28 @@ class Player(DefaultPlayer):
         return [i for i in track_list if i['id'] not in existing_ids]
 
     async def track_start_event(self, event: TrackStartEvent):
-        if not self._track_start_event.is_set():
-            return
-
-        await self._track_end_event.wait()
-
-        self._track_start_event.clear()
-
-        await wait_until(lambda: self.is_playing, True)
-
-        self.messages['playing'] = await self.send_playing_message(event.track)
-
-        self._track_start_event.set()
+        async with self._track_start_lock:
+            await wait_until(lambda: self.is_playing, True)
+            self.messages['playing'] = await self.send_playing_message(event.track)
 
     async def track_end_event(self, event: TrackEndEvent):
-        if not self._track_end_event.is_set():
-            return
-
         if event.track is None or len(self.playlist) == 0 or (self.current_queue == -1 and self.current is None):
             return
 
-        self._track_end_event.clear()
+        async with self._track_end_lock:
+            self.current = None
+            self.last_track = event.track
 
-        self.current = None
-        self.last_track = event.track
+            self.messages['finished'] = await self.send_finished_message(event.track)
 
-        self.messages['finished'] = await self.send_finished_message(event.track)
+            if event.reason.may_start_next():
+                await self.queue_next_song()
 
-        if event.reason.may_start_next():
-            await self.queue_next_song()
+                if len(self.queue) == 0:
+                    await bot.edit_message(
+                        self.messages['finished'],
+                        embed=self.get_finished_embed(event.track),
+                        view=self.player_controls.get(),
+                    )
 
-            if len(self.queue) == 0:
-                await bot.edit_message(
-                    self.messages['finished'],
-                    embed=self.get_finished_embed(event.track),
-                    view=self.player_controls.get(),
-                )
-
-            await self.play()
-
-        self._track_end_event.set()
+                await self.play()
