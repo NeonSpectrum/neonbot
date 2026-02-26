@@ -28,14 +28,23 @@ class Log(logging.Logger):
         self.addHandler(file)
 
     def set_console_handler(self) -> None:
-        formatter = coloredlogs.ColoredFormatter(LOG_FORMAT, '%Y-%m-%d %I:%M:%S %p', field_styles={
-            'asctime': {'color': 'black'},
+        level_styles = {
+            'debug': {'color': 'cyan'},
+            'info': {'color': 'white'},
+            'warning': {'color': 'yellow'},
+            'error': {'color': 'red'},
+            'critical': {'color': 'red'}
+        }
+
+        field_styles = {
+            'asctime': {'color': 'white'},
             'levelname': {'bold': True},
             'module': {'color': 'blue'},
             'funcName': {'color': 'green'},
             'lineno': {'color': 'yellow'}
-        })
+        }
 
+        formatter = coloredlogs.ColoredFormatter(LOG_FORMAT, '%Y-%m-%d %I:%M:%S %p', field_styles=field_styles, level_styles=level_styles)
         console = logging.StreamHandler()
         console.setFormatter(formatter)
         console.setLevel(BOT_LOG_LEVEL)

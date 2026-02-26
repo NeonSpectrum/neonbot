@@ -53,8 +53,6 @@ class Event(commands.Cog):
         log.info(f"Lavalink node '{node.name}' is ready!")
 
     async def on_message(self, message: discord.Message) -> None:
-        print(message)
-
         if not self.bot.is_ready() or message.author.id == self.bot.user.id:
             return
 
