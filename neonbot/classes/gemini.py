@@ -1,5 +1,6 @@
 import inspect
 from typing import List
+from typing import TYPE_CHECKING
 
 import discord.ext.commands
 import google.genai as genai
@@ -8,18 +9,21 @@ from envparse import env
 from google.genai import types
 from json_repair import repair_json
 
-from neonbot import bot
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log
+
+if TYPE_CHECKING:
+    from neonbot import NeonBot
 
 client = genai.Client()
 
 
 class GeminiChat:
-    def __init__(self, ctx: commands.Context):
+    def __init__(self, ctx: commands.Context['NeonBot']):
         self.model_name = env.str('GEMINI_MODEL')
         self.response = None
         self.ctx = ctx
+        self.bot = ctx.bot
         self.prompt = ctx.message.content
 
     async def generate_content(self):
@@ -27,7 +31,7 @@ class GeminiChat:
             with open('./system_instruction.md', 'r') as f:
                 system_instruction = f.read()
         except FileNotFoundError:
-            system_instruction = bot.setting.gemini_system_instruction
+            system_instruction = self.bot.setting.gemini_system_instruction
 
         system_instruction = self.replace_placeholder(system_instruction)
 
@@ -41,8 +45,8 @@ class GeminiChat:
         for message in messages:
             text = message.content
 
-            if bot.user.mentioned_in(message):
-                text = text.replace(bot.user.mention, bot.user.name).strip()
+            if self.bot.user.mentioned_in(message):
+                text = text.replace(self.bot.user.mention, self.bot.user.name).strip()
 
             attachments = []
 
@@ -55,7 +59,7 @@ class GeminiChat:
                     pass
 
             contents.append(types.Content(
-                role='user' if message.author.id != bot.user.id else 'model',
+                role='user' if message.author.id != self.bot.user.id else 'model',
                 parts=[
                     types.Part.from_text(text=text),
                     *attachments
@@ -96,7 +100,7 @@ class GeminiChat:
         data = self.get_commands()
 
         for row in data:
-            command = bot.get_command(row.get('name'))
+            command = self.bot.get_command(row.get('name'))
             arguments = row.get('arguments')
 
             sig = inspect.signature(command.callback)
@@ -134,7 +138,7 @@ class GeminiChat:
         return messages[::-1]
 
     def replace_placeholder(self, text):
-        player = bot.lavalink.player_manager.get(self.ctx.guild.id)
+        player = self.bot.lavalink.player_manager.get(self.ctx.guild.id)
         player_settings = GuildModel.get_instance(self.ctx.guild.id)
         track_list = []
 
@@ -143,9 +147,9 @@ class GeminiChat:
                 track_list.append({'index': track.extra['index'], 'title': track.title, 'identifier': track.identifier})
 
         placeholders = {
-            '{{DISPLAY_NAME}}': bot.user.name,
-            '{{OWNER_ID}}': bot.get_user(bot.app_info.owner.id).id,
-            '{{USER_ID}}': bot.get_user(bot.app_info.owner.id).id,
+            '{{DISPLAY_NAME}}': self.bot.user.name,
+            '{{OWNER_ID}}': self.bot.get_user(self.bot.app_info.owner.id).id,
+            '{{USER_ID}}': self.bot.get_user(self.bot.app_info.owner.id).id,
             '{{GUILD_DATA}}': self.get_guild_data(),
             '{{PLAYER_DATA}}': {
                 'settings': {

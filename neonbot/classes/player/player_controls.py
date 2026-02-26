@@ -1,23 +1,27 @@
 import asyncio
+from typing import TYPE_CHECKING
 
 import discord
 from i18n import t
 
-from neonbot import bot
-from neonbot.classes.embed import Embed
-from neonbot.classes.view import Button, View
+from neonbot.classes.discord.embed import Embed
+from neonbot.classes.discord.view import Button, View
 from neonbot.enums import Repeat
 from neonbot.utils import log
 
+if TYPE_CHECKING:
+    from neonbot import NeonBot
+
 
 class PlayerControls:
-    def __init__(self, guild_id):
+    def __init__(self, bot: 'NeonBot', guild_id):
+        self.bot = bot
         self.guild_id = guild_id
         self.view = None
 
     @property
     def player(self):
-        return bot.lavalink.player_manager.get(self.guild_id)
+        return self.bot.lavalink.player_manager.get(self.guild_id)
 
     def update_buttons(self, views):
         # ["🔀","⏮️","⏸️","⏭️","🔁"]
@@ -66,7 +70,7 @@ class PlayerControls:
 
         return views
 
-    async def callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def callback(self, button: discord.ui.Button, interaction: discord.Interaction['NeonBot']):
         async def send_message(message):
             await interaction.channel.send(embed=Embed(message))
             message = message.replace(interaction.user.mention, str(interaction.user))
@@ -75,8 +79,8 @@ class PlayerControls:
         if not interaction.user.voice or (
             interaction.user.voice and interaction.user.voice.channel != self.player.ctx.voice_client.channel
         ):
-            if not await bot.is_owner(interaction.user):
-                await bot.send_response(interaction, embed=Embed(t('music.cannot_interact')), ephemeral=True)
+            if not await self.bot.is_owner(interaction.user):
+                await self.bot.send_response(interaction, embed=Embed(t('music.cannot_interact')), ephemeral=True)
                 return
 
         tasks = []
@@ -130,7 +134,7 @@ class PlayerControls:
         self.update_buttons(buttons)
 
         def callback(*args, **kwargs):
-            bot.loop.create_task(self.callback(*args, **kwargs))
+            self.bot.loop.create_task(self.callback(*args, **kwargs))
 
         self.view = View.create_button(buttons, callback, timeout=None)
 

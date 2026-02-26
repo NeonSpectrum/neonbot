@@ -33,7 +33,8 @@ class LavalinkVoiceClient(discord.VoiceProtocol):
         channel_id = data['channel_id']
 
         if not channel_id:
-            await player.reset()
+            if player:
+                await player.reset()
             return
 
         self.channel = self.client.get_channel(int(channel_id))
@@ -76,12 +77,12 @@ class LavalinkVoiceClient(discord.VoiceProtocol):
         # to None doesn't get dispatched after the disconnect
         player.channel_id = None
 
-        if destroy:
-            await self._destroy()
-
-    async def _destroy(self):
         self.cleanup()
 
+        if destroy:
+            await self.destroy()
+
+    async def destroy(self):
         if self._destroyed:
             # Idempotency handling, if `disconnect()` is called, the changed voice state
             # could cause this to run a second time.

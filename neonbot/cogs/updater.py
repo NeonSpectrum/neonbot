@@ -1,17 +1,20 @@
 import importlib
 import sys
+from typing import TYPE_CHECKING
 
 import discord
 import git
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import View
-from lavalink import PlayerManager
 
-from neonbot import bot
-from neonbot.classes.embed import Embed
-from neonbot.classes.select_choices import SelectChoices
+from neonbot.classes.discord.embed import Embed
+from neonbot.classes.discord.select_choices import SelectChoices
+from neonbot.classes.lavalink.player_manager import PlayerManager
 from neonbot.utils.constants import ICONS
+
+if TYPE_CHECKING:
+    from neonbot import NeonBot
 
 ROOT_FOLDERS = (
     'assets',
@@ -27,8 +30,8 @@ ROOT_FOLDERS = (
 module_changed = []
 
 
-async def is_owner(interaction: discord.Interaction) -> bool:
-    if interaction.user.id not in bot.owner_ids:
+async def is_owner(interaction: discord.Interaction['NeonBot']) -> bool:
+    if interaction.user.id not in interaction.client.owner_ids:
         await interaction.response.send_message(
             embed=Embed("You do not have permission to use this command."), ephemeral=True
         )
@@ -40,7 +43,7 @@ async def is_owner(interaction: discord.Interaction) -> bool:
 class UpdaterCog(commands.Cog):
     @app_commands.command(name='update')
     @app_commands.check(is_owner)
-    async def update(self, interaction: discord.Interaction):
+    async def update(self, interaction: discord.Interaction['NeonBot']):
         global module_changed
 
         repo = git.Repo('.')
@@ -82,71 +85,79 @@ class UpdaterCog(commands.Cog):
 
     @app_commands.command(name='reload')
     @app_commands.check(is_owner)
-    async def reload(self, interaction: discord.Interaction):
-        select = SelectChoices(
-            'Select modules to reload...',
-            module_changed,
-        )
+    async def reload(self, interaction: discord.Interaction['NeonBot'], module_list: str = None):
+        if module_list:
+            modules = module_list.split(',')
+            embed = await self.reload_modules(interaction, modules)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        elif len(module_changed) > 0:
+            select = SelectChoices(
+                'Select modules to reload...',
+                module_changed,
+            )
 
-        async def callback(_):
-            modules = select.values
-            cogs_reloaded = []
-            module_reloaded = []
+            async def callback(_):
+                _embed = await self.reload_modules(interaction, select.values)
+                await interaction.edit_original_response(embed=_embed, view=None)
 
-            for module in modules:
-                if module.startswith('neonbot.cogs') and module in bot.extensions:
-                    bot.reload_extension(module)
-                    cogs_reloaded.append(module)
-                elif module in sys.modules:
-                    importlib.reload(sys.modules[module])
+            select.callback = callback
 
-                    if module == 'neonbot.classes.player':
-                        from neonbot.classes.player import Player
+            view = View()
+            view.add_item(select)
 
-                        new_players = {}
+            await interaction.response.send_message(view=view, ephemeral=True)
+        else:
+            await interaction.response.send_message(embed=Embed('Empty module list.'), ephemeral=True)
 
-                        for guild_id, player in bot.lavalink.player_manager.players.items():
-                            new_players[guild_id] = {
-                                'ctx': player.ctx,
-                                'vc': player.vc,
-                                'current': player.current,
-                                'current_queue': player.current_queue,
-                                'last_track': player.last_track,
-                                'track_list': player.track_list.copy(),
-                                'shuffled_list': player.shuffled_list.copy(),
-                                'autoplay_list': player.autoplay_list.copy(),
-                                'messages': player.messages,
-                                'is_auto_paused': player.is_auto_paused,
-                                'channel_id': player.channel_id,
-                            }
+    async def reload_modules(self, interaction, modules):
+        cogs_reloaded = []
+        module_reloaded = []
 
-                        bot.lavalink.player_manager = PlayerManager(bot.lavalink, Player)
+        for module in modules:
+            if module.startswith('neonbot.cogs') and module in interaction.client.extensions:
+                await interaction.client.reload_extension(module)
+                cogs_reloaded.append(module)
+            elif module in sys.modules:
+                importlib.reload(sys.modules[module])
 
-                        for guild_id, new_player in new_players.items():
-                            player = bot.lavalink.player_manager.create(guild_id)
-                            player.__dict__.update(new_player)
+                if module == 'neonbot.classes.player':
 
-                    module_reloaded.append(module)
+                    new_players = {}
 
-            embed = Embed()
-            embed.set_author('Reloaded!', icon_url=ICONS['github'])
+                    for guild_id, player in interaction.client.lavalink.player_manager.players.items():
+                        new_players[guild_id] = {
+                            'ctx': player.ctx,
+                            'vc': player.vc,
+                            'current': player.current,
+                            'current_queue': player.current_queue,
+                            'last_track': player.last_track,
+                            'track_list': player.track_list.copy(),
+                            'shuffled_list': player.shuffled_list.copy(),
+                            'autoplay_list': player.autoplay_list.copy(),
+                            'messages': player.messages,
+                            'is_auto_paused': player.is_auto_paused,
+                            'channel_id': player.channel_id,
+                        }
 
-            if len(module_reloaded) > 0:
-                embed.add_field('Python modules', f'```\n{'\n'.join(module_reloaded)}\n```', inline=False)
+                    interaction.client.lavalink.player_manager = PlayerManager(interaction.client.lavalink)
 
-            if len(cogs_reloaded) > 0:
-                embed.add_field('Cogs modules', f'```\n{'\n'.join(cogs_reloaded)}\n```', inline=False)
+                    for guild_id, new_player in new_players.items():
+                        player = interaction.client.lavalink.bot
+                        player.__dict__.update(new_player)
 
-            await interaction.edit_original_response(embed=embed, view=None)
+                module_reloaded.append(module)
 
-        select.callback = callback
+        embed = Embed()
+        embed.set_author('Reloaded!', icon_url=ICONS['github'])
 
-        view = View()
-        view.add_item(select)
+        if len(module_reloaded) > 0:
+            embed.add_field('Python modules', f'```\n{'\n'.join(module_reloaded)}\n```', inline=False)
 
-        await interaction.response.send_message(view=view, ephemeral=True)
+        if len(cogs_reloaded) > 0:
+            embed.add_field('Cogs modules', f'```\n{'\n'.join(cogs_reloaded)}\n```', inline=False)
+
+        return embed
 
 
-# noinspection PyShadowingNames
 async def setup(bot):
     await bot.add_cog(UpdaterCog())

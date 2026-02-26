@@ -1,4 +1,5 @@
 import asyncio
+from typing import TYPE_CHECKING
 
 import discord
 from discord.ext import commands
@@ -9,12 +10,15 @@ from neonbot.classes.chatgpt.chat_thread import ChatThread
 from neonbot.models.guild import GuildModel
 from neonbot.utils.functions import split_long_message
 
+if TYPE_CHECKING:
+    from neonbot import NeonBot
+
 
 class ChatGPT:
     def __init__(self):
         self.client = AsyncOpenAI()
 
-    async def create_thread(self, ctx: commands.Context):
+    async def create_thread(self, ctx: commands.Context['NeonBot']):
         server = GuildModel.get_instance(ctx.guild.id)
         channel = ctx.channel
         content = ctx.message.content

@@ -3,6 +3,7 @@ import re
 import time
 import urllib.parse
 from datetime import datetime, timedelta
+from typing import TYPE_CHECKING
 from typing import Union
 
 import discord
@@ -13,7 +14,10 @@ from discord.ext import commands
 from discord.utils import format_dt
 from envparse import env
 
-from neonbot.classes.embed import Embed
+from neonbot.classes.discord.embed import Embed
+
+if TYPE_CHECKING:
+    from neonbot import NeonBot
 
 
 async def shell_exec(command: str) -> str:
@@ -26,7 +30,7 @@ async def shell_exec(command: str) -> str:
     return stdout.decode().strip()
 
 
-def get_command_string(ctx: commands.Context):
+def get_command_string(ctx: commands.Context['NeonBot']):
     if ctx.interaction:
         interaction = ctx.interaction
         params = []
@@ -110,7 +114,7 @@ def remove_ansi(text):
     return ansi_escape.sub('', text)
 
 
-async def generate_profile_member_embed(interaction: discord.Interaction, member: discord.Member):
+async def generate_profile_member_embed(interaction: discord.Interaction['NeonBot'], member: discord.Member):
     user = await interaction.client.fetch_user(member.id)
 
     roles = member.roles[1:]
@@ -136,7 +140,7 @@ async def generate_profile_member_embed(interaction: discord.Interaction, member
     return embed
 
 
-async def generate_profile_user_embed(interaction: discord.Interaction, user: discord.User):
+async def generate_profile_user_embed(interaction: discord.Interaction['NeonBot'], user: discord.User):
     user = await interaction.client.fetch_user(user.id)
 
     # noinspection PyUnresolvedReferences

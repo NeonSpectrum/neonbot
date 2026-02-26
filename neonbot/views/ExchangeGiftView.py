@@ -1,10 +1,15 @@
+from typing import TYPE_CHECKING
+
 import discord
 
-from neonbot.classes.embed import Embed
+from neonbot.classes.discord.embed import Embed
 from neonbot.classes.exchange_gift import ExchangeGift
 from neonbot.utils.exceptions import ExchangeGiftNotRegistered
 from neonbot.views.WishlistModal import WishlistModal
 from neonbot.views.WishlistView import WishlistView
+
+if TYPE_CHECKING:
+    from neonbot import NeonBot
 
 
 class ExchangeGiftView(discord.ui.View):
@@ -17,7 +22,7 @@ class ExchangeGiftView(discord.ui.View):
     @discord.ui.button(
         label='Participate', style=discord.ButtonStyle.primary, custom_id='exchange_gift:participate', emoji='✅'
     )
-    async def participate(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def participate(self, interaction: discord.Interaction['NeonBot'], button: discord.ui.Button):
         exchange_gift = ExchangeGift(interaction)
 
         if exchange_gift.member:
@@ -32,7 +37,7 @@ class ExchangeGiftView(discord.ui.View):
         )
 
     @discord.ui.button(label='My Wishlist', custom_id='exchange_gift:my_wishlist', emoji='🎁')
-    async def my_wishlist(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def my_wishlist(self, interaction: discord.Interaction['NeonBot'], button: discord.ui.Button):
         try:
             exchange_gift = ExchangeGift(interaction)
             wishlist = exchange_gift.get_wishlist()
@@ -51,7 +56,7 @@ class ExchangeGiftView(discord.ui.View):
             )
 
     @discord.ui.button(label='All Wishlist', custom_id='exchange_gift:all_wishlist', emoji='🎁')
-    async def all_wishlist(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def all_wishlist(self, interaction: discord.Interaction['NeonBot'], button: discord.ui.Button):
         try:
             exchange_gift = ExchangeGift(interaction)
             wishlist = exchange_gift.get_wishlist()
@@ -75,7 +80,7 @@ class ExchangeGiftView(discord.ui.View):
             )
 
     @discord.ui.button(label='Get event info', custom_id='exchange_gift:get_event_info', emoji='📄')
-    async def get_event_info(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def get_event_info(self, interaction: discord.Interaction['NeonBot'], button: discord.ui.Button):
         exchange_gift = ExchangeGift(interaction)
         await interaction.response.send_message(
             embed=exchange_gift.get_current_info(), ephemeral=True

@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime, timedelta
+from typing import TYPE_CHECKING
 
 import discord
 import validators
@@ -7,13 +8,15 @@ from aiohttp import ContentTypeError
 from discord.utils import find
 from envparse import env
 
-from neonbot import bot
-from neonbot.classes.embed import Embed
+from neonbot.classes.discord.embed import Embed
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
 from neonbot.utils.exceptions import ApiError
 from neonbot.utils.functions import format_uptime
+
+if TYPE_CHECKING:
+    from neonbot import NeonBot
 
 
 class Panel:
@@ -21,14 +24,15 @@ class Panel:
     API_KEY = env.str('PANEL_API_KEY')
     MCSTATUS_API = 'https://api.mcstatus.io/v2/status/java'
 
-    def __init__(self, server_id: str):
+    def __init__(self, bot: 'NeonBot', server_id: str = None):
+        self.bot = bot
         self.server_id = server_id
         self.servers = None
         self.details = None
         self.resources = None
 
     async def get_server_details(self):
-        res = await bot.session.get(
+        res = await self.bot.session.get(
             self.URL + '/api/client/servers/' + self.server_id,
             headers={
                 'Accept': 'application/json',
@@ -46,7 +50,7 @@ class Panel:
         return self.details
 
     async def get_server_resources(self):
-        res = await bot.session.get(
+        res = await self.bot.session.get(
             self.URL + '/api/client/servers/' + self.server_id + '/resources',
             headers={
                 'Accept': 'application/json',
@@ -63,9 +67,8 @@ class Panel:
 
         return self.resources
 
-    @staticmethod
-    async def get_server_list():
-        res = await bot.session.get(
+    async def get_server_list(self):
+        res = await self.bot.session.get(
             Panel.URL + '/api/client',
             headers={
                 'Accept': 'application/json',
@@ -81,7 +84,7 @@ class Panel:
         return await res.json()
 
     @staticmethod
-    async def start_monitor(guild_id):
+    async def start_monitor(bot: 'NeonBot', guild_id: int):
         try:
             server = GuildModel.get_instance(guild_id)
 
@@ -91,7 +94,7 @@ class Panel:
                 if not channel_id:
                     continue
 
-                panel = Panel(server_id)
+                panel = Panel(bot, server_id)
 
                 details = None
                 resources = None
@@ -196,7 +199,7 @@ class Panel:
             return
 
         try:
-            res = await bot.session.get(self.MCSTATUS_API + '/' + server_ip)
+            res = await self.bot.session.get(self.MCSTATUS_API + '/' + server_ip)
             data = await res.json()
 
             if not data['online']:
@@ -233,7 +236,7 @@ class Panel:
             return None
 
     @staticmethod
-    def start_listener(guild_id: int):
+    def start_listener(bot: 'NeonBot', guild_id: int):
         server = GuildModel.get_instance(guild_id)
 
         if bot.scheduler.get_job('panel-' + str(guild_id)):
@@ -247,11 +250,12 @@ class Panel:
             bot.scheduler.add_job(
                 id='panel-' + str(guild_id),
                 func=Panel.start_monitor,
-                trigger='interval',
-                minutes=1,
                 kwargs={
+                    'bot': bot,
                     'guild_id': guild_id,
                 },
+                trigger='interval',
+                minutes=1,
                 next_run_time=next_run_time,
             )
             log.info(f'Auto started job panel-{guild_id}')

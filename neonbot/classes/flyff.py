@@ -2,18 +2,21 @@ import asyncio
 import math
 from datetime import datetime, timedelta
 from typing import List
+from typing import TYPE_CHECKING
 
 import discord
 from aiohttp import ClientTimeout
 from discord import Webhook
 from envparse import env
 
-from neonbot import bot
-from neonbot.classes.embed import Embed
+from neonbot.classes.discord.embed import Embed
 from neonbot.models.flyff import FlyffWebhookChannel
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
 from neonbot.utils.functions import check_ip_online_socket
+
+if TYPE_CHECKING:
+    from neonbot import NeonBot
 
 
 class Flyff:
@@ -21,8 +24,11 @@ class Flyff:
     RESET_TIME = '06:00 PM'
     DOWNTIME_COUNT = 0
 
+    def __init__(self, bot: 'NeonBot'):
+        self.bot = bot
+
     def calculate_next_spawn(self, initial_interval, interval, func):
-        world_start_time = bot.flyff_settings.world_start_time
+        world_start_time = self.bot.flyff_settings.world_start_time
 
         current_time = datetime.now()
         start_time = datetime.strptime(world_start_time, '%Y-%m-%d %I:%M:%S %p')
@@ -54,10 +60,10 @@ class Flyff:
         return int(next_spawn_time.timestamp())
 
     async def refresh_status(self):
-        world_start_time = bot.flyff_settings.world_start_time
+        world_start_time = self.bot.flyff_settings.world_start_time
         embed = Embed(timestamp=datetime.now())
         embed.set_author('Emerald Flyff', icon_url=ICONS['emeraldflyff'])
-        embed.set_thumbnail(ICONS['green'] if bot.flyff_settings.status else ICONS['red'])
+        embed.set_thumbnail(ICONS['green'] if self.bot.flyff_settings.status else ICONS['red'])
 
         timers = []
         events = []
@@ -66,7 +72,7 @@ class Flyff:
             server_start_time = datetime.strptime(world_start_time, '%Y-%m-%d %I:%M:%S %p')
             server_start_time = int(server_start_time.timestamp())
             next_reset_time = int(self.get_next_reset_time(Flyff.RESET_TIME).timestamp())
-            for name, timer in bot.flyff_settings.timers.items():
+            for name, timer in self.bot.flyff_settings.timers.items():
                 spawn_time = self.calculate_next_spawn(
                     timer.initial_interval,
                     timer.interval,
@@ -75,7 +81,7 @@ class Flyff:
 
                 timers.append(f'- {name}: <t:{spawn_time}:T> <t:{spawn_time}:R>')
 
-            for name, time_list in bot.flyff_settings.fixed_timers.items():
+            for name, time_list in self.bot.flyff_settings.fixed_timers.items():
                 next_time = int(self.get_next_nearest_time(time_list).timestamp())
 
                 events.append(f'- {name}: <t:{next_time}:t> <t:{next_time}:R>')
@@ -97,21 +103,21 @@ class Flyff:
 
         tasks = []
 
-        for channel_id, message_id in bot.flyff_settings.status_channels.items():
+        for channel_id, message_id in self.bot.flyff_settings.status_channels.items():
             tasks.append(self.send_status_channel(channel_id, message_id, embed))
 
-        for webhook_channel in bot.flyff_settings.webhook_channels:
+        for webhook_channel in self.bot.flyff_settings.webhook_channels:
             tasks.append(self.send_webhook_channel(webhook_channel, embed))
 
         await asyncio.gather(*tasks)
 
     async def check_next_alert(self):
-        if not bot.flyff_settings.world_start_time:
+        if not self.bot.flyff_settings.world_start_time:
             return
 
         alert_message = None
 
-        for name, timer in bot.flyff_settings.timers.items():
+        for name, timer in self.bot.flyff_settings.timers.items():
             spawn_time = self.calculate_next_spawn(
                 timer.initial_interval,
                 timer.interval,
@@ -126,7 +132,7 @@ class Flyff:
             elif abs(current_time - spawn_time) <= timedelta(minutes=5):
                 alert_message = f'**{name}** will spawn in **5 minutes**.'
 
-        for name, time_list in bot.flyff_settings.fixed_timers.items():
+        for name, time_list in self.bot.flyff_settings.fixed_timers.items():
             current_time = datetime.now()
 
             next_time = self.get_next_nearest_time(time_list)
@@ -136,22 +142,22 @@ class Flyff:
             elif abs(current_time - next_time) <= timedelta(minutes=5):
                 alert_message = f'**{name}** will start in **5 minutes**.'
 
-        if not alert_message or alert_message == bot.flyff_settings.last_alert_message:
+        if not alert_message or alert_message == self.bot.flyff_settings.last_alert_message:
             return
 
-        alert_channels = [bot.get_channel(alert.channel_id) for alert in bot.flyff_settings.alert_channels]
+        alert_channels = [self.bot.get_channel(alert.channel_id) for alert in self.bot.flyff_settings.alert_channels]
         tasks = []
 
         for channel in alert_channels:
-            if alert_message != bot.flyff_settings.last_alert_message:
+            if alert_message != self.bot.flyff_settings.last_alert_message:
                 tasks.append(channel.send(f'@everyone {alert_message}'))
 
-        for _, webhook_url in bot.flyff_settings.webhooks.items():
+        for _, webhook_url in self.bot.flyff_settings.webhooks.items():
             tasks.append(self.trigger_webhook(webhook_url, alert_message))
 
         await asyncio.gather(*tasks)
-        bot.flyff_settings.last_alert_message = alert_message
-        await bot.flyff_settings.save_changes(False)
+        self.bot.flyff_settings.last_alert_message = alert_message
+        await self.bot.flyff_settings.save_changes(False)
 
     def get_interval_counter(self, name, count):
         match name:
@@ -203,14 +209,14 @@ class Flyff:
 
     async def trigger_webhook(self, url, message):
         try:
-            await bot.session.post(url, json={'message': message}, timeout=ClientTimeout(total=2))
+            await self.bot.session.post(url, json={'message': message}, timeout=ClientTimeout(total=2))
         except asyncio.exceptions.TimeoutError:
             pass
         except Exception as e:
             log.error(f'An unexpected error occurred: {e}')
 
     async def send_status_channel(self, channel_id: int, message_id: int, embed: discord.Embed):
-        channel = bot.get_channel(channel_id)
+        channel = self.bot.get_channel(channel_id)
 
         try:
             message = await channel.fetch_message(message_id) if message_id else None
@@ -221,15 +227,15 @@ class Flyff:
             if not message:
                 message = await channel.send(embed=embed)
 
-                bot.flyff_settings.status_channels[channel_id] = message.id
-                await bot.flyff_settings.save_changes(False)
+                self.bot.flyff_settings.status_channels[channel_id] = message.id
+                await self.bot.flyff_settings.save_changes(False)
             else:
-                await bot.edit_message(message, embed=embed)
+                await self.bot.edit_message(message, embed=embed)
         except discord.HTTPException as error:
             log.error(error)
 
     async def send_webhook_channel(self, webhook_channel: FlyffWebhookChannel, embed: discord.Embed):
-        webhook = Webhook.from_url(webhook_channel.url, session=bot.session)
+        webhook = Webhook.from_url(webhook_channel.url, session=self.bot.session)
         message = None
 
         try:
@@ -242,25 +248,25 @@ class Flyff:
             if not message:
                 message = await webhook.send(embed=embed, wait=True)
                 webhook_channel.message_id = message.id if message else None
-                await bot.flyff_settings.save_changes(False)
+                await self.bot.flyff_settings.save_changes(False)
             else:
-                await bot.edit_message(message, embed=embed)
+                await self.bot.edit_message(message, embed=embed)
         except discord.HTTPException as error:
             if error.status != 404:
                 log.error(error)
 
     @staticmethod
-    async def start_status_monitor():
-        flyff = Flyff()
+    async def start_status_monitor(bot: 'NeonBot'):
+        flyff = Flyff(bot)
         await flyff.refresh_status()
 
     @staticmethod
-    async def start_alert_monitor():
-        flyff = Flyff()
+    async def start_alert_monitor(bot: 'NeonBot'):
+        flyff = Flyff(bot)
         await flyff.check_next_alert()
 
     @staticmethod
-    async def start_ping_monitor():
+    async def start_ping_monitor(bot: 'NeonBot'):
         old_status = bot.flyff_settings.status
         ip, port = Flyff.IP_ADDRESS.split(':')
         status = await check_ip_online_socket(ip, port, 5)
@@ -296,7 +302,7 @@ class Flyff:
         await bot.flyff_settings.save_changes(False)
 
     @staticmethod
-    def start_listener():
+    def start_listener(bot: 'NeonBot'):
         if not Flyff.IP_ADDRESS or bot.scheduler.get_job('flyff-monitor'):
             return
 
@@ -305,6 +311,9 @@ class Flyff:
         bot.scheduler.add_job(
             id='flyff-status-monitor',
             func=Flyff.start_status_monitor,
+            kwargs={
+                'bot': bot,
+            },
             trigger='interval',
             minutes=1,
             next_run_time=next_run_time,
@@ -314,6 +323,9 @@ class Flyff:
         bot.scheduler.add_job(
             id='flyff-alert-monitor',
             func=Flyff.start_alert_monitor,
+            kwargs={
+                'bot': bot,
+            },
             trigger='interval',
             seconds=5,
             next_run_time=next_run_time,
@@ -323,6 +335,9 @@ class Flyff:
         bot.scheduler.add_job(
             id='flyff-ping-monitor',
             func=Flyff.start_ping_monitor,
+            kwargs={
+                'bot': bot,
+            },
             trigger='interval',
             seconds=5,
             next_run_time=next_run_time,

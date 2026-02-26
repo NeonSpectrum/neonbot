@@ -1,11 +1,16 @@
 import logging
 import sys
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Optional, Union, TYPE_CHECKING
 
+import coloredlogs
 import discord
 from discord.ext import commands
+from envparse import env
 
 from neonbot.utils.constants import LOG_FORMAT
+
+if TYPE_CHECKING:
+    from neonbot import NeonBot
 
 
 class Log(logging.Logger):
@@ -13,26 +18,32 @@ class Log(logging.Logger):
         self._log: Callable
         super().__init__(*args, **kwargs)
 
-        self.formatter = logging.Formatter(LOG_FORMAT, '%Y-%m-%d %I:%M:%S %p')
-
         self.set_file_handler()
         self.set_console_handler()
 
     def set_file_handler(self) -> None:
         file = logging.FileHandler(filename='debug.log', encoding='utf-8', mode='a')
-        file.setFormatter(self.formatter)
+        file.setFormatter(logging.Formatter(LOG_FORMAT, '%Y-%m-%d %I:%M:%S %p'))
         file.setLevel(logging.DEBUG)
         self.addHandler(file)
 
     def set_console_handler(self) -> None:
+        formatter = coloredlogs.ColoredFormatter(LOG_FORMAT, '%Y-%m-%d %I:%M:%S %p', field_styles={
+            'asctime': {'color': 'black'},
+            'levelname': {'bold': True},
+            'module': {'color': 'blue'},
+            'funcName': {'color': 'green'},
+            'lineno': {'color': 'yellow'}
+        })
+
         console = logging.StreamHandler()
-        console.setFormatter(self.formatter)
-        console.setLevel(logging.INFO)
+        console.setFormatter(formatter)
+        console.setLevel(env.str('BOT_LOG_LEVEL', default='ERROR'))
         self.addHandler(console)
 
     def cmd(
         self,
-        ctx: Union[commands.Context, discord.Interaction],
+        ctx: Union[commands.Context['NeonBot'], discord.Interaction['NeonBot']],
         msg: str,
         *,
         guild: Optional[discord.Guild] = None,

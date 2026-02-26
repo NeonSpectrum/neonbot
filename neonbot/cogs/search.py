@@ -2,6 +2,7 @@ import json
 import textwrap
 from datetime import datetime
 from io import BytesIO
+from typing import TYPE_CHECKING
 
 import aiohttp
 import discord
@@ -12,21 +13,24 @@ from discord.ext import commands
 from envparse import env
 from jikanpy import AioJikan
 
-from neonbot import bot
 from neonbot.classes.chatgpt.chatgpt import ChatGPT
-from neonbot.classes.embed import Embed, EmbedChoices, PaginationEmbed
+from neonbot.classes.discord.embed import Embed, EmbedChoices, PaginationEmbed
 from neonbot.classes.google import get_google_access_token
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
 from neonbot.utils.exceptions import ApiError
 
+if TYPE_CHECKING:
+    from neonbot import NeonBot
+
 
 class Search(commands.Cog):
     anime = app_commands.Group(name='anime', description='Searches for top, upcoming, or specific anime.')
+    chatgpt = app_commands.Group(name='chatgpt', description='ChatGPT', guild_ids=env.list('OWNER_GUILD_IDS', default=[], subcast=int))
 
-    chatgpt = app_commands.Group(name='chatgpt', description='ChatGPT', guild_ids=bot.owner_guilds)
+    def __init__(self, bot) -> None:
+        self.bot = bot
 
-    def __init__(self) -> None:
         with open('./neonbot/assets/lang.json', 'r') as f:
             self.lang_list = json.load(f)
 
@@ -36,10 +40,10 @@ class Search(commands.Cog):
     @app_commands.command(name='joke')
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    async def joke(self, interaction: discord.Interaction) -> None:
+    async def joke(self, interaction: discord.Interaction['NeonBot']) -> None:
         """Tells a random dad joke."""
 
-        res = await bot.session.get('https://icanhazdadjoke.com', headers={'Accept': 'application/json'})
+        res = await self.bot.session.get('https://icanhazdadjoke.com', headers={'Accept': 'application/json'})
         data = await res.json()
 
         await interaction.response.send_message(embed=Embed(data['joke']))
@@ -47,10 +51,10 @@ class Search(commands.Cog):
     @app_commands.command(name='image')
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    async def image(self, interaction: discord.Interaction, keyword: str) -> None:
+    async def image(self, interaction: discord.Interaction['NeonBot'], keyword: str) -> None:
         """Searches for an image in Google Image."""
 
-        res = await bot.session.get(
+        res = await self.bot.session.get(
             'https://www.googleapis.com/customsearch/v1',
             params={
                 'q': keyword,
@@ -78,10 +82,10 @@ class Search(commands.Cog):
     @app_commands.command(name='dictionary')
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    async def dictionary(self, interaction: discord.Interaction, word: str) -> None:
+    async def dictionary(self, interaction: discord.Interaction['NeonBot'], word: str) -> None:
         """Searches for a word in Merriam Webster."""
 
-        res = await bot.session.get(
+        res = await self.bot.session.get(
             f'https://www.dictionaryapi.com/api/v3/references/sd4/json/{word}',
             params={'key': env.str('DICTIONARY_API')},
         )
@@ -104,7 +108,7 @@ class Search(commands.Cog):
 
         if audio:
             url = f'https://media.merriam-webster.com/soundc11/{audio[0]}/{audio}.wav'
-            res = await bot.session.get(url)
+            res = await self.bot.session.get(url)
 
         term = dictionary['meta']['id']
 
@@ -133,10 +137,10 @@ class Search(commands.Cog):
     @app_commands.command(name='weather')
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    async def weather(self, interaction: discord.Interaction, location: str) -> None:
+    async def weather(self, interaction: discord.Interaction['NeonBot'], location: str) -> None:
         """Searches for a weather forecast in Open Weather Map."""
 
-        res = await bot.session.get(
+        res = await self.bot.session.get(
             'https://api.openweathermap.org/data/2.5/weather',
             params={
                 'q': location,
@@ -208,7 +212,7 @@ class Search(commands.Cog):
         await interaction.response.send_message(embed=embed)
 
     @weather.autocomplete(name='location')
-    async def location_autocomplete(self, interaction: discord.Interaction, current: str):
+    async def location_autocomplete(self, interaction: discord.Interaction['NeonBot'], current: str):
         return [Choice(name=city, value=city) for city in self.city_list if city.lower().startswith(current.lower())][
             :25
         ]
@@ -216,10 +220,10 @@ class Search(commands.Cog):
     @app_commands.command(name='lyrics')
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    async def lyrics(self, interaction: discord.Interaction, song: str) -> None:
+    async def lyrics(self, interaction: discord.Interaction['NeonBot'], song: str) -> None:
         """Searches for a lyrics in AZLyrics."""
 
-        res = await bot.session.get(
+        res = await self.bot.session.get(
             'https://search.azlyrics.com/search.php',
             params={'q': song, 'x': '309dddb3dd4a2067f6332f8abc9c8dbe611be904305dc2c4d3cd0db59c783abd'},
         )
@@ -238,7 +242,7 @@ class Search(commands.Cog):
             return
 
         try:
-            res = await bot.session.get(links[choice]['url'], proxy=env.str('PROXY', default=None))
+            res = await self.bot.session.get(links[choice]['url'], proxy=env.str('PROXY', default=None))
             html = await res.text()
             soup = BeautifulSoup(html, 'html.parser')
             div = soup.select('div.col-xs-12.col-lg-8.text-center')[0]
@@ -273,7 +277,7 @@ class Search(commands.Cog):
     @anime.command(name='search')
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    async def anime_search(self, interaction: discord.Interaction, keyword: str) -> None:
+    async def anime_search(self, interaction: discord.Interaction['NeonBot'], keyword: str) -> None:
         """Searches for anime information."""
 
         jikan = AioJikan()
@@ -325,7 +329,7 @@ class Search(commands.Cog):
     @anime.command(name='top')
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    async def anime_top(self, interaction: discord.Interaction) -> None:
+    async def anime_top(self, interaction: discord.Interaction['NeonBot']) -> None:
         """Lists top anime."""
 
         jikan = AioJikan()
@@ -350,7 +354,7 @@ class Search(commands.Cog):
     @anime.command(name='upcoming')
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    async def anime_upcoming(self, interaction: discord.Interaction) -> None:
+    async def anime_upcoming(self, interaction: discord.Interaction['NeonBot']) -> None:
         """Lists upcoming anime."""
 
         jikan = AioJikan()
@@ -375,14 +379,14 @@ class Search(commands.Cog):
     @app_commands.command(name='translate')
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    async def translate(self, interaction: discord.Interaction, lang: str, sentence: str) -> None:
+    async def translate(self, interaction: discord.Interaction['NeonBot'], lang: str, sentence: str) -> None:
         """Translates sentence based on language code given."""
 
         google_token = await get_google_access_token()
 
         query = {'q': sentence, 'format': 'text', 'target': lang}
 
-        res = await bot.session.post(
+        res = await self.bot.session.post(
             'https://translation.googleapis.com/language/translate/v2',
             data=query,
             headers={'Authorization': f'Bearer {google_token}'},
@@ -411,7 +415,7 @@ class Search(commands.Cog):
         await interaction.response.send_message(embed=embed)
 
     @translate.autocomplete(name='lang')
-    async def lang_autocomplete(self, interaction: discord.Interaction, current: str) -> list[Choice]:
+    async def lang_autocomplete(self, interaction: discord.Interaction['NeonBot'], current: str) -> list[Choice]:
         """Lists all language codes."""
         return [
             Choice(name=lang, value=code)
@@ -422,7 +426,7 @@ class Search(commands.Cog):
     @chatgpt.command(name='image')
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    async def chatgpt_image(self, interaction: discord.Interaction, keyword: str):
+    async def chatgpt_image(self, interaction: discord.Interaction['NeonBot'], keyword: str):
         await interaction.response.defer()
 
         response = await ChatGPT().generate_image(keyword)
@@ -434,6 +438,5 @@ class Search(commands.Cog):
         await interaction.followup.send(embed=embed)
 
 
-# noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(Search())
+    await bot.add_cog(Search(bot))

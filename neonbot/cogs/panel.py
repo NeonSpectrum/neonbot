@@ -1,27 +1,32 @@
+from typing import TYPE_CHECKING
+
 import discord
 from discord import app_commands
 from discord.ext import commands
+from envparse import env
 
-from neonbot import bot
-from neonbot.classes.embed import Embed
+from neonbot.classes.discord.embed import Embed
 from neonbot.classes.panel import Panel
 from neonbot.models.guild import GuildModel
 from neonbot.models.panel import PanelServer
+
+if TYPE_CHECKING:
+    from neonbot import NeonBot
 
 
 class PanelCog(commands.Cog):
     panel = app_commands.Group(
         name='panel',
         description='Panel commands',
-        guild_ids=bot.owner_guilds,
+        guild_ids=env.list('OWNER_GUILD_IDS', default=[], subcast=int),
         default_permissions=discord.Permissions(administrator=True),
     )
 
     @panel.command(name='startmonitor')
-    async def startmonitor(self, interaction: discord.Interaction, server_id: str) -> None:
+    async def startmonitor(self, interaction: discord.Interaction['NeonBot'], server_id: str) -> None:
         server = GuildModel.get_instance(interaction.guild.id)
 
-        details = await Panel(server_id).get_server_details()
+        details = await Panel(interaction.client, server_id).get_server_details()
 
         if not details:
             await interaction.response.send_message(
@@ -38,14 +43,14 @@ class PanelCog(commands.Cog):
         server.panel.servers[server_id] = PanelServer(channel_id=interaction.channel_id)
         await server.save_changes(False)
 
-        Panel.start_listener(interaction.guild.id)
+        Panel.start_listener(interaction.client, interaction.guild.id)
 
         await interaction.response.send_message(
             embed=Embed(f'Started monitor for `{server_id}` on {interaction.channel.mention}'), ephemeral=True
         )
 
     @panel.command(name='deletemonitor')
-    async def deletemonitor(self, interaction: discord.Interaction, server_id: str) -> None:
+    async def deletemonitor(self, interaction: discord.Interaction['NeonBot'], server_id: str) -> None:
         server = GuildModel.get_instance(interaction.guild.id)
 
         if server_id not in server.panel.servers:
@@ -57,7 +62,7 @@ class PanelCog(commands.Cog):
         panel = server.panel.servers[server_id]
 
         if panel.channel_id and panel.message_id:
-            await bot.delete_message(await bot.get_channel(panel.channel_id).fetch_message(panel.message_id))
+            await interaction.client.delete_message(await interaction.client.get_channel(panel.channel_id).fetch_message(panel.message_id))
 
         server.panel.servers[server_id] = PanelServer()
         await server.save_changes(False)
@@ -67,11 +72,11 @@ class PanelCog(commands.Cog):
         )
 
     @startmonitor.autocomplete('server_id')
-    async def startmonitor_autocomplete(self, interaction: discord.Interaction, current: str):
+    async def startmonitor_autocomplete(self, interaction: discord.Interaction['NeonBot'], current: str):
         panel = GuildModel.get_instance(interaction.guild.id).panel
         servers = [
             {'id': server['attributes']['identifier'], 'name': server['attributes']['name']}
-            for server in (await Panel.get_server_list())['data']
+            for server in (await Panel(interaction.client).get_server_list())['data']
         ]
 
         return [
@@ -81,11 +86,11 @@ class PanelCog(commands.Cog):
         ]
 
     @deletemonitor.autocomplete('server_id')
-    async def deletemonitor_autocomplete(self, interaction: discord.Interaction, current: str):
+    async def deletemonitor_autocomplete(self, interaction: discord.Interaction['NeonBot'], current: str):
         panel = GuildModel.get_instance(interaction.guild.id).panel
         servers = [
             {'id': server['attributes']['identifier'], 'name': server['attributes']['name']}
-            for server in (await Panel.get_server_list())['data']
+            for server in (await Panel(interaction.client).get_server_list())['data']
         ]
 
         return [
@@ -95,6 +100,5 @@ class PanelCog(commands.Cog):
         ]
 
 
-# noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(PanelCog())

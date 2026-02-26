@@ -3,35 +3,42 @@ from __future__ import annotations
 import asyncio
 import random
 from typing import Dict, List, Optional, Union, cast
+from typing import TYPE_CHECKING
 
 import discord
-import ytmusicapi.exceptions
-from discord import VoiceChannel, Message
-from discord.ext import tasks
+from discord import VoiceChannel
+from discord.ext import tasks, commands
 from discord.ext.commands import Context
-from discord.utils import MISSING, find
+from discord.utils import find
 from i18n import t
 from lavalink import AudioTrack, DefaultPlayer, DeferredAudioTrack, LoadType, TrackEndEvent, TrackStartEvent
+from ytmusicapi.exceptions import YTMusicError
 
 from lib.lavalink_voice_client import LavalinkVoiceClient
-from neonbot import bot
-from neonbot.classes.embed import Embed
-from neonbot.classes.player_controls import PlayerControls
-from neonbot.classes.ytmusic import YTMusic
-from neonbot.enums import Repeat
+from neonbot.classes.discord.embed import Embed
+from neonbot.classes.player.player_message_manager import PlayerMessageManager
+from neonbot.classes.player.ytmusic import YTMusic
+from neonbot.dataclasses import PlayerMessage
+from neonbot.enums import Repeat, MessageType
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log
-from neonbot.utils.constants import ICONS
-from neonbot.utils.exceptions import PlayerError
-from neonbot.utils.functions import clean_youtube_url, format_milliseconds, is_youtube_url, wait_until
+from neonbot.utils.functions import clean_youtube_url, is_youtube_url, wait_until
+
+if TYPE_CHECKING:
+    from neonbot import NeonBot
+    from neonbot.classes.lavalink.client import Client
+    from lavalink import Node
 
 
 class Player(DefaultPlayer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, guild_id: int, node: 'Node'):
+        super().__init__(guild_id, node)
+
+        self.client: 'Client' = node.manager.client
+        self.bot: 'NeonBot' = self.client.bot
 
         self.settings = GuildModel.get_instance(self.guild_id)
-        self.player_controls = PlayerControls(self.guild_id)
+        self.messager: PlayerMessageManager = PlayerMessageManager(self.bot, self.guild_id)
         self._track_event_lock = asyncio.Lock()
 
         self.ctx: Optional[Context] = None
@@ -42,10 +49,6 @@ class Player(DefaultPlayer):
         self.track_list: List[AudioTrack] = []
         self.shuffled_list: List[AudioTrack] = []
         self.autoplay_list: List[dict] = []
-        self.messages: Dict[str, Optional[discord.Message]] = dict(
-            playing=None,
-            finished=None,
-        )
         self.is_auto_paused = False
 
         self.set_autoplay(self.autoplay)
@@ -67,7 +70,11 @@ class Player(DefaultPlayer):
     @autoplay.setter
     def autoplay(self, value) -> None:
         self.settings.music.autoplay = value
-        bot.loop.create_task(self.settings.save_changes(False))
+        self.bot.loop.create_task(self.settings.save_changes(False))
+
+    def set_ctx(self, ctx: commands.Context['NeonBot']):
+        self.ctx = ctx
+        self.messager.set_ctx(ctx)
 
     async def handle_event(self, event):
         pass
@@ -75,8 +82,8 @@ class Player(DefaultPlayer):
     def set_loop(self, value: int) -> None:
         super().set_loop(value)
         self.settings.music.repeat = value
-        bot.loop.create_task(self.settings.save_changes(False))
-        self.refresh_player_message(embed=True)
+        self.bot.loop.create_task(self.settings.save_changes(False))
+        self.messager.refresh_player_controls(embed=True)
 
     def set_shuffle(self, value: bool) -> None:
         if value:
@@ -90,12 +97,12 @@ class Player(DefaultPlayer):
 
         super().set_shuffle(value)
         self.settings.music.shuffle = value
-        bot.loop.create_task(self.settings.save_changes(False))
-        self.refresh_player_message(embed=True)
+        self.bot.loop.create_task(self.settings.save_changes(False))
+        self.messager.refresh_player_controls(embed=True)
 
     def set_autoplay(self, value: bool):
         self.autoplay = value
-        self.refresh_player_message(embed=True)
+        self.messager.refresh_player_controls(embed=True)
 
     @tasks.loop(count=1)
     async def reset_timeout(self, timeout=60) -> None:
@@ -137,7 +144,7 @@ class Player(DefaultPlayer):
         log.cmd(self.ctx, t('music.player_paused', user=requester.name))
 
         await self.send_message(embed=Embed(t('music.player_paused', user=requester.mention)))
-        self.refresh_player_message()
+        self.messager.refresh_player_controls()
 
     async def resume(self, requester: discord.User):
         if not self.paused:
@@ -147,7 +154,7 @@ class Player(DefaultPlayer):
         log.cmd(self.ctx, t('music.player_resumed', user=requester.name))
 
         await self.send_message(embed=Embed(t('music.player_resumed', user=requester.mention)))
-        self.refresh_player_message()
+        self.messager.refresh_player_controls()
 
     def add(self, track: Union[AudioTrack, 'DeferredAudioTrack', Dict[str, Union[Optional[str], bool, int]]],
             requester: int = 0, index: Optional[int] = None):
@@ -161,10 +168,10 @@ class Player(DefaultPlayer):
             self.shuffled_list.insert(index, track)
 
         if self.current:
-            self.refresh_player_message()
+            self.messager.refresh_player_controls()
 
-        if requester != bot.user.id:
-            bot.loop.create_task(YTMusic.like_song(track.identifier))
+        if requester != self.bot.user.id:
+            self.bot.loop.create_task(YTMusic(self.bot).like_song(track.identifier))
 
     def remove(self, index):
         if self.shuffle:
@@ -191,7 +198,7 @@ class Player(DefaultPlayer):
         return removed_track
 
     async def search_random(self):
-        tracks = await YTMusic.get_random_song()
+        tracks = await YTMusic(self.bot).get_random_song()
 
         self.autoplay_list = self.filter_tracks_from_existing(tracks)
 
@@ -262,7 +269,7 @@ class Player(DefaultPlayer):
         elif self.autoplay and self.is_last_track:  # autoplay
             try:
                 await self.process_autoplay(self.last_track)
-            except PlayerError:
+            except YTMusicError:
                 await self.send_message(embed=Embed('No related videos available.'))
                 return
             next_queue = self.current_queue + 1
@@ -309,113 +316,41 @@ class Player(DefaultPlayer):
 
         await self.stop()
         await self.disconnect(force=True, destroy=False, timeout=timeout)
+        await self.messager.replace_all_to_compact()
 
-        if self.messages['finished']:
-            await self.send_finished_message(self.last_track)
-
-        await bot.lavalink.player_manager.destroy(self.guild_id)
+        await self.bot.lavalink.player_manager.destroy(self.guild_id)
 
     async def process_autoplay(self, track: AudioTrack) -> None:
         try:
             if len(track.identifier) != 11:
-                video_id = await YTMusic.search(track.title)
+                video_id = await YTMusic(self.bot).search(track.title)
             else:
                 video_id = track.identifier
 
             log.debug('video_id: ' + video_id)
 
             if len(self.autoplay_list) == 0:
-                related_tracks = await YTMusic.get_related_tracks(video_id)
+                related_tracks = await YTMusic(self.bot).get_related_tracks(video_id)
 
                 log.debug('related_tracks: ' + str(len(related_tracks)))
 
                 if len(related_tracks) == 0:
-                    related_tracks = await YTMusic.get_random_song()
+                    related_tracks = await YTMusic(self.bot).get_random_song()
                     log.debug('replaced related_tracks: ' + str(len(related_tracks)))
 
                 self.autoplay_list = self.filter_tracks_from_existing(related_tracks)
                 log.debug('self.autoplay_list: ' + str(len(self.autoplay_list)))
 
             related_video = self.autoplay_list.pop(0)
-        except (ytmusicapi.exceptions.YTMusicServerError, IndexError) as error:
+        except (YTMusicError, IndexError) as error:
             log.debug(error, exc_info=True)
-            raise PlayerError()
+            raise YTMusicError(error)
 
         video_url = f"https://music.youtube.com/watch?v={related_video['id']}"
-        await self.search(video_url, send_message=False, requester=bot.user.id)
+        await self.search(video_url, send_message=False, requester=self.bot.user.id)
 
     async def send_message(self, *args, **kwargs):
         return await self.ctx.channel.send(*args, **kwargs)
-
-    async def send_playing_message(self, track: AudioTrack) -> Message | None:
-        log.cmd(
-            self.ctx, t('music.now_playing.title', title=track.title), user=track.requester
-        )
-
-        self.player_controls.initialize()
-
-        return await self.send_message(
-            embed=self.get_playing_embed(track), view=self.player_controls.get(), silent=True
-        )
-
-    async def send_finished_message(self, track: AudioTrack) -> Message | None:
-        log.cmd(
-            self.ctx,
-            t('music.finished_playing.title', title=track.title),
-            user=track.requester,
-        )
-
-        message = await bot.edit_message(self.messages['playing'], embed=self.get_simplified_finished_message(track), view=None)
-        self.messages['playing'] = None
-
-        return message
-
-    def refresh_player_message(self, *, embed=False):
-        if self.messages['playing']:
-            bot.loop.create_task(bot.edit_message(
-                self.messages['playing'],
-                embed=self.get_playing_embed(self.current) if embed else MISSING,
-                view=self.player_controls.get() if len(self.messages['playing'].components) > 0 else None,
-            ))
-        elif self.messages['finished']:
-            bot.loop.create_task(bot.edit_message(
-                self.messages['finished'],
-                embed=self.get_finished_embed(self.last_track) if embed else MISSING,
-                view=self.player_controls.get() if len(self.messages['finished'].components) > 0 else None,
-            ))
-
-    def get_footer(self, track):
-        return [
-            bot.get_user(track.requester).display_name,
-            format_milliseconds(track.duration),
-            t('music.shuffle_footer', shuffle='on' if self.shuffle else 'off'),
-            t('music.repeat_footer', repeat=Repeat(self.loop).name.lower()),
-            t('music.autoplay_footer', autoplay='on' if self.autoplay else 'off'),
-        ]
-
-    def get_playing_embed(self, track: AudioTrack):
-        return self.get_track_embed(track).set_author(
-            name=t('music.now_playing.index', index=track.extra.get('index') + 1),
-            icon_url=ICONS.get(track.source_name, ICONS.get('music')),
-        )
-
-    def get_finished_embed(self, track: AudioTrack):
-        return self.get_track_embed(track).set_author(
-            name=t('music.finished_playing.index', index=track.extra.get('index') + 1),
-            icon_url=ICONS.get(track.source_name, ICONS.get('music')),
-        )
-
-    def get_track_embed(self, track: AudioTrack):
-        footer = self.get_footer(track)
-        embed = Embed(title=track.title, url=track.uri)
-        embed.set_footer(text=' | '.join(footer), icon_url=bot.get_user(track.requester).display_avatar)
-
-        return embed
-
-    def get_simplified_finished_message(self, track: AudioTrack):
-        formatted_title = f'[{track.title}]({track.uri})' if track.uri else track.title
-
-        return Embed(f'{t("music.finished_playing.index", index=track.extra.get('index') + 1)}: {formatted_title}')
 
     def find_new_current_queue(self, track_list):
         for index, track in enumerate(track_list):
@@ -430,29 +365,24 @@ class Player(DefaultPlayer):
         return [i for i in track_list if i['id'] not in existing_ids]
 
     async def track_start_event(self, event: TrackStartEvent):
-        if event.track is None:
-            return
-
         async with self._track_event_lock:
             await wait_until(lambda: self.is_playing)
-            self.messages['playing'] = await self.send_playing_message(event.track)
+            await self.messager.send_message(PlayerMessage(
+                type=MessageType.PLAYING,
+                track=event.track,
+                compact=False
+            ))
             self.last_track = event.track
 
     async def track_end_event(self, event: TrackEndEvent):
-        if event.track is None:
-            return
-
         async with self._track_event_lock:
-            self.messages['finished'] = await self.send_finished_message(event.track)
+            player_message = self.messager.get_latest_message(MessageType.PLAYING)
+            await self.messager.replace_to_finished_playing(player_message)
 
             if event.reason.may_start_next():
                 await self.queue_next_song()
 
                 if len(self.queue) == 0 and len(self.playlist) > 0:
-                    await bot.edit_message(
-                        self.messages['finished'],
-                        embed=self.get_finished_embed(event.track),
-                        view=self.player_controls.get(),
-                    )
+                    await self.messager.replace_to_non_compact(player_message)
 
                 await self.play()

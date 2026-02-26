@@ -8,19 +8,20 @@ from os import sep
 from time import time
 from typing import TYPE_CHECKING, Any, Optional, Union
 
+import aiohttp.client_exceptions
 import discord
-import lavalink
 import psutil
 from aiohttp import ClientSession, ClientTimeout
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.schedulers.base import STATE_RUNNING
 from discord import Activity, Status, Message
 from discord.ext import commands
 from discord.utils import oauth_url
 from envparse import env
-from lavalink import Client
 
 from neonbot import __version__
 from neonbot.classes.database import Database
+from neonbot.classes.lavalink.client import Client
 from neonbot.models.flyff import FlyffModel
 from neonbot.models.guild import GuildModel
 from neonbot.models.setting import SettingModel
@@ -30,7 +31,7 @@ from neonbot.utils.context_menu import load_context_menu
 from neonbot.views.ExchangeGiftView import ExchangeGiftView
 
 if TYPE_CHECKING:
-    from neonbot.classes.player import Player
+    pass
 
 
 class NeonBot(commands.Bot):
@@ -53,7 +54,14 @@ class NeonBot(commands.Bot):
         self.flyff_settings: Optional[FlyffModel] = None
         self.scheduler: Optional[AsyncIOScheduler] = None
         self.is_player_cache_loaded = False
-        self.lavalink: Optional[Client[Player]] = None
+
+        self.lavalink: Optional[Client] = Client(self, self.user.id)
+        self.lavalink.add_node(
+            env.str('LAVALINK_HOST'),
+            env.str('LAVALINK_PORT'),
+            env.str('LAVALINK_PASSWORD'),
+            'asia'
+        )
 
     def get_presence(self) -> tuple[Status, Activity]:
         activity_type = self.setting.activity_type
@@ -66,8 +74,9 @@ class NeonBot(commands.Bot):
         )
 
     async def setup_hook(self):
-        self.loop.add_signal_handler(signal.SIGTERM,
-                                     lambda: asyncio.create_task(self.close()))  # type: ignore[arg-type]
+        if not sys.platform.startswith('win'):
+            self.loop.add_signal_handler(signal.SIGTERM,
+                                         lambda: asyncio.create_task(self.close()))  # type: ignore[arg-type]
 
         await self.db.initialize()
         self.setting = await SettingModel.get_instance()
@@ -109,12 +118,10 @@ class NeonBot(commands.Bot):
             if server and not server.exchange_gift.finish and server.exchange_gift.message_id:
                 self.add_view(ExchangeGiftView(), message_id=server.exchange_gift.message_id)
 
-            Panel.start_listener(guild.id)
+            Panel.start_listener(self, guild.id)
 
     def initialize_lavalink(self):
-        from neonbot.classes.player import Player
-
-        self.lavalink: Optional[Client[Player]] = lavalink.Client(self.user.id, player=Player)
+        self.lavalink: Optional[Client] = Client(self, self.user.id)
         self.lavalink.add_node(
             env.str('LAVALINK_HOST'),
             env.str('LAVALINK_PORT'),
@@ -159,7 +166,7 @@ class NeonBot(commands.Bot):
             status=getattr(discord.Status, setting.status),
         )
 
-    async def send_response(self, interaction: discord.Interaction, *args, **kwargs):
+    async def send_response(self, interaction: discord.Interaction['NeonBot'], *args, **kwargs):
         if not interaction.response.is_done():
             await interaction.response.send_message(*args, **kwargs)
         elif (
@@ -176,13 +183,13 @@ class NeonBot(commands.Bot):
                 pass
             await interaction.edit_original_response(*args, **kwargs)
 
-    async def edit_message(self, message: Union[discord.Message, None], **kwargs) -> Message | None:
+    async def edit_message(self, message: Union[discord.Message, None], *args, **kwargs) -> Message | None:
         if message is None:
             return None
 
         try:
-            return await message.edit(**kwargs)
-        except Exception:
+            return await message.edit(*args, **kwargs)
+        except (discord.DiscordException, aiohttp.client_exceptions.ClientError):
             pass
 
     async def delete_message(self, *messages: Union[discord.Message, None]) -> None:
@@ -194,7 +201,8 @@ class NeonBot(commands.Bot):
     async def close(self) -> None:
         if self.scheduler:
             log.info('Stopping scheduler...')
-            self.scheduler.shutdown(wait=False)
+            if self.scheduler.state == STATE_RUNNING:
+                self.scheduler.shutdown(wait=False)
 
         log.info('Saving all music...')
 
@@ -210,13 +218,10 @@ class NeonBot(commands.Bot):
         log.info('Stopping bot...')
         await super().close()
 
-    async def start(self, *args, **kwargs) -> None:
-        await super().start(*args, **kwargs)
-
-    def run(self, *args, **kwargs):
+    async def start(self, *args, **kwargs):
         self.executor = kwargs['executor']
         del kwargs['executor']
-        super().run(env.str('TOKEN'), *args, **kwargs)
+        await super().start(env.str('TOKEN'), *args, **kwargs)
 
     def _handle_ready(self) -> None:
         pass
