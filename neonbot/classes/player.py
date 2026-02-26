@@ -32,8 +32,7 @@ class Player(DefaultPlayer):
 
         self.settings = GuildModel.get_instance(self.guild_id)
         self.player_controls = PlayerControls(self.guild_id)
-        self._track_start_lock = asyncio.Lock()
-        self._track_end_lock = asyncio.Lock()
+        self._track_event_lock = asyncio.Lock()
 
         self.ctx: Optional[Context] = None
         self.vc: Optional[VoiceChannel] = None
@@ -425,19 +424,19 @@ class Player(DefaultPlayer):
         return [i for i in track_list if i['id'] not in existing_ids]
 
     async def track_start_event(self, event: TrackStartEvent):
-        if self._track_start_lock.locked() or event.track is None:
+        if event.track is None:
             return
 
-        async with self._track_start_lock:
+        async with self._track_event_lock:
             await wait_until(lambda: self.is_playing)
             self.messages['playing'] = await self.send_playing_message(event.track)
             self.last_track = event.track
 
     async def track_end_event(self, event: TrackEndEvent):
-        if self._track_end_lock.locked():
+        if event.track is None:
             return
 
-        async with self._track_end_lock:
+        async with self._track_event_lock:
             self.messages['finished'] = await self.send_finished_message(event.track)
 
             if event.reason.may_start_next():
