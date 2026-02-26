@@ -296,7 +296,7 @@ class Player(DefaultPlayer):
         await self.play()
 
     async def skip(self):
-        await super().stop()
+        await self.node.update_player(guild_id=self._internal_id, encoded_track=None)
         await self._track_end_event.wait()
         await self.play()
 
