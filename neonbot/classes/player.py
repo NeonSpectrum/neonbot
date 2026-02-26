@@ -23,7 +23,7 @@ from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
 from neonbot.utils.exceptions import PlayerError
-from neonbot.utils.functions import clean_youtube_url, format_milliseconds, is_youtube_url
+from neonbot.utils.functions import clean_youtube_url, format_milliseconds, is_youtube_url, wait_until
 
 
 class Player(DefaultPlayer):
@@ -429,6 +429,7 @@ class Player(DefaultPlayer):
             return
 
         async with self._track_start_lock:
+            await wait_until(lambda: self.is_playing)
             self.messages['playing'] = await self.send_playing_message(event.track)
             self.last_track = event.track
 
