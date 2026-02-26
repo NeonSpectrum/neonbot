@@ -23,7 +23,7 @@ from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
 from neonbot.utils.exceptions import PlayerError
-from neonbot.utils.functions import clean_youtube_url, format_milliseconds, is_youtube_url, wait_until
+from neonbot.utils.functions import clean_youtube_url, format_milliseconds, is_youtube_url
 
 
 class Player(DefaultPlayer):
@@ -298,11 +298,6 @@ class Player(DefaultPlayer):
         await self.queue_next_song()
         await self.play()
 
-    async def play(self, *args, **kwargs):
-        await super().play(*args, **kwargs)
-        await wait_until(lambda: self.current)
-        self.messages['playing'] = await self.send_playing_message(self.current)
-
     async def stop(self):
         self.current = None
         self.current_queue = -1
@@ -430,11 +425,17 @@ class Player(DefaultPlayer):
         return [i for i in track_list if i['id'] not in existing_ids]
 
     async def track_start_event(self, event: TrackStartEvent):
+        if self._track_start_lock.locked() or event.track is None:
+            return
+
         async with self._track_start_lock:
-            if event.track is not None:
-                self.last_track = event.track
+            self.messages['playing'] = await self.send_playing_message(self.current)
+            self.last_track = event.track
 
     async def track_end_event(self, event: TrackEndEvent):
+        if self._track_end_lock.locked():
+            return
+
         async with self._track_end_lock:
             self.messages['finished'] = await self.send_finished_message(event.track)
 
