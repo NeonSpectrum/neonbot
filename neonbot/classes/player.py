@@ -291,12 +291,12 @@ class Player(DefaultPlayer):
     async def next(self):
         await self.skip()
 
-    async def play_next(self):
-        await self.queue_next_song()
-        await self.play()
-
     async def skip(self):
         await super().stop()
+        await self.play_next()
+
+    async def play_next(self):
+        await self.queue_next_song()
         await self.play()
 
     async def stop(self):
@@ -366,7 +366,7 @@ class Player(DefaultPlayer):
             user=track.requester,
         )
 
-        await bot.edit_message(self.messages['playing'], embed=self.get_simplified_finished_message(track))
+        await bot.edit_message(self.messages['playing'], embed=self.get_simplified_finished_message(track), view=None)
 
         return self.messages['playing']
 
@@ -457,7 +457,8 @@ class Player(DefaultPlayer):
 
         message = await self.send_finished_message(event.track)
 
-        await self.queue_next_song()
+        if event.reason.may_start_next():
+            await self.queue_next_song()
 
         if len(self.queue) == 0:
             self.messages['finished'] = await message.edit(

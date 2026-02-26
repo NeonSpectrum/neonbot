@@ -76,7 +76,7 @@ class NeonBot(commands.Bot):
         self.session = ClientSession(timeout=ClientTimeout(total=30))
         self.scheduler = AsyncIOScheduler()
         self.scheduler.start()
-        
+
         self.initialize_lavalink()
 
         await self.add_cogs()
@@ -132,7 +132,7 @@ class NeonBot(commands.Bot):
 
         for extension in extensions:
             log.info(f'Loading {extension} cog... [{(process.memory_info().rss / 1024000):.2f} MB]')
-            await self.load_extension('neonbot.cogs.' + extension)
+            self.loop.create_task(self.load_extension('neonbot.cogs.' + extension))
 
         print(file=sys.stderr)
 
