@@ -367,11 +367,13 @@ class Player(DefaultPlayer):
         )
 
         message = await bot.edit_message(self.messages['playing'], embed=self.get_simplified_finished_message(track), view=None)
+        print('sent finish')
         self.messages['playing'] = None
 
         return message
 
     def refresh_player_message(self, *, embed=False):
+        print('refresh')
         if self.messages['playing']:
             bot.loop.create_task(bot.edit_message(
                 self.messages['playing'],
