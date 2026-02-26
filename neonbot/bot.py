@@ -13,7 +13,7 @@ import lavalink
 import psutil
 from aiohttp import ClientSession, ClientTimeout
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from discord import Activity, Status
+from discord import Activity, Status, Message
 from discord.ext import commands
 from discord.utils import oauth_url
 from envparse import env
@@ -176,12 +176,12 @@ class NeonBot(commands.Bot):
                 pass
             await interaction.edit_original_response(*args, **kwargs)
 
-    async def edit_message(self, message: Union[discord.Message, None], **kwargs) -> None:
+    async def edit_message(self, message: Union[discord.Message, None], **kwargs) -> Message | None:
         if message is None:
-            return
+            return None
 
         try:
-            await message.edit(**kwargs)
+            return await message.edit(**kwargs)
         except Exception:
             pass
 
