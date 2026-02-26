@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import random
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, cast
 
 import discord
 import ytmusicapi.exceptions
@@ -120,10 +120,11 @@ class Player(DefaultPlayer):
         await self.vc.connect(timeout=3, reconnect=True, self_deaf=True, cls=LavalinkVoiceClient)
         log.cmd(self.ctx, t('music.player_connected', channel=self.vc))
 
-    async def disconnect(self, force=True, timeout=None) -> None:
+    async def disconnect(self, force=True, destroy=True, timeout=None) -> None:
         if self.is_connected and self.ctx.voice_client:
             try:
-                await asyncio.wait_for(self.ctx.voice_client.disconnect(force=force), timeout=timeout)
+                voice_client = cast(LavalinkVoiceClient, self.ctx.voice_client)
+                await asyncio.wait_for(voice_client.disconnect(force=force, destroy=destroy), timeout=timeout)
                 self.vc = None
             except asyncio.TimeoutError:
                 pass
@@ -307,7 +308,12 @@ class Player(DefaultPlayer):
         self.shuffled_list = []
 
         await self.stop()
-        await self.disconnect(force=True, timeout=timeout)
+        await self.disconnect(force=True, destroy=False, timeout=timeout)
+
+        if self.messages['finished']:
+            await self.send_finished_message(self.last_track)
+
+        await bot.lavalink.player_manager.destroy(self.guild_id)
 
     async def process_autoplay(self, track: AudioTrack) -> None:
         try:

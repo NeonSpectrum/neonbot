@@ -57,7 +57,7 @@ class LavalinkVoiceClient(discord.VoiceProtocol):
         self.lavalink.player_manager.create(guild_id=self.channel.guild.id)
         await self.channel.guild.change_voice_state(channel=self.channel, self_mute=self_mute, self_deaf=self_deaf)
 
-    async def disconnect(self, *, force: bool = False) -> None:
+    async def disconnect(self, *, force: bool = False, destroy: bool = True) -> None:
         """
         Handles the disconnect.
         Cleans up running player and leaves the voice client.
@@ -75,7 +75,9 @@ class LavalinkVoiceClient(discord.VoiceProtocol):
         # this must be done because the on_voice_state_update that would set channel_id
         # to None doesn't get dispatched after the disconnect
         player.channel_id = None
-        await self._destroy()
+
+        if destroy:
+            await self._destroy()
 
     async def _destroy(self):
         self.cleanup()
