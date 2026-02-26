@@ -434,15 +434,13 @@ class Player(DefaultPlayer):
         async with self._track_start_lock:
             await wait_until(lambda: self.is_playing, True)
             self.messages['playing'] = await self.send_playing_message(event.track)
+            self.last_track = event.track
 
     async def track_end_event(self, event: TrackEndEvent):
         if event.track is None or len(self.playlist) == 0 or (self.current_queue == -1 and self.current is None):
             return
 
         async with self._track_end_lock:
-            self.current = None
-            self.last_track = event.track
-
             self.messages['finished'] = await self.send_finished_message(event.track)
 
             if event.reason.may_start_next():
