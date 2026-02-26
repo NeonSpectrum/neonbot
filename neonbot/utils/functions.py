@@ -208,7 +208,7 @@ def clean_youtube_url(url):
 async def wait_until(func, poll_interval=0.05, timeout=None):
     start_time = time.monotonic()
 
-    while func():
+    while not func():
         if timeout is not None and (time.monotonic() - start_time) > timeout:
             break
 
