@@ -1,8 +1,8 @@
-import inspect
 from typing import Optional
 from typing import TYPE_CHECKING
 
 import discord
+from discord.utils import maybe_coroutine
 
 if TYPE_CHECKING:
     from neonbot import NeonBot
@@ -17,10 +17,7 @@ class Button(discord.ui.Button):
         self._callback = callback
 
     async def callback(self, interaction: discord.Interaction['NeonBot']):
-        if inspect.iscoroutinefunction(self._callback):
-            await self._callback(self, interaction)
-        else:
-            self._callback(self, interaction)
+        await maybe_coroutine(self._callback(self, interaction))
 
         if not interaction.response.is_done():
             await interaction.response.defer()

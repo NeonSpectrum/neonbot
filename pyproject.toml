@@ -9,7 +9,6 @@ readme = "README.md"
 requires-python = ">=3.10,<3.14"
 dependencies = [
     "environs (>=14.1.1,<15.0.0)",
-    "motor (>=3.7.0,<4.0.0)",
     "python-i18n (>=0.3.9,<0.4.0)",
     "dnspython (>=2.7.0,<3.0.0)",
     "pynacl (>=1.5.0,<2.0.0)",
@@ -38,6 +37,7 @@ dependencies = [
     "gitpython (>=3.1.46,<4.0.0)",
     "importlib (>=1.0.4,<2.0.0)",
     "coloredlogs (>=15.0.1,<16.0.0)",
+    "pymongo[srv] (>=4.16.0,<5.0.0)",
 ]
 
 

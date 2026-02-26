@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING
 import discord.ext.commands
 import google.genai as genai
 from discord.ext import commands
-from envparse import env
 from google.genai import types
 from json_repair import repair_json
 
+from neonbot.env import GEMINI_MODEL
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 
@@ -20,7 +20,7 @@ client = genai.Client()
 
 class GeminiChat:
     def __init__(self, ctx: commands.Context['NeonBot']):
-        self.model_name = env.str('GEMINI_MODEL')
+        self.model_name = GEMINI_MODEL
         self.response = None
         self.ctx = ctx
         self.bot = ctx.bot

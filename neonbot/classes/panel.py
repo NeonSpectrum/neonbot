@@ -6,9 +6,9 @@ import discord
 import validators
 from aiohttp import ContentTypeError
 from discord.utils import find
-from envparse import env
 
 from neonbot.classes.discord.embed import Embed
+from neonbot.env import PANEL_URL, PANEL_API_KEY
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
@@ -20,8 +20,8 @@ if TYPE_CHECKING:
 
 
 class Panel:
-    URL = env.str('PANEL_URL')
-    API_KEY = env.str('PANEL_API_KEY')
+    URL = PANEL_URL
+    API_KEY = PANEL_API_KEY
     MCSTATUS_API = 'https://api.mcstatus.io/v2/status/java'
 
     def __init__(self, bot: 'NeonBot', server_id: str = None):

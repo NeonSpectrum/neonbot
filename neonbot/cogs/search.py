@@ -10,12 +10,12 @@ from bs4 import BeautifulSoup
 from discord import app_commands
 from discord.app_commands.models import Choice
 from discord.ext import commands
-from envparse import env
 from jikanpy import AioJikan
 
 from neonbot.classes.chatgpt.chatgpt import ChatGPT
 from neonbot.classes.discord.embed import Embed, EmbedChoices, PaginationEmbed
 from neonbot.classes.google import get_google_access_token
+from neonbot.env import OWNER_GUILD_IDS, GOOGLE_CX, GOOGLE_API, DICTIONARY_API, PROXY, OPENWEATHERMAP_API
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
 from neonbot.utils.exceptions import ApiError
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 class Search(commands.Cog):
     anime = app_commands.Group(name='anime', description='Searches for top, upcoming, or specific anime.')
-    chatgpt = app_commands.Group(name='chatgpt', description='ChatGPT', guild_ids=env.list('OWNER_GUILD_IDS', default=[], subcast=int))
+    chatgpt = app_commands.Group(name='chatgpt', description='ChatGPT', guild_ids=OWNER_GUILD_IDS)
 
     def __init__(self, bot) -> None:
         self.bot = bot
@@ -60,8 +60,8 @@ class Search(commands.Cog):
                 'q': keyword,
                 'num': 1,
                 'searchType': 'image',
-                'cx': env.str('GOOGLE_CX'),
-                'key': env.str('GOOGLE_API'),
+                'cx': GOOGLE_CX,
+                'key': GOOGLE_API,
             },
         )
         image = await res.json()
@@ -87,7 +87,7 @@ class Search(commands.Cog):
 
         res = await self.bot.session.get(
             f'https://www.dictionaryapi.com/api/v3/references/sd4/json/{word}',
-            params={'key': env.str('DICTIONARY_API')},
+            params={'key': DICTIONARY_API},
         )
 
         try:
@@ -145,7 +145,7 @@ class Search(commands.Cog):
             params={
                 'q': location,
                 'units': 'metric',
-                'appid': env.str('OPENWEATHERMAP_API'),
+                'appid': OPENWEATHERMAP_API,
             },
         )
         data = await res.json()
@@ -242,7 +242,7 @@ class Search(commands.Cog):
             return
 
         try:
-            res = await self.bot.session.get(links[choice]['url'], proxy=env.str('PROXY', default=None))
+            res = await self.bot.session.get(links[choice]['url'], proxy=PROXY)
             html = await res.text()
             soup = BeautifulSoup(html, 'html.parser')
             div = soup.select('div.col-xs-12.col-lg-8.text-center')[0]

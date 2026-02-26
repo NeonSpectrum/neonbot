@@ -3,10 +3,10 @@ from typing import Optional, TYPE_CHECKING
 import discord
 from discord import app_commands
 from discord.ext import commands
-from envparse import env
 
 from neonbot.classes.discord.embed import Embed
 from neonbot.classes.exchange_gift import ExchangeGift
+from neonbot.env import OWNER_GUILD_IDS
 from neonbot.views.ExchangeGiftView import ExchangeGiftView
 
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ class ExchangeGiftCog(commands.Cog):
     exchangegift = app_commands.Group(
         name='exchangegift',
         description='Exchange gift commands',
-        guild_ids=env.list('OWNER_GUILD_IDS', default=[], subcast=int),
+        guild_ids=OWNER_GUILD_IDS,
         default_permissions=discord.Permissions(administrator=True),
     )
 

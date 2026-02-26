@@ -139,6 +139,7 @@ class Music(commands.Cog):
     @commands.check(has_permission)
     @commands.check(in_voice)
     @commands.check(has_player)
+    @commands.guild_only()
     async def playlist(self, interaction: discord.Interaction['NeonBot']) -> None:
         """List down all songs in the player's queue."""
 

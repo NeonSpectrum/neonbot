@@ -12,10 +12,10 @@ from dateutil.parser import parse
 from discord import app_commands
 from discord.ext import commands
 from discord.utils import format_dt
-from envparse import env
 
 from neonbot import __author__, __title__, __version__
 from neonbot.classes.discord.embed import Embed
+from neonbot.env import OWNER_GUILD_IDS, SEMAPHONE_API_KEY, SEMAPHONE_SENDER_NAME
 from neonbot.utils.constants import ICONS
 from neonbot.utils.functions import format_seconds, generate_profile_member_embed, generate_profile_user_embed
 
@@ -81,7 +81,7 @@ class Utility(commands.Cog):
 
     @commands.hybrid_command(name='sms')
     @commands.check(is_owner_guilds)
-    @app_commands.guilds(*env.list('OWNER_GUILD_IDS', default=[], subcast=int))
+    @app_commands.guilds(*OWNER_GUILD_IDS)
     async def sms(self, ctx: commands.Context['NeonBot'], number: str, *, body: str) -> None:
         """Send SMS using NeonBot. *BOT_OWNER"""
 
@@ -98,8 +98,8 @@ class Utility(commands.Cog):
             embed=generate_embed().add_field('Status:', 'Sending...', inline=False)
         )
 
-        api_key = env.str('SEMAPHONE_API_KEY')
-        sender_name = env.str('SEMAPHONE_SENDER_NAME')
+        api_key = SEMAPHONE_API_KEY
+        sender_name = SEMAPHONE_SENDER_NAME
 
         body = f'{body}\n\nSent by {ctx.author.display_name}'
 

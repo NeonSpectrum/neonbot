@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING
 import discord
 from aiohttp import ClientTimeout
 from discord import Webhook
-from envparse import env
 
 from neonbot.classes.discord.embed import Embed
+from neonbot.env import FLYFF_IP_ADDRESS
 from neonbot.models.flyff import FlyffWebhookChannel
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 class Flyff:
-    IP_ADDRESS = env.str('FLYFF_IP_ADDRESS', default=None)
+    IP_ADDRESS = FLYFF_IP_ADDRESS
     RESET_TIME = '06:00 PM'
     DOWNTIME_COUNT = 0
 

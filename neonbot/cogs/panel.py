@@ -3,10 +3,10 @@ from typing import TYPE_CHECKING
 import discord
 from discord import app_commands
 from discord.ext import commands
-from envparse import env
 
 from neonbot.classes.discord.embed import Embed
 from neonbot.classes.panel import Panel
+from neonbot.env import OWNER_GUILD_IDS
 from neonbot.models.guild import GuildModel
 from neonbot.models.panel import PanelServer
 
@@ -18,7 +18,7 @@ class PanelCog(commands.Cog):
     panel = app_commands.Group(
         name='panel',
         description='Panel commands',
-        guild_ids=env.list('OWNER_GUILD_IDS', default=[], subcast=int),
+        guild_ids=OWNER_GUILD_IDS,
         default_permissions=discord.Permissions(administrator=True),
     )
 

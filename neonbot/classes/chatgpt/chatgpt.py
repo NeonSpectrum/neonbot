@@ -3,10 +3,10 @@ from typing import TYPE_CHECKING
 
 import discord
 from discord.ext import commands
-from envparse import env
 from openai import AsyncOpenAI
 
 from neonbot.classes.chatgpt.chat_thread import ChatThread
+from neonbot.env import OPENAI_IMAGE_MODEL
 from neonbot.models.guild import GuildModel
 from neonbot.utils.functions import split_long_message
 
@@ -70,7 +70,7 @@ class ChatGPT:
 
     async def generate_image(self, keyword):
         return await self.client.images.generate(
-            model=env.str('OPENAI_IMAGE_MODEL', default='dall-e-2'),
+            model=OPENAI_IMAGE_MODEL,
             prompt=keyword,
             n=1,
             size='1024x1024',

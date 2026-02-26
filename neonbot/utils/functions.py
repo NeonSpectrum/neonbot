@@ -12,9 +12,9 @@ import pytz
 from bs4 import BeautifulSoup
 from discord.ext import commands
 from discord.utils import format_dt
-from envparse import env
 
 from neonbot.classes.discord.embed import Embed
+from neonbot.env import TZ
 
 if TYPE_CHECKING:
     from neonbot import NeonBot
@@ -77,7 +77,7 @@ def format_uptime(milliseconds: int) -> str:
 
 
 def get_log_prefix() -> str:
-    tz = pytz.timezone(env.str('TZ', default='Asia/Manila'))
+    tz = pytz.timezone(TZ)
     now = datetime.now(tz)
     return f'[{now.strftime("%I:%M:%S %p")}] :bust_in_silhouette:'
 

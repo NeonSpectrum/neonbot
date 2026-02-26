@@ -9,10 +9,10 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import View
-from envparse import env
 
 from neonbot.classes.discord.embed import Embed
 from neonbot.classes.discord.select_choices import SelectChoices
+from neonbot.env import OWNER_GUILD_IDS
 from neonbot.models.guild import GuildModel
 from neonbot.utils.constants import ICONS
 
@@ -43,7 +43,7 @@ class Administration(commands.Cog):
         name='bot',
         description='Configure the settings of the bot globally.',
         default_permissions=discord.Permissions(administrator=True),
-        guild_ids=env.list('OWNER_GUILD_IDS', default=[], subcast=int),
+        guild_ids=OWNER_GUILD_IDS,
         guild_only=True,
     )
 

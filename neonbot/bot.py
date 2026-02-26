@@ -3,10 +3,11 @@ import os
 import re
 import signal
 import sys
+from concurrent.futures import Executor
 from glob import glob
 from os import sep
 from time import time
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import Any, Optional, Union
 
 import aiohttp.client_exceptions
 import discord
@@ -17,11 +18,19 @@ from apscheduler.schedulers.base import STATE_RUNNING
 from discord import Activity, Status, Message
 from discord.ext import commands
 from discord.utils import oauth_url
-from envparse import env
 
 from neonbot import __version__
 from neonbot.classes.database import Database
 from neonbot.classes.lavalink.client import Client
+from neonbot.env import (
+    DEFAULT_PREFIX,
+    LAVALINK_HOST,
+    LAVALINK_PASSWORD,
+    LAVALINK_PORT,
+    OWNER_GUILD_IDS,
+    OWNER_IDS,
+    SYNC_COMMANDS,
+)
 from neonbot.models.flyff import FlyffModel
 from neonbot.models.guild import GuildModel
 from neonbot.models.setting import SettingModel
@@ -30,38 +39,30 @@ from neonbot.utils.constants import PERMISSIONS
 from neonbot.utils.context_menu import load_context_menu
 from neonbot.views.ExchangeGiftView import ExchangeGiftView
 
-if TYPE_CHECKING:
-    pass
-
 
 class NeonBot(commands.Bot):
-    def __init__(self):
-        self.default_prefix = env.str('DEFAULT_PREFIX', default='.')
+    def __init__(self, executor: Executor):
+        self.default_prefix = DEFAULT_PREFIX
         self.user_agent = f'NeonBot v{__version__}'
         self.loop = asyncio.get_event_loop()
-        self.executor = None
+        self.loop.set_default_executor(executor)
         super().__init__(
             intents=discord.Intents.all(),
+
             command_prefix=self.default_prefix,
-            owner_ids=set(env.list('OWNER_IDS', default=[], subcast=int)),
+            owner_ids=set(OWNER_IDS),
         )
 
         self.db = Database(self)
         self.app_info: Optional[discord.AppInfo] = None
-        self.owner_guilds = env.list('OWNER_GUILD_IDS', default=[], subcast=int)
+        self.owner_guilds = OWNER_GUILD_IDS
         self.session: Optional[ClientSession] = None
         self.setting: Optional[SettingModel] = None
         self.flyff_settings: Optional[FlyffModel] = None
         self.scheduler: Optional[AsyncIOScheduler] = None
         self.is_player_cache_loaded = False
 
-        self.lavalink: Optional[Client] = Client(self, self.user.id)
-        self.lavalink.add_node(
-            env.str('LAVALINK_HOST'),
-            env.str('LAVALINK_PORT'),
-            env.str('LAVALINK_PASSWORD'),
-            'asia'
-        )
+        self.lavalink: Optional[Client] = None
 
     def get_presence(self) -> tuple[Status, Activity]:
         activity_type = self.setting.activity_type
@@ -93,7 +94,7 @@ class NeonBot(commands.Bot):
 
         guilds = [guild async for guild in self.fetch_guilds()]
 
-        if env.bool('SYNC_COMMANDS', default=True):
+        if SYNC_COMMANDS:
             await self.sync_command()
 
             # This copies the global commands over to your guild.
@@ -107,10 +108,10 @@ class NeonBot(commands.Bot):
         log.info(f'Command synced to: {guild or "Global"}')
 
     def start_listeners(self):
+        from neonbot.classes.flyff import Flyff
         from neonbot.classes.panel import Panel
-        # from neonbot.classes.flyff import Flyff
 
-        # Flyff.start_listener()
+        Flyff.start_listener(self)
 
         for guild in self.guilds:
             server = GuildModel.get_instance(guild.id)
@@ -121,11 +122,11 @@ class NeonBot(commands.Bot):
             Panel.start_listener(self, guild.id)
 
     def initialize_lavalink(self):
-        self.lavalink: Optional[Client] = Client(self, self.user.id)
+        self.lavalink = Client(self, self.user.id)
         self.lavalink.add_node(
-            env.str('LAVALINK_HOST'),
-            env.str('LAVALINK_PORT'),
-            env.str('LAVALINK_PASSWORD'),
+            LAVALINK_HOST,
+            LAVALINK_PORT,
+            LAVALINK_PASSWORD,
             'asia'
         )
 
@@ -137,9 +138,13 @@ class NeonBot(commands.Bot):
 
         print(file=sys.stderr)
 
+        futures = []
+
         for extension in extensions:
             log.info(f'Loading {extension} cog... [{(process.memory_info().rss / 1024000):.2f} MB]')
-            self.loop.create_task(self.load_extension('neonbot.cogs.' + extension))
+            futures.append(self.load_extension('neonbot.cogs.' + extension))
+
+        await asyncio.gather(*futures)
 
         print(file=sys.stderr)
 
@@ -217,11 +222,6 @@ class NeonBot(commands.Bot):
 
         log.info('Stopping bot...')
         await super().close()
-
-    async def start(self, *args, **kwargs):
-        self.executor = kwargs['executor']
-        del kwargs['executor']
-        await super().start(env.str('TOKEN'), *args, **kwargs)
 
     def _handle_ready(self) -> None:
         pass

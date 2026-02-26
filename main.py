@@ -16,6 +16,7 @@ i18n.set('skip_locale_root_data', True)
 
 async def main() -> None:
     from neonbot.bot import NeonBot
+    from neonbot.env import TOKEN
 
     # Clear debug.log on startup
     open('./debug.log', 'w').close()
@@ -23,13 +24,13 @@ async def main() -> None:
     logging.getLogger('apscheduler.scheduler').setLevel(logging.ERROR)
 
     with ThreadPoolExecutor() as executor:
-        bot = NeonBot()
+        bot = NeonBot(executor)
 
         try:
             utils.setup_logging(
                 level=logging.getLevelName(env.str('DISCORD_LOG_LEVEL', default='ERROR')),
             )
-            await bot.start(executor=executor)
+            await bot.start(TOKEN)
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         finally:

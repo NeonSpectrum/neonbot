@@ -5,8 +5,8 @@ from typing import Any, Callable, Optional, Union, TYPE_CHECKING
 import coloredlogs
 import discord
 from discord.ext import commands
-from envparse import env
 
+from neonbot.env import BOT_LOG_LEVEL
 from neonbot.utils.constants import LOG_FORMAT
 
 if TYPE_CHECKING:
@@ -38,7 +38,7 @@ class Log(logging.Logger):
 
         console = logging.StreamHandler()
         console.setFormatter(formatter)
-        console.setLevel(env.str('BOT_LOG_LEVEL', default='ERROR'))
+        console.setLevel(BOT_LOG_LEVEL)
         self.addHandler(console)
 
     def cmd(
