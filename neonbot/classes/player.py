@@ -23,7 +23,7 @@ from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
 from neonbot.utils.exceptions import PlayerError
-from neonbot.utils.functions import clean_youtube_url, format_milliseconds, is_youtube_url
+from neonbot.utils.functions import clean_youtube_url, format_milliseconds, is_youtube_url, wait_until
 
 
 class Player(DefaultPlayer):
@@ -300,6 +300,7 @@ class Player(DefaultPlayer):
 
     async def play(self, *args, **kwargs):
         await super().play(*args, **kwargs)
+        await wait_until(lambda: self.current)
         self.messages['playing'] = await self.send_playing_message(self.current)
 
     async def stop(self):
@@ -311,13 +312,8 @@ class Player(DefaultPlayer):
         self.track_list = []
         self.shuffled_list = []
 
-        track = self.current
-
         await self.stop()
         await self.disconnect(force=True, timeout=timeout)
-
-        if track:
-            await self.send_finished_message(track)
 
     async def process_autoplay(self, track: AudioTrack) -> None:
         try:
