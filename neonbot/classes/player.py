@@ -23,7 +23,7 @@ from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
 from neonbot.utils.exceptions import PlayerError
-from neonbot.utils.functions import clean_youtube_url, format_milliseconds, is_youtube_url, wait_until
+from neonbot.utils.functions import clean_youtube_url, format_milliseconds, is_youtube_url
 
 
 class Player(DefaultPlayer):
@@ -173,12 +173,12 @@ class Player(DefaultPlayer):
                 if track.extra.get('index') != index
             ]
 
-        target_index = find(lambda track: track.extra.get('index') == index, self.track_list)
+        target_track: Optional[AudioTrack] = find(lambda track: track.extra.get('index') == index, self.track_list)
 
-        if not target_index:
+        if not target_track:
             raise IndexError
 
-        removed_track = self.track_list.pop(target_index.extra.get('index'))
+        removed_track = self.track_list.pop(target_track.extra.get('index'))
 
         # Adjust index on all tracks
         for index, track in enumerate(self.shuffled_list):
@@ -297,6 +297,10 @@ class Player(DefaultPlayer):
     async def play_next(self):
         await self.queue_next_song()
         await self.play()
+
+    async def play(self, *args, **kwargs):
+        await super().play(*args, **kwargs)
+        self.messages['playing'] = await self.send_playing_message(self.current)
 
     async def stop(self):
         self.current = None
@@ -431,21 +435,16 @@ class Player(DefaultPlayer):
 
     async def track_start_event(self, event: TrackStartEvent):
         async with self._track_start_lock:
-            await wait_until(lambda: self.is_playing, True)
-            self.messages['playing'] = await self.send_playing_message(event.track)
             self.last_track = event.track
 
     async def track_end_event(self, event: TrackEndEvent):
-        if event.track is None or len(self.playlist) == 0 or (self.current_queue == -1 and self.current is None):
-            return
-
         async with self._track_end_lock:
             self.messages['finished'] = await self.send_finished_message(event.track)
 
             if event.reason.may_start_next():
                 await self.queue_next_song()
 
-                if len(self.queue) == 0:
+                if len(self.queue) == 0 and len(self.playlist) > 0:
                     await bot.edit_message(
                         self.messages['finished'],
                         embed=self.get_finished_embed(event.track),
