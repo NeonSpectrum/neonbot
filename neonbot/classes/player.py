@@ -300,7 +300,7 @@ class Player(DefaultPlayer):
 
     async def play(self, *args, **kwargs):
         await super().play(*args, **kwargs)
-        await wait_until(lambda: self.is_playing)
+        await wait_until(lambda: self.current)
         self.messages['playing'] = await self.send_playing_message(self.current)
 
     async def stop(self):
