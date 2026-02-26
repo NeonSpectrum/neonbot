@@ -62,10 +62,6 @@ class PlayerControls:
         else:
             views[5].style = discord.ButtonStyle.secondary
 
-        # Newly created player control should display pause button since its playing
-        if not self.view:
-            views[2].emoji = '⏸️'
-
         return views
 
     async def callback(self, button: discord.ui.Button, interaction: discord.Interaction):
