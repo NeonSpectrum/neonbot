@@ -380,6 +380,7 @@ class Player(DefaultPlayer):
                 view=self.player_controls.get(),
             ))
         elif self.messages['finished']:
+            print(len(self.messages['finished'].components))
             bot.loop.create_task(bot.edit_message(
                 self.messages['finished'],
                 embed=self.get_finished_embed(self.last_track) if embed else MISSING,
