@@ -460,12 +460,13 @@ class Player(DefaultPlayer):
         if event.reason.may_start_next():
             await self.queue_next_song()
 
-        if len(self.queue) == 0:
-            self.messages['finished'] = await message.edit(
-                embed=self.get_finished_embed(event.track),
-                view=self.player_controls.get(),
-            )
-        elif event.reason.may_start_next():
+            if len(self.queue) == 0:
+                await bot.edit_message(
+                    self.messages['finished'],
+                    embed=self.get_finished_embed(event.track),
+                    view=self.player_controls.get(),
+                )
+
             await self.play()
 
         self._track_end_event.set()
