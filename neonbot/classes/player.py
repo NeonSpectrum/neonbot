@@ -372,12 +372,15 @@ class Player(DefaultPlayer):
 
     def refresh_player_message(self, *, embed=False):
         if self.messages['playing']:
+            print('editing playing')
+            print(len(self.messages['playing'].components))
             bot.loop.create_task(bot.edit_message(
                 self.messages['playing'],
                 embed=self.get_playing_embed(self.current) if embed else MISSING,
                 view=self.player_controls.get(),
             ))
         elif self.messages['finished']:
+            print('editing finished')
             print(len(self.messages['finished'].components))
             bot.loop.create_task(bot.edit_message(
                 self.messages['finished'],
