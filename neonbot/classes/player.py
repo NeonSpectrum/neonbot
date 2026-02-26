@@ -429,7 +429,7 @@ class Player(DefaultPlayer):
             return
 
         async with self._track_start_lock:
-            self.messages['playing'] = await self.send_playing_message(self.current)
+            self.messages['playing'] = await self.send_playing_message(event.track)
             self.last_track = event.track
 
     async def track_end_event(self, event: TrackEndEvent):
