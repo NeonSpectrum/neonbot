@@ -373,7 +373,6 @@ class Player(DefaultPlayer):
         return message
 
     def refresh_player_message(self, *, embed=False):
-        print('refresh')
         if self.messages['playing']:
             bot.loop.create_task(bot.edit_message(
                 self.messages['playing'],
@@ -384,7 +383,7 @@ class Player(DefaultPlayer):
             bot.loop.create_task(bot.edit_message(
                 self.messages['finished'],
                 embed=self.get_finished_embed(self.last_track) if embed else MISSING,
-                view=self.player_controls.get() if len(self.messages['finished'].components) > 0 else MISSING,
+                view=self.player_controls.get() if len(self.messages['finished'].components) > 0 else None,
             ))
 
     def get_footer(self, track):
