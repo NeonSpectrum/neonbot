@@ -304,8 +304,8 @@ class Player(DefaultPlayer):
                    **kwargs):
         try:
             track = track or self.queue.pop(0)
+            await super().play(track, *args, **kwargs)
             self.messages['playing'] = await self.send_playing_message(track)
-            await super().play(*args, **kwargs)
         except IndexError:
             pass
 
