@@ -366,7 +366,7 @@ class Player(DefaultPlayer):
             user=track.requester,
         )
 
-        await bot.edit_message(self.messages['playing'], embed=self.get_simplified_finished_message(track), view=None)
+        await bot.edit_message(self.messages['playing'], embed=self.get_simplified_finished_message(track), view=MISSING)
 
         return self.messages['playing']
 
