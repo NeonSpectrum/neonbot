@@ -296,8 +296,9 @@ class Player(DefaultPlayer):
         await self.play()
 
     async def skip(self):
-        await self.node.update_player(guild_id=self._internal_id, encoded_track=None)
+        await super().stop()
         await self._track_end_event.wait()
+        print('playing new song')
         await self.play()
 
     async def stop(self):
@@ -474,6 +475,7 @@ class Player(DefaultPlayer):
         message = await self.send_finished_message(event.track)
 
         await self.queue_next_song()
+        print('queueing next song')
 
         if len(self.queue) == 0:
             self.messages['finished'] = await message.edit(
