@@ -296,10 +296,7 @@ class Player(DefaultPlayer):
         await self.play()
 
     async def skip(self):
-        await self._track_end_event.wait()
         await super().stop()
-        await self._track_end_event.wait()
-        print('playing new song')
         await self.play()
 
     async def stop(self):
@@ -318,8 +315,6 @@ class Player(DefaultPlayer):
 
         if track:
             await self.send_finished_message(track)
-        else:
-            await self.clear_messages()
 
     async def process_autoplay(self, track: AudioTrack) -> None:
         try:
@@ -358,7 +353,6 @@ class Player(DefaultPlayer):
             self.ctx, t('music.now_playing.title', title=track.title), user=track.requester
         )
 
-        await self.clear_messages()
         self.player_controls.initialize()
 
         return await self.send_message(
@@ -372,21 +366,9 @@ class Player(DefaultPlayer):
             user=track.requester,
         )
 
-        await self.clear_messages()
+        await bot.edit_message(self.messages['playing'], embed=self.get_simplified_finished_message(track))
 
-        return await self.send_message(
-            embed=self.get_simplified_finished_message(track),
-            silent=True,
-        )
-
-    async def clear_messages(self):
-        if self.messages['finished']:
-            await bot.delete_message(self.messages['finished'])
-            await self.send_message(embed=self.get_simplified_finished_message(self.last_track), silent=True)
-
-        await bot.delete_message(self.messages['playing'])
-        self.messages['playing'] = None
-        self.messages['finished'] = None
+        return self.messages['playing']
 
     def refresh_player_message(self, *, embed=False):
         if self.messages['playing']:
@@ -476,7 +458,6 @@ class Player(DefaultPlayer):
         message = await self.send_finished_message(event.track)
 
         await self.queue_next_song()
-        print('queueing next song')
 
         if len(self.queue) == 0:
             self.messages['finished'] = await message.edit(
