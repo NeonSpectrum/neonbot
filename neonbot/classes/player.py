@@ -23,7 +23,7 @@ from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
 from neonbot.utils.exceptions import PlayerError
-from neonbot.utils.functions import clean_youtube_url, format_milliseconds, is_youtube_url, wait_until
+from neonbot.utils.functions import clean_youtube_url, format_milliseconds, is_youtube_url
 
 
 class Player(DefaultPlayer):
@@ -298,10 +298,16 @@ class Player(DefaultPlayer):
         await self.queue_next_song()
         await self.play()
 
-    async def play(self, *args, **kwargs):
-        await super().play(*args, **kwargs)
-        await wait_until(lambda: self.current)
-        self.messages['playing'] = await self.send_playing_message(self.current)
+    async def play(self,
+                   track: Optional[Union[AudioTrack, 'DeferredAudioTrack', Dict[str, Union[Optional[str], bool, int]]]] = None,
+                   *args,
+                   **kwargs):
+        try:
+            track = track or self.queue.pop(0)
+            self.messages['playing'] = await self.send_playing_message(track)
+            await super().play(*args, **kwargs)
+        except IndexError:
+            pass
 
     async def stop(self):
         self.current = None
