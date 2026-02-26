@@ -377,7 +377,7 @@ class Player(DefaultPlayer):
             bot.loop.create_task(bot.edit_message(
                 self.messages['playing'],
                 embed=self.get_playing_embed(self.current) if embed else MISSING,
-                view=self.player_controls.get() if len(self.messages['finished'].components) > 0 else None,
+                view=self.player_controls.get() if len(self.messages['playing'].components) > 0 else None,
             ))
         elif self.messages['finished']:
             print('editing finished')
