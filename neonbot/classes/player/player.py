@@ -216,7 +216,8 @@ class Player(DefaultPlayer):
         load_type = results.load_type
         tracks = results.tracks
         embed = None
-        log.info(results)
+        
+        log.debug(results)
 
         if load_type == LoadType.EMPTY:
             embed = Embed(t('music.no_songs_available'))
