@@ -455,7 +455,7 @@ class Player(DefaultPlayer):
         self.current = None
         self.last_track = event.track
 
-        message = await self.send_finished_message(event.track)
+        self.messages['finished'] = await self.send_finished_message(event.track)
 
         if event.reason.may_start_next():
             await self.queue_next_song()
