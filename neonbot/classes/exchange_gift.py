@@ -1,18 +1,23 @@
 import random
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 import discord
 from discord.utils import find
 
-from neonbot.classes.embed import Embed
+from neonbot.classes.discord.embed import Embed
 from neonbot.models.exchange_gift import ExchangeGiftMember
 from neonbot.models.guild import GuildModel
 from neonbot.utils.exceptions import ExchangeGiftNotRegistered
 
+if TYPE_CHECKING:
+    from neonbot import NeonBot
+
 
 class ExchangeGift:
-    def __init__(self, interaction: discord.Interaction):
+    def __init__(self, interaction: discord.Interaction['NeonBot']):
         self.server = GuildModel.get_instance(interaction.guild.id)
+        self.bot = interaction.client
         self.guild = interaction.guild
         self.user = interaction.user
 
@@ -36,7 +41,7 @@ class ExchangeGift:
 
     async def set_message_id(self, message_id: int):
         self.server.exchange_gift.message_id = message_id
-        await self.server.save_changes()
+        await self.server.save_changes(False)
 
     def get_no_wishlist_users(self):
         no_wishlist_users = []
@@ -49,7 +54,7 @@ class ExchangeGift:
 
     async def set_budget(self, budget):
         self.server.exchange_gift.budget = budget
-        await self.server.save_changes()
+        await self.server.save_changes(False)
 
     async def set_wishlist(self, wishlist: str):
         if not self.member:
@@ -57,7 +62,7 @@ class ExchangeGift:
 
         self.member.wishlist = wishlist
 
-        await self.server.save_changes()
+        await self.server.save_changes(False)
 
     def get_wishlist(self):
         if not self.member:
@@ -67,14 +72,14 @@ class ExchangeGift:
 
     async def register(self):
         self.server.exchange_gift.members.append(ExchangeGiftMember(user_id=self.user.id))
-        await self.server.save_changes()
+        await self.server.save_changes(False)
 
     async def unregister(self):
         if not self.member:
             raise ExchangeGiftNotRegistered()
 
         self.server.exchange_gift.members.remove(ExchangeGiftMember(user_id=self.user.id))
-        await self.server.save_changes()
+        await self.server.save_changes(False)
 
     async def shuffle(self):
         members = list(map(lambda m: m.user_id, self.get_all()))
@@ -88,11 +93,11 @@ class ExchangeGift:
 
             self.get(member.user_id).chosen = chosen_member
 
-            await self.server.save_changes()
+            await self.server.save_changes(False)
 
     async def set_finish(self):
         self.server.exchange_gift.finish = True
-        await self.server.save_changes()
+        await self.server.save_changes(False)
 
     def create_embed_template(self):
         year = datetime.now().strftime('%Y')
@@ -103,14 +108,12 @@ class ExchangeGift:
         return Embed().set_author('🎁 Wishlist ' + year)
 
     def create_start_template(self):
-        from neonbot import bot
-
         embed = self.create_embed_template()
         embed.set_description(
             'Christmas season is here! It’s also the season for gift giving, so wouldn’t it be wonderful to have a exchange gift event?\n\n'
             'For more info about this event, interact with the buttons below.\n\n'
             '**Note: If you misclick or have a reason to withdraw, '
-            'please DM or tag ' + bot.app_info.owner.mention + '.**'
+            'please DM or tag ' + self.bot.app_info.owner.mention + '.**'
         )
 
         return embed

@@ -7,10 +7,10 @@ from typing import List
 import discord
 from beanie import init_beanie
 from beanie.odm.operators.find.comparison import In
-from envparse import env
-from motor.motor_asyncio import AsyncIOMotorClient as MotorClient
+from pymongo import AsyncMongoClient
 
 from neonbot.classes.chatgpt.chatgpt import ChatGPT
+from neonbot.env import MONGO_IP, MONGO_DB_NAME, MONGO_DB_USERNAME, MONGO_DB_PASSWORD, MONGO_DB_PORT
 from neonbot.models.flyff import FlyffModel
 from neonbot.models.guild import GuildModel
 from neonbot.models.setting import SettingModel
@@ -25,16 +25,16 @@ class Database:
         self.db = None
 
     async def initialize(self) -> Database:
-        mongo_url = env.str('MONGO_URL')
-        db_name = env.str('MONGO_DB_NAME')
-        db_username = env.str('MONGO_DB_USERNAME')
-        db_password = env.str('MONGO_DB_PASSWORD')
-        db_port = env.int('MONGO_DB_PORT', default=27017)
+        mongo_ip = MONGO_IP
+        db_name = MONGO_DB_NAME
+        db_username = MONGO_DB_USERNAME
+        db_password = MONGO_DB_PASSWORD
+        db_port = MONGO_DB_PORT
 
         start_time = time()
 
         log.info('Connecting to Database...')
-        client = MotorClient(mongo_url, db_port, username=db_username, password=db_password)
+        client = AsyncMongoClient(host=mongo_ip, port=db_port, username=db_username, password=db_password)
         self.db = client.get_database(db_name)
         await init_beanie(database=self.db, document_models=[GuildModel, SettingModel, FlyffModel])
         log.info(f'MongoDB connection established in {(time() - start_time):.2f}s')

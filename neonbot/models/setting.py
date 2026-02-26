@@ -11,10 +11,12 @@ class SettingModel(Document):
     status: str
     activity_name: str
     activity_type: str
+    gemini_system_instruction: Optional[str] = ''
 
     class Settings:
         name = 'settings'
         use_cache = True
+        use_state_management = True
 
     @staticmethod
     async def get_instance() -> Optional[SettingModel]:

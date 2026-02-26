@@ -1,7 +1,11 @@
-import inspect
-from typing import Optional, cast
+from typing import Optional
+from typing import TYPE_CHECKING
 
 import discord
+from discord.utils import maybe_coroutine
+
+if TYPE_CHECKING:
+    from neonbot import NeonBot
 
 
 class Button(discord.ui.Button):
@@ -12,24 +16,21 @@ class Button(discord.ui.Button):
     def set_callback(self, callback):
         self._callback = callback
 
-    async def callback(self, interaction: discord.Interaction):
-        if inspect.iscoroutinefunction(self._callback):
-            await self._callback(self, interaction)
-        else:
-            self._callback(self, interaction)
+    async def callback(self, interaction: discord.Interaction['NeonBot']):
+        await maybe_coroutine(self._callback(self, interaction))
 
-        if not cast(discord.InteractionResponse, interaction.response).is_done():
-            await cast(discord.InteractionResponse, interaction.response).defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
 
 class View(discord.ui.View):
-    def __init__(self, interaction: Optional[discord.Interaction], delete_on_timeout: bool, **kwargs):
+    def __init__(self, interaction: Optional[discord.Interaction['NeonBot']], delete_on_timeout: bool = False, **kwargs):
         self.interaction = interaction
         self.delete_on_timeout = delete_on_timeout
         super().__init__(**kwargs)
 
     @staticmethod
-    def create_button(data, callback, *, interaction: discord.Interaction = None, timeout=180, delete_on_timeout=False):
+    def create_button(data, callback, *, interaction: discord.Interaction['NeonBot'] = None, timeout=180, delete_on_timeout=False):
         view = View(timeout=timeout, interaction=interaction, delete_on_timeout=delete_on_timeout)
 
         for button in data:
@@ -51,7 +52,7 @@ class View(discord.ui.View):
             except discord.NotFound:
                 pass
 
-    async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item) -> None:
+    async def on_error(self, interaction: discord.Interaction['NeonBot'], error: Exception, item: discord.ui.Item) -> None:
         if isinstance(error, discord.NotFound):
             return
 

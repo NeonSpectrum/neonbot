@@ -1,14 +1,14 @@
 import discord
 import tiktoken
 from discord.utils import find
-from envparse import env
 
+from neonbot.env import OPENAI_MAX_TOKEN, OPENAI_MODEL
 from neonbot.models.chatgpt import Chat, Message
 from neonbot.models.guild import GuildModel
 
 
 class ChatThread:
-    MAX_TOKEN = env.int('OPENAI_MAX_TOKEN')
+    MAX_TOKEN = OPENAI_MAX_TOKEN
 
     def __init__(self, client, thread: discord.Thread):
         self.client = client
@@ -58,16 +58,16 @@ class ChatThread:
         self.chat.messages.clear()
         self.chat.messages.extend(saved_messages)
         self.chat.token = total_tokens
-        await self.server.save_changes()
+        await self.server.save_changes(False)
 
     async def get_response(self) -> str:
         chat_completion = await self.client.chat.completions.create(
-            model=env.str('OPENAI_MODEL', default='gpt-3.5-turbo'),
+            model=OPENAI_MODEL,
             messages=[{'role': message.role, 'content': message.content} for message in self.chat.messages],
         )
         answer = chat_completion.choices[0].message.content
         self.chat.messages.append(Message(role='assistant', content=answer))
         self.add_token(chat_completion.usage.total_tokens)
-        await self.server.save_changes()
+        await self.server.save_changes(False)
 
         return answer

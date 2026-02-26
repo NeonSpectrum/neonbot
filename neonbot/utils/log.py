@@ -1,11 +1,16 @@
 import logging
 import sys
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Optional, Union, TYPE_CHECKING
 
+import coloredlogs
 import discord
 from discord.ext import commands
 
+from neonbot.env import BOT_LOG_LEVEL
 from neonbot.utils.constants import LOG_FORMAT
+
+if TYPE_CHECKING:
+    from neonbot import NeonBot
 
 
 class Log(logging.Logger):
@@ -13,31 +18,37 @@ class Log(logging.Logger):
         self._log: Callable
         super().__init__(*args, **kwargs)
 
-        self.formatter = logging.Formatter(LOG_FORMAT, '%Y-%m-%d %I:%M:%S %p')
-
-        self.setLevel(logging.DEBUG if self.name.startswith('neonbot') else logging.ERROR)
-
         self.set_file_handler()
         self.set_console_handler()
 
     def set_file_handler(self) -> None:
         file = logging.FileHandler(filename='debug.log', encoding='utf-8', mode='a')
-        file.setFormatter(self.formatter)
+        file.setFormatter(logging.Formatter(LOG_FORMAT, '%Y-%m-%d %I:%M:%S %p'))
+        file.setLevel(logging.DEBUG)
         self.addHandler(file)
 
     def set_console_handler(self) -> None:
+        formatter = coloredlogs.ColoredFormatter(LOG_FORMAT, '%Y-%m-%d %I:%M:%S %p', field_styles={
+            'asctime': {'color': 'black'},
+            'levelname': {'bold': True},
+            'module': {'color': 'blue'},
+            'funcName': {'color': 'green'},
+            'lineno': {'color': 'yellow'}
+        })
+
         console = logging.StreamHandler()
-        console.setFormatter(self.formatter)
+        console.setFormatter(formatter)
+        console.setLevel(BOT_LOG_LEVEL)
         self.addHandler(console)
 
     def cmd(
         self,
-        ctx: Union[commands.Context, discord.Interaction],
+        ctx: Union[commands.Context['NeonBot'], discord.Interaction['NeonBot']],
         msg: str,
         *,
         guild: Optional[discord.Guild] = None,
         channel: Optional[Union[discord.TextChannel, discord.VoiceChannel]] = None,
-        user: Optional[Union[str, discord.User]] = None,
+        user: Optional[Union[str, int, discord.User]] = None,
     ) -> None:
         guild = guild or ctx.guild
         channel = channel or ctx.channel
@@ -47,6 +58,8 @@ class Log(logging.Logger):
                 user = ctx.author
             elif isinstance(ctx, discord.Interaction):
                 user = ctx.user
+        elif isinstance(user, int):
+            user = ctx.bot.get_user(user)
 
         print(file=sys.stderr)
         self._log(

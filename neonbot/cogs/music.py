@@ -1,249 +1,311 @@
-import re
-from typing import Optional, cast
+from typing import TYPE_CHECKING
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 from i18n import t
 
-from neonbot import bot
-from neonbot.classes.embed import Embed, PaginationEmbed
-from neonbot.classes.player import Player
-from neonbot.classes.spotify import Spotify
-from neonbot.classes.youtube import Youtube
-from neonbot.enums import PlayerState, Repeat
+from neonbot import NeonBot
+from neonbot.classes.discord.embed import Embed, PaginationEmbed
+from neonbot.enums import Repeat
 from neonbot.utils import log
-from neonbot.utils.constants import ICONS, SPOTIFY_REGEX, YOUTUBE_REGEX
-from neonbot.utils.functions import format_seconds
+from neonbot.utils.constants import ICONS
+from neonbot.utils.functions import format_milliseconds
+
+if TYPE_CHECKING:
+    from neonbot.classes.player.player import Player
 
 
-async def in_voice(interaction: discord.Interaction) -> bool:
-    if await bot.is_owner(interaction.user) and interaction.command.name == 'reset':
+async def in_voice(ctx: commands.Context['NeonBot']) -> bool:
+    if await ctx.bot.is_owner(ctx.author) and ctx.command.name == 'reset':
         return True
 
-    if not interaction.user.voice:
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+    if not ctx.author.voice:
+        await ctx.reply(
             embed=Embed('You need to be in the channel.'), ephemeral=True
         )
         return False
     return True
 
 
-async def has_permission(interaction: discord.Interaction) -> bool:
-    if not interaction.channel.permissions_for(interaction.guild.me).send_messages:
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+async def has_permission(ctx: commands.Context['NeonBot']) -> bool:
+    if not ctx.channel.permissions_for(ctx.guild.me).send_messages:
+        await ctx.reply(
             embed=Embed("I don't have permission to send message on this channel."), ephemeral=True
         )
         return False
+
+    if ctx.author.voice and not ctx.author.voice.channel.permissions_for(ctx.guild.me).connect:
+        await ctx.reply(
+            embed=Embed("I don't have permission to connect to that voice channel."), ephemeral=True
+        )
+        return False
+
     return True
 
 
-async def has_player(interaction: discord.Interaction) -> bool:
-    player = await Player.get_instance(interaction)
+async def has_player(ctx: commands.Context['NeonBot']) -> bool:
+    player: Player = ctx.bot.lavalink.player_manager.get(ctx.guild.id)
 
-    if not player.connection:
-        await cast(discord.InteractionResponse, interaction.response).send_message(
-            embed=Embed('No active player.'), ephemeral=True
-        )
+    if not player:
+        await ctx.reply(embed=Embed('No active player.'), ephemeral=True)
         return False
     return True
 
 
 class Music(commands.Cog):
-    @app_commands.command(name='play')
-    @app_commands.describe(value='Enter keyword or url...')
-    @app_commands.check(in_voice)
-    @app_commands.check(has_permission)
-    @app_commands.guild_only()
-    async def play(self, interaction: discord.Interaction, value: str, play_now: Optional[bool] = False):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @commands.hybrid_command(name='play', aliases=['p'], )
+    @app_commands.describe(query='Enter keyword or url...')
+    @commands.check(has_permission)
+    @commands.check(in_voice)
+    @commands.guild_only()
+    async def play(self, ctx: commands.Context['NeonBot'], *, query: str) -> None:
         """Searches the url or the keyword and add it to queue. This will queue the first search."""
 
-        player = await Player.get_instance(interaction)
-        last_index = len(player.queue) - 1
+        if query.isdigit():
+            if await has_player(ctx):
+                await self.goto(ctx, int(query))
+                return
 
-        if re.search(YOUTUBE_REGEX, value):
-            await Youtube(interaction).search_url(value)
-        elif re.search(SPOTIFY_REGEX, value):
-            await Spotify(interaction).search_url(value)
-        else:
-            await Youtube(interaction).search_keyword(value)
+        player: Player = self.bot.lavalink.player_manager.create(ctx.guild.id)
+        player.set_ctx(ctx)
 
-        await player.connect(interaction.user.voice.channel)
+        # Clear autoplay list whenever there's new song
+        player.autoplay_list = []
 
-        if player.state == PlayerState.STOPPED:
-            play_now = True
+        await player.search(query)
 
-        if player.connection.is_playing():
-            if play_now:
-                player.jump(last_index + 1)
-        else:
-            await player.play()
-
-    @app_commands.command(name='nowplaying')
-    @app_commands.check(in_voice)
-    @app_commands.guild_only()
-    async def nowplaying(self, interaction: discord.Interaction) -> None:
-        """Displays in brief description of the current playing."""
-
-        player = await Player.get_instance(interaction)
-
-        if not player.connection or not player.connection.is_playing():
-            await cast(discord.InteractionResponse, interaction.response).send_message(
-                embed=Embed(t('music.no_song_playing')), ephemeral=True
-            )
+        if len(player.track_list) == 0:
             return
 
-        now_playing = player.now_playing
+        await player.connect()
 
-        footer = player.get_footer(now_playing)
+        if not player.is_playing:
+            await player.play_next()
+
+    @commands.hybrid_command(name='playrandom', aliases=['pr'], )
+    @commands.check(has_permission)
+    @commands.check(in_voice)
+    @commands.guild_only()
+    async def playrandom(self, ctx: commands.Context['NeonBot']):
+        player: Player = self.bot.lavalink.player_manager.create(ctx.guild.id)
+        player.set_ctx(ctx)
+
+        await player.search_random()
+
+        if len(player.track_list) == 0:
+            return
+
+        await player.connect()
+
+        if not player.is_playing:
+            await player.play_next()
+
+    @commands.hybrid_command(name='nowplaying', aliases=['np'])
+    @commands.check(has_permission)
+    @commands.check(in_voice)
+    @commands.check(has_player)
+    @commands.guild_only()
+    async def nowplaying(self, ctx: commands.Context['NeonBot']) -> None:
+        """Displays in brief description of the current playing."""
+
+        player: Player = self.bot.lavalink.player_manager.get(ctx.guild.id)
+
+        if not player.current:
+            await ctx.send(embed=Embed(t('music.no_song_playing')), ephemeral=True)
+            return
+
+        now_playing = player.current
+
+        footer = player.messager.get_footer(now_playing)
         footer.pop(1)
 
         embed = Embed()
-        embed.add_field(t('music.nowplaying.uploader'), now_playing['uploader'])
-        embed.add_field(t('music.nowplaying.upload_date'), now_playing['upload_date'])
-        embed.add_field(t('music.nowplaying.duration'), now_playing['formatted_duration'])
-        embed.add_field(t('music.nowplaying.views'), now_playing['view_count'])
-        embed.add_field(t('music.nowplaying.description'), now_playing['description'], inline=False)
+        embed.add_field(t('music.nowplaying.uploader'), now_playing.author)
+        embed.add_field(t('music.nowplaying.duration'), format_milliseconds(now_playing.duration))
         embed.set_author(
-            name=now_playing['title'],
-            url=now_playing['url'],
+            name=now_playing.title,
+            url=now_playing.uri,
             icon_url=ICONS['music'],
         )
-        embed.set_thumbnail(url=now_playing['thumbnail'])
-        embed.set_footer(text=' | '.join(footer), icon_url=now_playing['requested'].display_avatar)
-        await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
+        embed.set_image(url=now_playing.artwork_url)
+        embed.set_footer(text=' | '.join(footer), icon_url=self.bot.get_user(now_playing.requester).display_avatar)
+        await ctx.reply(embed=embed)
 
     @app_commands.command(name='playlist')
-    @app_commands.check(in_voice)
-    @app_commands.guild_only()
-    async def playlist(self, interaction: discord.Interaction) -> None:
+    @commands.check(has_permission)
+    @commands.check(in_voice)
+    @commands.check(has_player)
+    @commands.guild_only()
+    async def playlist(self, interaction: discord.Interaction['NeonBot']) -> None:
         """List down all songs in the player's queue."""
 
-        player = await Player.get_instance(interaction)
-        queue = player.queue
+        player: Player = self.bot.lavalink.player_manager.get(interaction.guild_id)
         embeds = []
         duration = 0
 
-        if not queue:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
+        if len(player.track_list) == 0:
+            await interaction.response.send_message(
                 embed=Embed(t('music.empty_playlist')), ephemeral=True
             )
             return
 
-        for i in range(0, len(player.queue), 10):
+        for i in range(0, len(player.playlist), 10):
             temp = []
-            for index, song in enumerate(player.queue[i : i + 10], i):
-                is_current = player.track_list[player.current_track] == index
-                title = f'`{"*" if is_current else ""}{index + 1}.` [{song["title"]}]({song["url"]})'
+            for _, track in enumerate(player.playlist[i: i + 10], i):
+                title = f'`{"*" if player.current.identifier == track.identifier else ""}{track.extra['index'] + 1}.` [{track["title"]}]({track["uri"]})'
                 description = f"""\
-{f'~~{title}~~' if 'removed' in song else title}
-- - - `{format_seconds(song.get('duration')) if song.get('duration') else 'N/A'}` `{song['requested']}`"""
+{title}
+- - - `{format_milliseconds(track.duration) if track.duration else 'N/A'}` `{self.bot.get_user(track.requester)}`"""
 
-                duration += song.get('duration') or 0
+                duration += track.duration or 0
 
                 temp.append(description)
             embeds.append(Embed('\n'.join(temp)))
 
         footer = [
-            t('music.songs', count=len(player.queue)),
-            format_seconds(duration),
+            t('music.songs', count=len(player.playlist)),
+            format_milliseconds(duration),
             t('music.shuffle_footer', shuffle='on' if player.shuffle else 'off'),
-            t('music.repeat_footer', repeat=Repeat(player.repeat).name.lower()),
+            t('music.repeat_footer', repeat=Repeat(player.loop).name.lower()),
         ]
 
         pagination = PaginationEmbed(interaction, embeds=embeds)
         pagination.embed.set_author(name=t('music.player_queue'), icon_url=ICONS['music'])
-        pagination.embed.set_footer(text=' | '.join(footer), icon_url=bot.user.display_avatar)
-        await pagination.build()
+        pagination.embed.set_footer(text=' | '.join(footer), icon_url=self.bot.user.display_avatar)
+        await pagination.build(page_number=player.current.extra['index'] // 10 + 1)
 
-    @app_commands.command(name='jump')
-    @app_commands.check(in_voice)
-    @app_commands.check(has_player)
-    @app_commands.guild_only()
-    async def jump(self, interaction: discord.Interaction, index: int) -> None:
+    @commands.hybrid_command(name='goto', aliases=['jump', 'go'])
+    @commands.check(has_permission)
+    @commands.check(in_voice)
+    @commands.check(has_player)
+    @commands.guild_only()
+    async def goto(self, ctx: commands.Context['NeonBot'], index: int) -> None:
         """Skips the current song."""
 
-        player = await Player.get_instance(interaction)
+        player: Player = self.bot.lavalink.player_manager.get(ctx.guild.id)
 
-        if index > len(player.queue) or index < 0:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
-                embed=Embed('Invalid index.'), ephemeral=True
-            )
-            return
+        try:
+            player.current_queue = index - 1
+            track = player.track_list[player.current_queue]
 
-        player.jump(index - 1)
-        track = player.get_track(index - 1)
+            await ctx.reply(embed=Embed(t('music.jumped_to', index=index, title=track.title, url=track.uri)))
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(
-            embed=Embed(t('music.jumped_to', index=index, title=track['title'], url=track['url']))
-        )
+            await player.play(track)
+        except IndexError:
+            await ctx.reply(embed=Embed('Invalid index.'), ephemeral=True)
 
-    @app_commands.command(name='removesong')
-    @app_commands.check(in_voice)
-    @app_commands.check(has_player)
-    @app_commands.guild_only()
-    async def removesong(self, interaction: discord.Interaction, index: int) -> None:
+    @commands.hybrid_command(name='removesong', aliases=['remove', 'del', 'rm'])
+    @commands.check(has_permission)
+    @commands.check(in_voice)
+    @commands.check(has_player)
+    @commands.guild_only()
+    async def removesong(self, ctx: commands.Context['NeonBot'], index: int) -> None:
         """Removes a specific song."""
 
-        player = await Player.get_instance(interaction)
+        player: Player = self.bot.lavalink.player_manager.get(ctx.guild.id)
 
-        if index > len(player.queue) or index < 0:
-            await cast(discord.InteractionResponse, interaction.response).send_message(
-                embed=Embed('Invalid index.'), ephemeral=True
-            )
-            return
+        try:
+            is_currently_playing = player.current.extra['index'] == index - 1
+            removed = player.remove(index - 1)
 
-        track = player.get_track(index - 1)
-        await player.remove_song(index - 1)
+            if len(player.playlist) > 0 and is_currently_playing:
+                await player.prev()
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(
-            embed=Embed(t('music.removed_song', index=index, title=track['title'], url=track['url']))
-        )
+            await ctx.reply(embed=Embed(t('music.removed_song', index=index, title=removed.title, url=removed.uri)))
 
-    @app_commands.command(name='reset')
-    @app_commands.check(in_voice)
-    @app_commands.check(has_player)
-    @app_commands.guild_only()
-    async def reset(self, interaction: discord.Interaction) -> None:
+            if len(player.playlist) == 0:
+                await player.reset()
+        except IndexError:
+            await ctx.reply(embed=Embed('Invalid index.'), ephemeral=True)
+
+    @commands.hybrid_command(name='reset')
+    @commands.check(has_permission)
+    @commands.check(in_voice)
+    @commands.check(has_player)
+    @commands.guild_only()
+    async def reset(self, ctx: commands.Context['NeonBot']) -> None:
         """Resets the current player and disconnect to voice channel."""
 
-        player = await Player.get_instance(interaction)
+        player: Player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         await player.reset()
-        player.remove_instance()
 
         msg = 'Player reset.'
-        log.cmd(interaction, msg)
-        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed(msg))
+        log.cmd(ctx, msg)
+        await ctx.reply(embed=Embed(msg))
 
-    @app_commands.command(name='stop')
-    @app_commands.check(in_voice)
-    @app_commands.check(has_player)
-    @app_commands.guild_only()
-    async def stop(self, interaction: discord.Interaction) -> None:
-        """Stops the current player and reset the queue from the start."""
+    @commands.hybrid_command(name='join')
+    @commands.check(has_permission)
+    @commands.guild_only()
+    async def join(self, ctx: commands.Context['NeonBot'], voice_channel: discord.VoiceChannel) -> None:
+        """Connect to voice channel."""
 
-        player = await Player.get_instance(interaction)
-        await player.stop()
+        player: Player = self.bot.lavalink.player_manager.create(ctx.guild.id)
+        player.set_ctx(ctx)
+        await player.connect(voice_channel)
 
-        msg = 'Player stopped.'
-        log.cmd(interaction, msg)
-        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed(msg))
+        await ctx.reply(embed=Embed(f'Joined {voice_channel.mention}.'), ephemeral=True)
 
-    @app_commands.command(name='reconnect')
-    @app_commands.check(has_player)
-    @app_commands.guild_only()
-    async def reconnect(self, interaction: discord.Interaction) -> None:
-        """Stops the current player and reset the queue from the start."""
+    @commands.hybrid_command(name='leave')
+    @commands.check(has_permission)
+    @commands.guild_only()
+    async def leave(self, ctx: commands.Context['NeonBot']) -> None:
+        """Connect to voice channel."""
 
-        player = await Player.get_instance(interaction)
-        await player.disconnect(force=True)
-        await player.play()
+        player: Player = self.bot.lavalink.player_manager.create(ctx.guild.id)
 
-        msg = 'Player reconnected.'
-        log.cmd(interaction, msg)
-        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed(msg))
+        last_voice_channel = player.vc
+
+        await player.disconnect()
+
+        await ctx.reply(embed=Embed(f'Left {last_voice_channel.mention}.'), ephemeral=True)
+
+    @commands.hybrid_command(name='shuffle')
+    @commands.check(has_permission)
+    @commands.guild_only()
+    async def shuffle(self, ctx: commands.Context['NeonBot'], state: bool) -> None:
+        """Set shuffle mode."""
+
+        player: Player = self.bot.lavalink.player_manager.create(ctx.guild.id)
+        player.set_shuffle(state)
+
+        user = ctx.author.mention if ctx.invoked_with != 'bot' else ctx.guild.me.mention
+        await ctx.reply(embed=Embed(t('music.shuffle_changed', mode='on' if player.shuffle else 'off', user=user)))
+
+    @commands.hybrid_command(name='repeat')
+    @commands.check(has_permission)
+    @commands.guild_only()
+    @app_commands.choices(mode=[
+        app_commands.Choice(name='Off', value=0),
+        app_commands.Choice(name='Single', value=1),
+        app_commands.Choice(name='All', value=2),
+    ])
+    async def repeat(self, ctx: commands.Context['NeonBot'], mode: int) -> None:
+        """Set repeat mode."""
+
+        player: Player = self.bot.lavalink.player_manager.create(ctx.guild.id)
+
+        modes = [Repeat.OFF, Repeat.SINGLE, Repeat.ALL]
+        player.set_loop(modes[mode].value)
+
+        user = ctx.author.mention if ctx.invoked_with != 'bot' else ctx.guild.me.mention
+        await ctx.reply(embed=Embed(t('music.repeat_changed', mode=modes[mode].name.lower(), user=user)))
+
+    @commands.hybrid_command(name='autoplay')
+    @commands.check(has_permission)
+    @commands.guild_only()
+    async def autoplay(self, ctx: commands.Context['NeonBot'], state: bool) -> None:
+        """Set autoplay mode."""
+
+        player: Player = self.bot.lavalink.player_manager.create(ctx.guild.id)
+        player.set_autoplay(state)
+
+        user = ctx.author.mention if ctx.invoked_with != 'bot' else ctx.guild.me.mention
+        await ctx.reply(embed=Embed(t('music.autoplay_changed', mode='on' if player.autoplay else 'off', user=user)))
 
 
-# noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(Music())
+    await bot.add_cog(Music(bot))

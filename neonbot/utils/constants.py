@@ -1,9 +1,6 @@
 TIMEZONE = 'Asia/Manila'
 LOG_FORMAT = '%(asctime)s [%(levelname)s] [%(module)s.%(funcName)s:%(lineno)d]: %(message)s'
 
-YOUTUBE_TMP_DIR = './tmp/youtube_dl'
-YOUTUBE_DOWNLOADS_DIR = './tmp/youtube_dl/downloads'
-YOUTUBE_CACHE_DIR = './tmp/youtube_dl/cache'
 PLAYER_CACHE_DIR = './tmp/players'
 
 PLAYER_CACHE_PATH = './tmp/players/%s.json'
@@ -29,7 +26,7 @@ ICONS = {
     'pokemon': 'https://i.imgur.com/3sQh8aN.png',
     'music': 'https://i.imgur.com/SBMH84I.png',
     'python': 'https://i.imgur.com/vzcWouB.png',
-    'github': 'https://cdn1.iconfinder.com/data/icons/social-media-vol-1-1/24/_github-512.png',
+    'github': 'https://github.githubassets.com/favicons/favicon.png',
     'pip': 'https://i.imgur.com/vzcWouB.png',
     'google': 'https://i.imgur.com/G46fm8J.png',
     'merriam': 'https://dictionaryapi.com/images/MWLogo.png',
@@ -42,7 +39,11 @@ ICONS = {
     'openai': 'https://i.imgur.com/TAeEnLT.png',
     'green': 'https://i.imgur.com/Vk1wdHH.png',
     'red': 'https://i.imgur.com/gnfYVjW.png',
-    'emeraldflyff': 'https://i.imgur.com/JT3DlyW.png'
+    'emeraldflyff': 'https://i.imgur.com/JT3DlyW.png',
+    'deezer': 'https://i.imgur.com/zIMXnXD.png',
+    'youtube': 'https://i.imgur.com/wCADAJY.png',
+    'applemusic': 'https://i.imgur.com/1nu2yo5.png',
+    'spotify': 'https://i.imgur.com/Yby9AcE.png'
 }
 
 FFMPEG_BEFORE_OPTIONS = '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5'

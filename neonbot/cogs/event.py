@@ -2,61 +2,71 @@ import traceback
 from datetime import datetime
 from io import BytesIO
 from typing import Optional, Union
+from typing import TYPE_CHECKING
 
 import discord
-import yt_dlp.utils
+import lavalink
 from discord.app_commands import AppCommandError
 from discord.ext import commands
 from discord.utils import escape_markdown
+from lavalink import Node, NodeConnectedEvent, listener
 
-from neonbot import bot
 from neonbot.classes.chatgpt.chatgpt import ChatGPT
-from neonbot.classes.embed import Embed
+from neonbot.classes.discord.embed import Embed
 from neonbot.classes.gemini import GeminiChat
-from neonbot.classes.player import Player
+from neonbot.classes.player.ytmusic import YTMusic
 from neonbot.classes.voice_events import VoiceEvents
-from neonbot.enums import PlayerState
 from neonbot.models.guild import GuildModel
-from neonbot.utils import exceptions, log
+from neonbot.utils import log
 from neonbot.utils.functions import format_seconds, get_command_string, get_log_prefix, md_to_text, remove_ansi
+
+if TYPE_CHECKING:
+    from neonbot import NeonBot
 
 
 class Event(commands.Cog):
-    @staticmethod
-    @bot.event
-    async def on_connect() -> None:
-        await bot.fetch_app_info()
-        log.info(f'Logged in as {bot.user}\n')
+    def __init__(self, bot):
+        self.bot = bot
 
-    @staticmethod
-    @bot.event
-    async def on_disconnect() -> None:
+    @commands.Cog.listener()
+    async def on_connect(self) -> None:
+        await self.bot.fetch_app_info()
+        log.info(f'Logged in as {self.bot.user}\n')
+
+    @commands.Cog.listener()
+    async def on_disconnect(self) -> None:
         # log.warn("Disconnected!")
         pass
 
-    @staticmethod
-    @bot.event
-    async def on_ready() -> None:
+    @commands.Cog.listener()
+    async def on_ready(self) -> None:
         log.info('Ready!\n')
-        bot.set_ready()
-        bot.start_listeners()
-        bot.load_player_cache()
 
-    @staticmethod
-    @bot.event
-    async def on_message(message: discord.Message) -> None:
-        if not bot.is_ready() or message.author.id == bot.user.id:
+        if not self.bot.is_ready():
+            self.bot.start_listeners()
+            log.debug(f'YTMusic.get_account_info: {await YTMusic(self.bot).get_account_info()}')
+
+        self.bot.set_ready()
+
+    @listener(NodeConnectedEvent)
+    async def on_node_connected(self, node: Node):
+        log.info(f"Lavalink node '{node.name}' is ready!")
+
+    async def on_message(self, message: discord.Message) -> None:
+        print(message)
+
+        if not self.bot.is_ready() or message.author.id == self.bot.user.id:
             return
 
-        ctx = await bot.get_context(message)
-        content = message.content
+        ctx = await self.bot.get_context(message)
 
         if ctx.channel.type == discord.ChannelType.private:
             if message.content.lower() == 'invite':
-                return await bot.send_invite_link(message)
+                await self.bot.send_invite_link(message)
+                return
 
             log.info(f'DM from {ctx.author}: {message.content}')
-            await bot.send_to_owner(
+            await self.bot.send_to_owner(
                 embed=Embed(title=f'DM from {ctx.author}', description=message.content),
                 sender=ctx.author.id,
             )
@@ -65,53 +75,82 @@ class Event(commands.Cog):
         if await ChatGPT().create_thread(ctx):
             return
 
-        if content.startswith('?? ') or content.startswith('??? '):
-            gemini_chat = GeminiChat(ctx.message.content)
+        if self.bot.user.mentioned_in(message):
+            try:
+                gemini_chat = GeminiChat(ctx)
 
-            if not gemini_chat.get_prompt():
-                return
+                if not gemini_chat.get_prompt():
+                    return
 
-            await ctx.message.add_reaction('🤔')
+                async with ctx.channel.typing():
+                    await gemini_chat.generate_content()
+                    response = gemini_chat.get_response()
 
-            if content.startswith('?? '):
-                gemini_chat.set_prompt_concise()
+                    if len(response) > 2000:
+                        response = md_to_text(response)
+                        bot_message = await ctx.reply(
+                            file=discord.File(BytesIO(response.encode()), filename=gemini_chat.get_prompt() + '.txt')
+                        )
+                    else:
+                        bot_message = await ctx.reply(response)
 
-            async with ctx.channel.typing():
-                await gemini_chat.generate_content_from_ctx(ctx)
-                response = gemini_chat.get_response()
+                cmds = gemini_chat.get_command_list()
 
-                if len(response) > 2000:
-                    response = md_to_text(response)
-                    await ctx.reply(
-                        file=discord.File(BytesIO(response.encode()), filename=gemini_chat.get_prompt() + '.txt')
-                    )
-                else:
-                    await ctx.reply(gemini_chat.get_response())
+                for cmd in cmds:
+                    command, args = cmd
 
+                    # Change message author so it won't recognize as bot
+                    bot_message.author = message.author
+                    bot_message.content = f'{self.bot.default_prefix}{command.name} {' '.join(args)}'
+
+                    bot_ctx = await self.bot.get_context(bot_message)
+                    bot_ctx.invoked_with = 'bot'
+
+                    await self.bot.invoke(bot_ctx)
+            except Exception as error:
+                await ctx.reply(embed=Embed('Something went wrong.'))
+                log.debug(error, exc_info=True)
+                log.error(error, exc_info=True)
+            finally:
                 return
 
         if ctx.command is not None:
             async with ctx.channel.typing():
-                await bot.process_commands(message)
+                await self.bot.process_commands(message)
 
-    @staticmethod
-    @bot.event
-    async def on_interaction(interaction: discord.Interaction):
+    @commands.Cog.listener()
+    async def on_command(self, ctx: commands.Context['NeonBot']):
+        if ctx.interaction is not None:
+            return
+
+        log.cmd(ctx, get_command_string(ctx), guild=ctx.guild or 'N/A',
+                user=ctx.guild.me if ctx.invoked_with == 'bot' else None)
+
+    @commands.Cog.listener()
+    async def on_interaction(self, interaction: discord.Interaction['NeonBot']):
         if interaction.type != discord.InteractionType.application_command:
             return
 
-        log.cmd(interaction, get_command_string(interaction), guild=interaction.guild or 'N/A')
+        ctx = await self.bot.get_context(interaction)
+        log.cmd(ctx, get_command_string(ctx), guild=ctx.guild or 'N/A')
 
-    @staticmethod
-    @bot.event
-    async def on_app_command_error(interaction: discord.Interaction, error: AppCommandError) -> None:
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx: Union[discord.Interaction['NeonBot'], commands.Context['NeonBot']], error: AppCommandError) -> None:
+        if isinstance(ctx, discord.Interaction):
+            ctx = await self.bot.get_context(ctx)
+
         error = getattr(error, 'original', error)
-        ignored = discord.NotFound, commands.BadArgument, commands.CheckFailure, discord.app_commands.CheckFailure
+        ignored = (
+            discord.NotFound,
+            commands.BadArgument,
+            commands.CheckFailure,
+            discord.app_commands.CheckFailure,
+            discord.ext.commands.MissingRequiredArgument
+        )
         send_msg = (
-            exceptions.YtdlError,
             discord.app_commands.AppCommandError,
             discord.app_commands.CommandInvokeError,
-            yt_dlp.utils.YoutubeDLError,
+            lavalink.errors.ClientError
         )
 
         tb = traceback.format_exception(error, value=error, tb=error.__traceback__)
@@ -121,62 +160,65 @@ class Event(commands.Cog):
         if type(error) in ignored:
             return
 
-        log.cmd(interaction, f'Command error: {error}')
+        log.cmd(ctx, f'Command error: {error}')
 
         if isinstance(error, send_msg):
-            embed = Embed(remove_ansi(error))
+            embed = Embed(remove_ansi(str(error)))
         else:
             embed = Embed('There was an error executing the command. Please contact the administrator.')
 
-        await bot.send_response(interaction, embed=embed, ephemeral=True)
+        await ctx.send(embed=embed, ephemeral=True)
 
         embed = Embed(
             title='Traceback Exception',
-            description=f'Command: ```{get_command_string(interaction)}``````py\n{tb_msg}```',
+            description=f'Command: ```{get_command_string(ctx)}``````py\n{tb_msg}```',
         )
 
-        await bot.send_to_owner(embed=embed)
+        await self.bot.send_to_owner(embed=embed)
 
         raise error
 
-    @staticmethod
-    @bot.event
-    async def on_guild_join(guild):
+    @commands.Cog.listener()
+    async def on_guild_join(self, guild):
         log.info(f'Executing init for {guild}...')
         await GuildModel.create_default_collection(guild.id)
         await GuildModel.create_instance(guild.id)
-        await bot.sync_command(guild)
+        await self.bot.sync_command(guild)
 
-    @staticmethod
-    @bot.event
-    async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
-        player = Player.get_instance_from_guild(member.guild)
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+        player = self.bot.lavalink.player_manager.get(member.guild.id)
 
-        if member.id == bot.user.id:
+        if member.id == self.bot.user.id:
             return
 
-        if player and player.connection:
-            voice_members = [member for member in player.connection.channel.members if not member.bot]
+        if player and player.ctx and player.ctx.voice_client:
+            voice_members = [member for member in player.vc.members if not member.bot]
 
             if any(voice_members):
                 player.reset_timeout.cancel()
-                if player.state == PlayerState.AUTO_PAUSED:
-                    await player.resume(requester=bot.user)
+                if player.is_auto_paused:
+                    await player.resume(requester=self.bot.user)
+                    player.is_auto_paused = False
             else:
-                if player.connection.is_playing():
-                    await player.pause(requester=bot.user, auto=True)
-                if not player.reset_timeout.is_running():
-                    await player.reset_timeout.start()
+                if not player.paused and player.is_playing:
+                    await player.pause(requester=self.bot.user)
+                    player.is_auto_paused = True
+                # if not player.reset_timeout.is_running():
+                #     await player.reset_timeout.start()
+
+        if member.bot:
+            return
 
         server = GuildModel.get_instance(member.guild.id)
 
-        connect_channel = bot.get_channel(int(server.channel_log.connect or -1))
-        deafen_channel = bot.get_channel(int(server.channel_log.deafen or -1))
-        mute_channel = bot.get_channel(int(server.channel_log.mute or -1))
-        server_deafen_channel = bot.get_channel(int(server.channel_log.server_deafen or -1))
-        server_mute_channel = bot.get_channel(int(server.channel_log.server_mute or -1))
-        stream_channel = bot.get_channel(int(server.channel_log.stream or -1))
-        video_channel = bot.get_channel(int(server.channel_log.video or -1))
+        connect_channel = self.bot.get_channel(int(server.channel_log.connect or -1))
+        deafen_channel = self.bot.get_channel(int(server.channel_log.deafen or -1))
+        mute_channel = self.bot.get_channel(int(server.channel_log.mute or -1))
+        server_deafen_channel = self.bot.get_channel(int(server.channel_log.server_deafen or -1))
+        server_mute_channel = self.bot.get_channel(int(server.channel_log.server_mute or -1))
+        stream_channel = self.bot.get_channel(int(server.channel_log.stream or -1))
+        video_channel = self.bot.get_channel(int(server.channel_log.video or -1))
 
         voice_events = VoiceEvents(member, before, after)
 
@@ -199,15 +241,14 @@ class Event(commands.Cog):
         elif video_channel and voice_events.is_self_video_changed:
             await video_channel.send(embed=voice_events.get_self_video_message())
 
-    @staticmethod
-    @bot.event
-    async def on_presence_update(before: discord.Member, after: discord.Member) -> None:
+    @commands.Cog.listener()
+    async def on_presence_update(self, before: discord.Member, after: discord.Member) -> None:
         if after.bot:
             return
 
         server = GuildModel.get_instance(after.guild.id)
-        status_log_channel = bot.get_channel(int(server.channel_log.status or -1))
-        activity_log_channel = bot.get_channel(int(server.channel_log.activity or -1))
+        status_log_channel = self.bot.get_channel(int(server.channel_log.status or -1))
+        activity_log_channel = self.bot.get_channel(int(server.channel_log.activity or -1))
 
         if before.status != after.status:
             embed = Embed()
@@ -215,7 +256,10 @@ class Event(commands.Cog):
 
             if status_log_channel:
                 embed.description = get_log_prefix() + embed.description
-                await status_log_channel.send(embed=embed)
+                try:
+                    await status_log_channel.send(embed=embed)
+                except discord.DiscordException:
+                    pass
         elif before.activities != after.activities:
             before_activity = before.activities and before.activities[-1]
             after_activity = after.activities and after.activities[-1]
@@ -279,10 +323,14 @@ class Event(commands.Cog):
 
             if activity_log_channel:
                 embed.description = ':bust_in_silhouette:' + embed.description
-                await activity_log_channel.send(embed=embed)
+                try:
+                    await activity_log_channel.send(embed=embed)
+                except discord.DiscordException:
+                    pass
 
 
-# noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:
-    bot.tree.on_error = Event.on_app_command_error
-    await bot.add_cog(Event())
+    cog = Event(bot)
+    bot.tree.on_error = cog.on_command_error
+    bot.on_message = cog.on_message
+    await bot.add_cog(Event(bot))

@@ -1,16 +1,23 @@
 import asyncio
 import re
+import time
+import urllib.parse
 from datetime import datetime, timedelta
+from typing import TYPE_CHECKING
 from typing import Union
 
 import discord
 import markdown
 import pytz
 from bs4 import BeautifulSoup
+from discord.ext import commands
 from discord.utils import format_dt
-from envparse import env
 
-from neonbot.classes.embed import Embed
+from neonbot.classes.discord.embed import Embed
+from neonbot.env import TZ
+
+if TYPE_CHECKING:
+    from neonbot import NeonBot
 
 
 async def shell_exec(command: str) -> str:
@@ -23,20 +30,27 @@ async def shell_exec(command: str) -> str:
     return stdout.decode().strip()
 
 
-def get_command_string(interaction: discord.Interaction):
-    params = []
+def get_command_string(ctx: commands.Context['NeonBot']):
+    if ctx.interaction:
+        interaction = ctx.interaction
+        params = []
 
-    # Context menu starts with uppercase
-    if interaction.command.name[0].isupper():
-        try:
-            users = list(interaction.data['resolved']['users'].values())
-            params = [f'{user["username"]}#{user["discriminator"]}' for user in users]
-        except IndexError:
-            pass
+        # Context menu starts with uppercase
+        if ctx.command.name[0].isupper():
+            try:
+                users = list(interaction.data['resolved']['users'].values())
+                params = [f'{user["username"]}#{user["discriminator"]}' for user in users]
+            except IndexError:
+                pass
+        else:
+            params = [f'{key}="{value}"' for key, value in interaction.namespace.__dict__.items()]
+
+        return f'{interaction.command.name} {" ".join(params)}'
     else:
-        params = [f'{key}="{value}"' for key, value in interaction.namespace.__dict__.items()]
+        command_name = ctx.invoked_with if ctx.invoked_with != 'bot' else ctx.command.name
 
-    return f'{interaction.command.name} {" ".join(params)}'
+        params = ctx.message.content[len(ctx.prefix + command_name):].strip()
+        return f'{ctx.prefix}{command_name} {params}'
 
 
 def format_seconds(secs: Union[int, float]) -> str:
@@ -44,6 +58,10 @@ def format_seconds(secs: Union[int, float]) -> str:
     if formatted.startswith('0:'):
         return formatted[2:]
     return formatted
+
+
+def format_milliseconds(ms: Union[int, float]) -> str:
+    return format_seconds(ms / 1000)
 
 
 def format_uptime(milliseconds: int) -> str:
@@ -59,7 +77,7 @@ def format_uptime(milliseconds: int) -> str:
 
 
 def get_log_prefix() -> str:
-    tz = pytz.timezone(env.str('TZ', default='Asia/Manila'))
+    tz = pytz.timezone(TZ)
     now = datetime.now(tz)
     return f'[{now.strftime("%I:%M:%S %p")}] :bust_in_silhouette:'
 
@@ -96,7 +114,7 @@ def remove_ansi(text):
     return ansi_escape.sub('', text)
 
 
-async def generate_profile_member_embed(interaction: discord.Interaction, member: discord.Member):
+async def generate_profile_member_embed(interaction: discord.Interaction['NeonBot'], member: discord.Member):
     user = await interaction.client.fetch_user(member.id)
 
     roles = member.roles[1:]
@@ -122,7 +140,7 @@ async def generate_profile_member_embed(interaction: discord.Interaction, member
     return embed
 
 
-async def generate_profile_user_embed(interaction: discord.Interaction, user: discord.User):
+async def generate_profile_user_embed(interaction: discord.Interaction['NeonBot'], user: discord.User):
     user = await interaction.client.fetch_user(user.id)
 
     # noinspection PyUnresolvedReferences
@@ -155,8 +173,47 @@ async def check_ip_online_socket(host: str, port: int, timeout: float = 5.0) -> 
 
         return True
 
-    except (asyncio.TimeoutError, ConnectionRefusedError, OSError):
+    except (asyncio.TimeoutError, ConnectionRefusedError, OSError, asyncio.CancelledError):
         return False
     except Exception as e:
         print(f"An unexpected error occurred while checking {host}:{port}: {e}")
         return False
+
+
+def is_youtube_url(url):
+    parsed = urllib.parse.urlparse(url.lower())
+    youtube_hosts = ('youtube.com', 'www.youtube.com', 'youtu.be', 'm.youtube.com')
+    return parsed.hostname in youtube_hosts
+
+
+def clean_youtube_url(url):
+    parsed = urllib.parse.urlparse(url)
+    params = urllib.parse.parse_qs(parsed.query)
+
+    # Extract video ID from v param or youtu.be path
+    vid = params.get('v', [None])[0]
+    if not vid:
+        path_match = re.match(r'/([a-zA-Z0-9_-]{11})', parsed.path)
+        vid = path_match.group(1) if path_match else None
+
+    if not vid:
+        return url
+
+    # Clean only if both video ID and 'list' present
+    has_list = 'list' in params
+    if has_list:
+        if parsed.hostname == 'youtu.be':
+            return f"https://youtu.be/{vid}"
+        else:
+            return f"https://www.youtube.com/watch?v={vid}"
+    return url
+
+
+async def wait_until(func, poll_interval=0.05, timeout=None):
+    start_time = time.monotonic()
+
+    while not func():
+        if timeout is not None and (time.monotonic() - start_time) > timeout:
+            break
+
+        await asyncio.sleep(poll_interval)

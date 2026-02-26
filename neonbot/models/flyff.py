@@ -12,15 +12,19 @@ class FlyffWebhookChannel(BaseModel):
     url: str
     message_id: Optional[int] = None
 
+
 class FlyffAlertChannel(BaseModel):
     channel_id: int
+
 
 class FlyffPingChannel(BaseModel):
     channel_id: int
 
+
 class FlyffTimer(BaseModel):
     initial_interval: int
     interval: int
+
 
 class FlyffModel(Document):
     world_start_time: Optional[str] = None
@@ -62,6 +66,6 @@ class FlyffModel(Document):
             timers={},
             fixed_timers={},
             last_alert_message='',
-            webhooks=[],
+            webhooks={},
             status=False
         ).create()

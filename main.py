@@ -1,9 +1,9 @@
+import asyncio
 import logging
-import os
-import shutil
 from concurrent.futures import ThreadPoolExecutor
 
 import i18n
+from discord import utils
 from dotenv import load_dotenv
 from envparse import env
 
@@ -14,24 +14,28 @@ i18n.set('file_format', 'json')
 i18n.set('skip_locale_root_data', True)
 
 
-def main() -> None:
-    from neonbot import bot
-    from neonbot.utils.constants import PLAYER_CACHE_DIR, YOUTUBE_DOWNLOADS_DIR
-
-    if env.bool('YTDL_AUTO_CLEAR_DOWNLOADS', default=False):
-        shutil.rmtree(YOUTUBE_DOWNLOADS_DIR, ignore_errors=True)
-    os.makedirs(YOUTUBE_DOWNLOADS_DIR, exist_ok=True)
-    os.makedirs(PLAYER_CACHE_DIR, exist_ok=True)
+async def main() -> None:
+    from neonbot.bot import NeonBot
+    from neonbot.env import TOKEN
 
     # Clear debug.log on startup
     open('./debug.log', 'w').close()
 
-    scheduler_logger = logging.getLogger('apscheduler.executors')
-    scheduler_logger.setLevel(logging.ERROR)
+    logging.getLogger('apscheduler.scheduler').setLevel(logging.ERROR)
 
     with ThreadPoolExecutor() as executor:
-        bot.run(log_level=logging.getLevelName(env.str('LOG_LEVEL', default='ERROR')), executor=executor)
+        bot = NeonBot(executor)
+
+        try:
+            utils.setup_logging(
+                level=logging.getLevelName(env.str('DISCORD_LOG_LEVEL', default='ERROR')),
+            )
+            await bot.start(TOKEN)
+        except (KeyboardInterrupt, asyncio.CancelledError):
+            pass
+        finally:
+            await bot.close()
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())

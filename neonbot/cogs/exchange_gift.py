@@ -1,25 +1,31 @@
-from typing import Optional, cast
+from typing import Optional, TYPE_CHECKING
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 
-from neonbot import bot
-from neonbot.classes.embed import Embed
+from neonbot.classes.discord.embed import Embed
 from neonbot.classes.exchange_gift import ExchangeGift
+from neonbot.env import OWNER_GUILD_IDS
 from neonbot.views.ExchangeGiftView import ExchangeGiftView
+
+if TYPE_CHECKING:
+    from neonbot import NeonBot
 
 
 class ExchangeGiftCog(commands.Cog):
     exchangegift = app_commands.Group(
         name='exchangegift',
         description='Exchange gift commands',
-        guild_ids=bot.owner_guilds,
+        guild_ids=OWNER_GUILD_IDS,
         default_permissions=discord.Permissions(administrator=True),
     )
 
+    def __init__(self, bot):
+        self.bot = bot
+
     @exchangegift.command(name='start')
-    async def exchangegift_start(self, interaction: discord.Interaction, discussion_id: str):
+    async def exchangegift_start(self, interaction: discord.Interaction['NeonBot'], discussion_id: str):
         exchange_gift = ExchangeGift(interaction)
 
         embed = exchange_gift.create_start_template()
@@ -28,18 +34,18 @@ class ExchangeGiftCog(commands.Cog):
 
         if not exchange_gift_message:
             message = await interaction.channel.send(
-                '@everyone', embed=embed, view=ExchangeGiftView(bot.get_channel(int(discussion_id)).jump_url)
+                '@everyone', embed=embed, view=ExchangeGiftView(self.bot.get_channel(int(discussion_id)).jump_url)
             )
             await exchange_gift.set_message_id(message.id)
         else:
             await exchange_gift_message.edit(
-                content='@everyone', embed=embed, view=ExchangeGiftView(bot.get_channel(int(discussion_id)).jump_url)
+                content='@everyone', embed=embed, view=ExchangeGiftView(self.bot.get_channel(int(discussion_id)).jump_url)
             )
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed('Done!'), ephemeral=True)
+        await interaction.response.send_message(embed=Embed('Done!'), ephemeral=True)
 
     @exchangegift.command(name='finish')
-    async def exchangegift_finish(self, interaction: discord.Interaction):
+    async def exchangegift_finish(self, interaction: discord.Interaction['NeonBot']):
         exchange_gift = ExchangeGift(interaction)
 
         embed = exchange_gift.create_start_template()
@@ -51,18 +57,18 @@ class ExchangeGiftCog(commands.Cog):
 
         await exchange_gift.set_finish()
 
-        await cast(discord.InteractionResponse, interaction.response).send_message(embed=Embed('Done!'), ephemeral=True)
+        await interaction.response.send_message(embed=Embed('Done!'), ephemeral=True)
 
     @exchangegift.command(name='shuffle')
-    async def exchangegift_shuffle(self, interaction: discord.Interaction):
+    async def exchangegift_shuffle(self, interaction: discord.Interaction['NeonBot']):
         await ExchangeGift(interaction).shuffle()
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed('Exchange gift has been shuffled.')
         )
 
     @exchangegift.command(name='send')
     @app_commands.default_permissions(administrator=True)
-    async def exchangegift_send(self, interaction: discord.Interaction, specific_user: Optional[discord.Member] = None):
+    async def exchangegift_send(self, interaction: discord.Interaction['NeonBot'], specific_user: Optional[discord.Member] = None):
         exchange_gift = ExchangeGift(interaction)
         success = []
         failed = []
@@ -78,10 +84,10 @@ class ExchangeGiftCog(commands.Cog):
             )
             embed.add_field('Users:', '\n'.join(members))
 
-            await cast(discord.InteractionResponse, interaction.response).send_message(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
 
-        await cast(discord.InteractionResponse, interaction.response).defer()
+        await interaction.response.defer()
 
         members = [exchange_gift.get(specific_user.id)] if specific_user else exchange_gift.get_all()
 
@@ -115,13 +121,12 @@ class ExchangeGiftCog(commands.Cog):
         await interaction.followup.send(embed=embed)
 
     @exchangegift.command(name='setbudget')
-    async def exchangegift_setbudget(self, interaction: discord.Interaction, budget: int):
+    async def exchangegift_setbudget(self, interaction: discord.Interaction['NeonBot'], budget: int):
         await ExchangeGift(interaction).set_budget(budget)
-        await cast(discord.InteractionResponse, interaction.response).send_message(
+        await interaction.response.send_message(
             embed=Embed(f'Budget has been set to `{budget}`.')
         )
 
 
-# noinspection PyShadowingNames
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(ExchangeGiftCog())
+    await bot.add_cog(ExchangeGiftCog(bot))

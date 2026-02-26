@@ -1,20 +1,25 @@
 from __future__ import annotations
 
-from typing import Any, Optional, cast
+from typing import Any, Optional
+from typing import TYPE_CHECKING
 
 import discord
 
+from neonbot.classes.discord.view import Button, View
 from neonbot.utils.constants import CHOICES_EMOJI, PAGINATION_EMOJI
-from neonbot.classes.view import Button, View
+
+if TYPE_CHECKING:
+    from neonbot import NeonBot
 
 
 class Embed(discord.Embed):
-    def __init__(self, description: Any = None, **kwargs: Any) -> None:
+    def __init__(self, description: Any = None, data: Any = None, **kwargs: Any) -> None:
         if description is not None:
             super().__init__(description=description and str(description).strip(), **kwargs)
         else:
             super().__init__(**kwargs)
         self.color = 0xE91E63
+        self.data = data
 
     def add_field(self, name: Any, value: Any, *, inline: bool = True) -> Embed:
         super().add_field(name=name, value=value, inline=inline)
@@ -59,7 +64,7 @@ class PaginationEmbed:
 
     def __init__(
         self,
-        interaction: discord.Interaction,
+        interaction: discord.Interaction['NeonBot'],
         embeds=None,
         authorized_users: Optional[list] = None,
         timeout: Optional[int] = 60,
@@ -75,9 +80,13 @@ class PaginationEmbed:
         self.index = 0
         self.embed = Embed()
 
-    async def build(self) -> None:
+    async def build(self, page_number=None) -> None:
         self.authorized_users.append(self.interaction.user.id)
         self.title = self.embed.title
+
+        if page_number:
+            self.index = page_number - 1
+
         await self.send()
 
     async def send(self) -> None:
@@ -89,13 +98,13 @@ class PaginationEmbed:
             embed.description += f'\n\n**Page {self.index + 1}/{len(self.embeds)}**'
             buttons = self.get_buttons()
 
-        if not cast(discord.InteractionResponse, self.interaction.response).is_done():
-            await cast(discord.InteractionResponse, self.interaction.response).send_message(embed=embed, view=buttons)
+        if not self.interaction.response.is_done():
+            await self.interaction.response.send_message(embed=embed, view=buttons)
         else:
             await self.interaction.edit_original_response(embed=embed, view=buttons)
 
     def get_buttons(self) -> View:
-        async def callback(button: discord.ui.Button, interaction: discord.Interaction):
+        async def callback(button: discord.ui.Button, interaction: discord.Interaction['NeonBot']):
             if interaction.user != self.interaction.user:
                 return
 
@@ -124,7 +133,7 @@ class PaginationEmbed:
 
 
 class EmbedChoices:
-    def __init__(self, interaction: discord.Interaction, entries: list, timeout: Optional[int] = 30) -> None:
+    def __init__(self, interaction: discord.Interaction['NeonBot'], entries: list, timeout: Optional[int] = 30) -> None:
         self.interaction = interaction
         self.entries = entries
         self.value = None
@@ -141,9 +150,7 @@ class EmbedChoices:
         return self
 
     async def send_message(self, *args, **kwargs):
-        from neonbot import bot
-
-        await bot.send_response(self.interaction, *args, **kwargs)
+        await self.interaction.client.send_response(self.interaction, *args, **kwargs)
 
     async def send_choices(self) -> None:
         embed = Embed(title=f'Choose 1-{len(self.entries)} below.')
@@ -158,7 +165,7 @@ class EmbedChoices:
         await buttons.wait()
 
     def get_buttons(self) -> discord.ui.View:
-        async def callback(button: discord.ui.Button, interaction: discord.Interaction):
+        async def callback(button: discord.ui.Button, interaction: discord.Interaction['NeonBot']):
             if interaction.user != self.interaction.user:
                 return
 

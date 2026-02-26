@@ -3,21 +3,34 @@ import os
 import re
 import signal
 import sys
+from concurrent.futures import Executor
 from glob import glob
 from os import sep
 from time import time
-from typing import Any, Optional, Tuple, Type, Union, cast
+from typing import Any, Optional, Union
 
+import aiohttp.client_exceptions
 import discord
 import psutil
 from aiohttp import ClientSession, ClientTimeout
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.schedulers.base import STATE_RUNNING
+from discord import Activity, Status, Message
 from discord.ext import commands
 from discord.utils import oauth_url
-from envparse import env
 
 from neonbot import __version__
 from neonbot.classes.database import Database
+from neonbot.classes.lavalink.client import Client
+from neonbot.env import (
+    DEFAULT_PREFIX,
+    LAVALINK_HOST,
+    LAVALINK_PASSWORD,
+    LAVALINK_PORT,
+    OWNER_GUILD_IDS,
+    OWNER_IDS,
+    SYNC_COMMANDS,
+)
 from neonbot.models.flyff import FlyffModel
 from neonbot.models.guild import GuildModel
 from neonbot.models.setting import SettingModel
@@ -28,28 +41,30 @@ from neonbot.views.ExchangeGiftView import ExchangeGiftView
 
 
 class NeonBot(commands.Bot):
-    def __init__(self):
-        self.default_prefix = env.str('DEFAULT_PREFIX', default='.')
+    def __init__(self, executor: Executor):
+        self.default_prefix = DEFAULT_PREFIX
         self.user_agent = f'NeonBot v{__version__}'
         self.loop = asyncio.get_event_loop()
-        self.executor = None
+        self.loop.set_default_executor(executor)
         super().__init__(
             intents=discord.Intents.all(),
+
             command_prefix=self.default_prefix,
-            owner_ids=set(env.list('OWNER_IDS', default=[], subcast=int)),
+            owner_ids=set(OWNER_IDS),
         )
 
         self.db = Database(self)
         self.app_info: Optional[discord.AppInfo] = None
-        self.owner_guilds = env.list('OWNER_GUILD_IDS', default=[], subcast=int)
+        self.owner_guilds = OWNER_GUILD_IDS
         self.session: Optional[ClientSession] = None
         self.setting: Optional[SettingModel] = None
         self.flyff_settings: Optional[FlyffModel] = None
         self.scheduler: Optional[AsyncIOScheduler] = None
-        self.is_listeners_done = False
         self.is_player_cache_loaded = False
 
-    def get_presence(self) -> Tuple[Type[discord.Status], discord.Activity]:
+        self.lavalink: Optional[Client] = None
+
+    def get_presence(self) -> tuple[Status, Activity]:
         activity_type = self.setting.activity_type
         activity_name = self.setting.activity_name
         status = self.setting.status
@@ -60,7 +75,9 @@ class NeonBot(commands.Bot):
         )
 
     async def setup_hook(self):
-        self.loop.add_signal_handler(signal.SIGTERM, lambda: asyncio.create_task(self.close()))
+        if not sys.platform.startswith('win'):
+            self.loop.add_signal_handler(signal.SIGTERM,
+                                         lambda: asyncio.create_task(self.close()))  # type: ignore[arg-type]
 
         await self.db.initialize()
         self.setting = await SettingModel.get_instance()
@@ -70,12 +87,14 @@ class NeonBot(commands.Bot):
         self.scheduler = AsyncIOScheduler()
         self.scheduler.start()
 
+        self.initialize_lavalink()
+
         await self.add_cogs()
         load_context_menu(self)
 
         guilds = [guild async for guild in self.fetch_guilds()]
 
-        if env.bool('SYNC_COMMANDS', default=True):
+        if SYNC_COMMANDS:
             await self.sync_command()
 
             # This copies the global commands over to your guild.
@@ -89,13 +108,10 @@ class NeonBot(commands.Bot):
         log.info(f'Command synced to: {guild or "Global"}')
 
     def start_listeners(self):
-        if self.is_listeners_done:
-            return
-
-        from neonbot.classes.panel import Panel
         from neonbot.classes.flyff import Flyff
+        from neonbot.classes.panel import Panel
 
-        Flyff.start_listener()
+        Flyff.start_listener(self)
 
         for guild in self.guilds:
             server = GuildModel.get_instance(guild.id)
@@ -103,22 +119,16 @@ class NeonBot(commands.Bot):
             if server and not server.exchange_gift.finish and server.exchange_gift.message_id:
                 self.add_view(ExchangeGiftView(), message_id=server.exchange_gift.message_id)
 
-            Panel.start_listener(guild.id)
+            Panel.start_listener(self, guild.id)
 
-        self.is_listeners_done = True
-
-    def load_player_cache(self):
-        if not env.bool('LOAD_PLAYER_CACHE', default=False) or self.is_player_cache_loaded:
-            return
-
-        from neonbot.classes.player import Player
-
-        for guild in self.guilds:
-            if Player.has_cache(guild.id):
-                log.info(f'Loading player cache on {guild} ({guild.id})...')
-                self.loop.create_task(Player.load_cache(guild.id))
-
-        self.is_player_cache_loaded = True
+    def initialize_lavalink(self):
+        self.lavalink = Client(self, self.user.id)
+        self.lavalink.add_node(
+            LAVALINK_HOST,
+            LAVALINK_PORT,
+            LAVALINK_PASSWORD,
+            'asia'
+        )
 
     async def add_cogs(self):
         files = sorted(glob(f'neonbot{sep}cogs{sep}[!_]*.py'))
@@ -128,9 +138,13 @@ class NeonBot(commands.Bot):
 
         print(file=sys.stderr)
 
+        futures = []
+
         for extension in extensions:
             log.info(f'Loading {extension} cog... [{(process.memory_info().rss / 1024000):.2f} MB]')
-            await self.load_extension('neonbot.cogs.' + extension)
+            futures.append(self.load_extension('neonbot.cogs.' + extension))
+
+        await asyncio.gather(*futures)
 
         print(file=sys.stderr)
 
@@ -157,11 +171,11 @@ class NeonBot(commands.Bot):
             status=getattr(discord.Status, setting.status),
         )
 
-    async def send_response(self, interaction: discord.Interaction, *args, **kwargs):
-        if not cast(discord.InteractionResponse, interaction.response).is_done():
-            await cast(discord.InteractionResponse, interaction.response).send_message(*args, **kwargs)
+    async def send_response(self, interaction: discord.Interaction['NeonBot'], *args, **kwargs):
+        if not interaction.response.is_done():
+            await interaction.response.send_message(*args, **kwargs)
         elif (
-            cast(discord.InteractionResponse, interaction.response).type
+            interaction.response.type
             == discord.InteractionResponseType.deferred_message_update
         ):
             await interaction.followup.send(*args, **kwargs)
@@ -174,13 +188,13 @@ class NeonBot(commands.Bot):
                 pass
             await interaction.edit_original_response(*args, **kwargs)
 
-    async def edit_message(self, message: Union[discord.Message, None], **kwargs) -> None:
+    async def edit_message(self, message: Union[discord.Message, None], *args, **kwargs) -> Message | None:
         if message is None:
-            return
+            return None
 
         try:
-            await message.edit(**kwargs)
-        except:
+            return await message.edit(*args, **kwargs)
+        except (discord.DiscordException, aiohttp.client_exceptions.ClientError):
             pass
 
     async def delete_message(self, *messages: Union[discord.Message, None]) -> None:
@@ -190,32 +204,24 @@ class NeonBot(commands.Bot):
         await self.get_user(self.app_info.owner.id).send(*args, **kwargs)
 
     async def close(self) -> None:
-        from neonbot.classes.player import Player
-
         if self.scheduler:
             log.info('Stopping scheduler...')
-            self.scheduler.shutdown(wait=False)
+            if self.scheduler.state == STATE_RUNNING:
+                self.scheduler.shutdown(wait=False)
 
         log.info('Saving all music...')
-        for player in Player.servers.values():
-            player.save_cache()
 
         log.info('Stopping all music...')
-        await asyncio.gather(*[player.reset(timeout=3, clear_cache=False) for player in Player.servers.values()])
+        await asyncio.gather(
+            *[player.reset(timeout=3) for player in self.lavalink.player_manager.values()]
+        )
+        await self.lavalink.close()
 
         log.info('Closing session...')
         await self.session.close()
 
         log.info('Stopping bot...')
         await super().close()
-
-    async def start(self, *args, **kwargs) -> None:
-        await super().start(*args, **kwargs)
-
-    def run(self, *args, **kwargs):
-        self.executor = kwargs['executor']
-        del kwargs['executor']
-        super().run(env.str('TOKEN'), *args, **kwargs)
 
     def _handle_ready(self) -> None:
         pass
