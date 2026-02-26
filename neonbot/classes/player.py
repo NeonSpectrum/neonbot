@@ -160,7 +160,8 @@ class Player(DefaultPlayer):
             index = random.randint(self.current_queue, len(self.shuffled_list))
             self.shuffled_list.insert(index, track)
 
-        self.refresh_player_message()
+        if self.current:
+            self.refresh_player_message()
 
         if requester != bot.user.id:
             bot.loop.create_task(YTMusic.like_song(track.identifier))
@@ -365,23 +366,18 @@ class Player(DefaultPlayer):
         )
 
         message = await bot.edit_message(self.messages['playing'], embed=self.get_simplified_finished_message(track), view=None)
-        print('sent finish')
         self.messages['playing'] = None
 
         return message
 
     def refresh_player_message(self, *, embed=False):
         if self.messages['playing']:
-            print('editing playing')
-            print(len(self.messages['playing'].components))
             bot.loop.create_task(bot.edit_message(
                 self.messages['playing'],
                 embed=self.get_playing_embed(self.current) if embed else MISSING,
                 view=self.player_controls.get() if len(self.messages['playing'].components) > 0 else None,
             ))
         elif self.messages['finished']:
-            print('editing finished')
-            print(len(self.messages['finished'].components))
             bot.loop.create_task(bot.edit_message(
                 self.messages['finished'],
                 embed=self.get_finished_embed(self.last_track) if embed else MISSING,
