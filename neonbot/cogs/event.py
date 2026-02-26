@@ -192,7 +192,7 @@ class Event(commands.Cog):
         if member.id == self.bot.user.id:
             return
 
-        if player and player.ctx and player.ctx.voice_client:
+        if player and player.ctx and player.ctx.voice_client and player.vc:
             voice_members = [member for member in player.vc.members if not member.bot]
 
             if any(voice_members):
