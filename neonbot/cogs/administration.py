@@ -65,7 +65,7 @@ class Administration(commands.Cog):
 
             with stdout_io() as s:
                 exec(f'async def x():\n{lines}\n', variables)
-                await discord.utils.maybe_coroutine(eval('x()', variables))
+                await discord.utils.maybe_coroutine(eval, 'x()', variables)
             output = s.getvalue()
         except Exception as e:
             output = str(e)

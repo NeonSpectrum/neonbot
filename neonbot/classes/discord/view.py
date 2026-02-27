@@ -18,7 +18,7 @@ class Button(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction['NeonBot']):
         if self._callback:
-            await maybe_coroutine(self._callback(self, interaction))
+            await maybe_coroutine(self._callback, self, interaction)
 
         if not interaction.response.is_done():
             await interaction.response.defer()
