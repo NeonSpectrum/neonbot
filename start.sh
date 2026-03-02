@@ -3,10 +3,6 @@
 export PATH="~/.local/bin:$PATH";
 export SYNC_COMMANDS=0;
 
-if [[ ! -e .local/bin/poetry ]]; then
-    curl -sSL https://install.python-poetry.org | python3 -
-fi
-
 if [[ -d .git ]] && [[ "${AUTO_UPDATE}" == "1" ]]; then
     old_hash=$(git rev-parse HEAD)
     git pull
