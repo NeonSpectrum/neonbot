@@ -7,6 +7,7 @@ RUN apt update \
 # Install Poetry as root (poetry goes to /root/.local/bin)
 RUN curl -sSL https://install.python-poetry.org | python3 - \
     && mv /root/.local/bin/poetry /usr/bin/poetry \
+    && chmod 755 /usr/bin/poetry \
     && rm -rf /root/.local
 
 # Now switch to the container user
