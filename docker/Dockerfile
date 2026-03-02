@@ -1,11 +1,8 @@
 FROM --platform=$TARGETOS/$TARGETARCH python:3.13-slim-bookworm
 
 RUN apt update \
-    && apt -y install git gcc g++ ca-certificates dnsutils curl iproute2 ffmpeg procps tini \
+    && apt -y install git gcc g++ ca-certificates dnsutils curl iproute2 ffmpeg procps tini python3-poetry \
     && useradd -m -d /home/container container
-
-RUN pip install --no-cache-dir poetry
-
 
 # Now switch to the container user
 USER container
