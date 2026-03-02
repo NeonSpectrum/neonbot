@@ -6,10 +6,11 @@ RUN apt update \
 
 USER container
 ENV USER=container HOME=/home/container
-ENV PATH="/home/container/.local/bin:${PATH}"
 WORKDIR /home/container
 
-RUN curl -sSL https://install.python-poetry.org | python3 -
+RUN curl -sSL https://install.python-poetry.org | python3 - \
+    && mv /home/container/.local/bin/poetry /usr/bin/poetry \
+    && rm -rf /home/container/.local
 
 STOPSIGNAL SIGINT
 
