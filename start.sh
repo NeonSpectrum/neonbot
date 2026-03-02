@@ -3,7 +3,7 @@
 export SYNC_COMMANDS=0;
 
 if [[ -f pyproject.toml ]] && [[ ! -d .venv ]]; then
-    poetry install --sync
+    poetry sync --without dev
 fi
 
 if [[ -d .git ]] && [[ "${AUTO_UPDATE}" == "1" ]]; then
