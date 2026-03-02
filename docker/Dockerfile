@@ -13,7 +13,7 @@ RUN curl -sSL https://install.python-poetry.org | python3 -
 
 STOPSIGNAL SIGINT
 
-COPY --chown=container:container ./../entrypoint.sh /entrypoint.sh
+COPY --chown=container:container ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/usr/bin/tini", "-g", "--"]
 CMD ["/entrypoint.sh"]
