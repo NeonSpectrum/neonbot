@@ -3,6 +3,10 @@
 export PATH="~/.local/bin:$PATH";
 export SYNC_COMMANDS=0;
 
+if [[ -f pyproject.toml ]] && [[ ! -d .venv ]]; then
+    poetry install --sync
+fi
+
 if [[ -d .git ]] && [[ "${AUTO_UPDATE}" == "1" ]]; then
     old_hash=$(git rev-parse HEAD)
     git pull
@@ -17,6 +21,10 @@ if [[ -d .git ]] && [[ "${AUTO_UPDATE}" == "1" ]]; then
     fi
 fi
 
+if [[ ! -d .venv ]] && [[ -f pyproject.toml ]]; then
+    poetry install --sync
+fi
+
 if [[ ! -z "${AUTO_UPDATE_PYTHON_PACKAGES}" ]]; then
     poetry update ${AUTO_UPDATE_PYTHON_PACKAGES}
 fi
@@ -24,5 +32,6 @@ fi
 if [[ "${AUTO_PIP_UPDATE}" == "1" ]]; then
     poetry update --without dev
 fi
+
 
 poetry run python /home/container/${PY_FILE}
