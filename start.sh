@@ -1,6 +1,5 @@
 #!/bin/bash
 
-export PATH="~/.local/bin:$PATH";
 export SYNC_COMMANDS=0;
 
 if [[ -f pyproject.toml ]] && [[ ! -d .venv ]]; then
