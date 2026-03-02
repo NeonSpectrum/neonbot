@@ -4,8 +4,7 @@ RUN apt update \
     && apt -y install git gcc g++ ca-certificates dnsutils curl iproute2 ffmpeg procps tini \
     && useradd -m -d /home/container container
 
-RUN pip install --no-cache-dir poetry \
-    && mv /root/.local/bin/poetry /usr/local/bin/poetry
+RUN pip install --no-cache-dir poetry
 
 
 # Now switch to the container user
