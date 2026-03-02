@@ -1,16 +1,10 @@
-FROM python:3.9-slim
+FROM python:3.13-slim-bookworm
 
-# Keeps Python from generating .pyc files in the container
-ENV PYTHONDONTWRITEBYTECODE=1
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Turns off buffering for easier container logging
-ENV PYTHONUNBUFFERED=1
+RUN curl -sSL https://install.python-poetry.org | python3 -
 
-RUN apt-get -y update \
-    && apt-get install -y --no-install-recommends ffmpeg aria2
-
-COPY requirements.txt .
-
-RUN pip install --no-cache-dir -r requirements.txt
-
-CMD ["python", "main.py"]
+RUN mv /root/.local/bin/poetry /usr/local/bin/poetry \
+    && rm -rf /root/.local
