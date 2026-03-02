@@ -6,7 +6,7 @@ RUN apt update \
 
 # Install Poetry as root (poetry goes to /root/.local/bin)
 RUN curl -sSL https://install.python-poetry.org | python3 - \
-    && chmod +x /root/.local/share/pypoetry/venv/bin/poetry \
+    && chmod 755 /root/.local/share/pypoetry/venv/bin/poetry \
     && ln -sf /root/.local/share/pypoetry/venv/bin/poetry /usr/bin/poetry \
     && rm -rf /root/.local
 
