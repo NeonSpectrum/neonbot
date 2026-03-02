@@ -8,10 +8,10 @@ RUN apt update \
 # Now switch to the container user
 USER container
 ENV USER=container HOME=/home/container
+ENV PATH="/home/container/.local/bin:${PATH}"
 WORKDIR /home/container
 
-RUN pip install --no-cache-dir poetry \
-    && mv /home/container/.local/bin/poetry /usr/bin/local/poetry
+RUN pip install --no-cache-dir poetry
 
 STOPSIGNAL SIGINT
 
