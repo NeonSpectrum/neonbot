@@ -4,15 +4,14 @@ RUN apt update \
     && apt -y install git gcc g++ ca-certificates dnsutils curl iproute2 ffmpeg procps tini \
     && useradd -m -d /home/container container
 
-# Install Poetry as root (poetry goes to /root/.local/bin)
-RUN curl -sSL https://install.python-poetry.org | python3 - \
-    && chmod 755 /root/.local/share/pypoetry/venv/bin/poetry \
-    && ln -sf /root/.local/share/pypoetry/venv/bin/poetry /usr/bin/poetry
-
 # Now switch to the container user
 USER container
 ENV USER=container HOME=/home/container
+ENV PATH="/home/container/.local/bin:${PATH}"
 WORKDIR /home/container
+
+# Install Poetry (poetry goes to /home/container/.local/bin)
+RUN curl -sSL https://install.python-poetry.org | python3 -
 
 STOPSIGNAL SIGINT
 
