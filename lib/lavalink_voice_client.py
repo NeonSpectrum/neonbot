@@ -1,4 +1,5 @@
 import discord
+import lavalink
 from lavalink import ClientError
 
 
@@ -26,7 +27,11 @@ class LavalinkVoiceClient(discord.VoiceProtocol):
             't': 'VOICE_SERVER_UPDATE',
             'd': data
         }
-        await self.lavalink.voice_update_handler(lavalink_data)
+
+        try:
+            await self.lavalink.voice_update_handler(lavalink_data)
+        except lavalink.RequestError:
+            pass
 
     async def on_voice_state_update(self, data):
         player = self.lavalink.player_manager.get(self.channel.guild.id)
@@ -46,7 +51,10 @@ class LavalinkVoiceClient(discord.VoiceProtocol):
             'd': data
         }
 
-        await self.lavalink.voice_update_handler(lavalink_data)
+        try:
+            await self.lavalink.voice_update_handler(lavalink_data)
+        except lavalink.RequestError:
+            pass
 
     async def connect(self, *, timeout: float, reconnect: bool, self_deaf: bool = False,
                       self_mute: bool = False) -> None:
