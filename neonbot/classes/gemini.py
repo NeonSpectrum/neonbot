@@ -47,8 +47,6 @@ class GeminiChat:
         else:
             messages = [self.ctx.message]
 
-        print(messages)
-
         for message in messages:
             text = message.content
 
@@ -181,7 +179,7 @@ class GeminiChat:
                 "members": [{
                     "id": member.id,
                     "name": member.display_name,
-                } for member in self.ctx.channel.members],
+                } for member in self.ctx.channel.recipients],
             }
 
         return {
