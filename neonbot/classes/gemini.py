@@ -1,4 +1,5 @@
 import inspect
+import io
 from typing import List
 from typing import TYPE_CHECKING
 
@@ -30,6 +31,7 @@ class GeminiChat:
             ctx.message.content = prompt
 
         self.prompt = ctx.message.content
+        self.response_attachments = []
 
     async def generate_content(self):
         try:
@@ -71,15 +73,31 @@ class GeminiChat:
                 ]
             ))
 
-        self.response = await client.aio.models.generate_content(
+        response = await client.aio.models.generate_content(
             model=self.model_name,
             contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
                 response_mime_type='application/json',
-                tools=[types.Tool(google_search=types.GoogleSearch())]
+                response_modalities=['TEXT', 'IMAGE'],
+                tools=[
+                    types.Tool(google_search=types.GoogleSearch()),
+                    types.Tool(code_execution=types.ToolCodeExecution())
+                ]
             ),
         )
+
+        for part in response.candidates[0].content.parts:
+            if part.inline_data:
+                image_bytes = part.inline_data.data
+
+                with io.BytesIO(image_bytes) as image_binary:
+                    discord_file = discord.File(fp=image_binary)
+                    self.response_attachments.append(discord_file)
+
+            elif part.text:
+                self.response = part
+
         self.log()
         return self
 
@@ -96,6 +114,9 @@ class GeminiChat:
 
     def get_response(self):
         return self.get_json().get('response')
+
+    def get_response_attachments(self):
+        return self.response_attachments
 
     def get_commands(self):
         return self.get_json().get('commands', [])

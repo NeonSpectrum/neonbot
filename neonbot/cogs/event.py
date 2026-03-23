@@ -84,10 +84,13 @@ class Event(commands.Cog):
                     if len(response) > 2000:
                         response = md_to_text(response)
                         bot_message = await ctx.reply(
-                            file=discord.File(BytesIO(response.encode()), filename=gemini_chat.get_prompt() + '.txt')
+                            files=[
+                                [discord.File(BytesIO(response.encode()), filename=gemini_chat.get_prompt() + '.txt')]
+                                + gemini_chat.get_response_attachments()
+                            ]
                         )
                     else:
-                        bot_message = await ctx.reply(response)
+                        bot_message = await ctx.reply(response, files=gemini_chat.get_response_attachments())
 
                 cmds = gemini_chat.get_command_list()
 
