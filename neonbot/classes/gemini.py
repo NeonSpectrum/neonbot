@@ -106,6 +106,9 @@ class GeminiChat:
         response = await client.aio.models.generate_images(
             model=self.image_model_name,
             prompt=self.prompt,
+            config=types.GenerateImagesConfig(
+                number_of_images=1,
+            )
         )
 
         file_list = []
