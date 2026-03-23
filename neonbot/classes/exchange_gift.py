@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import discord
 from discord.utils import find
 
-from neonbot.classes.discord.embed import Embed
+from neonbot.classes.discord_utils.embed import Embed
 from neonbot.models.exchange_gift import ExchangeGiftMember
 from neonbot.models.guild import GuildModel
 from neonbot.utils.exceptions import ExchangeGiftNotRegistered

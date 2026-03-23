@@ -7,7 +7,7 @@ from discord.utils import MISSING
 from i18n import t
 from lavalink import AudioTrack
 
-from neonbot.classes.discord.embed import Embed
+from neonbot.classes.discord_utils.embed import Embed
 from neonbot.classes.player.player_controls import PlayerControls
 from neonbot.dataclasses import PlayerMessage
 from neonbot.enums import MessageType, Repeat

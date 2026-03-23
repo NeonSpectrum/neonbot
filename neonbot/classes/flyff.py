@@ -8,7 +8,7 @@ import discord
 from aiohttp import ClientTimeout
 from discord import Webhook
 
-from neonbot.classes.discord.embed import Embed
+from neonbot.classes.discord_utils.embed import Embed
 from neonbot.env import FLYFF_IP_ADDRESS
 from neonbot.models.flyff import FlyffWebhookChannel
 from neonbot.utils import log

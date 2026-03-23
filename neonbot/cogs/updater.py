@@ -8,8 +8,8 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import View
 
-from neonbot.classes.discord.embed import Embed
-from neonbot.classes.discord.select_choices import SelectChoices
+from neonbot.classes.discord_utils.embed import Embed
+from neonbot.classes.discord_utils.select_choices import SelectChoices
 from neonbot.classes.lavalink.player_manager import PlayerManager
 from neonbot.utils.constants import ICONS
 

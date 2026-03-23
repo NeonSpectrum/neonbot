@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 import discord
 from i18n import t
 
-from neonbot.classes.discord.embed import Embed
-from neonbot.classes.discord.view import Button, View
+from neonbot.classes.discord_utils.embed import Embed
+from neonbot.classes.discord_utils.view import Button, View
 from neonbot.enums import Repeat
 from neonbot.utils import log
 

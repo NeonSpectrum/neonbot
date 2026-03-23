@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import discord
 
-from neonbot.classes.discord.view import Button, View
+from neonbot.classes.discord_utils.view import Button, View
 from neonbot.utils.constants import CHOICES_EMOJI, PAGINATION_EMOJI
 
 if TYPE_CHECKING:

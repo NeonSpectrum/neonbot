@@ -1,6 +1,6 @@
 import discord
 
-from neonbot.classes.discord.embed import Embed
+from neonbot.classes.discord_utils.embed import Embed
 from neonbot.utils.functions import get_log_prefix
 
 

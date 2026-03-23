@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 import discord
 
-from neonbot.classes.discord.embed import Embed
+from neonbot.classes.discord_utils.embed import Embed
 from neonbot.classes.exchange_gift import ExchangeGift
 
 if TYPE_CHECKING:

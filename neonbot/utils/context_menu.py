@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 import discord
 from discord import app_commands
 
-from neonbot.classes.discord.embed import Embed
+from neonbot.classes.discord_utils.embed import Embed
 from neonbot.utils.functions import generate_profile_member_embed
 
 if TYPE_CHECKING:

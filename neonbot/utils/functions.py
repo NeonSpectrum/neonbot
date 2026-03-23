@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from discord.ext import commands
 from discord.utils import format_dt
 
-from neonbot.classes.discord.embed import Embed
+from neonbot.classes.discord_utils.embed import Embed
 from neonbot.env import TZ
 
 if TYPE_CHECKING:

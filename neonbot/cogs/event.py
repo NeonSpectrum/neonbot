@@ -12,7 +12,7 @@ from discord.utils import escape_markdown
 from lavalink import Node, NodeConnectedEvent, listener
 
 from neonbot.classes.chatgpt.chatgpt import ChatGPT
-from neonbot.classes.discord.embed import Embed
+from neonbot.classes.discord_utils.embed import Embed
 from neonbot.classes.gemini import GeminiChat
 from neonbot.classes.player.ytmusic import YTMusic
 from neonbot.classes.voice_events import VoiceEvents

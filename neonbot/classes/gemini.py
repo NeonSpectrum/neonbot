@@ -2,6 +2,7 @@ import inspect
 from typing import List
 from typing import TYPE_CHECKING
 
+import discord
 import discord.ext.commands
 import google.genai as genai
 from discord.ext import commands
@@ -19,12 +20,12 @@ client = genai.Client()
 
 
 class GeminiChat:
-    def __init__(self, ctx: commands.Context['NeonBot']):
+    def __init__(self, ctx: commands.Context['NeonBot'], prompt: str = None):
         self.model_name = GEMINI_MODEL
         self.response = None
         self.ctx = ctx
         self.bot = ctx.bot
-        self.prompt = ctx.message.content
+        self.prompt = prompt or ctx.message.content
 
     async def generate_content(self):
         try:

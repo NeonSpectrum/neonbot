@@ -15,7 +15,7 @@ from lavalink import AudioTrack, DefaultPlayer, DeferredAudioTrack, LoadType, Tr
 from ytmusicapi.exceptions import YTMusicError
 
 from lib.lavalink_voice_client import LavalinkVoiceClient
-from neonbot.classes.discord.embed import Embed
+from neonbot.classes.discord_utils.embed import Embed
 from neonbot.classes.player.player_message_manager import PlayerMessageManager
 from neonbot.classes.player.ytmusic import YTMusic
 from neonbot.dataclasses import PlayerMessage
@@ -34,6 +34,7 @@ class Player(DefaultPlayer):
     def __init__(self, guild_id: int, node: 'Node'):
         super().__init__(guild_id, node)
 
+        # noinspection PyFinal
         self.client: 'Client' = node.manager.client
         self.bot: 'NeonBot' = self.client.bot
 
@@ -216,7 +217,7 @@ class Player(DefaultPlayer):
         load_type = results.load_type
         tracks = results.tracks
         embed = None
-        
+
         log.debug(results)
 
         if load_type == LoadType.EMPTY:

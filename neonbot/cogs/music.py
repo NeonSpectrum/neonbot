@@ -6,7 +6,7 @@ from discord.ext import commands
 from i18n import t
 
 from neonbot import NeonBot
-from neonbot.classes.discord.embed import Embed, PaginationEmbed
+from neonbot.classes.discord_utils.embed import Embed, PaginationEmbed
 from neonbot.enums import Repeat
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS

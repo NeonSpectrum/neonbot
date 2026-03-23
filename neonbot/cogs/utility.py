@@ -2,6 +2,7 @@ import json
 import os
 import random
 from datetime import datetime
+from io import BytesIO
 from time import time
 from typing import TYPE_CHECKING
 from typing import Union
@@ -14,10 +15,13 @@ from discord.ext import commands
 from discord.utils import format_dt
 
 from neonbot import __author__, __title__, __version__
-from neonbot.classes.discord.embed import Embed
+from neonbot.classes.discord_utils.embed import Embed
+from neonbot.classes.gemini import GeminiChat
 from neonbot.env import OWNER_GUILD_IDS, SEMAPHONE_API_KEY, SEMAPHONE_SENDER_NAME
+from neonbot.utils import log
 from neonbot.utils.constants import ICONS
-from neonbot.utils.functions import format_seconds, generate_profile_member_embed, generate_profile_user_embed
+from neonbot.utils.functions import format_seconds, generate_profile_member_embed, generate_profile_user_embed, \
+    md_to_text
 
 if TYPE_CHECKING:
     from neonbot import NeonBot
@@ -123,6 +127,30 @@ class Utility(commands.Cog):
                 .add_field('Status:', 'Sent', inline=False)
                 .add_field('Date sent:', format_dt(datetime.now()), inline=False)
             )
+
+    @app_commands.command(name='ai')
+    @app_commands.allowed_installs(guilds=False, users=True)
+    @app_commands.allowed_contexts(guilds=False, dms=True, private_channels=True)
+    async def ai(self, interaction: discord.Interaction['NeonBot'], prompt: str) -> None:
+        """Chat with bot using AI."""
+
+        ctx = self.bot.get_context(interaction)
+
+        try:
+            gemini_chat = GeminiChat(ctx, prompt)
+
+            await gemini_chat.generate_content()
+            response = gemini_chat.get_response()
+
+            if len(response) > 2000:
+                response = md_to_text(response)
+                await ctx.reply(file=discord.File(BytesIO(response.encode()), filename=gemini_chat.get_prompt() + '.txt'))
+            else:
+                await ctx.reply(response)
+        except Exception as error:
+            await ctx.reply(embed=Embed('Something went wrong.'))
+            log.debug(error, exc_info=True)
+            log.error(error, exc_info=True)
 
     @app_commands.command(name='profile')
     @app_commands.allowed_installs(guilds=True, users=True)

@@ -5,7 +5,7 @@ from discord import app_commands
 from discord.ext import commands
 from durations_nlp import Duration
 
-from neonbot.classes.discord.embed import Embed
+from neonbot.classes.discord_utils.embed import Embed
 from neonbot.classes.flyff import Flyff
 from neonbot.models.flyff import FlyffAlertChannel, FlyffModel, FlyffPingChannel, FlyffTimer, FlyffWebhookChannel
 
