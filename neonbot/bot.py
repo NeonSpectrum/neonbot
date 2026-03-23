@@ -75,20 +75,6 @@ class NeonBot(commands.Bot):
         )
 
     async def setup_hook(self):
-        @self.tree.interaction_check
-        async def is_authorized(interaction: discord.Interaction) -> bool:
-            if interaction.guild_id is not None:
-                return True
-
-            if interaction.user.id in OWNER_IDS:
-                return True
-
-            await interaction.response.send_message(
-                'This personal app is restricted to the developer.',
-                ephemeral=True
-            )
-            return False
-
         if not sys.platform.startswith('win'):
             self.loop.add_signal_handler(signal.SIGTERM,
                                          lambda: asyncio.create_task(self.close()))  # type: ignore[arg-type]

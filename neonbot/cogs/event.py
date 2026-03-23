@@ -16,6 +16,7 @@ from neonbot.classes.discord_utils.embed import Embed
 from neonbot.classes.gemini import GeminiChat
 from neonbot.classes.player.ytmusic import YTMusic
 from neonbot.classes.voice_events import VoiceEvents
+from neonbot.env import OWNER_IDS
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.functions import format_seconds, get_command_string, get_log_prefix, md_to_text, remove_ansi
@@ -131,6 +132,19 @@ class Event(commands.Cog):
 
         ctx = await self.bot.get_context(interaction)
         log.cmd(ctx, get_command_string(ctx), guild=ctx.guild or 'N/A')
+
+    async def is_authorized(self, interaction: discord.Interaction) -> bool:
+        if interaction.guild_id is not None:
+            return True
+
+        if interaction.user.id in OWNER_IDS:
+            return True
+
+        await interaction.response.send_message(
+            'This personal app is restricted to the developer.',
+            ephemeral=True
+        )
+        return False
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: Union[discord.Interaction['NeonBot'], commands.Context['NeonBot']], error: AppCommandError) -> None:
@@ -329,6 +343,7 @@ class Event(commands.Cog):
 
 async def setup(bot: commands.Bot) -> None:
     cog = Event(bot)
-    bot.tree.on_error = cog.on_command_error
     bot.on_message = cog.on_message
+    bot.tree.on_error = cog.on_command_error
+    bot.tree.interaction_check = cog.interaction_check
     await bot.add_cog(Event(bot))
