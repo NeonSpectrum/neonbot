@@ -43,6 +43,8 @@ class GeminiChat:
         else:
             messages = [self.ctx.message]
 
+        print(messages)
+
         for message in messages:
             text = message.content
 
@@ -74,7 +76,6 @@ class GeminiChat:
                 system_instruction=system_instruction,
                 response_mime_type='application/json'
             ),
-
         )
         self.log()
         return self
