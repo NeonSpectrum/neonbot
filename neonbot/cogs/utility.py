@@ -17,7 +17,7 @@ from discord.utils import format_dt
 from neonbot import __author__, __title__, __version__
 from neonbot.classes.discord_utils.embed import Embed
 from neonbot.classes.gemini import GeminiChat
-from neonbot.env import OWNER_GUILD_IDS, SEMAPHONE_API_KEY, SEMAPHONE_SENDER_NAME
+from neonbot.env import OWNER_GUILD_IDS, SEMAPHONE_API_KEY, SEMAPHONE_SENDER_NAME, OWNER_IDS
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
 from neonbot.utils.functions import format_seconds, generate_profile_member_embed, generate_profile_user_embed, \
@@ -27,8 +27,8 @@ if TYPE_CHECKING:
     from neonbot import NeonBot
 
 
-async def is_owner_guilds(ctx: commands.Context['NeonBot']) -> bool:
-    if ctx.guild.id not in ctx.bot.owner_guilds:
+async def is_owner(ctx: commands.Context['NeonBot']) -> bool:
+    if (ctx.guild and ctx.guild.id not in ctx.bot.owner_guilds) or (not ctx.guild and ctx.author.id not in OWNER_IDS):
         await ctx.reply(
             embed=Embed("You do not have permission to use this command."), ephemeral=True
         )
@@ -84,7 +84,9 @@ class Utility(commands.Cog):
         await interaction.response.send_message(embed=embed)
 
     @commands.hybrid_command(name='sms')
-    @commands.check(is_owner_guilds)
+    @commands.check(is_owner)
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     @app_commands.guilds(*OWNER_GUILD_IDS)
     async def sms(self, ctx: commands.Context['NeonBot'], number: str, *, body: str) -> None:
         """Send SMS using NeonBot. *BOT_OWNER"""
@@ -157,6 +159,8 @@ class Utility(commands.Cog):
     @app_commands.command(name='imagine')
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    @app_commands.guilds(*OWNER_GUILD_IDS)
+    @commands.check(is_owner)
     async def imagine(self, interaction: discord.Interaction['NeonBot'], prompt: str) -> None:
         """Imagine with bot using AI."""
 
