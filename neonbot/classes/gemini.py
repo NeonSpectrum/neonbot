@@ -157,7 +157,7 @@ class GeminiChat:
             '{{DISPLAY_NAME}}': self.bot.user.name,
             '{{OWNER_ID}}': self.bot.get_user(self.bot.app_info.owner.id).id,
             '{{USER_ID}}': self.bot.get_user(self.bot.app_info.owner.id).id,
-            '{{GUILD_DATA}}': self.get_guild_data(),
+            '{{DISCORD_DATA}}': self.get_discord_data(),
             '{{PLAYER_DATA}}': {
                 'settings': {
                     'shuffle': player_settings.music.shuffle,
@@ -173,13 +173,18 @@ class GeminiChat:
 
         return text
 
-    def get_guild_data(self):
+    def get_discord_data(self):
         guild = self.ctx.guild
 
         if not guild:
-            return {}
+            return {
+                "members": [{
+                    "id": member.id,
+                    "name": member.display_name,
+                } for member in self.ctx.channel.members],
+            }
 
-        data = {
+        return {
             "id": guild.id,
             "name": guild.name,
             "owner_id": guild.owner_id,
@@ -193,5 +198,3 @@ class GeminiChat:
                 "name": member.display_name,
             } for member in guild.members],
         }
-
-        return data
