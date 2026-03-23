@@ -25,7 +25,11 @@ class GeminiChat:
         self.response = None
         self.ctx = ctx
         self.bot = ctx.bot
-        self.prompt = prompt or ctx.message.content
+
+        if prompt:
+            ctx.message.content = prompt
+
+        self.prompt = ctx.message.content
 
     async def generate_content(self):
         try:
