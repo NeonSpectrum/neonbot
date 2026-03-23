@@ -92,6 +92,7 @@ class GeminiChat:
         ]))
 
     def get_json(self):
+        print(self.response.text)
         return repair_json(self.response.text, True)
 
     def get_response(self):
@@ -183,9 +184,11 @@ class GeminiChat:
             }
 
         return {
-            "id": guild.id,
-            "name": guild.name,
-            "owner_id": guild.owner_id,
+            "guild": {
+                "id": guild.id,
+                "name": guild.name,
+                "owner_id": guild.owner_id,
+            },
             "channels": [{
                 'id': channel.id,
                 'name': channel.name,
