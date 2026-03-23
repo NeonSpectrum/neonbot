@@ -1,5 +1,6 @@
 import inspect
 import io
+import secrets
 from typing import List
 from typing import TYPE_CHECKING
 
@@ -111,7 +112,8 @@ class GeminiChat:
 
         for i, generated_image in enumerate(response.generated_images):
             with io.BytesIO(generated_image.image.image_bytes) as image_binary:
-                file_list.append(discord.File(fp=image_binary))
+                filename = f"neon_{secrets.token_hex(4)}.png"
+                file_list.append(discord.File(fp=image_binary, filename=filename))
 
         return file_list
 
