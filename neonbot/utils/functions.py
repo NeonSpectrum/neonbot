@@ -217,3 +217,9 @@ async def wait_until(func, poll_interval=0.05, timeout=None):
             break
 
         await asyncio.sleep(poll_interval)
+
+
+async def ensure_ctx(ctx: Union[commands.Context['NeonBot'], discord.Interaction['NeonBot']]):
+    if isinstance(ctx, discord.Interaction):
+        return await ctx.client.get_context(ctx)
+    return ctx

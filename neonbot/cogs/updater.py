@@ -8,6 +8,7 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import View
 
+from neonbot.classes.discord_utils.decorators import is_owner
 from neonbot.classes.discord_utils.embed import Embed
 from neonbot.classes.discord_utils.select_choices import SelectChoices
 from neonbot.classes.lavalink.player_manager import PlayerManager
@@ -30,19 +31,9 @@ ROOT_FOLDERS = (
 module_changed = []
 
 
-async def is_owner(interaction: discord.Interaction['NeonBot']) -> bool:
-    if interaction.user.id not in interaction.client.owner_ids:
-        await interaction.response.send_message(
-            embed=Embed("You do not have permission to use this command."), ephemeral=True
-        )
-        return False
-
-    return True
-
-
 class UpdaterCog(commands.Cog):
     @app_commands.command(name='update')
-    @app_commands.check(is_owner)
+    @is_owner(app=True)
     async def update(self, interaction: discord.Interaction['NeonBot']):
         global module_changed
 
@@ -84,7 +75,7 @@ class UpdaterCog(commands.Cog):
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @app_commands.command(name='reload')
-    @app_commands.check(is_owner)
+    @is_owner(app=True)
     async def reload(self, interaction: discord.Interaction['NeonBot'], module_list: str = None):
         if module_list:
             modules = module_list.split(',')
