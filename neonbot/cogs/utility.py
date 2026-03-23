@@ -149,7 +149,7 @@ class Utility(commands.Cog):
     @app_commands.command(name='imagine')
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    @is_owner()
+    @is_owner(app=True)
     async def imagine(self, interaction: discord.Interaction['NeonBot'], prompt: str) -> None:
         """Imagine with bot using AI."""
 
