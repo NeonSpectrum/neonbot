@@ -134,7 +134,7 @@ class Utility(commands.Cog):
     async def ai(self, interaction: discord.Interaction['NeonBot'], prompt: str) -> None:
         """Chat with bot using AI."""
 
-        ctx = self.bot.get_context(interaction)
+        ctx = await self.bot.get_context(interaction)
 
         try:
             gemini_chat = GeminiChat(ctx, prompt)
