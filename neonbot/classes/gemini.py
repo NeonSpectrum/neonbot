@@ -92,7 +92,6 @@ class GeminiChat:
         ]))
 
     def get_json(self):
-        print(self.response.text)
         return repair_json(self.response.text, True)
 
     def get_response(self):
