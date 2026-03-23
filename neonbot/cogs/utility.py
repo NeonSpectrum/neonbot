@@ -154,6 +154,25 @@ class Utility(commands.Cog):
             log.debug(error, exc_info=True)
             log.error(error, exc_info=True)
 
+    @app_commands.command(name='imagine')
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def imagine(self, interaction: discord.Interaction['NeonBot'], prompt: str) -> None:
+        """Imagine with bot using AI."""
+
+        await interaction.response.defer()
+
+        ctx = await self.bot.get_context(interaction)
+
+        try:
+            gemini_chat = GeminiChat(ctx, prompt)
+            files = await gemini_chat.generate_image()
+            await ctx.reply(files=files)
+        except Exception as error:
+            await ctx.reply(embed=Embed('Something went wrong.'))
+            log.debug(error, exc_info=True)
+            log.error(error, exc_info=True)
+
     @app_commands.command(name='profile')
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)

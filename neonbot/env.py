@@ -40,7 +40,8 @@ PANEL_URL = env.str('PANEL_URL', default=None)
 PANEL_API_KEY = env.str('PANEL_API_KEY', default=None)
 
 GEMINI_API_KEY = env.str('GEMINI_API_KEY', default=None)
-GEMINI_MODEL = env.str('GEMINI_MODEL', default=None)
+GEMINI_CHAT_MODEL = env.str('GEMINI_CHAT_MODEL', default=None)
+GEMINI_IMAGE_MODEL = env.str('GEMINI_IMAGE_MODEL', default=None)
 
 RAPID_API_KEY = env.str('RAPID_API_KEY', default=None)
 

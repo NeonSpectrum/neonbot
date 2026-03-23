@@ -10,7 +10,7 @@ from discord.ext import commands
 from google.genai import types
 from json_repair import repair_json
 
-from neonbot.env import GEMINI_MODEL
+from neonbot.env import GEMINI_CHAT_MODEL, GEMINI_IMAGE_MODEL
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 
@@ -22,7 +22,8 @@ client = genai.Client()
 
 class GeminiChat:
     def __init__(self, ctx: commands.Context['NeonBot'], prompt: str = None):
-        self.model_name = GEMINI_MODEL
+        self.chat_model_name = GEMINI_CHAT_MODEL
+        self.image_model_name = GEMINI_IMAGE_MODEL
         self.response = None
         self.ctx = ctx
         self.bot = ctx.bot
@@ -74,7 +75,7 @@ class GeminiChat:
             ))
 
         response = await client.aio.models.generate_content(
-            model=self.model_name,
+            model=self.chat_model_name,
             contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
@@ -99,6 +100,20 @@ class GeminiChat:
 
         self.log()
         return self
+
+    async def generate_image(self):
+        response = await client.aio.models.generate_images(
+            model=self.image_model_name,
+            prompt=self.prompt,
+        )
+
+        file_list = []
+
+        for i, generated_image in enumerate(response.generated_images):
+            with io.BytesIO(generated_image.image.image_bytes) as image_binary:
+                file_list.append(discord.File(fp=image_binary))
+
+        return file_list
 
     def log(self):
         log.info('\n'.join([
