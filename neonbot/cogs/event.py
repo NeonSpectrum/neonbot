@@ -141,7 +141,7 @@ class Event(commands.Cog):
             return True
 
         await interaction.response.send_message(
-            'This personal app is restricted to the developer.',
+            embed=Embed('This personal app is restricted to the developer.'),
             ephemeral=True
         )
         return False
