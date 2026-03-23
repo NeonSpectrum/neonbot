@@ -78,6 +78,7 @@ class GeminiChat:
             contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
+                response_mime_type='application/json',
                 tools=[
                     types.Tool(google_search=types.GoogleSearch()),
                     types.Tool(code_execution=types.ToolCodeExecution())
