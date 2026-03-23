@@ -133,7 +133,7 @@ class Event(commands.Cog):
         ctx = await self.bot.get_context(interaction)
         log.cmd(ctx, get_command_string(ctx), guild=ctx.guild or 'N/A')
 
-    async def is_authorized(self, interaction: discord.Interaction) -> bool:
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.guild_id is not None:
             return True
 
