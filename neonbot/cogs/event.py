@@ -64,10 +64,7 @@ class Event(commands.Cog):
                 return
 
             log.info(f'DM from {ctx.author}: {message.content}')
-            await self.bot.send_to_owner(
-                embed=Embed(title=f'DM from {ctx.author}', description=message.content),
-                sender=ctx.author.id,
-            )
+            await self.bot.send_to_owner(embed=Embed(title=f'DM from {ctx.author}', description=message.content))
             return
 
         if await ChatGPT().create_thread(ctx):

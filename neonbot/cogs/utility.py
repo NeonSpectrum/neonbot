@@ -128,10 +128,10 @@ class Utility(commands.Cog):
                 .add_field('Date sent:', format_dt(datetime.now()), inline=False)
             )
 
-    @app_commands.command(name='ai')
+    @app_commands.command(name='chat')
     @app_commands.allowed_installs(guilds=False, users=True)
     @app_commands.allowed_contexts(guilds=False, dms=True, private_channels=True)
-    async def ai(self, interaction: discord.Interaction['NeonBot'], prompt: str) -> None:
+    async def chat(self, interaction: discord.Interaction['NeonBot'], prompt: str) -> None:
         """Chat with bot using AI."""
 
         await interaction.response.defer()
