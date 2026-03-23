@@ -170,6 +170,9 @@ class GeminiChat:
     def get_guild_data(self):
         guild = self.ctx.guild
 
+        if not guild:
+            return {}
+
         data = {
             "id": guild.id,
             "name": guild.name,
