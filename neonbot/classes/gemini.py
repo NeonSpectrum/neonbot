@@ -139,8 +139,8 @@ class GeminiChat:
         return messages[::-1]
 
     def replace_placeholder(self, text):
-        player = self.bot.lavalink.player_manager.get(self.ctx.guild.id)
-        player_settings = GuildModel.get_instance(self.ctx.guild.id)
+        player = self.bot.lavalink.player_manager.get(self.ctx.guild.id) if self.ctx.guild else None
+        player_settings = GuildModel.get_instance(self.ctx.guild.id) if self.ctx.guild else None
         track_list = []
 
         if player:
@@ -159,7 +159,7 @@ class GeminiChat:
                     'repeat': player_settings.music.repeat,
                 },
                 'track_list': track_list
-            }
+            } if player_settings else {},
         }
 
         for placeholder, value in placeholders.items():
