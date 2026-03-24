@@ -330,7 +330,7 @@ class Player(DefaultPlayer):
                 video_id = track.identifier
 
             if len(self.autoplay_list) == 0:
-                log.debug(f'Searching related tracks from `{track.title}`.')
+                log.debug(f'Searching related tracks from `{track.title}` [{video_id}].')
                 related_tracks = await YTMusic(self.bot).get_related_tracks(video_id)
                 log.debug('Found related tracks: ' + str(len(related_tracks)))
 
