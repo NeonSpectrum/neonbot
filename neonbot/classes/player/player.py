@@ -199,7 +199,7 @@ class Player(DefaultPlayer):
         return removed_track
 
     async def search_random(self):
-        tracks = await YTMusic(self.bot).get_random_song()
+        tracks = await YTMusic(self.bot).get_random_tracks()
 
         self.autoplay_list = self.filter_tracks_from_existing(tracks)
 
@@ -329,16 +329,15 @@ class Player(DefaultPlayer):
             else:
                 video_id = track.identifier
 
-            log.debug('video_id: ' + video_id)
-
             if len(self.autoplay_list) == 0:
+                log.debug(f'Searching related tracks from `{track.title}`.')
                 related_tracks = await YTMusic(self.bot).get_related_tracks(video_id)
-
-                log.debug('related_tracks: ' + str(len(related_tracks)))
+                log.debug('Found related tracks: ' + str(len(related_tracks)))
 
                 if len(related_tracks) == 0:
-                    related_tracks = await YTMusic(self.bot).get_random_song()
-                    log.debug('replaced related_tracks: ' + str(len(related_tracks)))
+                    log.debug('Related tracks are empty. Getting random tracks.')
+                    related_tracks = await YTMusic(self.bot).get_random_tracks()
+                    log.debug('Found random tracks: ' + str(len(related_tracks)))
 
                 self.autoplay_list = self.filter_tracks_from_existing(related_tracks)
                 log.debug('self.autoplay_list: ' + str(len(self.autoplay_list)))

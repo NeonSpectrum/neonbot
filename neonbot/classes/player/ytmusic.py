@@ -72,7 +72,7 @@ class YTMusic:
 
         return related_tracks
 
-    async def get_random_song(self) -> List[dict]:
+    async def get_random_tracks(self) -> List[dict]:
         homes = await asyncio.to_thread(ytmusic.get_home)
 
         tracks = []
