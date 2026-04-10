@@ -88,7 +88,6 @@ class Player(DefaultPlayer):
         if self.ctx:
             return
 
-        log.debug('Setting default ctx')
         channel = self.bot.get_channel(self.settings.music.channel_id or self.settings.music.last_channel_id)
 
         if channel:
@@ -96,6 +95,7 @@ class Player(DefaultPlayer):
                 if message.author == self.bot.user:
                     ctx = await self.bot.get_context(message)
                     self.set_ctx(ctx, save_last_channel_id=False)
+                    log.debug(f'Setting default ctx to {ctx.channel.name}.')
                     return
 
         voice_channel = self.bot.get_channel(self.settings.music.autojoin_channel_id)
@@ -104,6 +104,7 @@ class Player(DefaultPlayer):
             message = await voice_channel.send('Executing autoplay...')
             ctx = await self.bot.get_context(message)
             self.set_ctx(ctx, save_last_channel_id=False)
+            log.debug(f'Setting default ctx to {ctx.channel.name}.')
             await message.delete()
             return
 
