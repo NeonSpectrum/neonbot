@@ -148,8 +148,7 @@ class NeonBot(commands.Bot):
         return player
 
     def get_player_instance(self, guild_id: int) -> 'Player':
-        player = self.get_player_instance(guild_id)
-        return player
+        return self.lavalink.player_manager.get(guild_id)
 
     def initialize_lavalink(self):
         self.lavalink = Client(self, self.user.id)
