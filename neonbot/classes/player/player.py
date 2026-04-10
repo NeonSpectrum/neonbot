@@ -56,9 +56,8 @@ class Player(DefaultPlayer):
         self.set_shuffle(self.settings.music.shuffle)
         self.set_loop(self.settings.music.repeat)
 
-    @staticmethod
-    def get_instance(guild_id):
-        return
+    def save_settings(self):
+        self.bot.loop.create_task(self.settings.save_changes(False))
 
     @property
     def playlist(self) -> List[AudioTrack]:
@@ -75,24 +74,36 @@ class Player(DefaultPlayer):
     @autoplay.setter
     def autoplay(self, value) -> None:
         self.settings.music.autoplay = value
-        self.bot.loop.create_task(self.settings.save_changes(False))
+        self.save_settings()
 
-    def set_ctx(self, ctx: commands.Context['NeonBot']):
+    def set_ctx(self, ctx: commands.Context['NeonBot'], *, save_last_channel_id=True):
         self.ctx = ctx
         self.messager.set_channel(self.bot.get_channel(self.settings.music.channel_id) or ctx.channel)
+
+        if save_last_channel_id:
+            self.settings.music.last_channel_id = ctx.channel.id
+            self.save_settings()
 
     async def set_default_ctx(self):
         if self.ctx:
             return
 
-        channel = self.bot.get_channel(self.settings.music.channel_id)
+        channel = self.bot.get_channel(self.settings.music.channel_id or self.settings.music.last_channel_id)
 
         if channel:
-            async for message in channel.history(limit=50):
+            async for message in channel.history(limit=100):
                 if message.author == self.ctx.bot.user:
                     ctx = await self.bot.get_context(message)
-                    self.set_ctx(ctx)
-                    break
+                    self.set_ctx(ctx, save_last_channel_id=False)
+                    return
+
+        voice_channel = self.bot.get_channel(self.settings.music.autojoin_channel_id)
+
+        if voice_channel:
+            message = await voice_channel.send('Executing autoplay...')
+            ctx = await self.bot.get_context(message)
+            self.set_ctx(ctx, save_last_channel_id=False)
+            return
 
         if not self.ctx:
             log.error('Cannot set default ctx')
@@ -103,7 +114,7 @@ class Player(DefaultPlayer):
     def set_loop(self, value: int) -> None:
         super().set_loop(value)
         self.settings.music.repeat = value
-        self.bot.loop.create_task(self.settings.save_changes(False))
+        self.save_settings()
         self.messager.refresh_player_controls(embed=True)
 
     def set_shuffle(self, value: bool) -> None:
@@ -118,7 +129,7 @@ class Player(DefaultPlayer):
 
         super().set_shuffle(value)
         self.settings.music.shuffle = value
-        self.bot.loop.create_task(self.settings.save_changes(False))
+        self.save_settings()
         self.messager.refresh_player_controls(embed=True)
 
     def set_autoplay(self, value: bool):

@@ -137,7 +137,7 @@ class NeonBot(commands.Bot):
             self.loop.create_task(player.connect(vc))
 
     async def create_player_instance(self, guild_id: int, *, ctx: Optional[commands.Context['NeonBot']] = None) -> 'Player':
-        player = self.lavalink.player_manager.create(guild_id)
+        player: 'Player' = self.lavalink.player_manager.create(guild_id)
 
         if not ctx and not player.ctx:
             await player.set_default_ctx()
