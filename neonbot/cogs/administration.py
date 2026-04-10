@@ -55,7 +55,7 @@ class Administration(commands.Cog):
     async def eval(self, ctx: commands.Context['NeonBot'], *, code: str) -> None:
         """Evaluates a line/s of python code. *BOT_OWNER"""
 
-        variables = {'bot': self.bot, 'ctx': ctx, 'player': self.bot.lavalink.player_manager.get(ctx.guild.id), 'Embed': Embed}
+        variables = {'bot': self.bot, 'ctx': ctx, 'player': self.bot.get_player_instance(ctx.guild.id), 'Embed': Embed}
 
         if code.startswith('```') and code.endswith('```'):
             code = '\n'.join(code.splitlines()[1:-1])
@@ -241,6 +241,19 @@ class Administration(commands.Cog):
         # noinspection PyUnresolvedReferences
         await interaction.response.send_message(
             embed=Embed(f'Autojoin voice channel is now set to **{channel}**.')
+        )
+
+    @server.command(name='set-music-channel')
+    async def set_music_channel(self, interaction: discord.Interaction['NeonBot'], channel: Optional[discord.VoiceChannel] = None):
+        """Sets the chatgpt channel. *ADMINISTRATOR"""
+
+        guild = GuildModel.get_instance(interaction.guild_id)
+        guild.music.channel_id = channel.id if channel else None
+        await guild.save_changes(False)
+
+        # noinspection PyUnresolvedReferences
+        await interaction.response.send_message(
+            embed=Embed(f'Music channel is now set to **{channel}**.')
         )
 
     @settings.command(name='set-gemini-instruction')

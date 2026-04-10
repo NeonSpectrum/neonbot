@@ -46,7 +46,7 @@ class Event(commands.Cog):
 
         if not self.bot.is_ready():
             self.bot.start_listeners()
-            self.bot.join_autojoin_voice_channels()
+            await self.bot.join_autojoin_voice_channels()
             log.debug(f'YTMusic.get_account_info: {await YTMusic(self.bot).get_account_info()}')
 
         self.bot.set_ready()
@@ -201,7 +201,7 @@ class Event(commands.Cog):
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
-        player: Player = self.bot.lavalink.player_manager.create(member.guild.id)
+        player: Player = await self.bot.create_player_instance(member.guild.id)
         server = GuildModel.get_instance(member.guild.id)
 
         if member.id == self.bot.user.id:

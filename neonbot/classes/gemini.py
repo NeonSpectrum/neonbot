@@ -184,7 +184,7 @@ class GeminiChat:
         return messages[::-1]
 
     def replace_placeholder(self, text):
-        player = self.bot.lavalink.player_manager.get(self.ctx.guild.id) if self.ctx.guild else None
+        player = self.bot.get_player_instance(self.ctx.guild.id) if self.ctx.guild else None
         player_settings = GuildModel.get_instance(self.ctx.guild.id) if self.ctx.guild else None
         track_list = []
 

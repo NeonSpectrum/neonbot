@@ -8,4 +8,5 @@ class MusicModel(BaseModel):
     repeat: int
     shuffle: bool
     autoplay: bool
+    channel_id: Optional[int] = None
     autojoin_channel_id: Optional[int] = None

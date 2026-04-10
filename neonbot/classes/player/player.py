@@ -42,7 +42,7 @@ class Player(DefaultPlayer):
         self.messager: PlayerMessageManager = PlayerMessageManager(self.bot, self.guild_id)
         self._track_event_lock = asyncio.Lock()
 
-        self.ctx: Optional[Context] = None
+        self.ctx: Optional[Context['NeonBot']] = None
         self.vc: Optional[VoiceChannel] = None
         self.current: Optional[AudioTrack] = None
         self.current_queue = -1
@@ -55,6 +55,10 @@ class Player(DefaultPlayer):
         self.set_autoplay(self.autoplay)
         self.set_shuffle(self.settings.music.shuffle)
         self.set_loop(self.settings.music.repeat)
+
+    @staticmethod
+    def get_instance(guild_id):
+        return
 
     @property
     def playlist(self) -> List[AudioTrack]:
@@ -75,7 +79,23 @@ class Player(DefaultPlayer):
 
     def set_ctx(self, ctx: commands.Context['NeonBot']):
         self.ctx = ctx
-        self.messager.set_ctx(ctx)
+        self.messager.set_channel(self.bot.get_channel(self.settings.music.channel_id) or ctx.channel)
+
+    async def set_default_ctx(self):
+        if self.ctx:
+            return
+
+        channel = self.bot.get_channel(self.settings.music.channel_id)
+
+        if channel:
+            async for message in channel.history(limit=50):
+                if message.author == self.ctx.bot.user:
+                    ctx = await self.bot.get_context(message)
+                    self.set_ctx(ctx)
+                    break
+
+        if not self.ctx:
+            log.error('Cannot set default ctx')
 
     async def handle_event(self, event):
         pass
@@ -116,7 +136,7 @@ class Player(DefaultPlayer):
         await self.send_message(embed=Embed(msg))
 
     async def connect(self, voice_channel: discord.VoiceChannel = None):
-        if self.ctx and self.ctx.guild.voice_client:
+        if self.ctx.guild.voice_client:
             if voice_channel and self.ctx.guild.voice_client.channel != voice_channel:
                 self.vc = voice_channel
                 await self.ctx.guild.me.move_to(voice_channel)

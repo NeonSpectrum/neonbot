@@ -1,8 +1,8 @@
 import asyncio
-from typing import List, Optional
+from typing import List
 from typing import TYPE_CHECKING
 
-from discord.ext import commands
+import discord
 from discord.utils import MISSING
 from i18n import t
 from lavalink import AudioTrack
@@ -17,6 +17,7 @@ from neonbot.utils.functions import format_milliseconds
 
 if TYPE_CHECKING:
     from neonbot import NeonBot
+    from neonbot.classes.player.player import Player
 
 
 class PlayerMessageManager:
@@ -25,14 +26,14 @@ class PlayerMessageManager:
         self.guild_id = guild_id
         self.data: List[PlayerMessage] = []
         self.player_controls = PlayerControls(self.bot, guild_id)
-        self.ctx: Optional[commands.Context['NeonBot']] = None
+        self.channel = None
 
     @property
-    def player(self):
-        return self.bot.lavalink.player_manager.get(self.guild_id)
+    def player(self) -> 'Player':
+        return self.bot.get_player_instance(self.guild_id)
 
-    def set_ctx(self, ctx: commands.Context['NeonBot']):
-        self.ctx = ctx
+    def set_channel(self, channel: discord.TextChannel):
+        self.channel = channel
 
     def add(self, data: PlayerMessage):
         self.data.append(data)
@@ -117,13 +118,13 @@ class PlayerMessageManager:
         player_message.message = await self.bot.edit_message(player_message.message, *args, **kwargs)
 
     async def send_message(self, data: PlayerMessage):
-        if self.ctx is None:
-            log.warn('self.ctx not yet available.')
+        if self.channel:
+            log.warn('self.channel not yet available.')
             return
 
         self.player_controls.initialize()
 
-        data.message = await self.ctx.channel.send(embed=self.get_playing_embed(data.track), view=self.player_controls.get())
+        data.message = await self.channel.send(embed=self.get_playing_embed(data.track), view=self.player_controls.get())
         self.add(data)
 
     def refresh_player_controls(self, *, embed=False):

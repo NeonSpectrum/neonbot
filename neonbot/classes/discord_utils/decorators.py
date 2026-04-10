@@ -54,7 +54,7 @@ def has_player(app: bool = False) -> Check[Context['NeonBot']]:
     async def predicate(ctx: commands.Context['NeonBot']):
         ctx = await ensure_ctx(ctx)
 
-        player: Player = ctx.bot.lavalink.player_manager.get(ctx.guild.id)
+        player: Player = ctx.bot.get_player_instance(ctx.guild.id)
 
         if not player or not player.ctx:
             await ctx.reply(embed=Embed('No active player.'), ephemeral=True)

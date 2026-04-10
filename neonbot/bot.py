@@ -124,17 +124,29 @@ class NeonBot(commands.Bot):
 
             Panel.start_listener(self, guild.id)
 
-    def join_autojoin_voice_channels(self):
+    async def join_autojoin_voice_channels(self):
         for guild in self.guilds:
             server = GuildModel.get_instance(guild.id)
 
             if server.music.autojoin_channel_id is None:
                 continue
 
-            player: Player = self.lavalink.player_manager.create(guild.id)
+            player = await self.create_player_instance(guild.id)
 
             vc: discord.VoiceChannel = self.get_channel(server.music.autojoin_channel_id)
             self.loop.create_task(player.connect(vc))
+
+    async def create_player_instance(self, guild_id: int, ctx: Optional[commands.Context['NeonBot']] = None) -> 'Player':
+        player = self.lavalink.player_manager.create(guild_id)
+
+        if not ctx and not player.ctx:
+            await player.set_default_ctx()
+
+        return player
+
+    def get_player_instance(self, guild_id: int) -> 'Player':
+        player = self.get_player_instance(guild_id)
+        return player
 
     def initialize_lavalink(self):
         self.lavalink = Client(self, self.user.id)

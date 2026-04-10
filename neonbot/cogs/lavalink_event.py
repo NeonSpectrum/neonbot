@@ -38,7 +38,7 @@ class LavalinkEvent(commands.Cog):
             log.warn('event.track is missing.')
             return
 
-        player = self.bot.lavalink.player_manager.get(event.player.guild_id)
+        player = self.bot.get_player_instance(event.player.guild_id)
 
         if player:
             await player.track_start_event(event)
@@ -47,7 +47,7 @@ class LavalinkEvent(commands.Cog):
     async def on_track_end(self, event: TrackEndEvent):
         log.debug(f'TrackEndEvent: {event.track} Reason: {event.reason}')
 
-        player = self.bot.lavalink.player_manager.get(event.player.guild_id)
+        player = self.bot.get_player_instance(event.player.guild_id)
 
         if event.track is None:
             log.warn(f'event.track is missing. overwriting with {player.last_track}')

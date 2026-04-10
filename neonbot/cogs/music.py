@@ -29,8 +29,7 @@ class Music(commands.Cog):
     async def play(self, ctx: commands.Context['NeonBot'], *, query: str) -> None:
         """Searches the url or the keyword and add it to queue. This will queue the first search."""
 
-        player: Player = self.bot.lavalink.player_manager.create(ctx.guild.id)
-        player.set_ctx(ctx)
+        player: Player = await self.bot.create_player_instance(ctx.guild.id, ctx)
 
         # Clear autoplay list whenever there's new song
         player.autoplay_list = []
@@ -50,8 +49,7 @@ class Music(commands.Cog):
     @in_voice()
     @commands.guild_only()
     async def playrandom(self, ctx: commands.Context['NeonBot']):
-        player: Player = self.bot.lavalink.player_manager.create(ctx.guild.id)
-        player.set_ctx(ctx)
+        player: Player = await self.bot.create_player_instance(ctx.guild.id, ctx)
 
         await player.search_random()
 
@@ -71,7 +69,7 @@ class Music(commands.Cog):
     async def nowplaying(self, ctx: commands.Context['NeonBot']) -> None:
         """Displays in brief description of the current playing."""
 
-        player: Player = self.bot.lavalink.player_manager.get(ctx.guild.id)
+        player: Player = self.bot.get_player_instance(ctx.guild.id)
 
         if not player.current:
             await ctx.send(embed=Embed(t('music.no_song_playing')), ephemeral=True)
@@ -102,7 +100,7 @@ class Music(commands.Cog):
     async def playlist(self, interaction: discord.Interaction['NeonBot']) -> None:
         """List down all songs in the player's queue."""
 
-        player: Player = self.bot.lavalink.player_manager.get(interaction.guild_id)
+        player: Player = self.bot.get_player_instance(interaction.guild_id)
         embeds = []
         duration = 0
 
@@ -145,7 +143,7 @@ class Music(commands.Cog):
     async def goto(self, ctx: commands.Context['NeonBot'], index: int) -> None:
         """Skips the current song."""
 
-        player: Player = self.bot.lavalink.player_manager.get(ctx.guild.id)
+        player: Player = self.bot.get_player_instance(ctx.guild.id)
 
         try:
             player.current_queue = index - 1
@@ -165,7 +163,7 @@ class Music(commands.Cog):
     async def removesong(self, ctx: commands.Context['NeonBot'], index: int) -> None:
         """Removes a specific song."""
 
-        player: Player = self.bot.lavalink.player_manager.get(ctx.guild.id)
+        player: Player = self.bot.get_player_instance(ctx.guild.id)
 
         try:
             is_currently_playing = player.current.extra['index'] == index - 1
@@ -189,7 +187,7 @@ class Music(commands.Cog):
     async def reset(self, ctx: commands.Context['NeonBot']) -> None:
         """Resets the current player and disconnect to voice channel."""
 
-        player: Player = self.bot.lavalink.player_manager.get(ctx.guild.id)
+        player: Player = self.bot.get_player_instance(ctx.guild.id)
         await player.reset()
 
         msg = 'Player reset.'
@@ -202,8 +200,7 @@ class Music(commands.Cog):
     async def join(self, ctx: commands.Context['NeonBot'], voice_channel: discord.VoiceChannel) -> None:
         """Connect to voice channel."""
 
-        player: Player = self.bot.lavalink.player_manager.create(ctx.guild.id)
-        player.set_ctx(ctx)
+        player: Player = await self.bot.create_player_instance(ctx.guild.id, ctx)
         await player.connect(voice_channel)
 
         await ctx.reply(embed=Embed(f'Joined {voice_channel.mention}.'), ephemeral=True)
@@ -214,7 +211,7 @@ class Music(commands.Cog):
     async def leave(self, ctx: commands.Context['NeonBot']) -> None:
         """Connect to voice channel."""
 
-        player: Player = self.bot.lavalink.player_manager.create(ctx.guild.id)
+        player: Player = self.bot.get_player_instance(ctx.guild.id)
 
         last_voice_channel = player.vc
 
@@ -228,7 +225,7 @@ class Music(commands.Cog):
     async def shuffle(self, ctx: commands.Context['NeonBot'], state: bool) -> None:
         """Set shuffle mode."""
 
-        player: Player = self.bot.lavalink.player_manager.create(ctx.guild.id)
+        player: Player = self.bot.get_player_instance(ctx.guild.id)
         player.set_shuffle(state)
 
         user = ctx.author.mention if ctx.invoked_with != 'bot' else ctx.guild.me.mention
@@ -245,7 +242,7 @@ class Music(commands.Cog):
     async def repeat(self, ctx: commands.Context['NeonBot'], mode: int) -> None:
         """Set repeat mode."""
 
-        player: Player = self.bot.lavalink.player_manager.create(ctx.guild.id)
+        player: Player = self.bot.get_player_instance(ctx.guild.id)
 
         modes = [Repeat.OFF, Repeat.SINGLE, Repeat.ALL]
         player.set_loop(modes[mode].value)
@@ -259,7 +256,7 @@ class Music(commands.Cog):
     async def autoplay(self, ctx: commands.Context['NeonBot'], state: bool) -> None:
         """Set autoplay mode."""
 
-        player: Player = self.bot.lavalink.player_manager.create(ctx.guild.id)
+        player: Player = self.bot.get_player_instance(ctx.guild.id)
         player.set_autoplay(state)
 
         user = ctx.author.mention if ctx.invoked_with != 'bot' else ctx.guild.me.mention

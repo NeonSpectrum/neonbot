@@ -21,7 +21,7 @@ class PlayerControls:
 
     @property
     def player(self):
-        return self.bot.lavalink.player_manager.get(self.guild_id)
+        return self.bot.get_player_instance(self.guild_id)
 
     def update_buttons(self, views):
         # ["🔀","⏮️","⏸️","⏭️","🔁"]
