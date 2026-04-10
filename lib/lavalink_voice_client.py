@@ -1,10 +1,15 @@
+from typing import TYPE_CHECKING
+
 import discord
 import lavalink
 from lavalink import ClientError
 
+if TYPE_CHECKING:
+    from neonbot.classes.player.player import Player
+
 
 # noinspection All
-class LavalinkVoiceClient(discord.VoiceProtocol):
+class LavalinkVoiceClient(discord.VoiceClient):
     """
     This is the preferred way to handle external voice sending
     This client will be created via a cls in the connect method of the channel
@@ -13,8 +18,7 @@ class LavalinkVoiceClient(discord.VoiceProtocol):
     """
 
     def __init__(self, client: discord.Client, channel: discord.abc.Connectable):
-        self.client = client
-        self.channel = channel
+        super().__init__(client, channel)
         self.guild_id = channel.guild.id
         self._destroyed = False
         # Create a shortcut to the Lavalink client here.
@@ -34,7 +38,7 @@ class LavalinkVoiceClient(discord.VoiceProtocol):
             pass
 
     async def on_voice_state_update(self, data):
-        player = self.lavalink.player_manager.get(self.channel.guild.id)
+        player: 'Player' = self.lavalink.player_manager.get(self.channel.guild.id)
         channel_id = data['channel_id']
 
         if not channel_id:
@@ -71,7 +75,7 @@ class LavalinkVoiceClient(discord.VoiceProtocol):
         Handles the disconnect.
         Cleans up running player and leaves the voice client.
         """
-        player = self.lavalink.player_manager.get(self.channel.guild.id)
+        player: 'Player' = self.lavalink.player_manager.get(self.channel.guild.id)
 
         # no need to disconnect if we are not connected
         if not force and not player.is_connected:
@@ -83,7 +87,8 @@ class LavalinkVoiceClient(discord.VoiceProtocol):
         # update the channel_id of the player to None
         # this must be done because the on_voice_state_update that would set channel_id
         # to None doesn't get dispatched after the disconnect
-        player.channel_id = None
+        if player:
+            player.channel_id = None
 
         self.cleanup()
 

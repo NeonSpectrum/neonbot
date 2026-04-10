@@ -43,7 +43,8 @@ class Player(DefaultPlayer):
         self._track_event_lock = asyncio.Lock()
 
         self.ctx: Optional[Context['NeonBot']] = None
-        self.vc: Optional[VoiceChannel] = None
+        self.voice_channel: Optional[VoiceChannel] = None
+        self.voice_client: Optional[LavalinkVoiceClient] = None
         self.current: Optional[AudioTrack] = None
         self.current_queue = -1
         self.last_track: Optional[AudioTrack] = None
@@ -70,6 +71,10 @@ class Player(DefaultPlayer):
     @property
     def is_last_track(self) -> bool:
         return self.current_queue == len(self.playlist) - 1
+
+    @property
+    def is_autojoin_enabled(self) -> bool:
+        return self.settings.music.autojoin_channel_id is not None
 
     @autoplay.setter
     def autoplay(self, value) -> None:
@@ -150,24 +155,25 @@ class Player(DefaultPlayer):
         await self.send_message(embed=Embed(msg))
 
     async def connect(self, voice_channel: discord.VoiceChannel = None):
-        if self.ctx.guild.voice_client:
+        if self.voice_client:
             if voice_channel and self.ctx.guild.voice_client.channel != voice_channel:
-                self.vc = voice_channel
+                self.voice_channel = voice_channel
                 await self.ctx.guild.me.move_to(voice_channel)
-                log.cmd(self.ctx, t('music.player_connected', channel=self.vc))
+                log.cmd(self.ctx, t('music.player_connected', channel=self.voice_channel))
 
             return
 
-        self.vc = voice_channel or self.ctx.author.voice.channel
-        await self.vc.connect(timeout=3, reconnect=True, self_deaf=True, cls=LavalinkVoiceClient)
-        log.cmd(self.ctx, t('music.player_connected', channel=self.vc, guild=self.vc.guild))
+        self.voice_channel = voice_channel or self.ctx.author.voice.channel
+        self.voice_client = await self.voice_channel.connect(timeout=3, reconnect=True, self_deaf=True, cls=LavalinkVoiceClient)
+        log.cmd(self.ctx, t('music.player_connected', channel=self.voice_channel, guild=self.voice_channel.guild))
 
     async def disconnect(self, force=True, destroy=True, timeout=None) -> None:
-        if self.is_connected and self.ctx.voice_client:
+        if self.ctx.voice_client:
             try:
                 voice_client = cast(LavalinkVoiceClient, self.ctx.voice_client)
                 await asyncio.wait_for(voice_client.disconnect(force=force, destroy=destroy), timeout=timeout)
-                self.vc = None
+                self.voice_channel = None
+                self.voice_client = None
             except asyncio.TimeoutError:
                 pass
 
@@ -349,12 +355,19 @@ class Player(DefaultPlayer):
     async def reset(self, timeout=None):
         self.track_list = []
         self.shuffled_list = []
+        self.autoplay_list = []
 
         await self.stop()
-        await self.disconnect(force=True, destroy=False, timeout=timeout)
-        await self.messager.replace_all_to_compact()
 
-        await self.bot.lavalink.player_manager.destroy(self.guild_id)
+        if self.is_autojoin_enabled:
+            await self.messager.replace_all_to_compact()
+            self.last_track = None
+            self.is_auto_paused = False
+            self.messager.clear()
+        else:
+            await self.disconnect(force=True, destroy=False, timeout=timeout)
+            await self.messager.replace_all_to_compact()
+            await self.voice_client.destroy()
 
     async def process_autoplay(self, track: AudioTrack) -> None:
         try:

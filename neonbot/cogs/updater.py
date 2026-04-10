@@ -118,7 +118,7 @@ class UpdaterCog(commands.Cog):
                     for guild_id, player in interaction.client.lavalink.player_manager.players.items():
                         new_players[guild_id] = {
                             'ctx': player.ctx,
-                            'vc': player.vc,
+                            'vc': player.voice_channel,
                             'current': player.current,
                             'current_queue': player.current_queue,
                             'last_track': player.last_track,

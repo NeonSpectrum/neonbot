@@ -213,7 +213,7 @@ class Music(commands.Cog):
 
         player: Player = self.bot.get_player_instance(ctx.guild.id)
 
-        last_voice_channel = player.vc
+        last_voice_channel = player.voice_channel
 
         await player.disconnect()
 

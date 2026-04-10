@@ -51,7 +51,6 @@ class NeonBot(commands.Bot):
         self.loop.set_default_executor(executor)
         super().__init__(
             intents=discord.Intents.all(),
-
             command_prefix=self.default_prefix,
             owner_ids=set(OWNER_IDS),
         )

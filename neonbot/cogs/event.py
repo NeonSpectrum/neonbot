@@ -203,16 +203,23 @@ class Event(commands.Cog):
         server = GuildModel.get_instance(member.guild.id)
 
         if member.id == self.bot.user.id:
+            if after.channel is None:
+                player = self.bot.get_player_instance(member.guild.id)
+
+                if player and player.ctx.voice_client:
+                    await player.disconnect(force=True)
+
             if server.music.autojoin_channel_id is not None and after.channel is None:
                 player = await self.bot.create_player_instance(member.guild.id)
+
                 vc: discord.VoiceChannel = self.bot.get_channel(server.music.autojoin_channel_id)
                 await player.connect(vc)
             return
 
         player = self.bot.get_player_instance(member.guild.id)
 
-        if player and player.ctx and player.ctx.voice_client and player.vc:
-            voice_members = [member for member in player.vc.members if not member.bot]
+        if player and player.ctx and player.ctx.voice_client and player.voice_channel:
+            voice_members = [member for member in player.voice_channel.members if not member.bot]
 
             if any(voice_members):
                 player.reset_timeout.cancel()
