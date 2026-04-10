@@ -88,6 +88,7 @@ class Player(DefaultPlayer):
         if self.ctx:
             return
 
+        log.debug('Setting default ctx')
         channel = self.bot.get_channel(self.settings.music.channel_id or self.settings.music.last_channel_id)
 
         if channel:

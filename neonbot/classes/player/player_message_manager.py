@@ -118,7 +118,7 @@ class PlayerMessageManager:
         player_message.message = await self.bot.edit_message(player_message.message, *args, **kwargs)
 
     async def send_message(self, data: PlayerMessage):
-        if self.channel:
+        if not self.channel:
             log.warn('self.channel not yet available.')
             return
 
