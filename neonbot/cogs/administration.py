@@ -230,6 +230,19 @@ class Administration(commands.Cog):
                 embed=Embed('ChatGPT is now disabled.')
             )
 
+    @server.command(name='set-autojoin')
+    async def set_autojoin(self, interaction: discord.Interaction['NeonBot'], channel: Optional[discord.VoiceChannel] = None):
+        """Sets the chatgpt channel. *ADMINISTRATOR"""
+
+        guild = GuildModel.get_instance(interaction.guild_id)
+        guild.music.autojoin_channel_id = channel.id if channel else None
+        await guild.save_changes(False)
+
+        # noinspection PyUnresolvedReferences
+        await interaction.response.send_message(
+            embed=Embed(f'Autojoin voice channel is now set to **{value}**.')
+        )
+
     @settings.command(name='set-gemini-instruction')
     async def set_gemini_instruction(self, interaction: discord.Interaction['NeonBot'], value: str):
         """Sets the chatgpt channel. *ADMINISTRATOR"""
@@ -241,19 +254,6 @@ class Administration(commands.Cog):
         # noinspection PyUnresolvedReferences
         await interaction.response.send_message(
             embed=Embed(f'Gemini instruction is now set to **{value}**.')
-        )
-
-    @settings.command(name='set-autojoin')
-    async def set_autojoin(self, interaction: discord.Interaction['NeonBot'], channel: Optional[discord.VoiceChannel] = None):
-        """Sets the chatgpt channel. *ADMINISTRATOR"""
-
-        guild = GuildModel.get_instance(interaction.guild_id)
-        guild.music.autojoin_channel_id = channel.id if channel else None
-        await guild.save_changes(False)
-
-        # noinspection PyUnresolvedReferences
-        await interaction.response.send_message(
-            embed=Embed(f'Autojoin voice channel is now set to **{value}**.')
         )
 
     @app_commands.command(name='sync')
