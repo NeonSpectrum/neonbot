@@ -67,6 +67,8 @@ class Log(logging.Logger):
                 user = ctx.author
             elif isinstance(ctx, discord.Interaction):
                 user = ctx.user
+            else:
+                user = 'N/A'
         elif isinstance(user, int):
             user = ctx.bot.get_user(user)
 

@@ -126,7 +126,7 @@ class Player(DefaultPlayer):
 
         self.vc = voice_channel or self.ctx.author.voice.channel
         await self.vc.connect(timeout=3, reconnect=True, self_deaf=True, cls=LavalinkVoiceClient)
-        log.cmd(self.ctx, t('music.player_connected', channel=self.vc))
+        log.cmd(self.ctx, t('music.player_connected', channel=self.vc, guild=self.vc.guild))
 
     async def disconnect(self, force=True, destroy=True, timeout=None) -> None:
         if self.is_connected and self.ctx.voice_client:
