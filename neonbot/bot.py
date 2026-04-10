@@ -29,7 +29,7 @@ from neonbot.env import (
     LAVALINK_PORT,
     OWNER_GUILD_IDS,
     OWNER_IDS,
-    SYNC_COMMANDS,
+    SYNC_COMMANDS, DISABLED_COGS,
 )
 from neonbot.models.flyff import FlyffModel
 from neonbot.models.guild import GuildModel
@@ -170,6 +170,9 @@ class NeonBot(commands.Bot):
         futures = []
 
         for extension in extensions:
+            if extension in DISABLED_COGS:
+                continue
+
             log.info(f'Loading {extension} cog... [{(process.memory_info().rss / 1024000):.2f} MB]')
             futures.append(self.load_extension('neonbot.cogs.' + extension))
 

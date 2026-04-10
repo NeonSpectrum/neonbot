@@ -8,6 +8,7 @@ OWNER_IDS = env.list('OWNER_IDS', default=[], subcast=int)
 DISCORD_LOG_LEVEL = env.str('DISCORD_LOG_LEVEL')
 BOT_LOG_LEVEL = env.str('BOT_LOG_LEVEL')
 DEFAULT_PREFIX = env.str('DEFAULT_PREFIX')
+DISABLED_COGS = env.str('DISABLED_COGS', default=[], subcast=str)
 
 MONGO_IP = env.str('MONGO_IP')
 MONGO_DB_NAME = env.str('MONGO_DB_NAME')
