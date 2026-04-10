@@ -20,6 +20,12 @@ if [[ -d .git ]] && [[ "${AUTO_UPDATE}" == "1" ]]; then
     fi
 fi
 
+if [[ -f .env ]]; then
+    if [[ $(find .env -mmin -1) ]]; then
+        export SYNC_COMMANDS=1
+    fi
+fi
+
 if [[ ! -d .venv ]] && [[ -f pyproject.toml ]]; then
     poetry install --sync
 fi
@@ -31,6 +37,5 @@ fi
 if [[ "${AUTO_PIP_UPDATE}" == "1" ]]; then
     poetry update --without dev
 fi
-
 
 poetry run python /home/container/${PY_FILE}
