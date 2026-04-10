@@ -103,6 +103,7 @@ class Player(DefaultPlayer):
             message = await voice_channel.send('Executing autoplay...')
             ctx = await self.bot.get_context(message)
             self.set_ctx(ctx, save_last_channel_id=False)
+            await message.delete()
             return
 
         if not self.ctx:
