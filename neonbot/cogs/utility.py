@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 
 
 class Utility(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: 'NeonBot'):
         self.bot = bot
 
     @app_commands.command(name='random')
@@ -52,7 +52,7 @@ class Utility(commands.Cog):
         process = psutil.Process(os.getpid())
 
         embed = Embed()
-        embed.set_author(f'{__title__} v{__version__}', icon_url=self.bot.user.display_avatar)
+        embed.set_author(f'{__title__} v{__version__}', icon_url=str(self.bot.user.display_avatar))
         embed.add_field('Username', self.bot.user.name)
         embed.add_field('Created On', f'{self.bot.user.created_at:%Y-%m-%d %I:%M:%S %p}')
         embed.add_field('Created By', __author__)
@@ -216,5 +216,5 @@ class Utility(commands.Cog):
                                                     ephemeral=True)
 
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: 'NeonBot') -> None:
     await bot.add_cog(Utility(bot))

@@ -7,7 +7,7 @@ from concurrent.futures import Executor
 from glob import glob
 from os import sep
 from time import time
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, TYPE_CHECKING
 
 import aiohttp.client_exceptions
 import discord
@@ -38,6 +38,9 @@ from neonbot.utils import log
 from neonbot.utils.constants import PERMISSIONS
 from neonbot.utils.context_menu import load_context_menu
 from neonbot.views.ExchangeGiftView import ExchangeGiftView
+
+if TYPE_CHECKING:
+    from neonbot.classes.player.player import Player
 
 
 class NeonBot(commands.Bot):
@@ -120,6 +123,18 @@ class NeonBot(commands.Bot):
                 self.add_view(ExchangeGiftView(), message_id=server.exchange_gift.message_id)
 
             Panel.start_listener(self, guild.id)
+
+    def join_autojoin_voice_channels(self):
+        for guild in self.guilds:
+            server = GuildModel.get_instance(guild.id)
+
+            if server.music.autojoin_channel_id is None:
+                continue
+
+            player: Player = self.lavalink.player_manager.create(guild.id)
+
+            vc: discord.VoiceChannel = self.get_channel(server.music.autojoin_channel_id)
+            self.loop.create_task(player.connect(vc))
 
     def initialize_lavalink(self):
         self.lavalink = Client(self, self.user.id)

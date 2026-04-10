@@ -100,5 +100,5 @@ class PanelCog(commands.Cog):
         ]
 
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: 'NeonBot') -> None:
     await bot.add_cog(PanelCog())

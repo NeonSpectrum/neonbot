@@ -21,7 +21,7 @@ class ExchangeGiftCog(commands.Cog):
         default_permissions=discord.Permissions(administrator=True),
     )
 
-    def __init__(self, bot):
+    def __init__(self, bot: 'NeonBot'):
         self.bot = bot
 
     @exchangegift.command(name='start')
@@ -128,5 +128,5 @@ class ExchangeGiftCog(commands.Cog):
         )
 
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: 'NeonBot') -> None:
     await bot.add_cog(ExchangeGiftCog(bot))

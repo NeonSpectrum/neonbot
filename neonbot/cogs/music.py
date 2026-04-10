@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 
 class Music(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: 'NeonBot'):
         self.bot = bot
 
     @commands.hybrid_command(name='play', aliases=['p'], )
@@ -91,7 +91,7 @@ class Music(commands.Cog):
             icon_url=ICONS['music'],
         )
         embed.set_image(url=now_playing.artwork_url)
-        embed.set_footer(text=' | '.join(footer), icon_url=self.bot.get_user(now_playing.requester).display_avatar)
+        embed.set_footer(text=' | '.join(footer), icon_url=self.bot.get_user(now_playing.requester).display_avatar.url)
         await ctx.reply(embed=embed)
 
     @app_commands.command(name='playlist')
@@ -266,5 +266,5 @@ class Music(commands.Cog):
         await ctx.reply(embed=Embed(t('music.autoplay_changed', mode='on' if player.autoplay else 'off', user=user)))
 
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: 'NeonBot') -> None:
     await bot.add_cog(Music(bot))

@@ -23,10 +23,11 @@ from neonbot.utils.functions import format_seconds, get_command_string, get_log_
 
 if TYPE_CHECKING:
     from neonbot import NeonBot
+    from neonbot.classes.player.player import Player
 
 
 class Event(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: 'NeonBot'):
         self.bot = bot
 
     @commands.Cog.listener()
@@ -45,6 +46,7 @@ class Event(commands.Cog):
 
         if not self.bot.is_ready():
             self.bot.start_listeners()
+            self.bot.join_autojoin_voice_channels()
             log.debug(f'YTMusic.get_account_info: {await YTMusic(self.bot).get_account_info()}')
 
         self.bot.set_ready()
@@ -199,9 +201,13 @@ class Event(commands.Cog):
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
-        player = self.bot.lavalink.player_manager.get(member.guild.id)
+        player: Player = self.bot.lavalink.player_manager.create(member.guild.id)
+        server = GuildModel.get_instance(member.guild.id)
 
         if member.id == self.bot.user.id:
+            if server.music.autojoin_channel_id is not None and after.channel is None:
+                vc: discord.VoiceChannel = self.bot.get_channel(server.music.autojoin_channel_id)
+                await player.connect(vc)
             return
 
         if player and player.ctx and player.ctx.voice_client and player.vc:
@@ -221,8 +227,6 @@ class Event(commands.Cog):
 
         if member.bot:
             return
-
-        server = GuildModel.get_instance(member.guild.id)
 
         connect_channel = self.bot.get_channel(int(server.channel_log.connect or -1))
         deafen_channel = self.bot.get_channel(int(server.channel_log.deafen or -1))
@@ -341,7 +345,7 @@ class Event(commands.Cog):
                     pass
 
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: 'NeonBot') -> None:
     cog = Event(bot)
     bot.on_message = cog.on_message
     bot.tree.on_error = cog.on_command_error

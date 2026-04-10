@@ -28,7 +28,7 @@ class Search(commands.Cog):
     anime = app_commands.Group(name='anime', description='Searches for top, upcoming, or specific anime.')
     chatgpt = app_commands.Group(name='chatgpt', description='ChatGPT', guild_ids=OWNER_GUILD_IDS)
 
-    def __init__(self, bot) -> None:
+    def __init__(self, bot: 'NeonBot') -> None:
         self.bot = bot
 
         with open('./neonbot/assets/lang.json', 'r') as f:
@@ -438,5 +438,5 @@ class Search(commands.Cog):
         await interaction.followup.send(embed=embed)
 
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: 'NeonBot') -> None:
     await bot.add_cog(Search(bot))

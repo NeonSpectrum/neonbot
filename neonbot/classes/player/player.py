@@ -137,7 +137,7 @@ class Player(DefaultPlayer):
             except asyncio.TimeoutError:
                 pass
 
-    async def pause(self, requester: discord.User):
+    async def pause(self, requester: Union[discord.User, discord.ClientUser]):
         if not self.is_playing:
             return
 
@@ -147,7 +147,7 @@ class Player(DefaultPlayer):
         await self.send_message(embed=Embed(t('music.player_paused', user=requester.mention)))
         self.messager.refresh_player_controls()
 
-    async def resume(self, requester: discord.User):
+    async def resume(self, requester: Union[discord.User, discord.ClientUser]):
         if not self.paused:
             return
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from time import time
-from typing import List
+from typing import List, TYPE_CHECKING
 
 import discord
 from beanie import init_beanie
@@ -16,9 +16,12 @@ from neonbot.models.guild import GuildModel
 from neonbot.models.setting import SettingModel
 from neonbot.utils import log
 
+if TYPE_CHECKING:
+    from neonbot import NeonBot
+
 
 class Database:
-    def __init__(self, bot):
+    def __init__(self, bot: 'NeonBot'):
         self.client = None
         self.bot = bot
         self.settings = None

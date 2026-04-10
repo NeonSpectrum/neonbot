@@ -59,7 +59,7 @@ class PlayerMessageManager:
     def get_track_embed(self, track: AudioTrack):
         footer = self.get_footer(track)
         embed = Embed(title=track.title, url=track.uri)
-        embed.set_footer(text=' | '.join(footer), icon_url=str(self.bot.get_user(track.requester).display_avatar))
+        embed.set_footer(text=' | '.join(footer), icon_url=self.bot.get_user(track.requester).display_avatar.url)
 
         return embed
 

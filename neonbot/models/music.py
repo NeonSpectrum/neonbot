@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -6,3 +8,4 @@ class MusicModel(BaseModel):
     repeat: int
     shuffle: bool
     autoplay: bool
+    autojoin_channel_id: Optional[int] = None

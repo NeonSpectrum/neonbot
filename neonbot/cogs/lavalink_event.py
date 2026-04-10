@@ -1,11 +1,16 @@
+from typing import TYPE_CHECKING
+
 from discord.ext import commands
 from lavalink import NodeConnectedEvent, NodeDisconnectedEvent, NodeReadyEvent, TrackEndEvent, TrackStartEvent, listener
 
 from neonbot.utils import log
 
+if TYPE_CHECKING:
+    from neonbot import NeonBot
+
 
 class LavalinkEvent(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: 'NeonBot'):
         self.bot = bot
         self.bot.lavalink.add_event_hooks(self)
 
@@ -46,6 +51,7 @@ class LavalinkEvent(commands.Cog):
 
         if event.track is None:
             log.warn(f'event.track is missing. overwriting with {player.last_track}')
+            # noinspection PyFinal
             event.track = player.last_track
 
             if event.track is None:
@@ -56,5 +62,5 @@ class LavalinkEvent(commands.Cog):
             await player.track_end_event(event)
 
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: 'NeonBot') -> None:
     await bot.add_cog(LavalinkEvent(bot))

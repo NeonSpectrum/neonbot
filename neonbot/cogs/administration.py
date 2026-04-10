@@ -47,7 +47,7 @@ class Administration(commands.Cog):
         guild_only=True,
     )
 
-    def __init__(self, bot):
+    def __init__(self, bot: 'NeonBot'):
         self.bot = bot
 
     @commands.command()
@@ -129,7 +129,7 @@ class Administration(commands.Cog):
         await self.bot.update_presence()
 
         await interaction.response.send_message(
-            embed=Embed(f'Status is now set to {self.bot.settings.get("status")}.')
+            embed=Embed(f'Status is now set to {self.bot.setting.get("status")}.')
         )
 
     @settings.command(name='set-presence')
@@ -199,7 +199,7 @@ class Administration(commands.Cog):
         guild = GuildModel.get_instance(interaction.guild_id)
 
         embed = Embed()
-        embed.set_author('Log Channels', icon_url=self.bot.user.display_avatar)
+        embed.set_author('Log Channels', icon_url=self.bot.user.display_avatar.url)
 
         for name, channel_id in guild.channel_log.model_dump().items():
             channel = self.bot.get_channel(channel_id or -1)
@@ -243,6 +243,19 @@ class Administration(commands.Cog):
             embed=Embed(f'Gemini instruction is now set to **{value}**.')
         )
 
+    @settings.command(name='set-autojoin')
+    async def set_autojoin(self, interaction: discord.Interaction['NeonBot'], channel: Optional[discord.VoiceChannel] = None):
+        """Sets the chatgpt channel. *ADMINISTRATOR"""
+
+        guild = GuildModel.get_instance(interaction.guild_id)
+        guild.music.autojoin_channel_id = channel.id if channel else None
+        await guild.save_changes(False)
+
+        # noinspection PyUnresolvedReferences
+        await interaction.response.send_message(
+            embed=Embed(f'Autojoin voice channel is now set to **{value}**.')
+        )
+
     @app_commands.command(name='sync')
     @app_commands.allowed_installs(guilds=False, users=True)
     @app_commands.allowed_contexts(guilds=False, dms=True, private_channels=False)
@@ -260,5 +273,5 @@ class Administration(commands.Cog):
         await interaction.response.send_message(embed=Embed('Commands Synced!'))
 
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: 'NeonBot') -> None:
     await bot.add_cog(Administration(bot))
