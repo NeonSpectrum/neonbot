@@ -136,7 +136,7 @@ class NeonBot(commands.Bot):
             vc: discord.VoiceChannel = self.get_channel(server.music.autojoin_channel_id)
             self.loop.create_task(player.connect(vc))
 
-    async def create_player_instance(self, guild_id: int, ctx: Optional[commands.Context['NeonBot']] = None) -> 'Player':
+    async def create_player_instance(self, guild_id: int, *, ctx: Optional[commands.Context['NeonBot']] = None) -> 'Player':
         player = self.lavalink.player_manager.create(guild_id)
 
         if not ctx and not player.ctx:

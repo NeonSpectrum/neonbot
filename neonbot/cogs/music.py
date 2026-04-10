@@ -29,7 +29,7 @@ class Music(commands.Cog):
     async def play(self, ctx: commands.Context['NeonBot'], *, query: str) -> None:
         """Searches the url or the keyword and add it to queue. This will queue the first search."""
 
-        player: Player = await self.bot.create_player_instance(ctx.guild.id, ctx)
+        player: Player = await self.bot.create_player_instance(ctx.guild.id, ctx=ctx)
 
         # Clear autoplay list whenever there's new song
         player.autoplay_list = []
@@ -49,7 +49,7 @@ class Music(commands.Cog):
     @in_voice()
     @commands.guild_only()
     async def playrandom(self, ctx: commands.Context['NeonBot']):
-        player: Player = await self.bot.create_player_instance(ctx.guild.id, ctx)
+        player: Player = await self.bot.create_player_instance(ctx.guild.id, ctx=ctx)
 
         await player.search_random()
 
@@ -200,7 +200,7 @@ class Music(commands.Cog):
     async def join(self, ctx: commands.Context['NeonBot'], voice_channel: discord.VoiceChannel) -> None:
         """Connect to voice channel."""
 
-        player: Player = await self.bot.create_player_instance(ctx.guild.id, ctx)
+        player: Player = await self.bot.create_player_instance(ctx.guild.id, ctx=ctx)
         await player.connect(voice_channel)
 
         await ctx.reply(embed=Embed(f'Joined {voice_channel.mention}.'), ephemeral=True)
