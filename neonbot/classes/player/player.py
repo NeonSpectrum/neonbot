@@ -116,7 +116,7 @@ class Player(DefaultPlayer):
         await self.send_message(embed=Embed(msg))
 
     async def connect(self, voice_channel: discord.VoiceChannel = None):
-        if self.ctx.guild.voice_client:
+        if self.ctx and self.ctx.guild.voice_client:
             if voice_channel and self.ctx.guild.voice_client.channel != voice_channel:
                 self.vc = voice_channel
                 await self.ctx.guild.me.move_to(voice_channel)
