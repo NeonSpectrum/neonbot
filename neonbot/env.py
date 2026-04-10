@@ -8,7 +8,11 @@ OWNER_IDS = env.list('OWNER_IDS', default=[], subcast=int)
 DISCORD_LOG_LEVEL = env.str('DISCORD_LOG_LEVEL')
 BOT_LOG_LEVEL = env.str('BOT_LOG_LEVEL')
 DEFAULT_PREFIX = env.str('DEFAULT_PREFIX')
+
+SYNC_COMMANDS = env.bool('SYNC_COMMANDS', default=False)
+PROXY = env.str('PROXY', default=None)
 DISABLED_COGS = env.str('DISABLED_COGS', default=[], subcast=str)
+ENABLE_AUTOJOIN = env.bool('ENABLE_AUTOJOIN', defautl=True)
 
 MONGO_IP = env.str('MONGO_IP')
 MONGO_DB_NAME = env.str('MONGO_DB_NAME')
@@ -58,6 +62,3 @@ YTMUSIC_BRAND_ACCOUNT_ID = env.str('YTMUSIC_BRAND_ACCOUNT_ID')
 YTMUSIC_CLIENT_ID = env.str('YTMUSIC_CLIENT_ID')
 YTMUSIC_CLIENT_SECRET = env.str('YTMUSIC_CLIENT_SECRET')
 YTMUSIC_COUNTRY = env.str('YTMUSIC_COUNTRY')
-
-SYNC_COMMANDS = env.bool('SYNC_COMMANDS', default=False)
-PROXY = env.str('PROXY', default=None)

@@ -29,7 +29,7 @@ from neonbot.env import (
     LAVALINK_PORT,
     OWNER_GUILD_IDS,
     OWNER_IDS,
-    SYNC_COMMANDS, DISABLED_COGS,
+    SYNC_COMMANDS, DISABLED_COGS, ENABLE_AUTOJOIN,
 )
 from neonbot.models.flyff import FlyffModel
 from neonbot.models.guild import GuildModel
@@ -124,6 +124,9 @@ class NeonBot(commands.Bot):
             Panel.start_listener(self, guild.id)
 
     async def join_autojoin_voice_channels(self):
+        if not ENABLE_AUTOJOIN:
+            return
+
         for guild in self.guilds:
             server = GuildModel.get_instance(guild.id)
 
