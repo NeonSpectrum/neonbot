@@ -240,7 +240,7 @@ class Administration(commands.Cog):
 
         # noinspection PyUnresolvedReferences
         await interaction.response.send_message(
-            embed=Embed(f'Autojoin voice channel is now set to **{value}**.')
+            embed=Embed(f'Autojoin voice channel is now set to **{channel}**.')
         )
 
     @settings.command(name='set-gemini-instruction')
