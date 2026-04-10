@@ -240,7 +240,7 @@ class Administration(commands.Cog):
 
         # noinspection PyUnresolvedReferences
         await interaction.response.send_message(
-            embed=Embed(f'Autojoin voice channel is now set to **{channel}**.')
+            embed=Embed(f'Autojoin voice channel is now set to **{channel.mention}**.')
         )
 
     @server.command(name='set-music-channel')
@@ -253,7 +253,7 @@ class Administration(commands.Cog):
 
         # noinspection PyUnresolvedReferences
         await interaction.response.send_message(
-            embed=Embed(f'Music channel is now set to **{channel}**.')
+            embed=Embed(f'Music channel is now set to **{channel.mention}**.')
         )
 
     @settings.command(name='set-gemini-instruction')
