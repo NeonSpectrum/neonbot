@@ -12,7 +12,7 @@ DEFAULT_PREFIX = env.str('DEFAULT_PREFIX')
 SYNC_COMMANDS = env.bool('SYNC_COMMANDS', default=False)
 PROXY = env.str('PROXY', default=None)
 DISABLED_COGS = env.str('DISABLED_COGS', default=[], subcast=str)
-ENABLE_AUTOJOIN = env.bool('ENABLE_AUTOJOIN', defautl=True)
+ENABLE_AUTOJOIN = env.bool('ENABLE_AUTOJOIN', default=True)
 
 MONGO_IP = env.str('MONGO_IP')
 MONGO_DB_NAME = env.str('MONGO_DB_NAME')
