@@ -23,7 +23,6 @@ from neonbot.utils.functions import format_seconds, get_command_string, get_log_
 
 if TYPE_CHECKING:
     from neonbot import NeonBot
-    from neonbot.classes.player.player import Player
 
 
 class Event(commands.Cog):
@@ -201,14 +200,16 @@ class Event(commands.Cog):
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
-        player: Player = await self.bot.create_player_instance(member.guild.id)
         server = GuildModel.get_instance(member.guild.id)
 
         if member.id == self.bot.user.id:
             if server.music.autojoin_channel_id is not None and after.channel is None:
+                player = await self.bot.create_player_instance(member.guild.id)
                 vc: discord.VoiceChannel = self.bot.get_channel(server.music.autojoin_channel_id)
                 await player.connect(vc)
             return
+
+        player = self.bot.get_player_instance(member.guild.id)
 
         if player and player.ctx and player.ctx.voice_client and player.vc:
             voice_members = [member for member in player.vc.members if not member.bot]
