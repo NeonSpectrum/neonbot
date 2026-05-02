@@ -1,5 +1,5 @@
 import asyncio
-from typing import List
+from typing import List, Optional
 from typing import TYPE_CHECKING
 
 import discord
@@ -26,7 +26,7 @@ class PlayerMessageManager:
         self.guild_id = guild_id
         self.data: List[PlayerMessage] = []
         self.player_controls = PlayerControls(self.bot, guild_id)
-        self.channel = None
+        self.channel: Optional[discord.TextChannel] = None
 
     @property
     def player(self) -> 'Player':
@@ -110,7 +110,7 @@ class PlayerMessageManager:
         await self.edit_message(
             player_message,
             embed=self.get_finished_embed(player_message.track, compact=False),
-            view=self.player_controls.get()
+            view=self.player_controls.get(),
         )
         player_message.compact = False
 
@@ -124,7 +124,7 @@ class PlayerMessageManager:
 
         self.player_controls.initialize()
 
-        data.message = await self.channel.send(embed=self.get_playing_embed(data.track), view=self.player_controls.get())
+        data.message = await self.channel.send(embed=self.get_playing_embed(data.track), view=self.player_controls.get(), silent=True)
         self.add(data)
 
     def refresh_player_controls(self, *, embed=False):
