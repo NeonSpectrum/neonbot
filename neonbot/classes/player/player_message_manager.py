@@ -129,7 +129,7 @@ class PlayerMessageManager:
 
     def refresh_player_controls(self, *, embed=False):
         for player_message in self.data:
-            if len(player_message.message.components) == 0:
+            if not player_message.message or len(player_message.message.components) == 0:
                 continue
 
             if player_message.type == MessageType.PLAYING:
