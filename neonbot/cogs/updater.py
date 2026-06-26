@@ -8,10 +8,10 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import View
 
-from neonbot.classes.discord_utils.decorators import is_owner
-from neonbot.classes.discord_utils.embed import Embed
-from neonbot.classes.discord_utils.select_choices import SelectChoices
-from neonbot.classes.lavalink.player_manager import PlayerManager
+from neonbot.discord_ui.decorators import is_owner
+from neonbot.discord_ui.embed import Embed
+from neonbot.discord_ui.select_choices import SelectChoices
+from neonbot.music.lavalink_client import PlayerManager
 from neonbot.utils.constants import ICONS
 
 if TYPE_CHECKING:
@@ -19,13 +19,15 @@ if TYPE_CHECKING:
 
 ROOT_FOLDERS = (
     'assets',
-    'classes',
     'cogs',
-    'enums',
+    'core',
+    'ai',
+    'music',
+    'features',
+    'discord_ui',
     'lang',
     'models',
     'utils',
-    'views'
 )
 
 module_changed = []
@@ -67,7 +69,7 @@ class UpdaterCog(commands.Cog):
 
         embed = Embed('\n'.join([
             f'{len(changed_files)} files changed.',
-            f'Python modules: {', '.join(module_changed)}',
+            f'Python modules: {", ".join(module_changed)}',
             f'```\n{pull_output}\n```'
         ]))
         embed.set_author('Updated!', icon_url=ICONS['github'])
@@ -111,7 +113,7 @@ class UpdaterCog(commands.Cog):
             elif module in sys.modules:
                 importlib.reload(sys.modules[module])
 
-                if module == 'neonbot.classes.player':
+                if module == 'neonbot.music.player':
 
                     new_players = {}
 
@@ -142,10 +144,10 @@ class UpdaterCog(commands.Cog):
         embed.set_author('Reloaded!', icon_url=ICONS['github'])
 
         if len(module_reloaded) > 0:
-            embed.add_field('Python modules', f'```\n{'\n'.join(module_reloaded)}\n```', inline=False)
+            embed.add_field('Python modules', f'```\n{"\n".join(module_reloaded)}\n```', inline=False)
 
         if len(cogs_reloaded) > 0:
-            embed.add_field('Cogs modules', f'```\n{'\n'.join(cogs_reloaded)}\n```', inline=False)
+            embed.add_field('Cogs modules', f'```\n{"\n".join(cogs_reloaded)}\n```', inline=False)
 
         return embed
 

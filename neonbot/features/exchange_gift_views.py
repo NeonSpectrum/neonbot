@@ -1,16 +1,59 @@
-from typing import TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 import discord
 from i18n import t
 
-from neonbot.classes.discord_utils.embed import Embed
-from neonbot.classes.exchange_gift import ExchangeGift
+from neonbot.discord_ui.embed import Embed
+from neonbot.features.exchange_gift import ExchangeGift
 from neonbot.utils.exceptions import ExchangeGiftNotRegistered
-from neonbot.views.WishlistModal import WishlistModal
-from neonbot.views.WishlistView import WishlistView
 
 if TYPE_CHECKING:
     from neonbot import NeonBot
+
+
+class WishlistModal(discord.ui.Modal, title=t('exchange_gift.modal_set_wishlist_title')):
+    def __init__(self, parent: Optional[discord.Interaction['NeonBot']] = None):
+        super().__init__()
+        self.parent = parent
+
+    wishlist = discord.ui.TextInput(
+        label=t('exchange_gift.modal_wishlist_label'),
+        placeholder=t('exchange_gift.modal_wishlist_placeholder'),
+        style=discord.TextStyle.long,
+    )
+
+    async def on_submit(self, interaction: discord.Interaction['NeonBot']):
+        try:
+            wishlist = self.wishlist.value
+
+            exchange_gift = ExchangeGift(interaction)
+            await exchange_gift.set_wishlist(wishlist)
+
+            if self.parent:
+                await interaction.response.defer()
+                await self.parent.edit_original_response(embed=Embed(t('exchange_gift.your_wishlist', wishlist=wishlist)))
+            else:
+                await interaction.response.send_message(
+                    embed=Embed(t('exchange_gift.wishlist_updated')), ephemeral=True
+                )
+        except ExchangeGiftNotRegistered:
+            await interaction.response.send_message(
+                embed=Embed(t('exchange_gift.not_registered')), ephemeral=True
+            )
+        except Exception:
+            await interaction.response.send_message(
+                embed=Embed(t('exchange_gift.wishlist_save_error')), ephemeral=True
+            )
+
+
+class WishlistView(discord.ui.View):
+    def __init__(self, parent: discord.Interaction['NeonBot']):
+        super().__init__(timeout=None)
+        self.parent = parent
+
+    @discord.ui.button(label=t('exchange_gift.button_edit_wishlist'), custom_id='exchange_gift:edit_wishlist')
+    async def edit_wishlist(self, interaction: discord.Interaction['NeonBot'], button: discord.ui.Button):
+        await interaction.response.send_modal(WishlistModal(self.parent))
 
 
 class ExchangeGiftView(discord.ui.View):

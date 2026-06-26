@@ -4,10 +4,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 import i18n
 from discord import utils
-from dotenv import load_dotenv
 from envparse import env
 
-load_dotenv()
 env.read_envfile()
 i18n.load_path.append('./neonbot/lang')
 i18n.set('file_format', 'json')

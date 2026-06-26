@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 import discord
 from i18n import t
 
-from neonbot.classes.discord_utils.embed import Embed
-from neonbot.classes.discord_utils.view import Button, View
-from neonbot.enums import Repeat
+from neonbot.discord_ui.embed import Embed
+from neonbot.discord_ui.view import Button, View
+from neonbot.music.enums import Repeat
 from neonbot.utils import log
 
 if TYPE_CHECKING:
@@ -24,8 +24,6 @@ class PlayerControls:
         return self.bot.get_player_instance(self.guild_id)
 
     def update_buttons(self, views):
-        # ["🔀","⏮️","⏸️","⏭️","🔁"]
-
         if self.player.shuffle:
             views[0].style = discord.ButtonStyle.primary
         else:

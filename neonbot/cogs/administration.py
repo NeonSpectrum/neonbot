@@ -11,8 +11,8 @@ from discord.ext import commands
 from discord.ui import View
 from i18n import t
 
-from neonbot.classes.discord_utils.embed import Embed
-from neonbot.classes.discord_utils.select_choices import SelectChoices
+from neonbot.discord_ui.embed import Embed
+from neonbot.discord_ui.select_choices import SelectChoices
 from neonbot.env import OWNER_GUILD_IDS
 from neonbot.models.guild import GuildModel
 

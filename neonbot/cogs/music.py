@@ -6,15 +6,15 @@ from discord.ext import commands
 from i18n import t
 
 from neonbot import NeonBot
-from neonbot.classes.discord_utils.decorators import has_permission, in_voice, has_player
-from neonbot.classes.discord_utils.embed import Embed, PaginationEmbed
-from neonbot.enums import Repeat
+from neonbot.discord_ui.decorators import has_permission, in_voice, has_player
+from neonbot.discord_ui.embed import Embed, PaginationEmbed
+from neonbot.music.enums import Repeat
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
 from neonbot.utils.functions import format_milliseconds
 
 if TYPE_CHECKING:
-    from neonbot.classes.player.player import Player
+    from neonbot.music.player import Player
 
 
 class Music(commands.Cog):
@@ -113,7 +113,7 @@ class Music(commands.Cog):
         for i in range(0, len(player.playlist), 10):
             temp = []
             for _, track in enumerate(player.playlist[i: i + 10], i):
-                title = f'`{"*" if player.current.identifier == track.identifier else ""}{track.extra['index'] + 1}.` [{track["title"]}]({track["uri"]})'
+                title = f'`{"*" if player.current.identifier == track.identifier else ""}{track.extra["index"] + 1}.` [{track["title"]}]({track["uri"]})'
                 description = f"""\
 {title}
 - - - `{format_milliseconds(track.duration) if track.duration else 'N/A'}` `{self.bot.get_user(track.requester)}`"""

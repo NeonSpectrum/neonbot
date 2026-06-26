@@ -1,5 +1,5 @@
 import asyncio
-import concurrent.futures
+from typing import TYPE_CHECKING
 
 import google.auth
 import google.auth.transport.requests
@@ -19,13 +19,9 @@ async def get_google_access_token():
         return creds
 
     async with _credentials_lock:
-        loop = asyncio.get_running_loop()
-
         if _cached_credentials is None:
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                _cached_credentials = await asyncio.to_thread(get_credentials)
+            _cached_credentials = await asyncio.to_thread(get_credentials)
         elif _cached_credentials.expired:
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                _cached_credentials = await asyncio.to_thread(get_credentials, _cached_credentials)
+            _cached_credentials = await asyncio.to_thread(get_credentials, _cached_credentials)
 
         return _cached_credentials.token

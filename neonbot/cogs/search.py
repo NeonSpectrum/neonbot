@@ -13,8 +13,8 @@ from discord.ext import commands
 from jikanpy import AioJikan
 from i18n import t
 
-from neonbot.classes.discord_utils.embed import Embed, EmbedChoices, PaginationEmbed
-from neonbot.classes.google import get_google_access_token
+from neonbot.discord_ui.embed import Embed, EmbedChoices, PaginationEmbed
+from neonbot.core.google_auth import get_google_access_token
 from neonbot.env import GOOGLE_CX, GOOGLE_API, DICTIONARY_API, PROXY, OPENWEATHERMAP_API
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS

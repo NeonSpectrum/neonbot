@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import discord
 from i18n import t
 
-from neonbot.classes.discord_utils.view import Button, View
+from neonbot.discord_ui.view import Button, View
 from neonbot.utils.constants import CHOICES_EMOJI, PAGINATION_EMOJI
 
 if TYPE_CHECKING:
@@ -56,13 +56,6 @@ class Embed(discord.Embed):
 
 
 class PaginationEmbed:
-    """
-    Initializes a pagination embed that has a function
-    previous, next and delete.
-
-    You cannot control this after the timeout expires. Defaults to 60s
-    """
-
     def __init__(
         self,
         interaction: discord.Interaction['NeonBot'],

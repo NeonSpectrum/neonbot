@@ -106,4 +106,3 @@ class Database:
     async def cache_guild(self, guild):
         log.info(f'Caching guild settings: {guild} ({guild.id})')
         await GuildModel.create_instance(guild.id)
-

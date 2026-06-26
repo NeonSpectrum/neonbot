@@ -3,7 +3,8 @@ from typing import TYPE_CHECKING
 import discord
 from discord import app_commands
 
-from neonbot.classes.discord_utils.embed import Embed
+from neonbot.discord_ui.embed import Embed
+from neonbot.env import CONTEXT_MENU_GUILD_ID, CONTEXT_MENU_GUEST_ROLE_ID, CONTEXT_MENU_MEMBER_ROLE_ID
 from neonbot.utils.functions import generate_profile_member_embed
 
 if TYPE_CHECKING:
@@ -12,11 +13,11 @@ if TYPE_CHECKING:
 
 def load_context_menu(bot):
     @bot.tree.context_menu(name='Add to Member')
-    @app_commands.guilds(discord.Object(id=1008661677446807713))
+    @app_commands.guilds(discord.Object(id=CONTEXT_MENU_GUILD_ID))
     @app_commands.default_permissions(administrator=True)
     async def add_to_member(interaction: discord.Interaction['NeonBot'], member: discord.Member):
-        guest_role = interaction.guild.get_role(1016294997353570305)
-        member_role = interaction.guild.get_role(1008661677446807714)
+        guest_role = interaction.guild.get_role(CONTEXT_MENU_GUEST_ROLE_ID)
+        member_role = interaction.guild.get_role(CONTEXT_MENU_MEMBER_ROLE_ID)
 
         await member.remove_roles(guest_role)
         await member.add_roles(member_role)

@@ -129,7 +129,7 @@ class GeminiChat:
             'Gemini Chat',
             f'Question: {self.prompt}',
             f'Answer: {self.get_response()}',
-            f'Commands: {self.get_json().get('commands')}'
+            f'Commands: {self.get_json().get("commands")}'
         ]))
 
     def get_json(self):

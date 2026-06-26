@@ -1,23 +1,21 @@
 import asyncio
 from typing import List, Optional, TYPE_CHECKING
-from typing import TYPE_CHECKING
 
 import discord
 from discord.utils import MISSING
 from i18n import t
 from lavalink import AudioTrack
 
-from neonbot.classes.discord_utils.embed import Embed
-from neonbot.classes.player.player_controls import PlayerControls
-from neonbot.dataclasses import PlayerMessage
-from neonbot.enums import MessageType, Repeat
+from neonbot.discord_ui.embed import Embed
+from neonbot.music.enums import PlayerMessage, MessageType, Repeat
+from neonbot.music.player_controls import PlayerControls
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
 from neonbot.utils.functions import format_milliseconds
 
 if TYPE_CHECKING:
     from neonbot import NeonBot
-    from neonbot.classes.player.player import Player
+    from neonbot.music.player import Player
 
 
 class PlayerMessageManager:

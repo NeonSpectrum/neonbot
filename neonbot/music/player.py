@@ -15,18 +15,17 @@ from lavalink import AudioTrack, DefaultPlayer, DeferredAudioTrack, LoadType, Tr
 from ytmusicapi.exceptions import YTMusicError
 
 from lib.lavalink_voice_client import LavalinkVoiceClient
-from neonbot.classes.discord_utils.embed import Embed
-from neonbot.classes.player.player_message_manager import PlayerMessageManager
-from neonbot.classes.player.ytmusic import YTMusic
-from neonbot.dataclasses import PlayerMessage
-from neonbot.enums import Repeat, MessageType
+from neonbot.discord_ui.embed import Embed
+from neonbot.music.enums import PlayerMessage, MessageType, Repeat
+from neonbot.music.player_message import PlayerMessageManager
+from neonbot.music.ytmusic import YTMusic
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.functions import clean_youtube_url, is_youtube_url, wait_until
 
 if TYPE_CHECKING:
     from neonbot import NeonBot
-    from neonbot.classes.lavalink.client import Client
+    from neonbot.music.lavalink_client import Client
     from lavalink import Node
 
 

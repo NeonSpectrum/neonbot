@@ -1,4 +1,3 @@
-from typing import Optional
 from typing import TYPE_CHECKING
 
 import discord
@@ -25,7 +24,7 @@ class Button(discord.ui.Button):
 
 
 class View(discord.ui.View):
-    def __init__(self, interaction: Optional[discord.Interaction['NeonBot']], delete_on_timeout: bool = False, **kwargs):
+    def __init__(self, interaction: discord.Interaction['NeonBot'] = None, delete_on_timeout: bool = False, **kwargs):
         self.interaction = interaction
         self.delete_on_timeout = delete_on_timeout
         super().__init__(**kwargs)

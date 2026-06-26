@@ -12,10 +12,10 @@ from discord.utils import escape_markdown
 from i18n import t
 from lavalink import Node, NodeConnectedEvent, listener
 
-from neonbot.classes.discord_utils.embed import Embed
-from neonbot.classes.gemini import GeminiChat
-from neonbot.classes.player.ytmusic import YTMusic
-from neonbot.classes.voice_events import VoiceEvents
+from neonbot.discord_ui.embed import Embed
+from neonbot.ai.gemini import GeminiChat
+from neonbot.music.ytmusic import YTMusic
+from neonbot.music.voice_events import VoiceEvents
 from neonbot.env import OWNER_IDS
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log
@@ -36,7 +36,6 @@ class Event(commands.Cog):
 
     @commands.Cog.listener()
     async def on_disconnect(self) -> None:
-        # log.warn("Disconnected!")
         pass
 
     @commands.Cog.listener()
@@ -222,8 +221,6 @@ class Event(commands.Cog):
                 if not player.paused and player.is_playing:
                     await player.pause(requester=self.bot.user)
                     player.is_auto_paused = True
-                # if not player.reset_timeout.is_running():
-                #     await player.reset_timeout.start()
 
         if member.bot:
             return
@@ -307,12 +304,8 @@ class Event(commands.Cog):
                     embed.add_field('Details', escape_markdown(after_activity.details))
 
             if (
-                not after_activity
-                and before_activity
-                and before_activity.name == 'Custom Status'
-                or not before_activity
-                and after_activity
-                and after_activity.name == 'Custom Status'
+                (not after_activity and before_activity and before_activity.name == 'Custom Status')
+                or (not before_activity and after_activity and after_activity.name == 'Custom Status')
             ):
                 return
 

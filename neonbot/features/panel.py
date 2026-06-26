@@ -7,7 +7,7 @@ import validators
 from aiohttp import ContentTypeError
 from discord.utils import find
 
-from neonbot.classes.discord_utils.embed import Embed
+from neonbot.discord_ui.embed import Embed
 from neonbot.env import PANEL_URL, PANEL_API_KEY
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log

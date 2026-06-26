@@ -1,13 +1,17 @@
-from typing import TYPE_CHECKING
-from typing import Union, Type
+from typing import TYPE_CHECKING, Type, Union
 
 from lavalink import Client as LavalinkClient
+from lavalink.playermanager import PlayerManager as BasePlayerManager
 
-from neonbot.classes.lavalink.player_manager import PlayerManager
-from neonbot.classes.player.player import Player
+from neonbot.music.player import Player
 
 if TYPE_CHECKING:
     from neonbot import NeonBot
+
+
+class PlayerManager(BasePlayerManager):
+    def __init__(self, client, player: Type['Player'] = Player):
+        super().__init__(client, player)
 
 
 class Client(LavalinkClient):

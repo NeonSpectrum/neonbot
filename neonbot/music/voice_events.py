@@ -1,7 +1,7 @@
 import discord
 from i18n import t
 
-from neonbot.classes.discord_utils.embed import Embed
+from neonbot.discord_ui.embed import Embed
 from neonbot.utils.functions import get_log_prefix
 
 

@@ -5,10 +5,10 @@ from discord import app_commands
 from discord.ext import commands
 from i18n import t
 
-from neonbot.classes.discord_utils.embed import Embed
-from neonbot.classes.exchange_gift import ExchangeGift
+from neonbot.discord_ui.embed import Embed
+from neonbot.features.exchange_gift import ExchangeGift
 from neonbot.env import OWNER_GUILD_IDS
-from neonbot.views.ExchangeGiftView import ExchangeGiftView
+from neonbot.features.exchange_gift_views import ExchangeGiftView
 
 if TYPE_CHECKING:
     from neonbot import NeonBot

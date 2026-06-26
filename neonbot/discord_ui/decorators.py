@@ -6,13 +6,13 @@ from discord.ext.commands import Context
 from discord.ext.commands._types import Check
 from i18n import t
 
-from neonbot.classes.discord_utils.embed import Embed
+from neonbot.discord_ui.embed import Embed
 from neonbot.env import OWNER_IDS
 from neonbot.utils.functions import ensure_ctx
 
 if TYPE_CHECKING:
     from neonbot import NeonBot
-    from neonbot.classes.player.player import Player
+    from neonbot.music.player import Player
 
 
 def in_voice(app: bool = False) -> Check[Context['NeonBot']]:

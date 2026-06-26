@@ -5,7 +5,7 @@ from typing import Optional
 from beanie import Document
 from beanie.odm.queries.find import FindOne
 
-from neonbot.enums import Repeat
+from neonbot.music.enums import Repeat
 from neonbot.models.channel_log import ChannelLogModel
 from neonbot.models.exchange_gift import ExchangeGiftModel
 from neonbot.models.music import MusicModel

@@ -14,7 +14,7 @@ from discord.ext import commands
 from discord.utils import format_dt
 from i18n import t
 
-from neonbot.classes.discord_utils.embed import Embed
+from neonbot.discord_ui.embed import Embed
 from neonbot.env import TZ
 
 if TYPE_CHECKING:

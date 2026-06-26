@@ -21,8 +21,8 @@ from discord.utils import oauth_url
 from i18n import t
 
 from neonbot import __version__
-from neonbot.classes.database import Database
-from neonbot.classes.lavalink.client import Client
+from neonbot.core.database import Database
+from neonbot.music.lavalink_client import Client
 from neonbot.env import (
     DEFAULT_PREFIX,
     LAVALINK_HOST,
@@ -37,10 +37,10 @@ from neonbot.models.setting import SettingModel
 from neonbot.utils import log
 from neonbot.utils.constants import PERMISSIONS
 from neonbot.utils.context_menu import load_context_menu
-from neonbot.views.ExchangeGiftView import ExchangeGiftView
+from neonbot.features.exchange_gift_views import ExchangeGiftView
 
 if TYPE_CHECKING:
-    from neonbot.classes.player.player import Player
+    from neonbot.music.player import Player
 
 
 class NeonBot(commands.Bot):
@@ -108,7 +108,7 @@ class NeonBot(commands.Bot):
         log.info(f'Command synced to: {guild or "Global"}')
 
     def start_listeners(self):
-        from neonbot.classes.panel import Panel
+        from neonbot.features.panel import Panel
 
         for guild in self.guilds:
             server = GuildModel.get_instance(guild.id)

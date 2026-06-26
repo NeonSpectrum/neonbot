@@ -16,9 +16,9 @@ from discord.utils import format_dt
 from i18n import t
 
 from neonbot import __author__, __title__, __version__
-from neonbot.classes.discord_utils.decorators import is_owner
-from neonbot.classes.discord_utils.embed import Embed
-from neonbot.classes.gemini import GeminiChat
+from neonbot.discord_ui.decorators import is_owner
+from neonbot.discord_ui.embed import Embed
+from neonbot.ai.gemini import GeminiChat
 from neonbot.env import SEMAPHONE_API_KEY, SEMAPHONE_SENDER_NAME
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS

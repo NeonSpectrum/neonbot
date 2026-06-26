@@ -5,8 +5,8 @@ from discord import app_commands
 from discord.ext import commands
 from i18n import t
 
-from neonbot.classes.discord_utils.embed import Embed
-from neonbot.classes.panel import Panel
+from neonbot.discord_ui.embed import Embed
+from neonbot.features.panel import Panel
 from neonbot.env import OWNER_GUILD_IDS
 from neonbot.models.guild import GuildModel
 from neonbot.models.panel import PanelServer

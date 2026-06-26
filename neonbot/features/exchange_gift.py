@@ -6,7 +6,7 @@ import discord
 from discord.utils import find
 from i18n import t
 
-from neonbot.classes.discord_utils.embed import Embed
+from neonbot.discord_ui.embed import Embed
 from neonbot.models.exchange_gift import ExchangeGiftMember
 from neonbot.models.guild import GuildModel
 from neonbot.utils.exceptions import ExchangeGiftNotRegistered
@@ -125,14 +125,5 @@ class ExchangeGift:
         embed = self.create_embed_template()
         embed.add_field(t('exchange_gift.budget_label'), self.budget)
         embed.add_field(t('exchange_gift.participants_label'), ' '.join(members), inline=False)
-
-        return embed
-
-    def get_current_info(self):
-        members = [self.guild.get_member(member.user_id).mention for member in self.get_all()]
-
-        embed = self.create_embed_template()
-        embed.add_field('Budget:', self.budget)
-        embed.add_field('Participants:', ' '.join(members), inline=False)
 
         return embed

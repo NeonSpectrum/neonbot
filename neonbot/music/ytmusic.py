@@ -53,17 +53,6 @@ class YTMusic:
         watch_playlist = await asyncio.to_thread(ytmusic.get_watch_playlist, video_id)
         tracks = watch_playlist['tracks']
 
-        # browser_id = watch_playlist['related']
-        #
-        # try:
-        #     if not browser_id:
-        #         raise YTMusicError('Browse id not found.')
-        #
-        #     song_related = await asyncio.to_thread(ytmusic.get_song_related, browser_id)
-        #     tracks = song_related[0].get('contents', [])
-        # except (YTMusicError, IndexError):
-        #     tracks = watch_playlist.get('tracks', [])
-
         related_tracks = []
 
         for track in tracks[1:]:
