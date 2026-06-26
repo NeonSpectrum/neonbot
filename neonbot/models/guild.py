@@ -9,7 +9,6 @@ from neonbot.enums import Repeat
 from neonbot.models.channel_log import ChannelLogModel
 from neonbot.models.chatgpt import ChatGPTModel
 from neonbot.models.exchange_gift import ExchangeGiftModel
-from neonbot.models.flyff import FlyffModel
 from neonbot.models.music import MusicModel
 from neonbot.models.panel import PanelModel
 
@@ -24,7 +23,6 @@ class GuildModel(Document):
     exchange_gift: Optional[ExchangeGiftModel] = None
     chatgpt: Optional[ChatGPTModel] = None
     panel: Optional[PanelModel] = None
-    flyff: Optional[FlyffModel] = None
 
     class Settings:
         name = 'guilds'
@@ -40,7 +38,7 @@ class GuildModel(Document):
 
     @staticmethod
     def get_instance(guild_id: int) -> Optional[GuildModel]:
-        return guilds[guild_id]
+        return guilds.get(guild_id)
 
     @staticmethod
     def get_model(guild_id: int) -> FindOne[GuildModel]:
@@ -59,5 +57,4 @@ class GuildModel(Document):
             exchange_gift=ExchangeGiftModel(members=[]),
             chatgpt=ChatGPTModel(chats=[]),
             panel=PanelModel(servers={}),
-            flyff=FlyffModel(timers={})
         ).create()

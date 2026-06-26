@@ -7,4 +7,6 @@ class Repeat(Enum):
     ALL = 2
 
     def __eq__(self, other):
+        if isinstance(other, Repeat):
+            return self is other
         return self.value == other

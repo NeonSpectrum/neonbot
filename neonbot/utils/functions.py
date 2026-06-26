@@ -27,7 +27,10 @@ async def shell_exec(command: str) -> str:
 
     stdout, stderr = await process.communicate()
 
-    return stdout.decode().strip()
+    output = stdout.decode().strip()
+    if not output and stderr:
+        output = stderr.decode().strip()
+    return output
 
 
 def get_command_string(ctx: commands.Context['NeonBot']):

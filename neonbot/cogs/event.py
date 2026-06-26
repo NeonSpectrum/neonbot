@@ -85,12 +85,8 @@ class Event(commands.Cog):
 
                     if len(response) > 2000:
                         response = md_to_text(response)
-                        bot_message = await ctx.reply(
-                            files=[
-                                [discord.File(BytesIO(response.encode()), filename=gemini_chat.get_prompt() + '.txt')]
-                                + gemini_chat.get_response_attachments()
-                            ]
-                        )
+                        files = [discord.File(BytesIO(response.encode()), filename=gemini_chat.get_prompt() + '.txt')] + gemini_chat.get_response_attachments()
+                        bot_message = await ctx.reply(files=files)
                     else:
                         bot_message = await ctx.reply(response, files=gemini_chat.get_response_attachments())
 
@@ -101,7 +97,8 @@ class Event(commands.Cog):
 
                     # Change message author so it won't recognize as bot
                     bot_message.author = message.author
-                    bot_message.content = f'{self.bot.default_prefix}{command.name} {' '.join(args)}'
+                    cmd_args = ' '.join(args)
+                    bot_message.content = f'{self.bot.default_prefix}{command.name} {cmd_args}'
 
                     bot_ctx = await self.bot.get_context(bot_message)
                     bot_ctx.invoked_with = 'bot'
@@ -109,7 +106,6 @@ class Event(commands.Cog):
                     await self.bot.invoke(bot_ctx)
             except Exception as error:
                 await ctx.reply(embed=Embed('Something went wrong.'))
-                log.debug(error, exc_info=True)
                 log.error(error, exc_info=True)
             finally:
                 return
@@ -189,8 +185,6 @@ class Event(commands.Cog):
         )
 
         await self.bot.send_to_owner(embed=embed)
-
-        raise error
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
@@ -359,4 +353,4 @@ async def setup(bot: 'NeonBot') -> None:
     bot.on_message = cog.on_message
     bot.tree.on_error = cog.on_command_error
     bot.tree.interaction_check = cog.interaction_check
-    await bot.add_cog(Event(bot))
+    await bot.add_cog(cog)

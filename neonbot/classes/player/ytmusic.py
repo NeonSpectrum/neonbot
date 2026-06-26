@@ -43,6 +43,8 @@ class YTMusic:
 
     async def search(self, keyword):
         results: list[dict] = await asyncio.to_thread(ytmusic.search, keyword, limit=1, filter='songs')
+        if not results:
+            return None
         result = results[0]
 
         return result.get('videoId')
@@ -67,8 +69,8 @@ class YTMusic:
         for track in tracks[1:]:
             if track.get('videoId'):
                 related_tracks.append({'id': track.get('videoId'), 'title': track.get('title')})
-            else:
-                related_tracks.append({'id': track.get('counterpart')['videoId'], 'title': track.get('title')})
+            elif track.get('counterpart') and track['counterpart'].get('videoId'):
+                related_tracks.append({'id': track['counterpart']['videoId'], 'title': track.get('title')})
 
         return related_tracks
 
@@ -87,8 +89,8 @@ class YTMusic:
         for track in tracks:
             if track.get('videoId'):
                 home_tracks.append({'id': track.get('videoId'), 'title': track.get('title')})
-            else:
-                home_tracks.append({'id': track.get('counterpart')['videoId'], 'title': track.get('title')})
+            elif track.get('counterpart') and track['counterpart'].get('videoId'):
+                home_tracks.append({'id': track['counterpart']['videoId'], 'title': track.get('title')})
 
         return home_tracks
 

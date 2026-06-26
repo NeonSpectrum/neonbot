@@ -62,7 +62,13 @@ class PanelCog(commands.Cog):
         panel = server.panel.servers[server_id]
 
         if panel.channel_id and panel.message_id:
-            await interaction.client.delete_message(await interaction.client.get_channel(panel.channel_id).fetch_message(panel.message_id))
+            channel = interaction.client.get_channel(panel.channel_id)
+            if channel:
+                try:
+                    message = await channel.fetch_message(panel.message_id)
+                    await interaction.client.delete_message(message)
+                except discord.NotFound:
+                    pass
 
         server.panel.servers[server_id] = PanelServer()
         await server.save_changes(False)

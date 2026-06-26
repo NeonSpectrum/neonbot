@@ -61,7 +61,7 @@ class UpdaterCog(commands.Cog):
         module_changed = []
 
         for file_path in changed_files:
-            module_name = file_path.replace('/', '.').rstrip('.py')
+            module_name = file_path.replace('/', '.').removesuffix('.py')
             if module_name in sys.modules:
                 module_changed.append(module_name)
 
@@ -133,7 +133,7 @@ class UpdaterCog(commands.Cog):
                     interaction.client.lavalink.player_manager = PlayerManager(interaction.client.lavalink)
 
                     for guild_id, new_player in new_players.items():
-                        player = interaction.client.lavalink.bot
+                        player = interaction.client.lavalink.player_manager.create(guild_id)
                         player.__dict__.update(new_player)
 
                 module_reloaded.append(module)

@@ -43,6 +43,8 @@ class ChatGPT:
             channel = await ctx.channel.create_thread(name=content[0:97] + '...' if len(content) > 100 else content)
             await channel.add_user(ctx.author)
 
+        chat_thread = None
+
         try:
             await channel.edit(locked=True)
 
@@ -56,7 +58,7 @@ class ChatGPT:
         finally:
             await channel.edit(locked=False)
 
-        if chat_thread.chat.token > ChatThread.MAX_TOKEN:
+        if chat_thread and chat_thread.chat.token > ChatThread.MAX_TOKEN:
             await chat_thread.trim_messages()
 
         if content.lower().strip() == 'bye':

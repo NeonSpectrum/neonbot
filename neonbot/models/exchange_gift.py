@@ -13,4 +13,4 @@ class ExchangeGiftModel(BaseModel):
     message_id: Optional[int] = None
     members: List[ExchangeGiftMember]
     budget: Optional[int] = None
-    finish: Optional[bool] = None
+    finish: bool = False

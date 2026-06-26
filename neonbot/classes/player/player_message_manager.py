@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 from typing import TYPE_CHECKING
 
 import discord
@@ -49,8 +49,10 @@ class PlayerMessageManager:
         return None
 
     def get_footer(self, track):
+        user = self.bot.get_user(track.requester)
+        requester_name = user.display_name if user else 'Unknown'
         return [
-            self.bot.get_user(track.requester).display_name,
+            requester_name,
             format_milliseconds(track.duration),
             t('music.shuffle_footer', shuffle='on' if self.player.shuffle else 'off'),
             t('music.repeat_footer', repeat=Repeat(self.player.loop).name.lower()),
@@ -60,7 +62,9 @@ class PlayerMessageManager:
     def get_track_embed(self, track: AudioTrack):
         footer = self.get_footer(track)
         embed = Embed(title=track.title, url=track.uri)
-        embed.set_footer(text=' | '.join(footer), icon_url=self.bot.get_user(track.requester).display_avatar.url)
+        user = self.bot.get_user(track.requester)
+        icon_url = user.display_avatar.url if user else None
+        embed.set_footer(text=' | '.join(footer), icon_url=icon_url)
 
         return embed
 
@@ -85,7 +89,9 @@ class PlayerMessageManager:
 
         return Embed(f'{t("music.finished_playing.index", index=track.extra.get('index') + 1)}: {formatted_title}')
 
-    async def replace_to_finished_playing(self, player_message: PlayerMessage):
+    async def replace_to_finished_playing(self, player_message: Optional[PlayerMessage]):
+        if player_message is None:
+            return
         await self.edit_message(
             player_message,
             embed=self.get_finished_embed(player_message.track, compact=True),

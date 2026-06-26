@@ -165,6 +165,9 @@ class Player(DefaultPlayer):
 
             return
 
+        if not voice_channel and not self.ctx.author.voice:
+            raise commands.CommandError('You must be in a voice channel.')
+
         self.voice_channel = voice_channel or self.ctx.author.voice.channel
         self.voice_client = await self.voice_channel.connect(timeout=3, reconnect=True, self_deaf=True, cls=LavalinkVoiceClient)
         log.cmd(self.ctx, t('music.player_connected', channel=self.voice_channel, guild=self.voice_channel.guild))
@@ -228,14 +231,15 @@ class Player(DefaultPlayer):
         if not target_track:
             raise IndexError
 
-        removed_track = self.track_list.pop(target_track.extra.get('index'))
+        removed_index = target_track.extra.get('index')
+        removed_track = self.track_list.pop(removed_index)
 
         # Adjust index on all tracks
-        for index, track in enumerate(self.shuffled_list):
-            if track.extra.get('index') > index:
+        for track in self.shuffled_list:
+            if track.extra.get('index') > removed_index:
                 track.extra['index'] -= 1
-        for index, track in enumerate(self.track_list):
-            if track.extra.get('index') > index:
+        for track in self.track_list:
+            if track.extra.get('index') > removed_index:
                 track.extra['index'] -= 1
 
         return removed_track
@@ -265,7 +269,7 @@ class Player(DefaultPlayer):
         if load_type == LoadType.EMPTY:
             embed = Embed(t('music.no_songs_available'))
 
-        if load_type == LoadType.ERROR:
+        elif load_type == LoadType.ERROR:
             embed = Embed(t('music.search_error'))
             log.error(results.error.message)
 
@@ -367,9 +371,8 @@ class Player(DefaultPlayer):
             self.is_auto_paused = False
             self.messager.clear()
         else:
-            await self.disconnect(force=True, destroy=False, timeout=timeout)
             await self.messager.replace_all_to_compact()
-            await self.voice_client.destroy()
+            await self.disconnect(force=True, destroy=False, timeout=timeout)
 
     async def process_autoplay(self, track: AudioTrack) -> None:
         try:
@@ -403,9 +406,11 @@ class Player(DefaultPlayer):
         return await self.ctx.channel.send(*args, **kwargs)
 
     def find_new_current_queue(self, track_list):
-        for index, track in enumerate(track_list):
-            if track.extra.get('index') == track_list[index].extra['index']:
-                return index
+        if self.current:
+            current_index = self.current.extra.get('index')
+            for index, track in enumerate(track_list):
+                if track.extra.get('index') == current_index:
+                    return index
 
         log.warn('Cannot find new current queue. Returning index 0')
         return 0
@@ -416,7 +421,7 @@ class Player(DefaultPlayer):
 
     async def track_start_event(self, event: TrackStartEvent):
         async with self._track_event_lock:
-            await wait_until(lambda: self.is_playing)
+            await wait_until(lambda: self.is_playing, timeout=30)
             await self.messager.send_message(PlayerMessage(
                 type=MessageType.PLAYING,
                 track=event.track,

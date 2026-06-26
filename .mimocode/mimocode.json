@@ -1,0 +1,14 @@
+{
+  "$schema": "https://mimo.xiaomi.com/mimocode/config.json",
+  "permission": {
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow"
+    }
+  },
+  "instructions": [
+    "AGENTS.md"
+  ]
+}

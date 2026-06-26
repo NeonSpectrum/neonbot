@@ -89,6 +89,9 @@ class GeminiChat:
             ),
         )
 
+        if not response.candidates:
+            raise ValueError('Gemini response was blocked by safety filter or empty.')
+
         for part in response.candidates[0].content.parts:
             if part.inline_data:
                 image_bytes = part.inline_data.data
@@ -130,6 +133,8 @@ class GeminiChat:
         ]))
 
     def get_json(self):
+        if self.response is None:
+            return {}
         return repair_json(self.response.text, True)
 
     def get_response(self):
@@ -147,6 +152,8 @@ class GeminiChat:
 
         for row in data:
             command = self.bot.get_command(row.get('name'))
+            if not command:
+                continue
             arguments = row.get('arguments')
 
             sig = inspect.signature(command.callback)
@@ -194,8 +201,8 @@ class GeminiChat:
 
         placeholders = {
             '{{DISPLAY_NAME}}': self.bot.user.name,
-            '{{OWNER_ID}}': self.bot.get_user(self.bot.app_info.owner.id).id,
-            '{{USER_ID}}': self.bot.get_user(self.bot.app_info.owner.id).id,
+            '{{OWNER_ID}}': self.bot.app_info.owner.id,
+            '{{USER_ID}}': self.bot.app_info.owner.id,
             '{{DISCORD_DATA}}': self.get_discord_data(),
             '{{PLAYER_DATA}}': {
                 'settings': {

@@ -232,33 +232,33 @@ class Administration(commands.Cog):
 
     @server.command(name='set-autojoin')
     async def set_autojoin(self, interaction: discord.Interaction['NeonBot'], channel: Optional[discord.VoiceChannel] = None):
-        """Sets the chatgpt channel. *ADMINISTRATOR"""
+        """Sets the autojoin voice channel. *ADMINISTRATOR"""
 
         guild = GuildModel.get_instance(interaction.guild_id)
         guild.music.autojoin_channel_id = channel.id if channel else None
         await guild.save_changes(False)
 
-        # noinspection PyUnresolvedReferences
+        channel_mention = channel.mention if channel else 'None'
         await interaction.response.send_message(
-            embed=Embed(f'Autojoin voice channel is now set to **{channel.mention if channel else 'None'}**.')
+            embed=Embed(f'Autojoin voice channel is now set to **{channel_mention}**.')
         )
 
     @server.command(name='set-music-channel')
     async def set_music_channel(self, interaction: discord.Interaction['NeonBot'], channel: Optional[discord.VoiceChannel] = None):
-        """Sets the chatgpt channel. *ADMINISTRATOR"""
+        """Sets the music channel. *ADMINISTRATOR"""
 
         guild = GuildModel.get_instance(interaction.guild_id)
         guild.music.channel_id = channel.id if channel else None
         await guild.save_changes(False)
 
-        # noinspection PyUnresolvedReferences
+        channel_mention = channel.mention if channel else 'None'
         await interaction.response.send_message(
-            embed=Embed(f'Music channel is now set to **{channel.mention if channel else 'None'}**.')
+            embed=Embed(f'Music channel is now set to **{channel_mention}**.')
         )
 
     @settings.command(name='set-gemini-instruction')
     async def set_gemini_instruction(self, interaction: discord.Interaction['NeonBot'], value: str):
-        """Sets the chatgpt channel. *ADMINISTRATOR"""
+        """Sets the Gemini system instruction. *ADMINISTRATOR"""
 
         self.bot.setting.gemini_system_instruction = value
 

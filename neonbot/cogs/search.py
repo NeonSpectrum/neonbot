@@ -151,7 +151,7 @@ class Search(commands.Cog):
         data = await res.json()
 
         if data['cod'] == 401:
-            raise ApiError(data.message)
+            raise ApiError(data['message'])
 
         if int(data['cod']) == 404:
             await interaction.response.send_message(
@@ -248,7 +248,7 @@ class Search(commands.Cog):
             div = soup.select('div.col-xs-12.col-lg-8.text-center')[0]
             title = div.select('b')[1].get_text()[1:-1]
             lyrics = div.select('div:nth-of-type(5)')[0].get_text().splitlines()
-        except:
+        except Exception:
             log.exception('There was an error parsing the url.')
             await interaction.response.send_message(
                 embed=Embed('There was error fetching the lyrics.'), ephemeral=True

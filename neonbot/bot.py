@@ -31,7 +31,6 @@ from neonbot.env import (
     OWNER_IDS,
     SYNC_COMMANDS, DISABLED_COGS, ENABLE_AUTOJOIN,
 )
-from neonbot.models.flyff import FlyffModel
 from neonbot.models.guild import GuildModel
 from neonbot.models.setting import SettingModel
 from neonbot.utils import log
@@ -60,7 +59,6 @@ class NeonBot(commands.Bot):
         self.owner_guilds = OWNER_GUILD_IDS
         self.session: Optional[ClientSession] = None
         self.setting: Optional[SettingModel] = None
-        self.flyff_settings: Optional[FlyffModel] = None
         self.scheduler: Optional[AsyncIOScheduler] = None
         self.is_player_cache_loaded = False
 
@@ -82,8 +80,8 @@ class NeonBot(commands.Bot):
                                          lambda: asyncio.create_task(self.close()))  # type: ignore[arg-type]
 
         await self.db.initialize()
+        await self.db.run_migrations()
         self.setting = await SettingModel.get_instance()
-        self.flyff_settings = await FlyffModel.get_instance()
         self.status, self.activity = self.get_presence()
         self.session = ClientSession(timeout=ClientTimeout(total=30))
         self.scheduler = AsyncIOScheduler()
@@ -102,7 +100,6 @@ class NeonBot(commands.Bot):
             # This copies the global commands over to your guild.
             await asyncio.gather(*[self.sync_command(guild) for guild in guilds])
 
-        await self.db.start_migration(guilds)
         await self.db.get_guilds(guilds)
 
     async def sync_command(self, guild: Optional[discord.Guild] = None):
@@ -110,10 +107,7 @@ class NeonBot(commands.Bot):
         log.info(f'Command synced to: {guild or "Global"}')
 
     def start_listeners(self):
-        from neonbot.classes.flyff import Flyff
         from neonbot.classes.panel import Panel
-
-        Flyff.start_listener(self)
 
         for guild in self.guilds:
             server = GuildModel.get_instance(guild.id)

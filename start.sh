@@ -11,7 +11,7 @@ if [[ -d .git ]] && [[ "${AUTO_UPDATE}" == "1" ]]; then
     git pull
     new_hash=$(git rev-parse HEAD)
     if [[ "$old_hash" != "$new_hash" ]]; then
-        if git diff --name-only "$old_hash" "$new_hash" | grep -q '^neonbot/cog'; then
+        if git diff --name-only "$old_hash" "$new_hash" | grep -q '^neonbot/cogs'; then
             export SYNC_COMMANDS=1
         fi
         if git diff --name-only "$old_hash" "$new_hash" | grep -q '^pyproject\.toml$'; then

@@ -65,6 +65,8 @@ class ExchangeGiftView(discord.ui.View):
 
             for member in exchange_gift.get_all():
                 user = interaction.guild.get_member(member.user_id)
+                if not user:
+                    continue
                 template.append(f'{user.mention}\n```{member.wishlist}```')
 
             embed = exchange_gift.create_wishlist_template()

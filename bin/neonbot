@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 CONTAINER_NAME="neonbot-app-1"
 
@@ -21,13 +21,13 @@ case "$1" in
     git pull
     ;;
   "upgrade")
-    docker exec -it $CONTAINER_NAME sh -c "pipenv update"
+    docker exec -it $CONTAINER_NAME sh -c "poetry update --without dev"
     ;;
   "rebuild")
     docker compose up -d --build
     ;;
   *)
-    echo "Invalid arguments. (restart|logs|update)"
+    echo "Invalid arguments. (bash|start|restart|logs|update|upgrade|rebuild)"
     exit 1
     ;;
 esac

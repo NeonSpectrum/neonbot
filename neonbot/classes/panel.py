@@ -39,7 +39,6 @@ class Panel:
                 'Content-Type': 'application/json',
                 'Authorization': f'Bearer {self.API_KEY}',
             },
-            ssl=False,
         )
 
         if res.status != 200:
@@ -57,7 +56,6 @@ class Panel:
                 'Content-Type': 'application/json',
                 'Authorization': f'Bearer {self.API_KEY}',
             },
-            ssl=False,
         )
 
         if res.status != 200:
@@ -75,7 +73,6 @@ class Panel:
                 'Content-Type': 'application/json',
                 'Authorization': f'Bearer {Panel.API_KEY}',
             },
-            ssl=False,
         )
 
         if res.status != 200:
@@ -104,13 +101,13 @@ class Panel:
                     resources = await panel.get_server_resources()
                 except ApiError as error:
                     log.warn(error)
-                    return
+                    continue
                 except Exception as error:
                     log.error(error)
 
                 if not details or not resources:
                     log.warn('Details or resources are empty!')
-                    return
+                    continue
 
                 identifier = details['attributes']['identifier']
                 name = details['attributes']['name']
@@ -167,9 +164,12 @@ class Panel:
                     embed.add_field('Status', state.title())
 
                 channel = bot.get_channel(channel_id)
-                server = GuildModel.get_instance(channel.guild.id)
+                if not channel:
+                    log.warn(f'Channel {channel_id} not found for server {server_id}')
+                    continue
+                guild_model = GuildModel.get_instance(channel.guild.id)
 
-                message_id = server.panel.servers[server_id].message_id
+                message_id = guild_model.panel.servers[server_id].message_id
 
                 try:
                     message = await channel.fetch_message(message_id) if message_id else None
@@ -179,8 +179,8 @@ class Panel:
                 try:
                     if not message:
                         message = await channel.send(embed=embed)
-                        server.panel.servers[server_id].message_id = message.id
-                        await server.save_changes(False)
+                        guild_model.panel.servers[server_id].message_id = message.id
+                        await guild_model.save_changes(False)
                     else:
                         await message.edit(embed=embed)
                 except discord.HTTPException as error:

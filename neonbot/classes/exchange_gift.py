@@ -82,18 +82,23 @@ class ExchangeGift:
         await self.server.save_changes(False)
 
     async def shuffle(self):
-        members = list(map(lambda m: m.user_id, self.get_all()))
+        all_members = list(self.get_all())
+        member_ids = [m.user_id for m in all_members]
 
-        if len(members) <= 1:
+        if len(member_ids) <= 1:
             return
 
-        for member in self.get_all():
-            chosen_member = random.choice([m for m in members if m != member.user_id])
-            members.remove(chosen_member)
+        # Create a derangement: shuffle until no one is assigned to themselves
+        shuffled_ids = member_ids.copy()
+        while True:
+            random.shuffle(shuffled_ids)
+            if all(a != b for a, b in zip(member_ids, shuffled_ids)):
+                break
 
-            self.get(member.user_id).chosen = chosen_member
+        for member, chosen_id in zip(all_members, shuffled_ids):
+            member.chosen = chosen_id
 
-            await self.server.save_changes(False)
+        await self.server.save_changes(False)
 
     async def set_finish(self):
         self.server.exchange_gift.finish = True
