@@ -35,7 +35,7 @@ class LavalinkEvent(commands.Cog):
 
     @listener(NodeConnectedEvent)
     async def on_node_connected(self, event: NodeConnectedEvent):
-        log.info(f'Node connected: {event.node.identifier}')
+        log.info(f'Node connected: {event.node.name}')
 
         for guild_id, player in self.bot.lavalink.player_manager.items():
             if player._reconnecting:
@@ -51,7 +51,7 @@ class LavalinkEvent(commands.Cog):
 
     @listener(NodeDisconnectedEvent)
     async def on_node_disconnected(self, event: NodeDisconnectedEvent):
-        log.warn(f'Node disconnected: {event.node.identifier}')
+        log.warn(f'Node disconnected: {event.node.name}')
 
         for guild_id, player in self.bot.lavalink.player_manager.items():
             if hasattr(player, 'node') and player.node == event.node:
@@ -63,10 +63,10 @@ class LavalinkEvent(commands.Cog):
                 except Exception:
                     pass
 
-        task = self._reconnect_tasks.get(event.node.identifier)
+        task = self._reconnect_tasks.get(event.node.name)
         if task and not task.done():
             task.cancel()
-        self._reconnect_tasks[event.node.identifier] = self.bot.loop.create_task(
+        self._reconnect_tasks[event.node.name] = self.bot.loop.create_task(
             self._reconnect_node(event.node)
         )
 
@@ -76,13 +76,13 @@ class LavalinkEvent(commands.Cog):
             await asyncio.sleep(delay)
             try:
                 await node.connect()
-                log.info(f'Node {node.identifier}: reconnected on attempt {attempt + 1}')
+                log.info(f'Node {node.name}: reconnected on attempt {attempt + 1}')
                 return
             except Exception as e:
-                log.warn(f'Node {node.identifier}: reconnect attempt {attempt + 1} failed: {e}')
+                log.warn(f'Node {node.name}: reconnect attempt {attempt + 1} failed: {e}')
                 delay = min(delay * 2, RECONNECT_MAX_DELAY)
 
-        log.error(f'Node {node.identifier}: failed to reconnect after {RECONNECT_MAX_ATTEMPTS} attempts')
+        log.error(f'Node {node.name}: failed to reconnect after {RECONNECT_MAX_ATTEMPTS} attempts')
         for guild_id, player in self.bot.lavalink.player_manager.items():
             if player._reconnecting:
                 player._reconnecting = False
@@ -94,7 +94,7 @@ class LavalinkEvent(commands.Cog):
 
     @listener(NodeReadyEvent)
     async def on_node_ready(self, event: NodeReadyEvent):
-        log.info(f'Node ready: {event.node.identifier}')
+        log.info(f'Node ready: {event.node.name}')
 
     @listener(TrackStartEvent)
     async def on_track_start(self, event: TrackStartEvent):

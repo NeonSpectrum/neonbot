@@ -20,6 +20,25 @@ bin/neonbot rebuild
 bin/neonbot bash
 ```
 
+## Package Management (Poetry)
+
+```bash
+# Install dependencies
+poetry install
+
+# Add a dependency
+poetry add <package>
+
+# Run a command inside the venv
+poetry run python main.py
+
+# Check installed packages
+poetry show
+
+# Check a specific package
+poetry show <package>
+```
+
 ## Running Locally (without Docker)
 
 ```bash
