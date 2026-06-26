@@ -37,7 +37,7 @@ class LavalinkEvent(commands.Cog):
     async def on_node_connected(self, event: NodeConnectedEvent):
         log.info(f'Node connected: {event.node.name}')
 
-        for guild_id, player in self.bot.lavalink.player_manager.items():
+        for guild_id, player in self.bot.lavalink.player_manager.players.items():
             if player._reconnecting:
                 player._reconnecting = False
                 log.info(f'Guild {guild_id}: node reconnected, resuming playback')
@@ -53,7 +53,7 @@ class LavalinkEvent(commands.Cog):
     async def on_node_disconnected(self, event: NodeDisconnectedEvent):
         log.warn(f'Node disconnected: {event.node.name}')
 
-        for guild_id, player in self.bot.lavalink.player_manager.items():
+        for guild_id, player in self.bot.lavalink.player_manager.players.items():
             if hasattr(player, 'node') and player.node == event.node:
                 player._reconnecting = True
                 log.info(f'Guild {guild_id}: marked as reconnecting')
@@ -83,7 +83,7 @@ class LavalinkEvent(commands.Cog):
                 delay = min(delay * 2, RECONNECT_MAX_DELAY)
 
         log.error(f'Node {node.name}: failed to reconnect after {RECONNECT_MAX_ATTEMPTS} attempts')
-        for guild_id, player in self.bot.lavalink.player_manager.items():
+        for guild_id, player in self.bot.lavalink.player_manager.players.items():
             if player._reconnecting:
                 player._reconnecting = False
                 try:
