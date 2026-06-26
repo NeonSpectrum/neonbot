@@ -158,7 +158,7 @@ class PlayerControls:
         self.update_buttons(buttons)
 
         def callback(*args, **kwargs):
-            self.bot.loop.create_task(self.callback(*args, **kwargs))
+            return self.callback(*args, **kwargs)
 
         self.view = View.create_button(buttons, callback, timeout=None)
 
