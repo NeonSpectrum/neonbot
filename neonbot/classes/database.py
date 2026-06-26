@@ -13,7 +13,6 @@ from beanie import init_beanie
 from beanie.odm.operators.find.comparison import In
 from pymongo import AsyncMongoClient
 
-from neonbot.classes.chatgpt.chatgpt import ChatGPT
 from neonbot.env import MONGO_IP, MONGO_DB_NAME, MONGO_DB_USERNAME, MONGO_DB_PASSWORD, MONGO_DB_PORT
 from neonbot.models.guild import GuildModel
 from neonbot.models.migration import MigrationModel
@@ -107,5 +106,4 @@ class Database:
     async def cache_guild(self, guild):
         log.info(f'Caching guild settings: {guild} ({guild.id})')
         await GuildModel.create_instance(guild.id)
-        await ChatGPT.cleanup_threads(guild)
 

@@ -7,7 +7,6 @@ from beanie.odm.queries.find import FindOne
 
 from neonbot.enums import Repeat
 from neonbot.models.channel_log import ChannelLogModel
-from neonbot.models.chatgpt import ChatGPTModel
 from neonbot.models.exchange_gift import ExchangeGiftModel
 from neonbot.models.music import MusicModel
 from neonbot.models.panel import PanelModel
@@ -21,7 +20,6 @@ class GuildModel(Document):
     channel_log: ChannelLogModel
     music: MusicModel
     exchange_gift: Optional[ExchangeGiftModel] = None
-    chatgpt: Optional[ChatGPTModel] = None
     panel: Optional[PanelModel] = None
 
     class Settings:
@@ -55,6 +53,5 @@ class GuildModel(Document):
             channel_log=ChannelLogModel(),
             music=MusicModel(volume=100, repeat=Repeat.OFF.value, shuffle=False, autoplay=False),
             exchange_gift=ExchangeGiftModel(members=[]),
-            chatgpt=ChatGPTModel(chats=[]),
             panel=PanelModel(servers={}),
         ).create()

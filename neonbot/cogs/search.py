@@ -11,11 +11,11 @@ from discord import app_commands
 from discord.app_commands.models import Choice
 from discord.ext import commands
 from jikanpy import AioJikan
+from i18n import t
 
-from neonbot.classes.chatgpt.chatgpt import ChatGPT
 from neonbot.classes.discord_utils.embed import Embed, EmbedChoices, PaginationEmbed
 from neonbot.classes.google import get_google_access_token
-from neonbot.env import OWNER_GUILD_IDS, GOOGLE_CX, GOOGLE_API, DICTIONARY_API, PROXY, OPENWEATHERMAP_API
+from neonbot.env import GOOGLE_CX, GOOGLE_API, DICTIONARY_API, PROXY, OPENWEATHERMAP_API
 from neonbot.utils import log
 from neonbot.utils.constants import ICONS
 from neonbot.utils.exceptions import ApiError
@@ -26,7 +26,6 @@ if TYPE_CHECKING:
 
 class Search(commands.Cog):
     anime = app_commands.Group(name='anime', description='Searches for top, upcoming, or specific anime.')
-    chatgpt = app_commands.Group(name='chatgpt', description='ChatGPT', guild_ids=OWNER_GUILD_IDS)
 
     def __init__(self, bot: 'NeonBot') -> None:
         self.bot = bot
@@ -71,10 +70,10 @@ class Search(commands.Cog):
 
         embed = Embed()
         embed.set_author(
-            name=f'Google Images for {keyword}',
+            name=t('search.google_images_for', keyword=keyword),
             icon_url=ICONS['google'],
         )
-        embed.set_footer(text=f'Searched by {interaction.user}', icon_url=interaction.user.display_avatar.url)
+        embed.set_footer(text=t('search.searched_by', user=interaction.user), icon_url=interaction.user.display_avatar.url)
         embed.set_image(url=image['items'][0]['link'])
 
         await interaction.response.send_message(embed=embed)
@@ -98,7 +97,7 @@ class Search(commands.Cog):
 
         if not data or not isinstance(data[0], dict):
             await interaction.response.send_message(
-                embed=Embed('Word not found.'), ephemeral=True
+                embed=Embed(t('search.word_not_found')), ephemeral=True
             )
             return
 
@@ -121,10 +120,10 @@ class Search(commands.Cog):
             value=(f'*{prs["mw"]}*' if prs['mw'] else '') + '\n' + dictionary['shortdef'][0],
         )
         embed.set_author(
-            name='Merriam-Webster Dictionary',
+            name=t('search.dictionary_title'),
             icon_url=ICONS['merriam'],
         )
-        embed.set_footer(text=f'Searched by {interaction.user}', icon_url=interaction.user.display_avatar.url)
+        embed.set_footer(text=t('search.searched_by', user=interaction.user), icon_url=interaction.user.display_avatar.url)
 
         if audio:
             content = await res.read()
@@ -155,7 +154,7 @@ class Search(commands.Cog):
 
         if int(data['cod']) == 404:
             await interaction.response.send_message(
-                embed=Embed('City not found.'), ephemeral=True
+                embed=Embed(t('search.city_not_found')), ephemeral=True
             )
             return
 
@@ -166,48 +165,48 @@ class Search(commands.Cog):
             icon_url=f'https://countryflagsapi.com/png/{data["sys"]["country"].lower()}',
         )
         embed.set_footer(
-            text='Powered by OpenWeatherMap',
+            text=t('search.powered_by_openweathermap'),
             icon_url=ICONS['openweather'],
         )
         embed.set_thumbnail(url=f'https://openweathermap.org/img/w/{data["weather"][0]["icon"]}.png')
         embed.add_field(
-            '☁ Weather',
+            t('search.weather'),
             f'{data["weather"][0]["main"]} - {data["weather"][0]["description"]}',
             inline=False,
         )
         embed.add_field(
-            '🌡 Temperature',
+            t('search.temperature'),
             textwrap.dedent(
                 f"""
-                Minimum Temperature: {data['main']['temp_min']}°C
-                Maximum Temperature: {data['main']['temp_max']}°C
-                Temperature: {data['main']['temp']}°C
+                {t('search.min_temperature', temp=data['main']['temp_min'])}
+                {t('search.max_temperature', temp=data['main']['temp_max'])}
+                {t('search.current_temperature', temp=data['main']['temp'])}
                 """
             ),
             inline=False,
         )
         embed.add_field(
-            '💨 Wind',
-            f'Speed: {data["wind"]["speed"]} m/s\nDegrees: {data["wind"]["deg"] or "N/A"}°',
+            t('search.wind'),
+            f"{t('search.wind_speed', speed=data['wind']['speed'])}\n{t('search.wind_degrees', deg=data['wind']['deg'] or 'N/A')}",
             inline=False,
         )
         embed.add_field(
-            '🌤 Sunrise',
+            t('search.sunrise'),
             datetime.fromtimestamp(data['sys']['sunrise']).strftime('%b %d, %Y %I:%M:%S %p'),
             inline=False,
         )
         embed.add_field(
-            '🌥 Sunset',
+            t('search.sunset'),
             datetime.fromtimestamp(data['sys']['sunset']).strftime('%b %d, %Y %I:%M:%S %p'),
             inline=False,
         )
         embed.add_field(
-            '🔘 Coordinates',
-            f'Longitude: {data["coord"]["lon"]}\nLatitude: {data["coord"]["lat"]}',
+            t('search.coordinates'),
+            f"{t('search.longitude', lon=data['coord']['lon'])}\n{t('search.latitude', lat=data['coord']['lat'])}",
             inline=False,
         )
-        embed.add_field('🎛 Pressure', f'{data["main"]["pressure"]} hpa', inline=False)
-        embed.add_field('💧 Humidity', f'{data["main"]["humidity"]}%', inline=False)
+        embed.add_field(t('search.pressure'), f'{data["main"]["pressure"]} hpa', inline=False)
+        embed.add_field(t('search.humidity'), f'{data["main"]["humidity"]}%', inline=False)
 
         await interaction.response.send_message(embed=embed)
 
@@ -251,7 +250,7 @@ class Search(commands.Cog):
         except Exception:
             log.exception('There was an error parsing the url.')
             await interaction.response.send_message(
-                embed=Embed('There was error fetching the lyrics.'), ephemeral=True
+                embed=Embed(t('search.lyrics_error')), ephemeral=True
             )
         else:
             lines = []
@@ -269,7 +268,7 @@ class Search(commands.Cog):
             pagination = PaginationEmbed(interaction, embeds=embeds)
             pagination.embed.set_author(name=title, icon_url=ICONS['music'])
             pagination.embed.set_footer(
-                text='Powered by AZLyrics',
+                text=t('search.powered_by_azlyrics'),
                 icon_url=ICONS['azlyrics'],
             )
             await pagination.build()
@@ -286,7 +285,7 @@ class Search(commands.Cog):
 
         if not results:
             await interaction.response.send_message(
-                embed=Embed('Anime not found.'), ephemeral=True
+                embed=Embed(t('search.anime_not_found')), ephemeral=True
             )
             return
 
@@ -310,19 +309,19 @@ class Search(commands.Cog):
         embed.set_author(name=title, url=anime['url'])
         embed.set_thumbnail(url=anime['images']['jpg']['image_url'])
         embed.set_footer(
-            text='Powered by MyAnimeList',
+            text=t('search.powered_by_myanimelist'),
             icon_url=ICONS['myanimelist'],
         )
         embed.add_field(
-            name='Synopsis',
+            name=t('search.synopsis'),
             value=anime['synopsis'][:1000] + '...' if len(anime['synopsis']) > 1000 else anime['synopsis'],
             inline=False,
         )
-        embed.add_field('Episodes', anime['episodes'])
-        embed.add_field('Rank', anime['rank'])
-        embed.add_field('Status', anime['status'])
-        embed.add_field('Aired', f'{from_date} - {to_date or "N/A"}')
-        embed.add_field('Genres', ', '.join([genre['name'] for genre in anime['genres']]))
+        embed.add_field(t('search.episodes'), anime['episodes'])
+        embed.add_field(t('search.rank'), anime['rank'])
+        embed.add_field(t('search.status'), anime['status'])
+        embed.add_field(t('search.aired'), f'{from_date} - {to_date or t("search.not_available")}')
+        embed.add_field(t('search.genres'), ', '.join([genre['name'] for genre in anime['genres']]))
 
         await interaction.response.send_message(embed=embed)
 
@@ -344,9 +343,9 @@ class Search(commands.Cog):
             embeds.append(Embed('\n'.join(temp)))
 
         pagination = PaginationEmbed(interaction, embeds=embeds)
-        pagination.embed.title = ':trophy: Top 50 Anime'
+        pagination.embed.title = t('search.top_50_anime')
         pagination.embed.set_footer(
-            text='Powered by MyAnimeList',
+            text=t('search.powered_by_myanimelist'),
             icon_url=ICONS['myanimelist'],
         )
         await pagination.build()
@@ -369,9 +368,9 @@ class Search(commands.Cog):
             embeds.append(Embed('\n'.join(temp)))
 
         pagination = PaginationEmbed(interaction, embeds=embeds)
-        pagination.embed.title = ':clock3: Upcoming Anime'
+        pagination.embed.title = t('search.upcoming_anime')
         pagination.embed.set_footer(
-            text='Powered by MyAnimeList',
+            text=t('search.powered_by_myanimelist'),
             icon_url=ICONS['myanimelist'],
         )
         await pagination.build()
@@ -397,7 +396,7 @@ class Search(commands.Cog):
         if 'error' in data:
             if data['error']['code'] == 400 and data['error']['message'] == 'Invalid Value':
                 await interaction.response.send_message(
-                    embed=Embed('Invalid language.'), ephemeral=True
+                    embed=Embed(t('search.invalid_language')), ephemeral=True
                 )
                 return
 
@@ -408,7 +407,7 @@ class Search(commands.Cog):
         translated_text = data['data']['translations'][0]['translatedText']
 
         embed = Embed()
-        embed.set_author(name='Google Translate', icon_url=ICONS['googletranslate'])
+        embed.set_author(name=t('search.google_translate'), icon_url=ICONS['googletranslate'])
         embed.add_field(f'**{self.lang_list[source_lang]}**', sentence, inline=False)
         embed.add_field(f'**{self.lang_list[target_lang]}**', translated_text)
 
@@ -423,19 +422,6 @@ class Search(commands.Cog):
             if lang.lower().startswith(current.lower())
         ][:25]
 
-    @chatgpt.command(name='image')
-    @app_commands.allowed_installs(guilds=True, users=True)
-    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    async def chatgpt_image(self, interaction: discord.Interaction['NeonBot'], keyword: str):
-        await interaction.response.defer()
-
-        response = await ChatGPT().generate_image(keyword)
-
-        embed = Embed()
-        embed.set_author(keyword)
-        embed.set_image(response.data[0].url)
-
-        await interaction.followup.send(embed=embed)
 
 
 async def setup(bot: 'NeonBot') -> None:

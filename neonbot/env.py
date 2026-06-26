@@ -36,11 +36,6 @@ CLEVERBOT_API = env.str('CLEVERBOT_API', default=None)
 SEMAPHONE_API_KEY = env.str('SEMAPHONE_API_KEY', default=None)
 SEMAPHONE_SENDER_NAME = env.str('SEMAPHONE_SENDER_NAME', default=None)
 
-OPENAI_API_KEY = env.str('OPENAI_API_KEY', default=None)
-OPENAI_MODEL = env.str('OPENAI_MODEL', default=None)
-OPENAI_IMAGE_MODEL = env.str('OPENAI_IMAGE_MODEL', default=None)
-OPENAI_MAX_TOKEN = env.int('OPENAI_MAX_TOKEN', default=4096)
-
 PANEL_URL = env.str('PANEL_URL', default=None)
 PANEL_API_KEY = env.str('PANEL_API_KEY', default=None)
 

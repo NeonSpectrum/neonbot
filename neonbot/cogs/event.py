@@ -9,9 +9,9 @@ import lavalink
 from discord.app_commands import AppCommandError
 from discord.ext import commands
 from discord.utils import escape_markdown
+from i18n import t
 from lavalink import Node, NodeConnectedEvent, listener
 
-from neonbot.classes.chatgpt.chatgpt import ChatGPT
 from neonbot.classes.discord_utils.embed import Embed
 from neonbot.classes.gemini import GeminiChat
 from neonbot.classes.player.ytmusic import YTMusic
@@ -69,9 +69,6 @@ class Event(commands.Cog):
             await self.bot.send_to_owner(embed=Embed(title=f'DM from {ctx.author}', description=message.content))
             return
 
-        if await ChatGPT().create_thread(ctx):
-            return
-
         if self.bot.user.mentioned_in(message):
             try:
                 gemini_chat = GeminiChat(ctx)
@@ -105,7 +102,7 @@ class Event(commands.Cog):
 
                     await self.bot.invoke(bot_ctx)
             except Exception as error:
-                await ctx.reply(embed=Embed('Something went wrong.'))
+                await ctx.reply(embed=Embed(t('utility.something_went_wrong')))
                 log.error(error, exc_info=True)
             finally:
                 return
@@ -138,7 +135,7 @@ class Event(commands.Cog):
             return True
 
         await interaction.response.send_message(
-            embed=Embed('This personal app is restricted to the developer.'),
+            embed=Embed(t('event.restricted_app')),
             ephemeral=True
         )
         return False
@@ -175,7 +172,7 @@ class Event(commands.Cog):
         if isinstance(error, send_msg):
             embed = Embed(remove_ansi(str(error)))
         else:
-            embed = Embed('There was an error executing the command. Please contact the administrator.')
+            embed = Embed(t('event.command_error'))
 
         await ctx.send(embed=embed, ephemeral=True)
 
@@ -271,7 +268,7 @@ class Event(commands.Cog):
 
         if before.status != after.status:
             embed = Embed()
-            embed.description = f'**{before.mention}** is now **{after.status}**.'
+            embed.description = t('event.status_change', user=before.mention, status=after.status)
 
             if status_log_channel:
                 embed.description = get_log_prefix() + embed.description
@@ -292,7 +289,7 @@ class Event(commands.Cog):
 
             embed = Embed(timestamp=datetime.now())
             embed.set_author(name=str(after), icon_url=after.display_avatar.url)
-            embed.description = f'**{before.mention}** is'
+            embed.description = t('event.activity.is_now', user=before.mention)
 
             if isinstance(after_activity, discord.Spotify):
                 if getattr(before_activity, 'title', None) == after_activity.title:
@@ -324,21 +321,19 @@ class Event(commands.Cog):
                 and isinstance(after_activity, discord.CustomActivity)
                 and before_activity.name != after_activity.name
             ):
-                embed.description += (
-                    f' changed custom status from **{before_activity.name}** to **{after_activity.name}**.'
-                )
+                embed.description += t('event.activity.changed_custom_status', **{'from': before_activity.name, 'to': after_activity.name})
             elif before_activity and not after_activity:
                 embed.set_thumbnail(get_image(before_activity))
-                embed.description += f' done {before_activity.type.name} **{before_activity.name}**.'
+                embed.description += t('event.activity.done_activity', type=before_activity.type.name, name=before_activity.name)
                 if hasattr(before_activity, 'start') and before_activity.start:
                     embed.add_field(
-                        name='Time Elapsed',
+                        name=t('event.time_elapsed'),
                         value=format_seconds(
                             datetime.now().timestamp() - before_activity.start.timestamp()
                         ),
                     )
             else:
-                embed.description += f' now {after_activity.type.name} **{after_activity.name}**.'
+                embed.description += t('event.activity.now_activity', type=after_activity.type.name, name=after_activity.name)
 
             if activity_log_channel:
                 embed.description = ':bust_in_silhouette:' + embed.description

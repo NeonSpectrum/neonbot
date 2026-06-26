@@ -1,0 +1,12 @@
+{
+    "prefix_set": "Prefix is now set to `%{prefix}`.",
+    "status_set": "Status is now set to %{status}.",
+    "presence_set": "Presence is now set to **%{type} %{name}**.",
+    "select_log_type": "Select log type...",
+    "log_channel_set": "Log channel type `%{type}` has been set to %{channel}.",
+    "log_channels_title": "Log Channels",
+    "none": "None",
+    "autojoin_set": "Autojoin voice channel is now set to **%{channel}**.",
+    "music_channel_set": "Music channel is now set to **%{channel}**.",
+    "gemini_instruction_set": "Gemini instruction is now set to **%{value}**."
+}

@@ -9,12 +9,12 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import View
+from i18n import t
 
 from neonbot.classes.discord_utils.embed import Embed
 from neonbot.classes.discord_utils.select_choices import SelectChoices
 from neonbot.env import OWNER_GUILD_IDS
 from neonbot.models.guild import GuildModel
-from neonbot.utils.constants import ICONS
 
 if TYPE_CHECKING:
     from neonbot import NeonBot
@@ -113,7 +113,7 @@ class Administration(commands.Cog):
         await server.save_changes(False)
 
         await interaction.response.send_message(
-            embed=Embed(f'Prefix is now set to `{server.prefix}`.')
+            embed=Embed(t('administration.prefix_set', prefix=server.prefix))
         )
 
     @settings.command(name='set-status')
@@ -129,7 +129,7 @@ class Administration(commands.Cog):
         await self.bot.update_presence()
 
         await interaction.response.send_message(
-            embed=Embed(f'Status is now set to {self.bot.setting.get("status")}.')
+            embed=Embed(t('administration.status_set', status=self.bot.setting.get("status")))
         )
 
     @settings.command(name='set-presence')
@@ -151,7 +151,7 @@ class Administration(commands.Cog):
 
         # noinspection PyUnresolvedReferences
         await interaction.response.send_message(
-            embed=Embed(f'Presence is now set to **{presence_type.name} {name}**.')
+            embed=Embed(t('administration.presence_set', type=presence_type.name, name=name))
         )
 
     @server.command(name='set-logs')
@@ -160,7 +160,7 @@ class Administration(commands.Cog):
 
         guild = GuildModel.get_instance(interaction.guild_id)
         select = SelectChoices(
-            'Select log type...',
+            t('administration.select_log_type'),
             [
                 'connect',
                 'mute',
@@ -181,7 +181,7 @@ class Administration(commands.Cog):
             await guild.save_changes(False)
 
             await interaction.edit_original_response(
-                embed=Embed(f'Log channel type `{", ".join(select.values)}` has been set to {channel.mention}'),
+                embed=Embed(t('administration.log_channel_set', type=", ".join(select.values), channel=channel.mention)),
                 view=None,
             )
 
@@ -199,36 +199,14 @@ class Administration(commands.Cog):
         guild = GuildModel.get_instance(interaction.guild_id)
 
         embed = Embed()
-        embed.set_author('Log Channels', icon_url=self.bot.user.display_avatar.url)
+        embed.set_author(t('administration.log_channels_title'), icon_url=self.bot.user.display_avatar.url)
 
         for name, channel_id in guild.channel_log.model_dump().items():
             channel = self.bot.get_channel(channel_id or -1)
-            embed.add_field(name.title().replace('_', ''), channel.mention if channel else 'None', inline=False)
+            embed.add_field(name.title().replace('_', ''), channel.mention if channel else t('administration.none'), inline=False)
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    @server.command(name='set-chatgpt')
-    async def set_chatgpt(self, interaction: discord.Interaction['NeonBot'], channel: discord.TextChannel, enable: bool):
-        """Sets the chatgpt channel. *ADMINISTRATOR"""
-
-        guild = GuildModel.get_instance(interaction.guild_id)
-        guild.chatgpt.channel_id = channel.id if enable else None
-        await guild.save_changes(False)
-
-        if guild.chatgpt.channel_id:
-            await interaction.response.send_message(
-                embed=Embed(f'ChatGPT is now set to {channel.mention}.')
-            )
-
-            embed = Embed()
-            embed.set_author('OpenAI - ChatGPT', url='https://chat.openai.com', icon_url=ICONS['openai'])
-            embed.set_description('Start a conversation with ChatGPT by asking a question in this space.')
-
-            await channel.send(embed=embed)
-        else:
-            await interaction.response.send_message(
-                embed=Embed('ChatGPT is now disabled.')
-            )
 
     @server.command(name='set-autojoin')
     async def set_autojoin(self, interaction: discord.Interaction['NeonBot'], channel: Optional[discord.VoiceChannel] = None):
@@ -238,9 +216,9 @@ class Administration(commands.Cog):
         guild.music.autojoin_channel_id = channel.id if channel else None
         await guild.save_changes(False)
 
-        channel_mention = channel.mention if channel else 'None'
+        channel_mention = channel.mention if channel else t('administration.none')
         await interaction.response.send_message(
-            embed=Embed(f'Autojoin voice channel is now set to **{channel_mention}**.')
+            embed=Embed(t('administration.autojoin_set', channel=channel_mention))
         )
 
     @server.command(name='set-music-channel')
@@ -251,9 +229,9 @@ class Administration(commands.Cog):
         guild.music.channel_id = channel.id if channel else None
         await guild.save_changes(False)
 
-        channel_mention = channel.mention if channel else 'None'
+        channel_mention = channel.mention if channel else t('administration.none')
         await interaction.response.send_message(
-            embed=Embed(f'Music channel is now set to **{channel_mention}**.')
+            embed=Embed(t('administration.music_channel_set', channel=channel_mention))
         )
 
     @settings.command(name='set-gemini-instruction')
@@ -266,7 +244,7 @@ class Administration(commands.Cog):
 
         # noinspection PyUnresolvedReferences
         await interaction.response.send_message(
-            embed=Embed(f'Gemini instruction is now set to **{value}**.')
+            embed=Embed(t('administration.gemini_instruction_set', value=value))
         )
 
     @app_commands.command(name='sync')
@@ -274,7 +252,7 @@ class Administration(commands.Cog):
     @app_commands.allowed_contexts(guilds=False, dms=True, private_channels=False)
     async def sync(self, interaction: discord.Interaction['NeonBot']):
         if not self.bot.is_owner(interaction.user):
-            await interaction.response.send_message(embed=Embed('No permission.'))
+            await interaction.response.send_message(embed=Embed(t('common.no_permission')))
             return
 
         await self.bot.sync_command()
@@ -283,7 +261,7 @@ class Administration(commands.Cog):
 
         await asyncio.gather(*[self.bot.sync_command(guild) for guild in guilds])
 
-        await interaction.response.send_message(embed=Embed('Commands Synced!'))
+        await interaction.response.send_message(embed=Embed(t('common.commands_synced')))
 
 
 async def setup(bot: 'NeonBot') -> None:
