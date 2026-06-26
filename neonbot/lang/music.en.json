@@ -73,5 +73,10 @@
     "autoplay_executing": "Executing autoplay...",
     "unknown_requester": "Unknown",
     "autoplay_label": "Autoplay",
-    "reset_label": "Reset"
+    "reset_label": "Reset",
+    "track_failed": "Track playback failed: %{error}",
+    "node_disconnected": "Music server disconnected. Attempting to reconnect...",
+    "node_reconnected": "Music server reconnected. Resuming playback...",
+    "node_reconnect_failed": "Music server is unavailable. Please try again later.",
+    "button_error": "An error occurred while processing your request."
 }

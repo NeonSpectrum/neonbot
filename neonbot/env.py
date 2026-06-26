@@ -14,7 +14,7 @@ PROXY = env.str('PROXY', default=None)
 DISABLED_COGS = env.list('DISABLED_COGS', default=[])
 ENABLE_AUTOJOIN = env.bool('ENABLE_AUTOJOIN', default=True)
 
-MONGO_IP = env.str('MONGO_IP', default='mongo')
+MONGO_DB_HOST = env.str('MONGO_DB_HOST', default='mongo')
 MONGO_DB_NAME = env.str('MONGO_DB_NAME', default='neonbot')
 MONGO_DB_USERNAME = env.str('MONGO_DB_USERNAME', default='')
 MONGO_DB_PASSWORD = env.str('MONGO_DB_PASSWORD', default='')
@@ -45,9 +45,7 @@ GEMINI_IMAGE_MODEL = env.str('GEMINI_IMAGE_MODEL', default=None)
 
 RAPID_API_KEY = env.str('RAPID_API_KEY', default=None)
 
-LAVALINK_HOST = env.str('LAVALINK_HOST', default='lavalink')
-LAVALINK_PORT = env.str('LAVALINK_PORT', default='2333')
-LAVALINK_PASSWORD = env.str('LAVALINK_PASSWORD', default='youshallnotpass')
+LAVALINK_NODES = env.list('LAVALINK_NODES', default=['lavalink:2333:youshallnotpass:asia'])
 
 YTMUSIC_CREDENTIALS_TYPE = env.str('YTMUSIC_CREDENTIALS_TYPE', default='oauth')
 YTMUSIC_CREDENTIALS_JSON = env.str('YTMUSIC_CREDENTIALS_JSON', default='')

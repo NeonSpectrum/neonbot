@@ -13,7 +13,7 @@ from beanie import init_beanie
 from beanie.odm.operators.find.comparison import In
 from pymongo import AsyncMongoClient
 
-from neonbot.env import MONGO_IP, MONGO_DB_NAME, MONGO_DB_USERNAME, MONGO_DB_PASSWORD, MONGO_DB_PORT
+from neonbot.env import MONGO_DB_HOST, MONGO_DB_NAME, MONGO_DB_USERNAME, MONGO_DB_PASSWORD, MONGO_DB_PORT
 from neonbot.models.guild import GuildModel
 from neonbot.models.migration import MigrationModel
 from neonbot.models.setting import SettingModel
@@ -31,7 +31,7 @@ class Database:
         self.db = None
 
     async def initialize(self) -> Database:
-        mongo_ip = MONGO_IP
+        mongo_host = MONGO_DB_HOST
         db_name = MONGO_DB_NAME
         db_username = MONGO_DB_USERNAME
         db_password = MONGO_DB_PASSWORD
@@ -40,7 +40,7 @@ class Database:
         start_time = time()
 
         log.info('Connecting to Database...')
-        client = AsyncMongoClient(host=mongo_ip, port=db_port, username=db_username, password=db_password)
+        client = AsyncMongoClient(host=mongo_host, port=db_port, username=db_username, password=db_password)
         self.db = client.get_database(db_name)
         await init_beanie(database=self.db, document_models=[GuildModel, SettingModel, MigrationModel])
         log.info(f'MongoDB connection established in {(time() - start_time):.2f}s')

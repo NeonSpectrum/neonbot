@@ -9,7 +9,6 @@ import discord
 from discord import VoiceChannel
 from discord.ext import tasks, commands
 from discord.ext.commands import Context
-from discord.utils import find
 from i18n import t
 from lavalink import AudioTrack, DefaultPlayer, DeferredAudioTrack, LoadType, TrackEndEvent, TrackStartEvent
 from ytmusicapi.exceptions import YTMusicError
@@ -18,7 +17,7 @@ from lib.lavalink_voice_client import LavalinkVoiceClient
 from neonbot.discord_ui.embed import Embed
 from neonbot.music.enums import PlayerMessage, MessageType, Repeat
 from neonbot.music.player_message import PlayerMessageManager
-from neonbot.music.ytmusic import YTMusic
+from neonbot.music.ytmusic import YTMusicHelper
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log
 from neonbot.utils.functions import clean_youtube_url, is_youtube_url, wait_until
@@ -27,6 +26,8 @@ if TYPE_CHECKING:
     from neonbot import NeonBot
     from neonbot.music.lavalink_client import Client
     from lavalink import Node
+
+MAX_MESSAGER_SIZE = 50
 
 
 class Player(DefaultPlayer):
@@ -40,6 +41,9 @@ class Player(DefaultPlayer):
         self.settings = GuildModel.get_instance(self.guild_id)
         self.messager: PlayerMessageManager = PlayerMessageManager(self.bot, self.guild_id)
         self._track_event_lock = asyncio.Lock()
+        self.command_lock = asyncio.Lock()
+        self.ytmusic = YTMusicHelper(self.bot)
+        self._reconnecting = False
 
         self.ctx: Optional[Context['NeonBot']] = None
         self.voice_channel: Optional[VoiceChannel] = None
@@ -57,7 +61,12 @@ class Player(DefaultPlayer):
         self.set_loop(self.settings.music.repeat)
 
     def save_settings(self):
-        self.bot.loop.create_task(self.settings.save_changes(False))
+        async def _save():
+            try:
+                await self.settings.save_changes(False)
+            except Exception:
+                log.exception(f'Guild {self.guild_id}: save_settings failed')
+        self.bot.loop.create_task(_save())
 
     @property
     def playlist(self) -> List[AudioTrack]:
@@ -97,28 +106,31 @@ class Player(DefaultPlayer):
         if channel:
             log.debug(f'Setting default ctx to {channel.name}.')
 
-            async for message in channel.history(limit=100):
-                if message.author == self.bot.user:
-                    ctx = await self.bot.get_context(message)
-                    self.set_ctx(ctx, save_last_channel_id=False)
-                    return
+            try:
+                async for message in channel.history(limit=100):
+                    if message.author == self.bot.user:
+                        ctx = await self.bot.get_context(message)
+                        self.set_ctx(ctx, save_last_channel_id=False)
+                        return
+            except discord.Forbidden:
+                log.warn(f'Cannot read history in channel {channel.id}')
 
         voice_channel = self.bot.get_channel(self.settings.music.autojoin_channel_id)
 
-        if voice_channel:
+        if voice_channel and isinstance(voice_channel, discord.VoiceChannel):
             log.debug(f'Setting default ctx to {voice_channel.name}.')
 
-            message = await voice_channel.send(t('music.autoplay_executing'))
-            ctx = await self.bot.get_context(message)
-            self.set_ctx(ctx, save_last_channel_id=False)
-            await message.delete()
-            return
+            try:
+                message = await voice_channel.send(t('music.autoplay_executing'))
+                ctx = await self.bot.get_context(message)
+                self.set_ctx(ctx, save_last_channel_id=False)
+                await message.delete()
+                return
+            except (discord.Forbidden, discord.HTTPException) as e:
+                log.warn(f'Cannot send message to voice channel {voice_channel.id}: {e}')
 
         if not self.ctx:
-            log.error('Cannot set default ctx')
-
-    async def handle_event(self, event):
-        pass
+            log.error(f'Guild {self.guild_id}: Cannot set default ctx')
 
     def set_loop(self, value: int) -> None:
         super().set_loop(value)
@@ -157,29 +169,46 @@ class Player(DefaultPlayer):
 
     async def connect(self, voice_channel: discord.VoiceChannel = None):
         if self.voice_client:
-            if voice_channel and self.ctx.guild.voice_client.channel != voice_channel:
-                self.voice_channel = voice_channel
-                await self.ctx.guild.me.move_to(voice_channel)
-                log.cmd(self.ctx, t('music.player_connected', channel=self.voice_channel))
-
+            if voice_channel and self.ctx and self.ctx.guild.voice_client:
+                if self.ctx.guild.voice_client.channel != voice_channel:
+                    self.voice_channel = voice_channel
+                    await self.ctx.guild.me.move_to(voice_channel)
+                    log.cmd(self.ctx, t('music.player_connected', channel=self.voice_channel))
             return
 
-        if not voice_channel and not self.ctx.author.voice:
-            raise commands.CommandError(t('music.must_be_in_voice_channel'))
+        if not self.ctx:
+            raise commands.CommandError('Player context not available')
 
-        self.voice_channel = voice_channel or self.ctx.author.voice.channel
-        self.voice_client = await self.voice_channel.connect(timeout=3, reconnect=True, self_deaf=True, cls=LavalinkVoiceClient)
-        log.cmd(self.ctx, t('music.player_connected', channel=self.voice_channel, guild=self.voice_channel.guild))
+        try:
+            if not voice_channel and not self.ctx.author.voice:
+                raise commands.CommandError(t('music.must_be_in_voice_channel'))
+
+            self.voice_channel = voice_channel or self.ctx.author.voice.channel
+            self.voice_client = await self.voice_channel.connect(
+                timeout=5, reconnect=True, self_deaf=True, cls=LavalinkVoiceClient
+            )
+            log.cmd(self.ctx, t('music.player_connected', channel=self.voice_channel, guild=self.voice_channel.guild))
+        except Exception:
+            self.voice_channel = None
+            self.voice_client = None
+            raise
 
     async def disconnect(self, force=True, destroy=True, timeout=None) -> None:
-        if self.ctx.voice_client:
-            try:
-                voice_client = cast(LavalinkVoiceClient, self.ctx.voice_client)
-                await asyncio.wait_for(voice_client.disconnect(force=force, destroy=destroy), timeout=timeout)
-                self.voice_channel = None
-                self.voice_client = None
-            except asyncio.TimeoutError:
-                pass
+        try:
+            ctx_vc = self.ctx.voice_client if self.ctx else None
+            if ctx_vc:
+                voice_client = cast(LavalinkVoiceClient, ctx_vc)
+                if timeout is not None:
+                    await asyncio.wait_for(voice_client.disconnect(force=force, destroy=destroy), timeout=timeout)
+                else:
+                    await voice_client.disconnect(force=force, destroy=destroy)
+        except asyncio.TimeoutError:
+            log.warn(f'Guild {self.guild_id}: disconnect timed out')
+        except Exception as e:
+            log.warn(f'Guild {self.guild_id}: disconnect error: {e}')
+        finally:
+            self.voice_channel = None
+            self.voice_client = None
 
     async def pause(self, requester: Union[discord.User, discord.ClientUser]):
         if not self.is_playing:
@@ -202,51 +231,49 @@ class Player(DefaultPlayer):
         self.messager.refresh_player_controls()
 
     def add(self, track: Union[AudioTrack, 'DeferredAudioTrack', Dict[str, Union[Optional[str], bool, int]]],
-            requester: int = 0, index: Optional[int] = None):
-        track.extra['index'] = len(self.track_list)
+            requester: int = 0):
         if requester:
             track.requester = requester
         self.track_list.append(track)
 
         if self.shuffle:
-            index = random.randint(self.current_queue, len(self.shuffled_list))
-            self.shuffled_list.insert(index, track)
+            insert_pos = random.randint(0, len(self.shuffled_list))
+            self.shuffled_list.insert(insert_pos, track)
 
         if self.current:
             self.messager.refresh_player_controls()
 
         if requester != self.bot.user.id:
-            self.bot.loop.create_task(YTMusic(self.bot).like_song(track.identifier))
+            self.bot.loop.create_task(self.ytmusic.like_song(track.identifier))
 
-    def remove(self, index):
-        if self.shuffle:
-            self.shuffled_list[:] = [
-                track for track in self.shuffled_list
-                if track.extra.get('index') != index
-            ]
-
-        target_track: Optional[AudioTrack] = find(lambda track: track.extra.get('index') == index, self.track_list)
-
-        if not target_track:
+    def remove(self, index: int):
+        playlist = self.playlist
+        if index < 0 or index >= len(playlist):
             raise IndexError
 
-        removed_index = target_track.extra.get('index')
-        removed_track = self.track_list.pop(removed_index)
+        removed_track = playlist.pop(index)
 
-        # Adjust index on all tracks
-        for track in self.shuffled_list:
-            if track.extra.get('index') > removed_index:
-                track.extra['index'] -= 1
-        for track in self.track_list:
-            if track.extra.get('index') > removed_index:
-                track.extra['index'] -= 1
+        if self.shuffle:
+            try:
+                self.track_list.remove(removed_track)
+            except ValueError:
+                pass
+
+        if index < self.current_queue:
+            self.current_queue -= 1
+        elif index == self.current_queue and self.current_queue >= len(self.playlist):
+            self.current_queue = max(0, len(self.playlist) - 1)
 
         return removed_track
 
     async def search_random(self):
-        tracks = await YTMusic(self.bot).get_random_tracks()
+        tracks = await self.ytmusic.get_random_tracks()
 
         self.autoplay_list = self.filter_tracks_from_existing(tracks)
+
+        if not self.autoplay_list:
+            log.warn(f'Guild {self.guild_id}: search_random: no available tracks')
+            return
 
         track = self.autoplay_list.pop(0)
         await self.search(f"https://music.youtube.com/watch?v={track['id']}")
@@ -257,7 +284,13 @@ class Player(DefaultPlayer):
         elif is_youtube_url(query):
             query = clean_youtube_url(query)
 
-        results = await self.node.get_tracks(query)
+        try:
+            results = await self.node.get_tracks(query)
+        except Exception as error:
+            log.error(f'Guild {self.guild_id}: Lavalink search failed: {error}')
+            if send_message and self.ctx:
+                await self.ctx.reply(embed=Embed(t('music.search_error')))
+            return
 
         load_type = results.load_type
         tracks = results.tracks
@@ -273,24 +306,19 @@ class Player(DefaultPlayer):
             log.error(results.error.message)
 
         elif load_type == LoadType.PLAYLIST:
-            count = 0
             for track in tracks:
-                self.add(track, requester=requester or self.ctx.author.id)
-                count += 1
+                self.add(track, requester=requester or (self.ctx.author.id if self.ctx else self.bot.user.id))
 
-            embed = Embed(
-                t('music.added_multiple_to_queue', count=len(tracks)) + ' ' + t('music.added_failed',
-                                                                                count=len(tracks) - count)
-            )
+            embed = Embed(t('music.added_multiple_to_queue', count=len(tracks)))
 
         elif load_type == LoadType.TRACK or load_type == LoadType.SEARCH:
             track = tracks[0]
 
-            self.add(track, requester=requester or self.ctx.author.id)
+            self.add(track, requester=requester or (self.ctx.author.id if self.ctx else self.bot.user.id))
 
             embed = Embed(t('music.added_to_queue', queue=len(self.track_list), title=track.title, url=track.uri))
 
-        if embed and send_message:
+        if embed and send_message and self.ctx:
             await self.ctx.reply(embed=embed)
 
     async def queue_next_song(self):
@@ -307,10 +335,10 @@ class Player(DefaultPlayer):
             else:
                 next_queue = self.current_queue + 1
         elif self.loop == Repeat.ALL:  # repeat all
-            if self.current_queue == len(self.playlist) - 1:  # move to last if end of playlist
+            if self.current_queue == len(self.playlist) - 1:
                 next_queue = 0
             else:
-                next_queue = self.current_queue + 1  # just increment if not last
+                next_queue = self.current_queue + 1
         elif self.loop == Repeat.SINGLE:  # repeat single
             pass
         elif self.autoplay and self.is_last_track:  # autoplay
@@ -321,9 +349,9 @@ class Player(DefaultPlayer):
                 return
             next_queue = self.current_queue + 1
         elif self.loop == Repeat.OFF:  # repeat off
-            if self.is_last_track:  # dont play if last
+            if self.is_last_track:
                 return
-            next_queue = self.current_queue + 1  # just increment if not last
+            next_queue = self.current_queue + 1
 
         if next_queue is not None and 0 <= next_queue < len(self.playlist):
             self.current_queue = next_queue
@@ -331,7 +359,7 @@ class Player(DefaultPlayer):
         try:
             track = self.playlist[self.current_queue]
         except IndexError:
-            log.error(f'Playlist length is {len(self.playlist)}. Current queue is {self.current_queue}')
+            log.error(f'Guild {self.guild_id}: Playlist length is {len(self.playlist)}. Current queue is {self.current_queue}')
             return
 
         self.queue = [track]
@@ -376,22 +404,28 @@ class Player(DefaultPlayer):
     async def process_autoplay(self, track: AudioTrack) -> None:
         try:
             if len(track.identifier) != 11:
-                video_id = await YTMusic(self.bot).search(track.title)
+                video_id = await self.ytmusic.search(track.title)
             else:
                 video_id = track.identifier
 
+            if not video_id:
+                raise YTMusicError('Could not find video ID for track')
+
             if len(self.autoplay_list) == 0:
                 log.debug(f'Searching related tracks from `{track.title}` [{video_id}].')
-                related_tracks = await YTMusic(self.bot).get_related_tracks(video_id)
+                related_tracks = await self.ytmusic.get_related_tracks(video_id)
                 log.debug('Found related tracks: ' + str(len(related_tracks)))
 
                 if len(related_tracks) == 0:
                     log.debug('Related tracks are empty. Getting random tracks.')
-                    related_tracks = await YTMusic(self.bot).get_random_tracks()
+                    related_tracks = await self.ytmusic.get_random_tracks()
                     log.debug('Found random tracks: ' + str(len(related_tracks)))
 
                 self.autoplay_list = self.filter_tracks_from_existing(related_tracks)
                 log.debug('self.autoplay_list: ' + str(len(self.autoplay_list)))
+
+            if not self.autoplay_list:
+                raise YTMusicError('No available tracks for autoplay')
 
             related_video = self.autoplay_list.pop(0)
         except (YTMusicError, IndexError) as error:
@@ -402,25 +436,38 @@ class Player(DefaultPlayer):
         await self.search(video_url, send_message=False, requester=self.bot.user.id)
 
     async def send_message(self, *args, **kwargs):
+        if not self.ctx:
+            return None
         return await self.ctx.channel.send(*args, **kwargs)
 
     def find_new_current_queue(self, track_list):
         if self.current:
-            current_index = self.current.extra.get('index')
-            for index, track in enumerate(track_list):
-                if track.extra.get('index') == current_index:
-                    return index
+            try:
+                return track_list.index(self.current)
+            except ValueError:
+                pass
 
-        log.warn('Cannot find new current queue. Returning index 0')
+        log.warn(f'Guild {self.guild_id}: Cannot find new current queue. Returning index 0')
         return 0
 
     def filter_tracks_from_existing(self, track_list):
         existing_ids = [i.identifier for i in self.track_list]
         return [i for i in track_list if i['id'] not in existing_ids]
 
+    def _trim_messager_data(self):
+        if len(self.messager.data) > MAX_MESSAGER_SIZE:
+            trimmed = self.messager.data[:len(self.messager.data) - MAX_MESSAGER_SIZE]
+            self.messager.data = self.messager.data[len(self.messager.data) - MAX_MESSAGER_SIZE:]
+            for pm in trimmed:
+                if pm.message:
+                    self.bot.loop.create_task(pm.message.delete(delay=0))
+
     async def track_start_event(self, event: TrackStartEvent):
         async with self._track_event_lock:
-            await wait_until(lambda: self.is_playing, timeout=30)
+            result = await wait_until(lambda: self.is_playing, timeout=30)
+            if result is None and not self.is_playing:
+                log.warn(f'Guild {self.guild_id}: track never started playing')
+                return
             await self.messager.send_message(PlayerMessage(
                 type=MessageType.PLAYING,
                 track=event.track,
@@ -430,6 +477,8 @@ class Player(DefaultPlayer):
 
     async def track_end_event(self, event: TrackEndEvent):
         async with self._track_event_lock:
+            self._trim_messager_data()
+
             player_message = self.messager.get_latest_message(MessageType.PLAYING)
             await self.messager.replace_to_finished_playing(player_message)
 

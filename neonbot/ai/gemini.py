@@ -196,8 +196,8 @@ class GeminiChat:
         track_list = []
 
         if player:
-            for track in player.playlist:
-                track_list.append({'index': track.extra['index'], 'title': track.title, 'identifier': track.identifier})
+            for i, track in enumerate(player.playlist):
+                track_list.append({'index': i + 1, 'title': track.title, 'identifier': track.identifier})
 
         placeholders = {
             '{{DISPLAY_NAME}}': self.bot.user.name,

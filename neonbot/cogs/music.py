@@ -31,18 +31,18 @@ class Music(commands.Cog):
 
         player: Player = await self.bot.create_player_instance(ctx.guild.id, ctx=ctx)
 
-        # Clear autoplay list whenever there's new song
-        player.autoplay_list = []
+        async with player.command_lock:
+            player.autoplay_list = []
 
-        await player.search(query)
+            await player.search(query)
 
-        if len(player.track_list) == 0:
-            return
+            if len(player.track_list) == 0:
+                return
 
-        await player.connect()
+            await player.connect()
 
-        if not player.is_playing:
-            await player.play_next()
+            if not player.is_playing:
+                await player.play_next()
 
     @commands.hybrid_command(name='playrandom', aliases=['pr'], )
     @has_permission()
@@ -51,15 +51,16 @@ class Music(commands.Cog):
     async def playrandom(self, ctx: commands.Context['NeonBot']):
         player: Player = await self.bot.create_player_instance(ctx.guild.id, ctx=ctx)
 
-        await player.search_random()
+        async with player.command_lock:
+            await player.search_random()
 
-        if len(player.track_list) == 0:
-            return
+            if len(player.track_list) == 0:
+                return
 
-        await player.connect()
+            await player.connect()
 
-        if not player.is_playing:
-            await player.play_next()
+            if not player.is_playing:
+                await player.play_next()
 
     @commands.hybrid_command(name='nowplaying', aliases=['np'])
     @has_permission()
@@ -112,8 +113,9 @@ class Music(commands.Cog):
 
         for i in range(0, len(player.playlist), 10):
             temp = []
-            for _, track in enumerate(player.playlist[i: i + 10], i):
-                title = f'`{"*" if player.current.identifier == track.identifier else ""}{track.extra["index"] + 1}.` [{track["title"]}]({track["uri"]})'
+            for j, track in enumerate(player.playlist[i: i + 10], i):
+                is_current = player.current and player.current.identifier == track.identifier
+                title = f'`{"*" if is_current else ""}{j + 1}.` [{track["title"]}]({track["uri"]})'
                 description = f"""\
 {title}
 - - - `{format_milliseconds(track.duration) if track.duration else 'N/A'}` `{self.bot.get_user(track.requester)}`"""
@@ -133,7 +135,8 @@ class Music(commands.Cog):
         pagination = PaginationEmbed(interaction, embeds=embeds)
         pagination.embed.set_author(name=t('music.player_queue'), icon_url=ICONS['music'])
         pagination.embed.set_footer(text=' | '.join(footer), icon_url=self.bot.user.display_avatar)
-        await pagination.build(page_number=player.current.extra['index'] // 10 + 1)
+        current_index = player.playlist.index(player.current) if player.current and player.current in player.playlist else 0
+        await pagination.build(page_number=current_index // 10 + 1)
 
     @commands.hybrid_command(name='goto', aliases=['jump', 'go'])
     @has_permission()
@@ -145,15 +148,19 @@ class Music(commands.Cog):
 
         player: Player = self.bot.get_player_instance(ctx.guild.id)
 
-        try:
-            player.current_queue = index - 1
-            track = player.track_list[player.current_queue]
+        async with player.command_lock:
+            try:
+                pos = index - 1
+                if pos < 0 or pos >= len(player.playlist):
+                    raise IndexError
+                player.current_queue = pos
+                track = player.playlist[pos]
 
-            await ctx.reply(embed=Embed(t('music.jumped_to', index=index, title=track.title, url=track.uri)))
+                await ctx.reply(embed=Embed(t('music.jumped_to', index=index, title=track.title, url=track.uri)))
 
-            await player.play(track)
-        except IndexError:
-            await ctx.reply(embed=Embed(t('music.invalid_index')), ephemeral=True)
+                await player.play(track)
+            except IndexError:
+                await ctx.reply(embed=Embed(t('music.invalid_index')), ephemeral=True)
 
     @commands.hybrid_command(name='removesong', aliases=['remove', 'del', 'rm'])
     @has_permission()
@@ -165,19 +172,24 @@ class Music(commands.Cog):
 
         player: Player = self.bot.get_player_instance(ctx.guild.id)
 
-        try:
-            is_currently_playing = player.current.extra['index'] == index - 1
-            removed = player.remove(index - 1)
+        async with player.command_lock:
+            try:
+                pos = index - 1
+                if pos < 0 or pos >= len(player.playlist):
+                    raise IndexError
 
-            if len(player.playlist) > 0 and is_currently_playing:
-                await player.prev()
+                is_currently_playing = player.current and player.playlist[pos] == player.current
+                removed = player.remove(pos)
 
-            await ctx.reply(embed=Embed(t('music.removed_song', index=index, title=removed.title, url=removed.uri)))
+                if len(player.playlist) > 0 and is_currently_playing:
+                    await player.prev()
 
-            if len(player.playlist) == 0:
-                await player.reset()
-        except IndexError:
-            await ctx.reply(embed=Embed(t('music.invalid_index')), ephemeral=True)
+                await ctx.reply(embed=Embed(t('music.removed_song', index=index, title=removed.title, url=removed.uri)))
+
+                if len(player.playlist) == 0:
+                    await player.reset()
+            except IndexError:
+                await ctx.reply(embed=Embed(t('music.invalid_index')), ephemeral=True)
 
     @commands.hybrid_command(name='reset')
     @has_permission()
@@ -188,7 +200,8 @@ class Music(commands.Cog):
         """Resets the current player and disconnect to voice channel."""
 
         player: Player = self.bot.get_player_instance(ctx.guild.id)
-        await player.reset()
+        async with player.command_lock:
+            await player.reset()
 
         msg = t('music.player_reset')
         log.cmd(ctx, msg)
@@ -201,7 +214,8 @@ class Music(commands.Cog):
         """Connect to voice channel."""
 
         player: Player = await self.bot.create_player_instance(ctx.guild.id, ctx=ctx)
-        await player.connect(voice_channel)
+        async with player.command_lock:
+            await player.connect(voice_channel)
 
         await ctx.reply(embed=Embed(t('music.joined_channel', channel=voice_channel.mention)), ephemeral=True)
 
@@ -213,9 +227,9 @@ class Music(commands.Cog):
 
         player: Player = self.bot.get_player_instance(ctx.guild.id)
 
-        last_voice_channel = player.voice_channel
-
-        await player.disconnect()
+        async with player.command_lock:
+            last_voice_channel = player.voice_channel
+            await player.disconnect()
 
         await ctx.reply(embed=Embed(t('music.left_channel', channel=last_voice_channel.mention)), ephemeral=True)
 
@@ -226,7 +240,8 @@ class Music(commands.Cog):
         """Set shuffle mode."""
 
         player: Player = self.bot.get_player_instance(ctx.guild.id)
-        player.set_shuffle(state)
+        async with player.command_lock:
+            player.set_shuffle(state)
 
         user = ctx.author.mention if ctx.invoked_with != 'bot' else ctx.guild.me.mention
         await ctx.reply(embed=Embed(t('music.shuffle_changed', mode='on' if player.shuffle else 'off', user=user)))
@@ -244,8 +259,9 @@ class Music(commands.Cog):
 
         player: Player = self.bot.get_player_instance(ctx.guild.id)
 
-        modes = [Repeat.OFF, Repeat.SINGLE, Repeat.ALL]
-        player.set_loop(modes[mode].value)
+        async with player.command_lock:
+            modes = [Repeat.OFF, Repeat.SINGLE, Repeat.ALL]
+            player.set_loop(modes[mode].value)
 
         user = ctx.author.mention if ctx.invoked_with != 'bot' else ctx.guild.me.mention
         await ctx.reply(embed=Embed(t('music.repeat_changed', mode=modes[mode].name.lower(), user=user)))
@@ -257,7 +273,8 @@ class Music(commands.Cog):
         """Set autoplay mode."""
 
         player: Player = self.bot.get_player_instance(ctx.guild.id)
-        player.set_autoplay(state)
+        async with player.command_lock:
+            player.set_autoplay(state)
 
         user = ctx.author.mention if ctx.invoked_with != 'bot' else ctx.guild.me.mention
         await ctx.reply(embed=Embed(t('music.autoplay_changed', mode='on' if player.autoplay else 'off', user=user)))

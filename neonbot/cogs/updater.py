@@ -127,9 +127,11 @@ class UpdaterCog(commands.Cog):
                             'track_list': player.track_list.copy(),
                             'shuffled_list': player.shuffled_list.copy(),
                             'autoplay_list': player.autoplay_list.copy(),
-                            'messages': player.messages,
+                            'messager': player.messager,
                             'is_auto_paused': player.is_auto_paused,
                             'channel_id': player.channel_id,
+                            'ytmusic': player.ytmusic,
+                            '_reconnecting': player._reconnecting,
                         }
 
                     interaction.client.lavalink.player_manager = PlayerManager(interaction.client.lavalink)
@@ -137,6 +139,7 @@ class UpdaterCog(commands.Cog):
                     for guild_id, new_player in new_players.items():
                         player = interaction.client.lavalink.player_manager.create(guild_id)
                         player.__dict__.update(new_player)
+                        player.command_lock = __import__('asyncio').Lock()
 
                 module_reloaded.append(module)
 

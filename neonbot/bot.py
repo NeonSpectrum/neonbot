@@ -25,9 +25,7 @@ from neonbot.core.database import Database
 from neonbot.music.lavalink_client import Client
 from neonbot.env import (
     DEFAULT_PREFIX,
-    LAVALINK_HOST,
-    LAVALINK_PASSWORD,
-    LAVALINK_PORT,
+    LAVALINK_NODES,
     OWNER_GUILD_IDS,
     OWNER_IDS,
     SYNC_COMMANDS, DISABLED_COGS, ENABLE_AUTOJOIN,
@@ -149,12 +147,14 @@ class NeonBot(commands.Bot):
 
     def initialize_lavalink(self):
         self.lavalink = Client(self, self.user.id)
-        self.lavalink.add_node(
-            LAVALINK_HOST,
-            LAVALINK_PORT,
-            LAVALINK_PASSWORD,
-            'asia'
-        )
+        for node_str in LAVALINK_NODES:
+            parts = node_str.split(':')
+            host = parts[0]
+            port = int(parts[1])
+            password = parts[2] if len(parts) > 2 else 'youshallnotpass'
+            region = parts[3] if len(parts) > 3 else 'asia'
+            self.lavalink.add_node(host, port, password, region)
+            log.info(f'Added Lavalink node: {host}:{port}')
 
     async def add_cogs(self):
         files = sorted(glob(f'neonbot{sep}cogs{sep}[!_]*.py'))
@@ -242,7 +242,8 @@ class NeonBot(commands.Bot):
 
         log.info('Stopping all music...')
         await asyncio.gather(
-            *[player.reset(timeout=3) for player in self.lavalink.player_manager.values()]
+            *[player.reset(timeout=3) for player in self.lavalink.player_manager.values()],
+            return_exceptions=True
         )
         await self.lavalink.close()
 

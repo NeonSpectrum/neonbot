@@ -24,44 +24,48 @@ class PlayerControls:
         return self.bot.get_player_instance(self.guild_id)
 
     def update_buttons(self, views):
-        if self.player.shuffle:
+        player = self.player
+        if not player:
+            return views
+
+        if player.shuffle:
             views[0].style = discord.ButtonStyle.primary
         else:
             views[0].style = discord.ButtonStyle.secondary
 
-        views[1].disabled = not (0 <= self.player.current_queue - 1 < len(self.player.track_list))
+        views[1].disabled = not (0 <= player.current_queue - 1 < len(player.playlist))
 
-        if self.player.is_playing and not self.player.paused:
+        if player.is_playing and not player.paused:
             views[2].emoji = '⏸️'
         else:
             views[2].emoji = '▶️'
 
         views[2].disabled = (
-            not self.player.is_playing
-            and not self.player.paused
-            and self.player.loop == Repeat.OFF
-            and not self.player.shuffle
-            and not self.player.autoplay
+            not player.is_playing
+            and not player.paused
+            and player.loop == Repeat.OFF
+            and not player.shuffle
+            and not player.autoplay
         )
 
         views[3].disabled = (
-            (not self.player.is_playing or self.player.is_last_track)
-            and self.player.loop == Repeat.OFF
-            and not self.player.autoplay
-            and not self.player.shuffle
+            (not player.is_playing or player.is_last_track)
+            and player.loop == Repeat.OFF
+            and not player.autoplay
+            and not player.shuffle
         )
 
-        if self.player.loop == Repeat.OFF:
+        if player.loop == Repeat.OFF:
             views[4].emoji = '🔁'
             views[4].style = discord.ButtonStyle.secondary
-        elif self.player.loop == Repeat.SINGLE:
+        elif player.loop == Repeat.SINGLE:
             views[4].emoji = '🔂'
             views[4].style = discord.ButtonStyle.primary
-        elif self.player.loop == Repeat.ALL:
+        elif player.loop == Repeat.ALL:
             views[4].emoji = '🔁'
             views[4].style = discord.ButtonStyle.primary
 
-        if self.player.autoplay:
+        if player.autoplay:
             views[5].style = discord.ButtonStyle.primary
         else:
             views[5].style = discord.ButtonStyle.secondary
@@ -69,13 +73,35 @@ class PlayerControls:
         return views
 
     async def callback(self, button: discord.ui.Button, interaction: discord.Interaction['NeonBot']):
+        player = self.player
+        if not player:
+            return
+
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.defer()
+
+            async with player.command_lock:
+                await self._handle_button(button, interaction, player)
+        except Exception as e:
+            log.exception(f'Guild {self.guild_id}: button callback error: {e}')
+            try:
+                if not interaction.response.is_done():
+                    await interaction.response.send_message(
+                        embed=Embed(t('music.button_error')), ephemeral=True
+                    )
+            except Exception:
+                pass
+
+    async def _handle_button(self, button, interaction, player):
         async def send_message(message):
             await interaction.channel.send(embed=Embed(message))
             message = message.replace(interaction.user.mention, str(interaction.user))
             log.cmd(interaction, message)
 
+        voice_client = player.ctx.voice_client if player.ctx else None
         if not interaction.user.voice or (
-            interaction.user.voice and interaction.user.voice.channel != self.player.ctx.voice_client.channel
+            interaction.user.voice and voice_client and interaction.user.voice.channel != voice_client.channel
         ):
             if not await self.bot.is_owner(interaction.user):
                 await self.bot.send_response(interaction, embed=Embed(t('music.cannot_interact')), ephemeral=True)
@@ -84,38 +110,38 @@ class PlayerControls:
         tasks = []
 
         if button.emoji.name == '▶️':  # play
-            if self.player.paused:
-                tasks.append(self.player.resume(requester=interaction.user))
+            if player.paused:
+                tasks.append(player.resume(requester=interaction.user))
             else:
-                tasks.append(self.player.play_next())
+                tasks.append(player.play_next())
         elif button.emoji.name == '⏸️':  # pause
-            tasks.append(self.player.pause(requester=interaction.user))
+            tasks.append(player.pause(requester=interaction.user))
         elif button.emoji.name == '⏮️':  # prev
             tasks.append(send_message(t('music.player_controls_pressed', action='back', user=interaction.user.mention)))
-            tasks.append(self.player.prev())
+            tasks.append(player.prev())
         elif button.emoji.name == '⏭️':  # next
             tasks.append(send_message(t('music.player_controls_pressed', action='next', user=interaction.user.mention)))
-            tasks.append(self.player.next())
+            tasks.append(player.next())
         elif button.emoji.name in ('🔁', '🔂'):  # repeat
             modes = [Repeat.OFF, Repeat.SINGLE, Repeat.ALL]
-            index = (modes.index(Repeat(self.player.loop)) + 1) % 3
+            index = (modes.index(Repeat(player.loop)) + 1) % 3
             mode = modes[index]
 
             tasks.append(send_message(t('music.repeat_changed', mode=mode.name.lower(), user=interaction.user.mention)))
-            self.player.set_loop(mode.value)
+            player.set_loop(mode.value)
         elif button.emoji.name == '🔀':  # shuffle
-            state = not self.player.shuffle
+            state = not player.shuffle
 
             tasks.append(send_message(t('music.shuffle_changed', mode='on' if state else 'off', user=interaction.user.mention)))
-            self.player.set_shuffle(state)
+            player.set_shuffle(state)
         elif button.emoji.name == '♾️':  # autoplay
-            state = not self.player.autoplay
+            state = not player.autoplay
 
             tasks.append(send_message(t('music.autoplay_changed', mode='on' if state else 'off', user=interaction.user.mention)))
-            self.player.set_autoplay(state)
+            player.set_autoplay(state)
         elif button.emoji.name == '⏏️':  # reset
             tasks.append(send_message(t('music.player_controls_pressed', action='reset', user=interaction.user.mention)))
-            tasks.append(self.player.reset())
+            tasks.append(player.reset())
 
         await asyncio.gather(*tasks)
 

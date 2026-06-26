@@ -14,7 +14,7 @@ from lavalink import Node, NodeConnectedEvent, listener
 
 from neonbot.discord_ui.embed import Embed
 from neonbot.ai.gemini import GeminiChat
-from neonbot.music.ytmusic import YTMusic
+from neonbot.music.ytmusic import YTMusicHelper
 from neonbot.music.voice_events import VoiceEvents
 from neonbot.env import OWNER_IDS
 from neonbot.models.guild import GuildModel
@@ -45,7 +45,7 @@ class Event(commands.Cog):
         if not self.bot.is_ready():
             self.bot.start_listeners()
             await self.bot.join_autojoin_voice_channels()
-            log.debug(f'YTMusic.get_account_info: {await YTMusic(self.bot).get_account_info()}')
+            log.debug(f'YTMusicHelper.get_account_info: {await YTMusicHelper(self.bot).get_account_info()}')
 
         self.bot.set_ready()
 
@@ -197,30 +197,39 @@ class Event(commands.Cog):
             if after.channel is None:
                 player = self.bot.get_player_instance(member.guild.id)
 
-                if player and player.ctx.voice_client:
-                    await player.disconnect(force=True)
+                if player and player.ctx and player.ctx.voice_client:
+                    try:
+                        await player.disconnect(force=True)
+                    except Exception:
+                        pass
 
             if server.music.autojoin_channel_id is not None and after.channel is None:
-                player = await self.bot.create_player_instance(member.guild.id)
-
-                vc: discord.VoiceChannel = self.bot.get_channel(server.music.autojoin_channel_id)
-                await player.connect(vc)
+                try:
+                    player = await self.bot.create_player_instance(member.guild.id)
+                    vc: discord.VoiceChannel = self.bot.get_channel(server.music.autojoin_channel_id)
+                    if vc:
+                        await player.connect(vc)
+                except Exception as e:
+                    log.error(f'Guild {member.guild.id}: autojoin failed: {e}')
             return
 
         player = self.bot.get_player_instance(member.guild.id)
 
         if player and player.ctx and player.ctx.voice_client and player.voice_channel:
-            voice_members = [member for member in player.voice_channel.members if not member.bot]
+            voice_members = [m for m in player.voice_channel.members if not m.bot]
 
-            if any(voice_members):
-                player.reset_timeout.cancel()
-                if player.is_auto_paused:
-                    await player.resume(requester=self.bot.user)
-                    player.is_auto_paused = False
-            else:
-                if not player.paused and player.is_playing:
-                    await player.pause(requester=self.bot.user)
-                    player.is_auto_paused = True
+            try:
+                if any(voice_members):
+                    player.reset_timeout.cancel()
+                    if player.is_auto_paused:
+                        await player.resume(requester=self.bot.user)
+                        player.is_auto_paused = False
+                else:
+                    if not player.paused and player.is_playing:
+                        await player.pause(requester=self.bot.user)
+                        player.is_auto_paused = True
+            except Exception as e:
+                log.error(f'Guild {member.guild.id}: auto-pause/resume error: {e}')
 
         if member.bot:
             return

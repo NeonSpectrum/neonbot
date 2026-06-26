@@ -67,25 +67,22 @@ class PlayerMessageManager:
         return embed
 
     def get_playing_embed(self, track: AudioTrack):
+        index = self.player.track_list.index(track) + 1 if track in self.player.track_list else '?'
         return self.get_track_embed(track).set_author(
-            name=t('music.now_playing.index', index=track.extra.get('index') + 1),
+            name=t('music.now_playing.index', index=index),
             icon_url=ICONS.get(track.source_name, ICONS.get('music')),
         )
 
     def get_finished_embed(self, track: AudioTrack, compact=True):
+        index = self.player.track_list.index(track) + 1 if track in self.player.track_list else '?'
         if compact:
             formatted_title = f'[{track.title}]({track.uri})' if track.uri else track.title
-            return Embed(f'{t("music.finished_playing.index", index=track.extra.get('index') + 1)}: {formatted_title}')
+            return Embed(f'{t("music.finished_playing.index", index=index)}: {formatted_title}')
 
         return self.get_track_embed(track).set_author(
-            name=t('music.finished_playing.index', index=track.extra.get('index') + 1),
+            name=t('music.finished_playing.index', index=index),
             icon_url=ICONS.get(track.source_name, ICONS.get('music')),
         )
-
-    def get_compact_finished_embed(self, track: AudioTrack):
-        formatted_title = f'[{track.title}]({track.uri})' if track.uri else track.title
-
-        return Embed(f'{t("music.finished_playing.index", index=track.extra.get('index') + 1)}: {formatted_title}')
 
     async def replace_to_finished_playing(self, player_message: Optional[PlayerMessage]):
         if player_message is None:
@@ -132,19 +129,22 @@ class PlayerMessageManager:
         self.add(data)
 
     def refresh_player_controls(self, *, embed=False):
+        tasks = []
         for player_message in self.data:
             if not player_message.message or len(player_message.message.components) == 0:
                 continue
 
             if player_message.type == MessageType.PLAYING:
-                self.bot.loop.create_task(self.edit_message(
+                tasks.append(self.edit_message(
                     player_message,
                     embed=self.get_playing_embed(player_message.track) if embed else MISSING,
                     view=self.player_controls.get(),
                 ))
             elif player_message.type == MessageType.FINISHED:
-                self.bot.loop.create_task(self.edit_message(
+                tasks.append(self.edit_message(
                     player_message,
                     embed=self.get_finished_embed(player_message.track) if embed else MISSING,
                     view=self.player_controls.get(),
                 ))
+        if tasks:
+            self.bot.loop.create_task(asyncio.gather(*tasks, return_exceptions=True))

@@ -15,6 +15,9 @@ class MessageType(Enum):
             return self is other
         return self.value == other
 
+    def __hash__(self):
+        return hash(self.value)
+
 
 class Repeat(Enum):
     OFF = 0
@@ -25,6 +28,9 @@ class Repeat(Enum):
         if isinstance(other, Repeat):
             return self is other
         return self.value == other
+
+    def __hash__(self):
+        return hash(self.value)
 
 
 @dataclass

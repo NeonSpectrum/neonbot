@@ -5,7 +5,7 @@ import lavalink
 from lavalink import ClientError
 
 if TYPE_CHECKING:
-    from neonbot.classes.player.player import Player
+    from neonbot.music.player import Player
 
 
 # noinspection All
@@ -43,7 +43,10 @@ class LavalinkVoiceClient(discord.VoiceClient):
 
         if not channel_id:
             if player:
-                await player.reset()
+                try:
+                    await player.reset()
+                except Exception:
+                    pass
             return
 
         self.channel = self.client.get_channel(int(channel_id))
@@ -78,7 +81,7 @@ class LavalinkVoiceClient(discord.VoiceClient):
         player: 'Player' = self.lavalink.player_manager.get(self.channel.guild.id)
 
         # no need to disconnect if we are not connected
-        if not force and not player.is_connected:
+        if not force and player and not player.is_connected:
             return
 
         # None means disconnect
