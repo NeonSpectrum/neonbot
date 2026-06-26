@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 import discord
 from discord import app_commands
 from discord.ext import commands
+from i18n import t
 
 from neonbot.classes.discord_utils.embed import Embed
 from neonbot.classes.panel import Panel
@@ -30,13 +31,13 @@ class PanelCog(commands.Cog):
 
         if not details:
             await interaction.response.send_message(
-                embed=Embed('Invalid server id.'), ephemeral=True
+                embed=Embed(t('panel.invalid_server_id')), ephemeral=True
             )
             return
 
         if server_id in server.panel.servers:
             await interaction.response.send_message(
-                embed=Embed('Server id already exists.'), ephemeral=True
+                embed=Embed(t('panel.server_id_exists')), ephemeral=True
             )
             return
 
@@ -46,7 +47,7 @@ class PanelCog(commands.Cog):
         Panel.start_listener(interaction.client, interaction.guild.id)
 
         await interaction.response.send_message(
-            embed=Embed(f'Started monitor for `{server_id}` on {interaction.channel.mention}'), ephemeral=True
+            embed=Embed(t('panel.monitor_started', server_id=server_id, channel=interaction.channel.mention)), ephemeral=True
         )
 
     @panel.command(name='deletemonitor')
@@ -55,7 +56,7 @@ class PanelCog(commands.Cog):
 
         if server_id not in server.panel.servers:
             await interaction.response.send_message(
-                embed=Embed('Server id not in monitor list.'), ephemeral=True
+                embed=Embed(t('panel.server_id_not_found')), ephemeral=True
             )
             return
 
@@ -74,7 +75,7 @@ class PanelCog(commands.Cog):
         await server.save_changes(False)
 
         await interaction.response.send_message(
-            embed=Embed(f'Removed monitor for `{server_id}` on {interaction.channel.mention}'), ephemeral=True
+            embed=Embed(t('panel.monitor_removed', server_id=server_id, channel=interaction.channel.mention)), ephemeral=True
         )
 
     @startmonitor.autocomplete('server_id')

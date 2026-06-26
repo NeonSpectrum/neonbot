@@ -1,0 +1,7 @@
+{
+    "invalid_server_id": "Invalid server id.",
+    "server_id_exists": "Server id already exists.",
+    "monitor_started": "Started monitor for `%{server_id}` on %{channel}.",
+    "server_id_not_found": "Server id not in monitor list.",
+    "monitor_removed": "Removed monitor for `%{server_id}` on %{channel}."
+}

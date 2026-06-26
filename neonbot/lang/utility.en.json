@@ -1,0 +1,36 @@
+{
+    "stats": {
+        "username": "Username",
+        "created_on": "Created On",
+        "created_by": "Created By",
+        "guilds": "Guilds",
+        "channels": "Channels",
+        "users": "Users",
+        "ram_usage": "Ram Usage",
+        "uptime": "Uptime",
+        "packages": "Packages"
+    },
+    "sms": {
+        "label": "✉ SMS",
+        "powered_by": "Powered by Semaphore",
+        "to": "To:",
+        "body": "Body:",
+        "sending": "Sending...",
+        "sending_failed": "Sending failed.",
+        "sent": "Sent",
+        "reason": "Reason:",
+        "date_sent": "Date sent:"
+    },
+    "something_went_wrong": "Something went wrong.",
+    "avatar_not_found": "Avatar not found.",
+    "banner_not_found": "Banner not found.",
+    "format_not_supported": "Format not supported.",
+    "profile": {
+        "created": "Created",
+        "joined": "Joined",
+        "server_booster_since": "Server Booster since",
+        "roles": "Roles",
+        "badges": "Badges",
+        "none": "None"
+    }
+}

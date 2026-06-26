@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 import discord
+from i18n import t
 
 from neonbot.classes.discord_utils.embed import Embed
 from neonbot.classes.exchange_gift import ExchangeGift
@@ -17,26 +18,26 @@ class ExchangeGiftView(discord.ui.View):
         super().__init__(timeout=None)
 
         if discussion_url:
-            self.add_item(discord.ui.Button(label='Go to discussions', url=discussion_url, emoji='💬'))
+            self.add_item(discord.ui.Button(label=t('exchange_gift.button_go_to_discussions'), url=discussion_url, emoji='💬'))
 
     @discord.ui.button(
-        label='Participate', style=discord.ButtonStyle.primary, custom_id='exchange_gift:participate', emoji='✅'
+        label=t('exchange_gift.button_participate'), style=discord.ButtonStyle.primary, custom_id='exchange_gift:participate', emoji='✅'
     )
     async def participate(self, interaction: discord.Interaction['NeonBot'], button: discord.ui.Button):
         exchange_gift = ExchangeGift(interaction)
 
         if exchange_gift.member:
             await interaction.response.send_message(
-                embed=Embed('You are already registered in the exchange gift event.'), ephemeral=True
+                embed=Embed(t('exchange_gift.already_registered')), ephemeral=True
             )
             return
 
         await exchange_gift.register()
         await interaction.response.send_message(
-            embed=Embed('You have been registered in the exchange gift event.'), ephemeral=True
+            embed=Embed(t('exchange_gift.registered')), ephemeral=True
         )
 
-    @discord.ui.button(label='My Wishlist', custom_id='exchange_gift:my_wishlist', emoji='🎁')
+    @discord.ui.button(label=t('exchange_gift.button_my_wishlist'), custom_id='exchange_gift:my_wishlist', emoji='🎁')
     async def my_wishlist(self, interaction: discord.Interaction['NeonBot'], button: discord.ui.Button):
         try:
             exchange_gift = ExchangeGift(interaction)
@@ -47,7 +48,7 @@ class ExchangeGiftView(discord.ui.View):
             else:
                 view = WishlistView(interaction)
                 message = await interaction.response.send_message(
-                    embed=Embed(f'Your wishlist: ```{wishlist}```'), view=view, ephemeral=True
+                    embed=Embed(t('exchange_gift.your_wishlist', wishlist=wishlist)), view=view, ephemeral=True
                 )
 
         except ExchangeGiftNotRegistered as error:
@@ -55,7 +56,7 @@ class ExchangeGiftView(discord.ui.View):
                 embed=Embed(error), ephemeral=True
             )
 
-    @discord.ui.button(label='All Wishlist', custom_id='exchange_gift:all_wishlist', emoji='🎁')
+    @discord.ui.button(label=t('exchange_gift.button_all_wishlist'), custom_id='exchange_gift:all_wishlist', emoji='🎁')
     async def all_wishlist(self, interaction: discord.Interaction['NeonBot'], button: discord.ui.Button):
         try:
             exchange_gift = ExchangeGift(interaction)
@@ -81,7 +82,7 @@ class ExchangeGiftView(discord.ui.View):
                 embed=Embed(error), ephemeral=True
             )
 
-    @discord.ui.button(label='Get event info', custom_id='exchange_gift:get_event_info', emoji='📄')
+    @discord.ui.button(label=t('exchange_gift.button_get_event_info'), custom_id='exchange_gift:get_event_info', emoji='📄')
     async def get_event_info(self, interaction: discord.Interaction['NeonBot'], button: discord.ui.Button):
         exchange_gift = ExchangeGift(interaction)
         await interaction.response.send_message(

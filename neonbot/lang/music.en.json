@@ -62,5 +62,16 @@
     "removed_song": "Removed song #%{index}: [%{title}](%{url})",
     "cannot_interact": "Cannot interact. You're not in the current voice channel.",
     "autoplay_disabled_for_quota": "Autoplay is currently unavailable due to quota restrictions.",
-    "no_related_video_found": "No related video found."
+    "no_related_video_found": "No related video found.",
+    "invalid_index": "Invalid index.",
+    "player_reset": "Player reset.",
+    "player_reset_inactivity": "Player reset due to inactivity.",
+    "must_be_in_voice_channel": "You must be in a voice channel.",
+    "no_related_videos": "No related videos available.",
+    "joined_channel": "Joined %{channel}.",
+    "left_channel": "Left %{channel}.",
+    "autoplay_executing": "Executing autoplay...",
+    "unknown_requester": "Unknown",
+    "autoplay_label": "Autoplay",
+    "reset_label": "Reset"
 }

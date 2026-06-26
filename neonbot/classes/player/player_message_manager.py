@@ -50,7 +50,7 @@ class PlayerMessageManager:
 
     def get_footer(self, track):
         user = self.bot.get_user(track.requester)
-        requester_name = user.display_name if user else 'Unknown'
+        requester_name = user.display_name if user else t('music.unknown_requester')
         return [
             requester_name,
             format_milliseconds(track.duration),

@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import discord
 from discord.utils import find
+from i18n import t
 
 from neonbot.classes.discord_utils.embed import Embed
 from neonbot.models.exchange_gift import ExchangeGiftMember
@@ -106,20 +107,24 @@ class ExchangeGift:
 
     def create_embed_template(self):
         year = datetime.now().strftime('%Y')
-        return Embed().set_author('🎁 Exchange Gift ' + year)
+        return Embed().set_author(t('exchange_gift.event_title', year=year))
 
     def create_wishlist_template(self):
         year = datetime.now().strftime('%Y')
-        return Embed().set_author('🎁 Wishlist ' + year)
+        return Embed().set_author(t('exchange_gift.wishlist_title', year=year))
 
     def create_start_template(self):
         embed = self.create_embed_template()
-        embed.set_description(
-            'Christmas season is here! It’s also the season for gift giving, so wouldn’t it be wonderful to have a exchange gift event?\n\n'
-            'For more info about this event, interact with the buttons below.\n\n'
-            '**Note: If you misclick or have a reason to withdraw, '
-            'please DM or tag ' + self.bot.app_info.owner.mention + '.**'
-        )
+        embed.set_description(t('exchange_gift.event_description', owner=self.bot.app_info.owner.mention))
+
+        return embed
+
+    def get_current_info(self):
+        members = [self.guild.get_member(member.user_id).mention for member in self.get_all()]
+
+        embed = self.create_embed_template()
+        embed.add_field(t('exchange_gift.budget_label'), self.budget)
+        embed.add_field(t('exchange_gift.participants_label'), ' '.join(members), inline=False)
 
         return embed
 

@@ -18,6 +18,7 @@ from apscheduler.schedulers.base import STATE_RUNNING
 from discord import Activity, Status, Message
 from discord.ext import commands
 from discord.utils import oauth_url
+from i18n import t
 
 from neonbot import __version__
 from neonbot.classes.database import Database
@@ -188,7 +189,7 @@ class NeonBot(commands.Bot):
             permissions=discord.Permissions(permissions=PERMISSIONS),
             scopes=('bot', 'applications.commands'),
         )
-        await message.channel.send(f'Bot invite link: {url}')
+        await message.channel.send(t('common.bot_invite_link', url=url))
         log.info(f'Sent an invite link to: {message.author}')
 
     async def update_presence(self):

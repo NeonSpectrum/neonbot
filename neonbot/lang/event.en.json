@@ -1,0 +1,34 @@
+{
+    "restricted_app": "This personal app is restricted to the developer.",
+    "command_error": "There was an error executing the command. Please contact the administrator.",
+    "status_change": "**%{user}** is now **%{status}**.",
+    "voice": {
+        "moved": "**%{user}** has moved from **%{from}** to **%{to}**",
+        "connected": "**%{user}** has connected to **%{channel}**",
+        "disconnected": "**%{user}** has disconnected from **%{channel}**",
+        "self_deafened": "**%{user}** has deafened themselves on **%{channel}**",
+        "self_undeafened": "**%{user}** has un-deafened themselves on **%{channel}**",
+        "self_muted": "**%{user}** has muted themselves on **%{channel}**",
+        "self_unmuted": "**%{user}** has un-muted themselves on **%{channel}**",
+        "server_deafened": "**%{user}** has been server deafened on **%{channel}**",
+        "server_undeafened": "**%{user}** has been server un-deafened on **%{channel}**",
+        "server_muted": "**%{user}** has been server muted on **%{channel}**",
+        "server_unmuted": "**%{user}** has been server un-muted on **%{channel}**",
+        "stream_started": "**%{user}** started streaming on **%{channel}**",
+        "stream_finished": "**%{user}** finished streaming on **%{channel}**",
+        "video_opened": "**%{user}** opened their video on **%{channel}**",
+        "video_closed": "**%{user}** closed their video on **%{channel}**"
+    },
+    "in_voice_required": "You need to be in the channel.",
+    "no_send_permission": "I don't have permission to send message on this channel.",
+    "no_connect_permission": "I don't have permission to connect to that voice channel.",
+    "no_active_player": "No active player.",
+    "no_command_permission": "You do not have permission to use this command.",
+    "time_elapsed": "Time Elapsed",
+    "activity": {
+        "is_now": "**%{user}** is",
+        "changed_custom_status": " changed custom status from **%{from}** to **%{to}**.",
+        "done_activity": " done %{type} **%{name}**.",
+        "now_activity": " now %{type} **%{name}**."
+    }
+}

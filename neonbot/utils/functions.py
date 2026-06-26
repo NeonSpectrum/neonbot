@@ -12,6 +12,7 @@ import pytz
 from bs4 import BeautifulSoup
 from discord.ext import commands
 from discord.utils import format_dt
+from i18n import t
 
 from neonbot.classes.discord_utils.embed import Embed
 from neonbot.env import TZ
@@ -72,9 +73,9 @@ def format_uptime(milliseconds: int) -> str:
     msg = []
 
     if td[0] != '0':
-        msg.append(f'{td[0]} Hours')
+        msg.append(f'{td[0]} {t("common.hours")}')
 
-    msg.append(f'{int(td[1]):.0f} Minutes {round(float(td[2]))} Seconds')
+    msg.append(f'{int(td[1]):.0f} {t("common.minutes")} {round(float(td[2]))} {t("common.seconds")}')
 
     return ' '.join(msg)
 
@@ -127,12 +128,12 @@ async def generate_profile_member_embed(interaction: discord.Interaction['NeonBo
     embed = Embed(member.mention, timestamp=datetime.now())
     embed.set_author(str(member), icon_url=member.display_avatar.url)
     embed.set_footer(str(member.id))
-    embed.add_field('Created', format_dt(member.created_at, 'F'), inline=False)
-    embed.add_field('Joined', format_dt(member.joined_at, 'F'), inline=True)
+    embed.add_field(t('utility.profile.created'), format_dt(member.created_at, 'F'), inline=False)
+    embed.add_field(t('utility.profile.joined'), format_dt(member.joined_at, 'F'), inline=True)
     if member.premium_since:
-        embed.add_field('Server Booster since', format_dt(member.premium_since, 'F'), inline=False)
-    embed.add_field('Roles', ' '.join([role.mention for role in roles]) if len(roles) > 0 else 'None', inline=False)
-    embed.add_field('Badges', '\n'.join(flags) if len(flags) > 0 else 'None', inline=False)
+        embed.add_field(t('utility.profile.server_booster_since'), format_dt(member.premium_since, 'F'), inline=False)
+    embed.add_field(t('utility.profile.roles'), ' '.join([role.mention for role in roles]) if len(roles) > 0 else t('utility.profile.none'), inline=False)
+    embed.add_field(t('utility.profile.badges'), '\n'.join(flags) if len(flags) > 0 else t('utility.profile.none'), inline=False)
 
     if user.display_avatar:
         embed.set_thumbnail(member.display_avatar.url)
@@ -152,8 +153,8 @@ async def generate_profile_user_embed(interaction: discord.Interaction['NeonBot'
     embed = Embed(user.mention, timestamp=datetime.now())
     embed.set_author(str(user), icon_url=user.display_avatar.url)
     embed.set_footer(str(user.id))
-    embed.add_field('Created', format_dt(user.created_at, 'F'), inline=False)
-    embed.add_field('Badges', '\n'.join(flags) if len(flags) > 0 else 'None', inline=False)
+    embed.add_field(t('utility.profile.created'), format_dt(user.created_at, 'F'), inline=False)
+    embed.add_field(t('utility.profile.badges'), '\n'.join(flags) if len(flags) > 0 else t('utility.profile.none'), inline=False)
 
     if user.display_avatar:
         embed.set_thumbnail(user.display_avatar.url)

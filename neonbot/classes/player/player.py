@@ -109,7 +109,7 @@ class Player(DefaultPlayer):
         if voice_channel:
             log.debug(f'Setting default ctx to {voice_channel.name}.')
 
-            message = await voice_channel.send('Executing autoplay...')
+            message = await voice_channel.send(t('music.autoplay_executing'))
             ctx = await self.bot.get_context(message)
             self.set_ctx(ctx, save_last_channel_id=False)
             await message.delete()
@@ -152,7 +152,7 @@ class Player(DefaultPlayer):
 
         await self.reset()
 
-        msg = 'Player reset due to inactivity.'
+        msg = t('music.player_reset_inactivity')
         log.cmd(self.ctx, msg)
         await self.send_message(embed=Embed(msg))
 
@@ -166,7 +166,7 @@ class Player(DefaultPlayer):
             return
 
         if not voice_channel and not self.ctx.author.voice:
-            raise commands.CommandError('You must be in a voice channel.')
+            raise commands.CommandError(t('music.must_be_in_voice_channel'))
 
         self.voice_channel = voice_channel or self.ctx.author.voice.channel
         self.voice_client = await self.voice_channel.connect(timeout=3, reconnect=True, self_deaf=True, cls=LavalinkVoiceClient)
@@ -318,7 +318,7 @@ class Player(DefaultPlayer):
             try:
                 await self.process_autoplay(self.last_track)
             except YTMusicError:
-                await self.send_message(embed=Embed('No related videos available.'))
+                await self.send_message(embed=Embed(t('music.no_related_videos')))
                 return
             next_queue = self.current_queue + 1
         elif self.loop == Repeat.OFF:  # repeat off

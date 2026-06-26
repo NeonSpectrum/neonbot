@@ -13,6 +13,7 @@ from dateutil.parser import parse
 from discord import app_commands
 from discord.ext import commands
 from discord.utils import format_dt
+from i18n import t
 
 from neonbot import __author__, __title__, __version__
 from neonbot.classes.discord_utils.decorators import is_owner
@@ -53,20 +54,20 @@ class Utility(commands.Cog):
 
         embed = Embed()
         embed.set_author(f'{__title__} v{__version__}', icon_url=str(self.bot.user.display_avatar))
-        embed.add_field('Username', self.bot.user.name)
-        embed.add_field('Created On', f'{self.bot.user.created_at:%Y-%m-%d %I:%M:%S %p}')
-        embed.add_field('Created By', __author__)
-        embed.add_field('Guilds', len(self.bot.guilds))
-        embed.add_field('Channels', sum(1 for _ in self.bot.get_all_channels()))
-        embed.add_field('Users', len(self.bot.users))
+        embed.add_field(t('utility.stats.username'), self.bot.user.name)
+        embed.add_field(t('utility.stats.created_on'), f'{self.bot.user.created_at:%Y-%m-%d %I:%M:%S %p}')
+        embed.add_field(t('utility.stats.created_by'), __author__)
+        embed.add_field(t('utility.stats.guilds'), len(self.bot.guilds))
+        embed.add_field(t('utility.stats.channels'), sum(1 for _ in self.bot.get_all_channels()))
+        embed.add_field(t('utility.stats.users'), len(self.bot.users))
         embed.add_field(
-            'Ram Usage',
+            t('utility.stats.ram_usage'),
             f'Approximately {(process.memory_info().rss / 1024000):.2f} MB',
             inline=True,
         )
-        embed.add_field('Uptime', format_seconds(time() - process.create_time()).split('.')[0])
+        embed.add_field(t('utility.stats.uptime'), format_seconds(time() - process.create_time()).split('.')[0])
         embed.add_field(
-            'Packages',
+            t('utility.stats.packages'),
             f"""
             discord `{discord.__version__}`
             """,
@@ -83,15 +84,15 @@ class Utility(commands.Cog):
 
         def generate_embed():
             embed = Embed()
-            embed.set_author(name='✉ SMS')
-            embed.set_footer(text='Powered by Semaphore', icon_url=ICONS['semaphone'])
-            embed.add_field('To:', number, inline=False)
-            embed.add_field('Body:', f'```\n{body}```', inline=False)
+            embed.set_author(name=t('utility.sms.label'))
+            embed.set_footer(text=t('utility.sms.powered_by'), icon_url=ICONS['semaphone'])
+            embed.add_field(t('utility.sms.to'), number, inline=False)
+            embed.add_field(t('utility.sms.body'), f'```\n{body}```', inline=False)
 
             return embed
 
         message = await ctx.reply(
-            embed=generate_embed().add_field('Status:', 'Sending...', inline=False)
+            embed=generate_embed().add_field(t('utility.sms.to'), t('utility.sms.sending'), inline=False)
         )
 
         api_key = SEMAPHONE_API_KEY
@@ -109,15 +110,15 @@ class Utility(commands.Cog):
 
             await message.edit(
                 embed=generate_embed()
-                .add_field('Status:', 'Sending failed.', inline=False)
-                .add_field('Reason:', json.dumps(data), inline=False)
-                .add_field('Date sent:', format_dt(datetime.now()), inline=False)
+                .add_field(t('utility.sms.to'), t('utility.sms.sending_failed'), inline=False)
+                .add_field(t('utility.sms.reason'), json.dumps(data), inline=False)
+                .add_field(t('utility.sms.date_sent'), format_dt(datetime.now()), inline=False)
             )
         else:
             await message.edit(
                 embed=generate_embed()
-                .add_field('Status:', 'Sent', inline=False)
-                .add_field('Date sent:', format_dt(datetime.now()), inline=False)
+                .add_field(t('utility.sms.to'), t('utility.sms.sent'), inline=False)
+                .add_field(t('utility.sms.date_sent'), format_dt(datetime.now()), inline=False)
             )
 
     @app_commands.command(name='chat')
@@ -142,7 +143,7 @@ class Utility(commands.Cog):
             else:
                 await ctx.reply(response)
         except Exception as error:
-            await ctx.reply(embed=Embed('Something went wrong.'))
+            await ctx.reply(embed=Embed(t('utility.something_went_wrong')))
             log.error(error, exc_info=True)
 
     @app_commands.command(name='imagine')
@@ -161,7 +162,7 @@ class Utility(commands.Cog):
             files = await gemini_chat.generate_image()
             await ctx.reply(files=files)
         except Exception as error:
-            await ctx.reply(embed=Embed('Something went wrong.'))
+            await ctx.reply(embed=Embed(t('utility.something_went_wrong')))
             log.debug(error, exc_info=True)
             log.error(error, exc_info=True)
 
@@ -181,7 +182,7 @@ class Utility(commands.Cog):
     async def avatar(self, interaction: discord.Interaction['NeonBot'], user: Union[discord.User, discord.Member], ephemeral: bool = False) -> None:
         if not user.display_avatar:
             await interaction.response.send_message(
-                embed=Embed('Avatar not found.'), ephemeral=True
+                embed=Embed(t('utility.avatar_not_found')), ephemeral=True
             )
             return
 
@@ -197,7 +198,7 @@ class Utility(commands.Cog):
 
         if not user.banner:
             await interaction.response.send_message(
-                embed=Embed('Banner not found.'), ephemeral=True
+                embed=Embed(t('utility.banner_not_found')), ephemeral=True
             )
             return
 
@@ -211,7 +212,7 @@ class Utility(commands.Cog):
             timestamp = int(parse(date_string).timestamp())
             await interaction.response.send_message(f'<t:{timestamp}>')
         except ValueError:
-            await interaction.response.send_message('Format not supported.',
+            await interaction.response.send_message(t('utility.format_not_supported'),
                                                     ephemeral=True)
 
 

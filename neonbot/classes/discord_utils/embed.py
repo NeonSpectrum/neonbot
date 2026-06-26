@@ -4,6 +4,7 @@ from typing import Any, Optional
 from typing import TYPE_CHECKING
 
 import discord
+from i18n import t
 
 from neonbot.classes.discord_utils.view import Button, View
 from neonbot.utils.constants import CHOICES_EMOJI, PAGINATION_EMOJI
@@ -95,7 +96,7 @@ class PaginationEmbed:
         buttons = discord.utils.MISSING
 
         if len(self.embeds) > 1:
-            embed.description += f'\n\n**Page {self.index + 1}/{len(self.embeds)}**'
+            embed.description += f'\n\n**{t("common.page_indicator", current=self.index + 1, total=len(self.embeds))}**'
             buttons = self.get_buttons()
 
         if not self.interaction.response.is_done():
@@ -143,17 +144,15 @@ class EmbedChoices:
         self.value = -1
 
         if not self.entries:
-            await self.send_message(embed=Embed('Empty choices.'), ephemeral=True)
+            await self.send_message(embed=Embed(t('common.empty_choices')), ephemeral=True)
         else:
             await self.send_choices()
-
-        return self
 
     async def send_message(self, *args, **kwargs):
         await self.interaction.client.send_response(self.interaction, *args, **kwargs)
 
     async def send_choices(self) -> None:
-        embed = Embed(title=f'Choose 1-{len(self.entries)} below.')
+        embed = Embed(title=t('common.choose_below', count=len(self.entries)))
 
         for index, entry in enumerate(self.entries, start=1):
             embed.add_field(f'{index}. {entry["title"]}', entry['url'], inline=False)

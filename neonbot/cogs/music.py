@@ -153,7 +153,7 @@ class Music(commands.Cog):
 
             await player.play(track)
         except IndexError:
-            await ctx.reply(embed=Embed('Invalid index.'), ephemeral=True)
+            await ctx.reply(embed=Embed(t('music.invalid_index')), ephemeral=True)
 
     @commands.hybrid_command(name='removesong', aliases=['remove', 'del', 'rm'])
     @has_permission()
@@ -177,7 +177,7 @@ class Music(commands.Cog):
             if len(player.playlist) == 0:
                 await player.reset()
         except IndexError:
-            await ctx.reply(embed=Embed('Invalid index.'), ephemeral=True)
+            await ctx.reply(embed=Embed(t('music.invalid_index')), ephemeral=True)
 
     @commands.hybrid_command(name='reset')
     @has_permission()
@@ -190,7 +190,7 @@ class Music(commands.Cog):
         player: Player = self.bot.get_player_instance(ctx.guild.id)
         await player.reset()
 
-        msg = 'Player reset.'
+        msg = t('music.player_reset')
         log.cmd(ctx, msg)
         await ctx.reply(embed=Embed(msg))
 
@@ -203,7 +203,7 @@ class Music(commands.Cog):
         player: Player = await self.bot.create_player_instance(ctx.guild.id, ctx=ctx)
         await player.connect(voice_channel)
 
-        await ctx.reply(embed=Embed(f'Joined {voice_channel.mention}.'), ephemeral=True)
+        await ctx.reply(embed=Embed(t('music.joined_channel', channel=voice_channel.mention)), ephemeral=True)
 
     @commands.hybrid_command(name='leave')
     @has_permission()
@@ -217,7 +217,7 @@ class Music(commands.Cog):
 
         await player.disconnect()
 
-        await ctx.reply(embed=Embed(f'Left {last_voice_channel.mention}.'), ephemeral=True)
+        await ctx.reply(embed=Embed(t('music.left_channel', channel=last_voice_channel.mention)), ephemeral=True)
 
     @commands.hybrid_command(name='shuffle')
     @has_permission()

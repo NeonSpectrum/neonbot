@@ -128,8 +128,8 @@ class PlayerControls:
             Button(emoji='⏸️', style=discord.ButtonStyle.primary),
             Button(emoji='⏭️', style=discord.ButtonStyle.primary),
             Button(emoji='🔁'),
-            Button(emoji='♾️', label='Autoplay'),
-            Button(emoji='⏏️', label='Reset'),
+            Button(emoji='♾️', label=t('music.autoplay_label')),
+            Button(emoji='⏏️', label=t('music.reset_label')),
         ]
         self.update_buttons(buttons)
 

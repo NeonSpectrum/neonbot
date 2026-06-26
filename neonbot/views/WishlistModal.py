@@ -2,6 +2,7 @@ from typing import Optional
 from typing import TYPE_CHECKING
 
 import discord
+from i18n import t
 
 from neonbot.classes.discord_utils.embed import Embed
 from neonbot.classes.exchange_gift import ExchangeGift
@@ -11,14 +12,14 @@ if TYPE_CHECKING:
     from neonbot import NeonBot
 
 
-class WishlistModal(discord.ui.Modal, title='Set your wishlist'):
+class WishlistModal(discord.ui.Modal, title=t('exchange_gift.modal_set_wishlist_title')):
     def __init__(self, parent: Optional[discord.Interaction['NeonBot']] = None):
         super().__init__()
         self.parent = parent
 
     wishlist = discord.ui.TextInput(
-        label='Wishlist',
-        placeholder='Type your wishlist here...',
+        label=t('exchange_gift.modal_wishlist_label'),
+        placeholder=t('exchange_gift.modal_wishlist_placeholder'),
         style=discord.TextStyle.long,
     )
 
@@ -31,16 +32,16 @@ class WishlistModal(discord.ui.Modal, title='Set your wishlist'):
 
             if self.parent:
                 await interaction.response.defer()
-                await self.parent.edit_original_response(embed=Embed(f'Your wishlist: ```{wishlist}```'))
+                await self.parent.edit_original_response(embed=Embed(t('exchange_gift.your_wishlist', wishlist=wishlist)))
             else:
                 await interaction.response.send_message(
-                    embed=Embed('Your wishlist has been updated.'), ephemeral=True
+                    embed=Embed(t('exchange_gift.wishlist_updated')), ephemeral=True
                 )
         except ExchangeGiftNotRegistered:
             await interaction.response.send_message(
-                embed=Embed('You are not registered for the exchange gift.'), ephemeral=True
+                embed=Embed(t('exchange_gift.not_registered')), ephemeral=True
             )
         except Exception:
             await interaction.response.send_message(
-                embed=Embed('An error occurred while saving your wishlist.'), ephemeral=True
+                embed=Embed(t('exchange_gift.wishlist_save_error')), ephemeral=True
             )

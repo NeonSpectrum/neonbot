@@ -1,0 +1,11 @@
+{
+    "page_indicator": "Page %{current}/%{total}",
+    "empty_choices": "Empty choices.",
+    "choose_below": "Choose 1-%{count} below.",
+    "bot_invite_link": "Bot invite link: %{url}",
+    "no_permission": "No permission.",
+    "commands_synced": "Commands Synced!",
+    "hours": "Hours",
+    "minutes": "Minutes",
+    "seconds": "Seconds"
+}

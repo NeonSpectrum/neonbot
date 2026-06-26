@@ -4,6 +4,7 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord.ext.commands._types import Check
+from i18n import t
 
 from neonbot.classes.discord_utils.embed import Embed
 from neonbot.env import OWNER_IDS
@@ -21,7 +22,7 @@ def in_voice(app: bool = False) -> Check[Context['NeonBot']]:
 
         if not ctx.author.voice:
             await ctx.reply(
-                embed=Embed('You need to be in the channel.'), ephemeral=True
+                embed=Embed(t('event.in_voice_required')), ephemeral=True
             )
             return False
         return True
@@ -35,13 +36,13 @@ def has_permission(app: bool = False) -> Check[Context['NeonBot']]:
 
         if not ctx.channel.permissions_for(ctx.guild.me).send_messages:
             await ctx.reply(
-                embed=Embed("I don't have permission to send message on this channel."), ephemeral=True
+                embed=Embed(t('event.no_send_permission')), ephemeral=True
             )
             return False
 
         if ctx.author.voice and not ctx.author.voice.channel.permissions_for(ctx.guild.me).connect:
             await ctx.reply(
-                embed=Embed("I don't have permission to connect to that voice channel."), ephemeral=True
+                embed=Embed(t('event.no_connect_permission')), ephemeral=True
             )
             return False
 
@@ -57,7 +58,7 @@ def has_player(app: bool = False) -> Check[Context['NeonBot']]:
         player: Player = ctx.bot.get_player_instance(ctx.guild.id)
 
         if not player or not player.ctx or len(player.playlist) == 0:
-            await ctx.reply(embed=Embed('No active player.'), ephemeral=True)
+            await ctx.reply(embed=Embed(t('event.no_active_player')), ephemeral=True)
             return False
         return True
 
@@ -70,7 +71,7 @@ def is_owner(app: bool = False) -> Check[Context['NeonBot']]:
 
         if (ctx.guild and ctx.guild.id not in ctx.bot.owner_guilds) or (not ctx.guild and ctx.author.id not in OWNER_IDS):
             await ctx.reply(
-                embed=Embed("You do not have permission to use this command."), ephemeral=True
+                embed=Embed(t('event.no_command_permission')), ephemeral=True
             )
             return False
 

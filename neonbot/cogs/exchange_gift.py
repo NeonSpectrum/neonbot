@@ -3,6 +3,7 @@ from typing import Optional, TYPE_CHECKING
 import discord
 from discord import app_commands
 from discord.ext import commands
+from i18n import t
 
 from neonbot.classes.discord_utils.embed import Embed
 from neonbot.classes.exchange_gift import ExchangeGift
@@ -42,7 +43,7 @@ class ExchangeGiftCog(commands.Cog):
                 content='@everyone', embed=embed, view=ExchangeGiftView(self.bot.get_channel(int(discussion_id)).jump_url)
             )
 
-        await interaction.response.send_message(embed=Embed('Done!'), ephemeral=True)
+        await interaction.response.send_message(embed=Embed(t('exchange_gift.done')), ephemeral=True)
 
     @exchangegift.command(name='finish')
     async def exchangegift_finish(self, interaction: discord.Interaction['NeonBot']):
@@ -57,13 +58,13 @@ class ExchangeGiftCog(commands.Cog):
 
         await exchange_gift.set_finish()
 
-        await interaction.response.send_message(embed=Embed('Done!'), ephemeral=True)
+        await interaction.response.send_message(embed=Embed(t('exchange_gift.done')), ephemeral=True)
 
     @exchangegift.command(name='shuffle')
     async def exchangegift_shuffle(self, interaction: discord.Interaction['NeonBot']):
         await ExchangeGift(interaction).shuffle()
         await interaction.response.send_message(
-            embed=Embed('Exchange gift has been shuffled.')
+            embed=Embed(t('exchange_gift.shuffled'))
         )
 
     @exchangegift.command(name='send')
@@ -78,11 +79,8 @@ class ExchangeGiftCog(commands.Cog):
         if len(no_wishlist_users) > 0:
             members = [interaction.guild.get_member(user).mention for user in no_wishlist_users]
             embed = exchange_gift.create_embed_template()
-            embed.set_description(
-                'There are some users without wishlist.\
-                Pleae add wishlist first before proceeding, so everyone can have a basis on what gift to buy.'
-            )
-            embed.add_field('Users:', '\n'.join(members))
+            embed.set_description(t('exchange_gift.missing_wishlist_description'))
+            embed.add_field(t('exchange_gift.users'), '\n'.join(members))
 
             await interaction.response.send_message(embed=embed)
             return
@@ -97,14 +95,11 @@ class ExchangeGiftCog(commands.Cog):
             chosen_member = exchange_gift.get(member.chosen)
 
             embed = exchange_gift.create_embed_template()
-            embed.set_description(
-                'You have picked this person as your gift recipient for the event! '
-                'Please refer to the following details for more information, and remember to refrain from sharing this to others!'
-            )
-            embed.add_field('Username', str(chosen_user))
-            embed.add_field('Nickname', chosen_user.nick)
-            embed.add_field('Budget', exchange_gift.budget, inline=False)
-            embed.add_field('Wishlist', chosen_member.wishlist or 'N/A', inline=False)
+            embed.set_description(t('exchange_gift.picked_description'))
+            embed.add_field(t('exchange_gift.username'), str(chosen_user))
+            embed.add_field(t('exchange_gift.nickname'), chosen_user.nick)
+            embed.add_field(t('exchange_gift.budget'), exchange_gift.budget, inline=False)
+            embed.add_field(t('exchange_gift.wishlist'), chosen_member.wishlist or 'N/A', inline=False)
 
             try:
                 await user.send(embed=embed)
@@ -113,10 +108,10 @@ class ExchangeGiftCog(commands.Cog):
                 failed.append(user)
 
         embed = exchange_gift.create_embed_template()
-        embed.add_field('Sent successfully:', '\n'.join(map(lambda u: u.mention, success)))
+        embed.add_field(t('exchange_gift.sent_successfully'), '\n'.join(map(lambda u: u.mention, success)))
 
         if len(failed) > 0:
-            embed.add_field('Sent failed:', '\n'.join(map(lambda u: u.mention, failed)))
+            embed.add_field(t('exchange_gift.sent_failed'), '\n'.join(map(lambda u: u.mention, failed)))
 
         await interaction.followup.send(embed=embed)
 
@@ -124,7 +119,7 @@ class ExchangeGiftCog(commands.Cog):
     async def exchangegift_setbudget(self, interaction: discord.Interaction['NeonBot'], budget: int):
         await ExchangeGift(interaction).set_budget(budget)
         await interaction.response.send_message(
-            embed=Embed(f'Budget has been set to `{budget}`.')
+            embed=Embed(t('exchange_gift.budget_set', budget=budget))
         )
 
 
