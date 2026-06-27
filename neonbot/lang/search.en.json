@@ -1,8 +1,4 @@
 {
-    "google_images_for": "Google Images for %{keyword}",
-    "searched_by": "Searched by %{user}",
-    "word_not_found": "Word not found.",
-    "dictionary_title": "Merriam-Webster Dictionary",
     "city_not_found": "City not found.",
     "powered_by_openweathermap": "Powered by OpenWeatherMap",
     "weather": "☁ Weather",
@@ -19,20 +15,5 @@
     "longitude": "Longitude: %{lon}",
     "latitude": "Latitude: %{lat}",
     "pressure": "🎛 Pressure",
-    "humidity": "💧 Humidity",
-    "lyrics_error": "There was error fetching the lyrics.",
-    "powered_by_azlyrics": "Powered by AZLyrics",
-    "anime_not_found": "Anime not found.",
-    "powered_by_myanimelist": "Powered by MyAnimeList",
-    "synopsis": "Synopsis",
-    "episodes": "Episodes",
-    "rank": "Rank",
-    "status": "Status",
-    "aired": "Aired",
-    "genres": "Genres",
-    "not_available": "N/A",
-    "top_50_anime": ":trophy: Top 50 Anime",
-    "upcoming_anime": ":clock3: Upcoming Anime",
-    "invalid_language": "Invalid language.",
-    "google_translate": "Google Translate"
+    "humidity": "💧 Humidity"
 }

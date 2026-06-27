@@ -35,7 +35,6 @@ from neonbot.models.setting import SettingModel
 from neonbot.utils import log
 from neonbot.utils.constants import PERMISSIONS
 from neonbot.utils.context_menu import load_context_menu
-from neonbot.features.exchange_gift_views import ExchangeGiftView
 
 if TYPE_CHECKING:
     from neonbot.music.player import Player
@@ -111,11 +110,6 @@ class NeonBot(commands.Bot):
         from neonbot.features.panel import Panel
 
         for guild in self.guilds:
-            server = GuildModel.get_instance(guild.id)
-
-            if server and not server.exchange_gift.finish and server.exchange_gift.message_id:
-                self.add_view(ExchangeGiftView(), message_id=server.exchange_gift.message_id)
-
             Panel.start_listener(self, guild.id)
 
     async def join_autojoin_voice_channels(self):
