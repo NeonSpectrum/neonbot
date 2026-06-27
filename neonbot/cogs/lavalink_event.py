@@ -66,7 +66,7 @@ class LavalinkEvent(commands.Cog):
         task = self._reconnect_tasks.get(event.node.name)
         if task and not task.done():
             task.cancel()
-        self._reconnect_tasks[event.node.name] = self.bot.loop.create_task(
+        self._reconnect_tasks[event.node.name] = asyncio.create_task(
             self._reconnect_node(event.node)
         )
 

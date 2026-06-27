@@ -149,4 +149,4 @@ class PlayerMessageManager:
         if tasks:
             async def _gather():
                 await asyncio.gather(*tasks, return_exceptions=True)
-            self.bot.loop.create_task(_gather())
+            asyncio.create_task(_gather())

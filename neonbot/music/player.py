@@ -20,7 +20,7 @@ from neonbot.music.player_message import PlayerMessageManager
 from neonbot.music.ytmusic import YTMusicHelper
 from neonbot.models.guild import GuildModel
 from neonbot.utils import log
-from neonbot.utils.functions import clean_youtube_url, is_youtube_url, wait_until
+from neonbot.utils.functions import clean_youtube_url, is_youtube_url
 
 if TYPE_CHECKING:
     from neonbot import NeonBot
@@ -41,6 +41,7 @@ class Player(DefaultPlayer):
         self.settings = GuildModel.get_instance(self.guild_id)
         self.messager: PlayerMessageManager = PlayerMessageManager(self.bot, self.guild_id)
         self._track_event_lock = asyncio.Lock()
+        self._playing_event = asyncio.Event()
         self.command_lock = asyncio.Lock()
         self.ytmusic = YTMusicHelper(self.bot)
         self._reconnecting = False
@@ -66,7 +67,7 @@ class Player(DefaultPlayer):
                 await self.settings.save_changes(False)
             except Exception:
                 log.exception(f'Guild {self.guild_id}: save_settings failed')
-        self.bot.loop.create_task(_save())
+        asyncio.create_task(_save())
 
     @property
     def playlist(self) -> List[AudioTrack]:
@@ -244,7 +245,7 @@ class Player(DefaultPlayer):
             self.messager.refresh_player_controls()
 
         if requester != self.bot.user.id:
-            self.bot.loop.create_task(self.ytmusic.like_song(track.identifier))
+            asyncio.create_task(self.ytmusic.like_song(track.identifier))
 
     def remove(self, index: int):
         playlist = self.playlist
@@ -383,6 +384,7 @@ class Player(DefaultPlayer):
     async def stop(self):
         self.current = None
         self.current_queue = -1
+        self._playing_event.clear()
         await super().stop()
 
     async def reset(self, timeout=None):
@@ -460,14 +462,15 @@ class Player(DefaultPlayer):
             self.messager.data = self.messager.data[len(self.messager.data) - MAX_MESSAGER_SIZE:]
             for pm in trimmed:
                 if pm.message:
-                    self.bot.loop.create_task(pm.message.delete(delay=0))
+                    asyncio.create_task(pm.message.delete(delay=0))
 
     async def track_start_event(self, event: TrackStartEvent):
         async with self._track_event_lock:
-            result = await wait_until(lambda: self.is_playing, timeout=30)
-            if result is None and not self.is_playing:
+            await asyncio.sleep(0.1)
+            if not self.is_playing:
                 log.warn(f'Guild {self.guild_id}: track never started playing')
                 return
+            self._playing_event.set()
             await self.messager.send_message(PlayerMessage(
                 type=MessageType.PLAYING,
                 track=event.track,

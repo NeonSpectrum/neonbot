@@ -45,13 +45,12 @@ class NeonBot(commands.Bot):
     def __init__(self, executor: Executor):
         self.default_prefix = DEFAULT_PREFIX
         self.user_agent = f'NeonBot v{__version__}'
-        self.loop = asyncio.get_event_loop()
-        self.loop.set_default_executor(executor)
         super().__init__(
             intents=discord.Intents.all(),
             command_prefix=self.default_prefix,
             owner_ids=set(OWNER_IDS),
         )
+        self._executor = executor
 
         self.db = Database(self)
         self.app_info: Optional[discord.AppInfo] = None
@@ -74,9 +73,12 @@ class NeonBot(commands.Bot):
         )
 
     async def setup_hook(self):
+        loop = asyncio.get_running_loop()
+        loop.set_default_executor(self._executor)
+
         if not sys.platform.startswith('win'):
-            self.loop.add_signal_handler(signal.SIGTERM,
-                                         lambda: asyncio.create_task(self.close()))  # type: ignore[arg-type]
+            loop.add_signal_handler(signal.SIGTERM,
+                                    lambda: asyncio.create_task(self.close()))  # type: ignore[arg-type]
 
         await self.db.initialize()
         await self.db.run_migrations()
@@ -129,7 +131,7 @@ class NeonBot(commands.Bot):
             player = await self.create_player_instance(guild.id)
 
             vc: discord.VoiceChannel = self.get_channel(server.music.autojoin_channel_id)
-            self.loop.create_task(player.connect(vc))
+            asyncio.create_task(player.connect(vc))
 
     async def create_player_instance(self, guild_id: int, *, ctx: Optional[commands.Context['NeonBot']] = None) -> 'Player':
         player: 'Player' = self.lavalink.player_manager.create(guild_id)

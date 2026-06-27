@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 import i18n
 from discord import utils
@@ -17,7 +18,7 @@ async def main() -> None:
     from neonbot.env import TOKEN
 
     # Clear debug.log on startup
-    open('./debug.log', 'w').close()
+    Path('./debug.log').write_text('')
 
     logging.getLogger('apscheduler.scheduler').setLevel(logging.ERROR)
 
