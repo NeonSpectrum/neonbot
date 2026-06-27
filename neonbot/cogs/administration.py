@@ -216,6 +216,10 @@ class Administration(commands.Cog):
         guild.music.autojoin_channel_id = channel.id if channel else None
         await guild.save_changes(False)
 
+        if channel:
+            player = await self.bot.create_player_instance(interaction.guild_id)
+            await player.connect(channel)
+
         channel_mention = channel.mention if channel else t('administration.none')
         await interaction.response.send_message(
             embed=Embed(t('administration.autojoin_set', channel=channel_mention))
