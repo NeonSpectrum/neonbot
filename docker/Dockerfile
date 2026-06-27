@@ -1,7 +1,7 @@
 FROM --platform=$TARGETOS/$TARGETARCH python:3.13-slim-bookworm
 
 RUN apt update \
-    && apt -y install git gcc g++ ca-certificates dnsutils curl iproute2 ffmpeg procps tini \
+    && apt -y install git gcc g++ ca-certificates dnsutils curl iproute2 ffmpeg libopus0 procps tini \
     && useradd -m -d /home/container container
 
 # Install Poetry globally into /opt/poetry
