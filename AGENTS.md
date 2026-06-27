@@ -77,17 +77,14 @@ neonbot/
 ├── ai/                 # AI integrations
 │   └── gemini.py       # Google Gemini integration
 ├── features/           # Standalone features
-│   ├── exchange_gift.py    # Exchange gift business logic
-│   ├── exchange_gift_views.py  # Discord views for exchange gift
 │   └── panel.py        # Pterodactyl panel monitoring
 ├── cogs/               # Command groups (slash commands)
 │   ├── music.py        # Play, queue, playlist commands
 │   ├── administration.py  # Server config, eval
-│   ├── search.py       # Web search, dictionary, anime
+│   ├── search.py       # Web search, weather
 │   ├── utility.py      # Misc tools, chat, imagine
 │   ├── event.py        # Event handlers (on_message, errors)
 │   ├── panel.py        # Server management panel
-│   ├── exchange_gift.py # Gift exchange feature
 │   └── updater.py      # Git pull + hot reload
 ├── discord_ui/         # Reusable Discord UI components
 │   ├── embed.py        # Embed, PaginationEmbed, EmbedChoices
@@ -121,6 +118,8 @@ neonbot/
 - Async/await for all I/O
 - Logging via custom `neonbot.utils.log` module
 - Embeds via `neonbot.discord_ui.embed.Embed` wrapper
+- **Commit messages**: Use format `<type>(<scope>): <description>` (e.g., `fix(music): resolve player crash on empty queue`)
+- **Always run tests before committing**: `poetry run pytest tests/ -x -q`
 
 ## Gotchas
 
