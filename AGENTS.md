@@ -42,7 +42,7 @@ poetry show <package>
 ## Running Locally (without Docker)
 
 ```bash
-# Requires Python 3.10+, ffmpeg, libopus
+# Requires Python 3.10+, ffmpeg, libopus (apt: libopus0)
 cp .env.example .env  # Fill in TOKEN and MONGO_URL
 pip install -r requirements.txt
 python main.py
@@ -126,7 +126,6 @@ neonbot/
 - `main.py` clears `debug.log` on startup
 - `SYNC_COMMANDS=true` (default) syncs slash commands to all guilds on boot
 - Player state cached to `tmp/players/` - set `LOAD_PLAYER_CACHE=true` to restore on restart
-- `lib/libopus.so.0` is bundled for voice support
 - `eval` command is owner-only and uses prefix command (not slash)
 
 ## References
