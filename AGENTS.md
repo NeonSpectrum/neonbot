@@ -128,5 +128,8 @@ neonbot/
 - `SYNC_COMMANDS=true` (default) syncs slash commands to all guilds on boot
 - Player state cached to `tmp/players/` - set `LOAD_PLAYER_CACHE=true` to restore on restart
 - `lib/libopus.so.0` is bundled for voice support
-- No tests or CI configured
 - `eval` command is owner-only and uses prefix command (not slash)
+
+## References
+
+- discord.py API docs: https://discordpy.readthedocs.io/en/stable/api.html
